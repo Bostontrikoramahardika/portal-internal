@@ -1,9 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="text-gray-500">Memuat...</div></div>}>
+      <DashboardContent />
+    </Suspense>
+  )
+}
+
+function DashboardContent() {
   const searchParams = useSearchParams()
   const menuKey = searchParams.get('menu') || 'dashboard'
   const [data, setData] = useState<any>(null)
@@ -37,7 +45,6 @@ export default function DashboardPage() {
   return <div>Tipe konten tidak dikenali</div>
 }
 
-// ============ DASHBOARD ============
 function DashboardView({ title }: any) {
   return (
     <div>
@@ -73,7 +80,6 @@ function StatCard({ label, value, color }: any) {
   )
 }
 
-// ============ FORM CUTI (Pilih Atasan) ============
 function FormCutiView({ title, onSuccess }: any) {
   const [form, setForm] = useState({ tanggal_mulai: '', tanggal_selesai: '', jenis_cuti: '', alasan: '', atasan_nrp: '' })
   const [atasanList, setAtasanList] = useState<any[]>([])
@@ -165,7 +171,6 @@ function FormCutiView({ title, onSuccess }: any) {
   )
 }
 
-// ============ ROSTER VIEW ============
 function RosterView({ title }: any) {
   const [files, setFiles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -233,7 +238,6 @@ function RosterView({ title }: any) {
   )
 }
 
-// ============ ROSTER UPLOAD ============
 function RosterUpload({ title }: any) {
   const [file, setFile] = useState<File | null>(null)
   const [form, setForm] = useState({ periode: '', site: '', departemen: '', keterangan: '' })
@@ -345,7 +349,6 @@ function RosterUpload({ title }: any) {
   )
 }
 
-// ============ IMPORT EXCEL ============
 function ImportExcel({ title, table }: any) {
   const [file, setFile] = useState<File | null>(null)
   const [msg, setMsg] = useState({ type: '', text: '' })
@@ -416,7 +419,6 @@ function ImportExcel({ title, table }: any) {
   )
 }
 
-// ============ CHANGE LOGIN ============
 function ChangeLoginView({ title }: any) {
   const [newNrp, setNewNrp] = useState('')
   const [msg, setMsg] = useState({ type: '', text: '' })
@@ -463,7 +465,6 @@ function ChangeLoginView({ title }: any) {
   )
 }
 
-// ============ TABLE VIEW ============
 function TableView({ data, onReload }: any) {
   const { title, rows = [], columns = [], total = 0, table, access_mode } = data
   const [trackingId, setTrackingId] = useState<string | null>(null)
@@ -531,7 +532,6 @@ function TableView({ data, onReload }: any) {
   )
 }
 
-// ============ CRUD MODAL ============
 function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   const [fields, setFields] = useState<any[]>([])
   const [values, setValues] = useState<any>({})
@@ -613,7 +613,6 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   )
 }
 
-// ============ TRACKING MODAL ============
 function TrackingModal({ leaveId, onClose }: any) {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -675,7 +674,6 @@ function TimelineItem({ icon, title, subtitle, date, status }: any) {
   )
 }
 
-// ============ HANDLERS ============
 async function handleApprove(id: string, action: string, onReload: () => void) {
   let catatan = ''
   if (action === 'REJECTED') { catatan = prompt('Catatan penolakan:') || ''; if (!catatan.trim()) { alert('❌ Catatan wajib'); return } }
@@ -699,7 +697,6 @@ async function handleDelete(table: string, id: string, onReload: () => void) {
   } catch { alert('❌ Error') }
 }
 
-// ============ UTILS ============
 function formatColumnName(col: string): string {
   return col.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 }

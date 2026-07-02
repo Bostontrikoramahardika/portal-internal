@@ -40,7 +40,6 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
-          {/* Logo / Brand */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <span className="text-white text-2xl font-bold">PI</span>
@@ -53,14 +52,12 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm">
               {error}
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleLogin}>
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">

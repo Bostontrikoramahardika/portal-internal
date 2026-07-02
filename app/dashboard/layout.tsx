@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 interface User {
@@ -21,6 +21,14 @@ interface MenuItem {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-100 flex items-center justify-center"><div className="text-gray-500">Memuat...</div></div>}>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </Suspense>
+  )
+}
+
+function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [menus, setMenus] = useState<MenuItem[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -58,10 +66,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push('/')
   }
 
-    function groupMenus(items: MenuItem[]) {
+  function groupMenus(items: MenuItem[]) {
     const groups: Record<string, MenuItem[]> = {}
     items.forEach(m => {
-      // Hilangkan prefix "1. ", "2. ", dll dari nama group
       const rawGroup = m.menu_group || 'Lainnya'
       const cleanGroup = rawGroup.replace(/^\d+\.\s*/, '')
       if (!groups[cleanGroup]) groups[cleanGroup] = []
@@ -84,7 +91,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
       <aside className={`
         ${sidebarOpen ? 'w-64' : 'w-0 -ml-64'}
         bg-gray-900 text-white flex-shrink-0 transition-all duration-300
@@ -92,18 +98,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         lg:relative lg:ml-0
       `}>
         <div className="p-4">
-          {/* Brand */}
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold">PI</span>
             </div>
             <div>
               <div className="font-bold text-sm">Portal Internal</div>
-              <div className="text-[10px] text-gray-400">v1.0</div>
+              <div className="text-[10px] text-gray-400">v1.1</div>
             </div>
           </div>
 
-          {/* User info */}
           <div className="bg-gray-800 rounded-xl p-3 mb-6">
             <div className="font-semibold text-sm">{user.nama}</div>
             <div className="text-xs text-gray-400">NRP: {user.nrp}</div>
@@ -112,7 +116,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
 
-          {/* Menu groups */}
           {Object.entries(grouped).map(([group, items]) => (
             <div key={group} className="mb-4">
               <div className="text-[10px] uppercase tracking-wider text-gray-500 px-3 mb-2">
@@ -140,7 +143,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           ))}
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
             className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
@@ -150,7 +152,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* Overlay mobile */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
@@ -158,9 +159,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         />
       )}
 
-      {/* Main content */}
       <main className="flex-1 min-w-0">
-        {/* Top bar */}
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4 sticky top-0 z-20">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -178,7 +177,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        {/* Page content */}
         <div className="p-6">
           {children}
         </div>
