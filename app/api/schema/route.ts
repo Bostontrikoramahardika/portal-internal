@@ -4,7 +4,8 @@ import { getSession } from '@/app/lib/auth'
 // Definisi schema untuk setiap tabel
 const TABLE_SCHEMA: Record<string, any[]> = {
   employees: [
-    { key: 'nrp', label: 'NRP', type: 'text', required: true },
+    { key: 'nrp', label: 'NRP Actual', type: 'text', required: true },
+    { key: 'nrp_login', label: 'NRP Login (untuk login)', type: 'text', placeholder: 'Kosongkan untuk sama dengan NRP' },
     { key: 'nama', label: 'Nama Lengkap', type: 'text', required: true },
     { key: 'jabatan', label: 'Jabatan', type: 'text' },
     { key: 'departemen', label: 'Departemen', type: 'text' },
@@ -21,6 +22,12 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'role', label: 'Role', type: 'select', required: true, options: ['karyawan', 'atasan', 'admin', 'hrga', 'pjo'] },
     { key: 'active', label: 'Aktif', type: 'checkbox' },
   ],
+  approval_matrix: [
+    { key: 'employee_nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'atasan_nrp', label: 'NRP Atasan', type: 'text', required: true },
+    { key: 'pjo_nrp', label: 'NRP PJO', type: 'text', required: true },
+    { key: 'active', label: 'Aktif', type: 'checkbox' },
+  ],
   sites_config: [
     { key: 'nama_site', label: 'Nama Site', type: 'text', required: true, placeholder: 'Contoh: Site A' },
     { key: 'siang_jam_masuk', label: 'Shift SIANG - Jam Masuk', type: 'time', required: true, placeholder: '06:00' },
@@ -33,19 +40,6 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'longitude', label: 'Longitude GPS Site', type: 'number', placeholder: '106.816666', required: true },
     { key: 'radius_meter', label: 'Radius Geofencing (meter)', type: 'number', placeholder: '500', required: true },
     { key: 'active', label: 'Site Aktif', type: 'checkbox' },
-  ],
-  approval_matrix: [
-    { key: 'employee_nrp', label: 'NRP Karyawan', type: 'text', required: true },
-    { key: 'atasan_nrp', label: 'NRP Atasan', type: 'text', required: true },
-    { key: 'pjo_nrp', label: 'NRP PJO', type: 'text', required: true },
-    { key: 'active', label: 'Aktif', type: 'checkbox' },
-  ],
-
-  approval_matrix: [
-    { key: 'employee_nrp', label: 'NRP Karyawan', type: 'text', required: true },
-    { key: 'atasan_nrp', label: 'NRP Atasan', type: 'text', required: true },
-    { key: 'pjo_nrp', label: 'NRP PJO', type: 'text', required: true },
-    { key: 'active', label: 'Aktif', type: 'checkbox' },
   ],
   kpi: [
     { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
@@ -84,6 +78,31 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'shift', label: 'Shift', type: 'select', required: true, options: ['SIANG', 'MALAM', 'OFF', 'CUTI', 'SAKIT', 'IZIN', 'ALPHA', 'LIBUR', 'TRAINING'] },
     { key: 'keterangan', label: 'Keterangan', type: 'text' },
   ],
+  attendance: [
+    { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'tanggal', label: 'Tanggal', type: 'date', required: true },
+    { key: 'shift', label: 'Shift', type: 'select', options: ['SIANG', 'MALAM'] },
+    { key: 'clock_in', label: 'Clock In', type: 'datetime-local' },
+    { key: 'clock_out', label: 'Clock Out', type: 'datetime-local' },
+    { key: 'status', label: 'Status', type: 'select', required: true, options: ['HADIR', 'TERLAMBAT', 'SETENGAH_HARI', 'ALPHA', 'CUTI', 'SAKIT', 'IZIN', 'LIBUR'] },
+    { key: 'jam_kerja_menit', label: 'Jam Kerja (menit)', type: 'number' },
+    { key: 'terlambat_menit', label: 'Terlambat (menit)', type: 'number' },
+    { key: 'keterangan', label: 'Keterangan', type: 'textarea' },
+    { key: 'site', label: 'Site', type: 'text' },
+  ],
+  overtime_requests: [
+    { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'tanggal', label: 'Tanggal Lembur', type: 'date', required: true },
+    { key: 'jam_mulai', label: 'Jam Mulai', type: 'time', required: true },
+    { key: 'jam_selesai', label: 'Jam Selesai', type: 'time', required: true },
+    { key: 'total_jam', label: 'Total Jam', type: 'number' },
+    { key: 'jenis_lembur', label: 'Jenis Lembur', type: 'select', options: ['BIASA', 'LIBUR', 'HARI_BESAR'] },
+    { key: 'alasan', label: 'Alasan', type: 'textarea', required: true },
+    { key: 'atasan_nrp', label: 'NRP Atasan', type: 'text' },
+    { key: 'status_atasan', label: 'Status Atasan', type: 'select', options: ['PENDING', 'APPROVED', 'REJECTED'] },
+    { key: 'catatan_atasan', label: 'Catatan Atasan', type: 'textarea' },
+    { key: 'status_final', label: 'Status Final', type: 'select', options: ['MENUNGGU_ATASAN', 'DISETUJUI', 'DITOLAK'] },
+  ],
   leave_requests: [
     { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
     { key: 'tanggal_mulai', label: 'Tanggal Mulai', type: 'date', required: true },
@@ -104,7 +123,7 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'menu_icon', label: 'Icon (emoji)', type: 'text' },
     { key: 'menu_group', label: 'Group', type: 'text' },
     { key: 'target_table', label: 'Target Table', type: 'text' },
-    { key: 'access_mode', label: 'Access Mode', type: 'select', options: ['SELF', 'ALL', 'TEAM_ATASAN', 'TEAM_PJO', 'APPROVAL_ATASAN', 'APPROVAL_PJO', 'DASHBOARD', 'FORM_CUTI', 'CRUD'] },
+    { key: 'access_mode', label: 'Access Mode', type: 'text' },
     { key: 'sort_order', label: 'Urutan', type: 'number' },
     { key: 'active', label: 'Aktif', type: 'checkbox' },
   ]
