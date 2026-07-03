@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Catatan wajib diisi jika reject' }, { status: 400 })
     }
 
-    // Get overtime data
     const { data: overtime } = await supabase
       .from('overtime_requests')
       .select('*')
@@ -34,47 +33,89 @@ export async function POST(request: NextRequest) {
 
     const now = new Date().toISOString()
     const isAtasan = session.roles.includes('atasan') || session.roles.includes('hrga')
+    const isPjo = session.roles.includes('pjo') || session.roles.includes('hrga')
 
-    // Cek hak akses
-    if (!isAtasan) {
-      return NextResponse.json({ error: 'Anda tidak berhak approve lembur' }, { status: 403 })
+    // TAHAP ATASAN
+    if (
+      overtime.status_atasan === 'PENDING' &&
+      (overtime.atasan_nrp === session.nrp || session.roles.includes('hrga'))
+    ) {
+      if (!isAtasan) {
+        return NextResponse.json({ error: 'Anda bukan atasan yang dipilih' }, { status: 403 })
+      }
+
+      const updates: any = {
+        catatan_atasan: catatan || null,
+        tanggal_approval_atasan: now,
+        updated_at: now
+      }
+
+      if (action === 'APPROVED') {
+        updates.status_atasan = 'APPROVED'
+        updates.status_pjo = 'PENDING'
+        updates.status_final = 'MENUNGGU_PJO'
+      } else {
+        updates.status_atasan = 'REJECTED'
+        updates.status_final = 'DITOLAK_ATASAN'
+      }
+
+      const { error } = await supabase
+        .from('overtime_requests')
+        .update(updates)
+        .eq('id', overtime_id)
+
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+      return NextResponse.json({
+        success: true,
+        message: action === 'APPROVED'
+          ? '✅ Lembur disetujui atasan. Menunggu approval PJO.'
+          : '❌ Lembur ditolak pada tahap atasan.'
+      })
     }
 
-    if (overtime.atasan_nrp !== session.nrp && !session.roles.includes('hrga')) {
-      return NextResponse.json({ error: 'Anda bukan atasan yang dipilih untuk lembur ini' }, { status: 403 })
+    // TAHAP PJO
+    if (
+      overtime.status_atasan === 'APPROVED' &&
+      overtime.status_pjo === 'PENDING' &&
+      (overtime.pjo_nrp === session.nrp || session.roles.includes('hrga'))
+    ) {
+      if (!isPjo) {
+        return NextResponse.json({ error: 'Anda bukan PJO yang berhak' }, { status: 403 })
+      }
+
+      const updates: any = {
+        catatan_pjo: catatan || null,
+        tanggal_approval_pjo: now,
+        updated_at: now
+      }
+
+      if (action === 'APPROVED') {
+        updates.status_pjo = 'APPROVED'
+        updates.status_final = 'DISETUJUI'
+      } else {
+        updates.status_pjo = 'REJECTED'
+        updates.status_final = 'DITOLAK_PJO'
+      }
+
+      const { error } = await supabase
+        .from('overtime_requests')
+        .update(updates)
+        .eq('id', overtime_id)
+
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+      return NextResponse.json({
+        success: true,
+        message: action === 'APPROVED'
+          ? '🎉 Lembur disetujui final oleh PJO!'
+          : '❌ Lembur ditolak pada tahap PJO.'
+      })
     }
-
-    if (overtime.status_atasan !== 'PENDING') {
-      return NextResponse.json({ error: 'Lembur ini sudah diproses sebelumnya' }, { status: 400 })
-    }
-
-    const updates: any = {
-      catatan_atasan: catatan || null,
-      tanggal_approval_atasan: now,
-      updated_at: now
-    }
-
-    if (action === 'APPROVED') {
-      updates.status_atasan = 'APPROVED'
-      updates.status_final = 'DISETUJUI'
-    } else {
-      updates.status_atasan = 'REJECTED'
-      updates.status_final = 'DITOLAK'
-    }
-
-    const { error } = await supabase
-      .from('overtime_requests')
-      .update(updates)
-      .eq('id', overtime_id)
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     return NextResponse.json({
-      success: true,
-      message: action === 'APPROVED'
-        ? '✅ Lembur disetujui.'
-        : '❌ Lembur ditolak.'
-    })
+      error: 'Anda tidak berhak memproses approval ini atau status tidak sesuai'
+    }, { status: 403 })
 
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

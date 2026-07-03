@@ -11,11 +11,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { tanggal_mulai, tanggal_selesai, jenis_cuti, alasan } = body
+    const { tanggal_mulai, tanggal_selesai, jenis_cuti, alasan, atasan_nrp } = body
 
-    // Validasi input
-    if (!tanggal_mulai || !tanggal_selesai || !jenis_cuti || !alasan) {
-      return NextResponse.json({ error: 'Semua field wajib diisi' }, { status: 400 })
+    if (!tanggal_mulai || !tanggal_selesai || !jenis_cuti || !alasan || !atasan_nrp) {
+      return NextResponse.json({ error: 'Semua field wajib diisi (termasuk atasan)' }, { status: 400 })
     }
 
     const start = new Date(tanggal_mulai + 'T00:00:00')
@@ -26,26 +25,61 @@ export async function POST(request: NextRequest) {
     }
 
     if (end < start) {
-      return NextResponse.json({ error: 'Tanggal selesai tidak boleh lebih kecil dari tanggal mulai' }, { status: 400 })
+      return NextResponse.json({ error: 'Tanggal selesai harus >= tanggal mulai' }, { status: 400 })
     }
 
     const jumlahHari = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1
 
-    // Cek approval matrix
-    const { data: matrix } = await supabase
-      .from('approval_matrix')
-      .select('*')
-      .eq('employee_nrp', session.nrp)
-      .eq('active', true)
+    // Validasi atasan
+    const { data: atasanCheck } = await supabase
+      .from('employees')
+      .select('nrp, nama')
+      .eq('nrp', atasan_nrp)
       .single()
 
-    if (!matrix) {
+    if (!atasanCheck) {
+      return NextResponse.json({ error: 'Atasan yang dipilih tidak ditemukan' }, { status: 400 })
+    }
+
+    // AUTO-DETECT PJO: cari PJO berdasarkan site karyawan
+    const { data: karyawan } = await supabase
+      .from('employees')
+      .select('site')
+      .eq('nrp', session.nrp)
+      .single()
+
+    // Ambil semua PJO aktif
+    const { data: pjoRoles } = await supabase
+      .from('roles')
+      .select('nrp')
+      .eq('role', 'pjo')
+      .eq('active', true)
+
+    const pjoNrps = (pjoRoles || []).map(r => r.nrp)
+
+    if (pjoNrps.length === 0) {
       return NextResponse.json({
-        error: 'Approval matrix untuk Anda belum diatur. Hubungi HRGA.'
+        error: 'Belum ada PJO yang di-set. Hubungi HRGA.'
       }, { status: 400 })
     }
 
-    // Cek overlap dengan cuti yang sudah ada
+    // Cari PJO yang site-nya sama
+    const { data: allPjo } = await supabase
+      .from('employees')
+      .select('nrp, nama, site')
+      .in('nrp', pjoNrps)
+      .eq('status_karyawan', 'Aktif')
+
+    if (!allPjo || allPjo.length === 0) {
+      return NextResponse.json({
+        error: 'PJO aktif tidak ditemukan. Hubungi HRGA.'
+      }, { status: 400 })
+    }
+
+    const samePjo = allPjo.find((p: any) => p.site === karyawan?.site)
+    const chosenPjo = samePjo || allPjo[0]
+
+    // Cek overlap
     const { data: existing } = await supabase
       .from('leave_requests')
       .select('*')
@@ -59,12 +93,10 @@ export async function POST(request: NextRequest) {
     })
 
     if (overlap) {
-      return NextResponse.json({
-        error: 'Tanggal bentrok dengan cuti Anda yang lain'
-      }, { status: 400 })
+      return NextResponse.json({ error: 'Tanggal bentrok dengan cuti Anda yang lain' }, { status: 400 })
     }
 
-    // Insert leave request
+    // Insert
     const { data: newLeave, error: insertError } = await supabase
       .from('leave_requests')
       .insert({
@@ -74,8 +106,8 @@ export async function POST(request: NextRequest) {
         jumlah_hari: jumlahHari,
         jenis_cuti,
         alasan,
-        atasan_nrp: matrix.atasan_nrp,
-        pjo_nrp: matrix.pjo_nrp,
+        atasan_nrp,
+        pjo_nrp: chosenPjo.nrp,
         status_atasan: 'PENDING',
         status_pjo: 'WAITING',
         status_final: 'MENUNGGU_ATASAN'
@@ -83,11 +115,8 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 })
-    }
+    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
 
-    // Log ke approval_logs
     await supabase.from('approval_logs').insert({
       leave_request_id: newLeave.id,
       approver_nrp: session.nrp,
@@ -98,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Pengajuan cuti berhasil dibuat. ${jumlahHari} hari cuti menunggu approval atasan.`,
+      message: `Pengajuan cuti ${jumlahHari} hari berhasil dibuat. Menunggu approval atasan (${atasanCheck.nama}), lalu final ke PJO (${chosenPjo.nama}).`,
       data: newLeave
     })
 

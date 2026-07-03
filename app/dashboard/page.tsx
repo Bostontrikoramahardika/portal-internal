@@ -41,7 +41,8 @@ function DashboardContent() {
   if (data.type === 'roster_upload') return <RosterUpload title={data.title} />
   if (data.type === 'import_excel') return <ImportExcel title={data.title} table={data.table} />
   if (data.type === 'change_login') return <ChangeLoginView title={data.title} />
-  if (data.type === 'absensi_clock') return <AbsensiClockView title={data.title} />
+if (data.type === 'absensi_clock') return <AbsensiClockView title={data.title} />
+if (data.type === 'role_manager') return <RoleManagerView title={data.title} />
   if (data.type === 'form_lembur') return <FormLemburView title={data.title} onSuccess={loadData} />
   if (data.type === 'export_absensi') return <ExportAbsensiView title={data.title} />
   if (data.type === 'table') return <TableView data={data} onReload={loadData} />
@@ -1340,7 +1341,7 @@ function TableView({ data, onReload }: any) {
   const [bulkLoading, setBulkLoading] = useState(false)
 
   const showApproval = access_mode === 'APPROVAL_ATASAN' || access_mode === 'APPROVAL_PJO'
-  const showApprovalLembur = access_mode === 'APPROVAL_LEMBUR'
+  const showApprovalLembur = access_mode === 'APPROVAL_LEMBUR' || access_mode === 'APPROVAL_LEMBUR_PJO'
   const showTracking = table === 'leave_requests'
   const showCrud = access_mode === 'CRUD'
 
@@ -1721,18 +1722,149 @@ async function handleDelete(table: string, id: string, onReload: () => void) {
 
 // ============ UTILS ============
 function formatColumnName(col: string): string {
+  // Label khusus untuk kolom nama yang di-enrich
+  const specialLabels: Record<string, string> = {
+    '_nama': 'Nama Karyawan',
+    '_nama_employee': 'Nama Karyawan',
+    '_nama_atasan': 'Nama Atasan',
+    '_nama_pjo': 'Nama PJO',
+    '_jabatan': 'Jabatan',
+    'nrp': 'NRP',
+    'employee_nrp': 'NRP Karyawan',
+    'atasan_nrp': 'NRP Atasan',
+    'pjo_nrp': 'NRP PJO',
+    'clock_in': 'Jam Masuk',
+    'clock_out': 'Jam Pulang',
+    'clock_in_lat': 'Latitude Masuk',
+    'clock_in_lng': 'Longitude Masuk',
+    'clock_in_lokasi': 'Lokasi Masuk',
+    'clock_out_lat': 'Latitude Pulang',
+    'clock_out_lng': 'Longitude Pulang',
+    'clock_out_lokasi': 'Lokasi Pulang',
+    'jam_kerja_menit': 'Jam Kerja',
+    'terlambat_menit': 'Terlambat',
+    'jumlah_hari': 'Jumlah Hari',
+    'jenis_cuti': 'Jenis Cuti',
+    'jenis_lembur': 'Jenis Lembur',
+    'jenis_sp': 'Jenis SP',
+    'total_jam': 'Total Jam',
+    'jam_mulai': 'Jam Mulai',
+    'jam_selesai': 'Jam Selesai',
+    'no_hp': 'No. HP',
+    'no_kontrak': 'No. Kontrak',
+    'nrp_login': 'NRP Login',
+    'status_karyawan': 'Status',
+    'status_atasan': 'Status Atasan',
+    'status_pjo': 'Status PJO',
+    'status_final': 'Status Final',
+    'catatan_atasan': 'Catatan Atasan',
+    'catatan_pjo': 'Catatan PJO',
+    'tanggal_mulai': 'Tanggal Mulai',
+    'tanggal_selesai': 'Tanggal Selesai',
+    'tanggal_masuk': 'Tanggal Masuk',
+    'tanggal_lahir': 'Tanggal Lahir',
+    'tanggal_terima': 'Tanggal Terima',
+    'tanggal_sp': 'Tanggal SP',
+    'tanggal_expired': 'Tanggal Expired',
+    'tanggal_approval_atasan': 'Tanggal Approve Atasan',
+    'tanggal_approval_pjo': 'Tanggal Approve PJO',
+    'tempat_lahir': 'Tempat Lahir',
+    'mulai_kontrak': 'Mulai Kontrak',
+    'akhir_kontrak': 'Akhir Kontrak',
+    'kontrak_ke': 'Kontrak Ke-',
+    'berlaku_sampai': 'Berlaku Sampai',
+    'nama_barang': 'Nama Barang',
+    'nilai_kpi': 'Nilai KPI',
+    'nama_site': 'Nama Site',
+    'nama_file': 'Nama File',
+    'file_url': 'URL File',
+    'file_type': 'Tipe File',
+    'file_size': 'Ukuran File',
+    'uploaded_by': 'Di-upload Oleh',
+    'siang_jam_masuk': 'Siang - Masuk',
+    'siang_jam_pulang': 'Siang - Pulang',
+    'siang_batas_telat': 'Siang - Batas Telat',
+    'malam_jam_masuk': 'Malam - Masuk',
+    'malam_jam_pulang': 'Malam - Pulang',
+    'malam_batas_telat': 'Malam - Batas Telat',
+    'radius_meter': 'Radius (m)',
+    'target_table': 'Tabel Target',
+    'access_mode': 'Mode Akses',
+    'menu_key': 'Menu Key',
+    'menu_label': 'Menu Label',
+    'menu_icon': 'Icon',
+    'menu_group': 'Group',
+    'sort_order': 'Urutan',
+  }
+
+  if (specialLabels[col]) return specialLabels[col]
   return col.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 }
 
 function renderCell(col: string, value: any) {
   if (value === null || value === undefined || value === '') return <span className="text-gray-300">-</span>
-  const statusCols = ['status_atasan', 'status_pjo', 'status_final', 'status', 'status_karyawan', 'shift', 'jenis_sp', 'kondisi']
+
+  // Nama karyawan → tampil bold
+  if (col === '_nama' || col === '_nama_employee' || col === '_nama_atasan' || col === '_nama_pjo') {
+    return <span className="font-semibold text-slate-900">{String(value)}</span>
+  }
+
+  // NRP → tampil kecil dan abu-abu
+  if (col === 'nrp' || col === 'employee_nrp' || col === 'atasan_nrp' || col === 'pjo_nrp' || col === 'nrp_login') {
+    return <span className="text-xs text-slate-500 font-mono">{String(value)}</span>
+  }
+
+  const statusCols = ['status_atasan', 'status_pjo', 'status_final', 'status', 'status_karyawan', 'shift', 'jenis_sp', 'kondisi', 'jenis_lembur']
   if (statusCols.includes(col)) return <StatusBadge value={String(value)} />
+
   if (typeof value === 'boolean') return value ? <span className="text-green-600">✓</span> : <span className="text-gray-400">✗</span>
+
+  // Clock In/Out → format jam
+  if (col === 'clock_in' || col === 'clock_out') {
+    try {
+      const d = new Date(value)
+      if (!isNaN(d.getTime())) {
+        return (
+          <div className="text-sm">
+            <div className="font-semibold text-slate-900">
+              {d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <div className="text-xs text-slate-400">
+              {d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+            </div>
+          </div>
+        )
+      }
+    } catch {}
+  }
+
+  // Jam kerja (menit) → format jam & menit
+  if (col === 'jam_kerja_menit' && typeof value === 'number') {
+    const jam = Math.floor(value / 60)
+    const menit = value % 60
+    return <span className="font-semibold">{jam}j {menit}m</span>
+  }
+
+  // Terlambat (menit) → warna oranye kalau > 0
+  if (col === 'terlambat_menit' && typeof value === 'number') {
+    if (value === 0) return <span className="text-emerald-600">Tepat waktu</span>
+    return <span className="text-orange-600 font-semibold">{value} menit</span>
+  }
+
+  // Tanggal
   if (col.includes('tanggal') || col.includes('_at') || col.includes('mulai') || col.includes('akhir') || col.includes('expired')) {
     try { const d = new Date(value); if (!isNaN(d.getTime())) return d.toLocaleDateString('id-ID') } catch {}
   }
+
+  // Jam (HH:MM)
+  if (col.includes('jam_') && typeof value === 'string' && value.match(/^\d{2}:\d{2}/)) {
+    return <span className="font-mono">{value.slice(0, 5)}</span>
+  }
+
+  // Angka
   if (typeof value === 'number') return value.toLocaleString('id-ID')
+
+  // String panjang
   const s = String(value)
   return s.length > 60 ? <span title={s}>{s.substring(0, 60)}...</span> : s
 }
@@ -1755,4 +1887,196 @@ function StatusBadge({ value }: any) {
     SP1: 'bg-yellow-100 text-yellow-800', SP2: 'bg-orange-100 text-orange-800', SP3: 'bg-red-100 text-red-800'
   }
   return <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${m[value] || 'bg-gray-100 text-gray-700'}`}>{value}</span>
+}
+
+// ============ ROLE MANAGER (Interface Baru) ============
+function RoleManagerView({ title }: any) {
+  const [data, setData] = useState<any>({ employees: [], sites: [], stats: {} })
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [filterSite, setFilterSite] = useState('')
+  const [filterRole, setFilterRole] = useState('')
+  const [msg, setMsg] = useState({ type: '', text: '' })
+
+  useEffect(() => { loadData() }, [search, filterSite, filterRole])
+
+  async function loadData() {
+    setLoading(true)
+    try {
+      let url = '/api/role-manager?'
+      if (search) url += `search=${encodeURIComponent(search)}&`
+      if (filterSite) url += `site=${encodeURIComponent(filterSite)}&`
+      if (filterRole) url += `role=${encodeURIComponent(filterRole)}&`
+
+      const res = await fetch(url)
+      const d = await res.json()
+      setData(d)
+    } catch { setMsg({ type: 'err', text: 'Gagal load data' }) }
+    finally { setLoading(false) }
+  }
+
+  async function toggleRole(nrp: string, role: string, currentActive: boolean) {
+    const action = currentActive ? 'remove' : 'assign'
+
+    try {
+      const res = await fetch('/api/role-manager', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nrp, role, action })
+      })
+      const d = await res.json()
+
+      if (!res.ok) { setMsg({ type: 'err', text: d.error }); return }
+      setMsg({ type: 'ok', text: d.message })
+      loadData()
+
+      setTimeout(() => setMsg({ type: '', text: '' }), 3000)
+    } catch { setMsg({ type: 'err', text: 'Gagal update role' }) }
+  }
+
+  const roles = [
+    { key: 'karyawan', label: 'Karyawan', color: 'slate', locked: true },
+    { key: 'atasan', label: 'Atasan', color: 'blue' },
+    { key: 'pjo', label: 'PJO', color: 'purple' },
+    { key: 'admin', label: 'Admin', color: 'emerald' },
+    { key: 'hrga', label: 'HRGA', color: 'amber' },
+  ]
+
+  return (
+    <div>
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-1 h-8 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></div>
+          <h2 className="text-2xl font-bold text-slate-900">🔑 {title}</h2>
+        </div>
+        <p className="text-sm text-slate-500">Centang role untuk assign / uncheck untuk hapus role</p>
+      </div>
+
+      {msg.text && (
+        <div className={`p-3 rounded-xl mb-4 text-sm ${msg.type === 'ok' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {msg.text}
+        </div>
+      )}
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-3">
+          <div className="text-xs text-slate-500">Total Karyawan</div>
+          <div className="text-2xl font-bold text-slate-900">{data.stats?.total_karyawan || 0}</div>
+        </div>
+        <div className="bg-blue-50 rounded-xl border border-blue-200 p-3">
+          <div className="text-xs text-blue-600">Atasan</div>
+          <div className="text-2xl font-bold text-blue-700">{data.stats?.total_atasan || 0}</div>
+        </div>
+        <div className="bg-purple-50 rounded-xl border border-purple-200 p-3">
+          <div className="text-xs text-purple-600">PJO</div>
+          <div className="text-2xl font-bold text-purple-700">{data.stats?.total_pjo || 0}</div>
+        </div>
+        <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-3">
+          <div className="text-xs text-emerald-600">Admin</div>
+          <div className="text-2xl font-bold text-emerald-700">{data.stats?.total_admin || 0}</div>
+        </div>
+        <div className="bg-amber-50 rounded-xl border border-amber-200 p-3">
+          <div className="text-xs text-amber-600">HRGA</div>
+          <div className="text-2xl font-bold text-amber-700">{data.stats?.total_hrga || 0}</div>
+        </div>
+      </div>
+
+      {/* Filter */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Cari Nama/NRP</label>
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Ketik nama atau NRP..." className="w-full px-4 py-2 rounded-xl border border-slate-300 text-slate-900 text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Filter Site</label>
+            <select value={filterSite} onChange={e => setFilterSite(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-slate-300 text-slate-900 text-sm">
+              <option value="">Semua Site</option>
+              {(data.sites || []).map((s: string) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Filter Role</label>
+            <select value={filterRole} onChange={e => setFilterRole(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-slate-300 text-slate-900 text-sm">
+              <option value="">Semua Role</option>
+              <option value="atasan">Atasan</option>
+              <option value="pjo">PJO</option>
+              <option value="admin">Admin</option>
+              <option value="hrga">HRGA</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* List Karyawan */}
+      {loading ? (
+        <div className="text-center py-8 text-slate-500">Memuat...</div>
+      ) : (data.employees || []).length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
+          <div className="text-4xl mb-3">📭</div>
+          <div className="text-slate-500">Tidak ada karyawan ditemukan</div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {(data.employees || []).map((emp: any) => (
+            <div key={emp.nrp} className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow">
+              <div className="flex flex-col md:flex-row md:items-center gap-3">
+                {/* Info Karyawan */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-slate-900">{emp.nama}</span>
+                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">
+                      NRP: {emp.nrp}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    {emp.jabatan || '-'} • {emp.departemen || '-'} • {emp.site || '-'}
+                  </div>
+                </div>
+
+                {/* Role Checkboxes */}
+                <div className="flex flex-wrap gap-2">
+                  {roles.map(r => {
+                    const isActive = emp.roles?.includes(r.key)
+                    const isLocked = r.locked && isActive
+
+                    const colorMap: any = {
+                      slate: isActive ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-white border-slate-200 text-slate-400',
+                      blue: isActive ? 'bg-blue-100 border-blue-400 text-blue-700' : 'bg-white border-slate-200 text-slate-400',
+                      purple: isActive ? 'bg-purple-100 border-purple-400 text-purple-700' : 'bg-white border-slate-200 text-slate-400',
+                      emerald: isActive ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-white border-slate-200 text-slate-400',
+                      amber: isActive ? 'bg-amber-100 border-amber-400 text-amber-700' : 'bg-white border-slate-200 text-slate-400',
+                    }
+
+                    return (
+                      <button
+                        key={r.key}
+                        onClick={() => !isLocked && toggleRole(emp.nrp, r.key, isActive)}
+                        disabled={isLocked}
+                        className={`px-3 py-1.5 rounded-lg border-2 text-xs font-semibold transition-all ${colorMap[r.color]} ${isLocked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:scale-105'}`}
+                        title={isLocked ? 'Role Karyawan tidak bisa dihapus' : `Klik untuk ${isActive ? 'hapus' : 'assign'} role ${r.label}`}
+                      >
+                        {isActive ? '✓' : '○'} {r.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
+        <div className="font-semibold mb-1">💡 Cara Pakai:</div>
+        <ul className="list-disc list-inside space-y-1 text-xs">
+          <li>Klik badge role untuk <b>assign</b> (nyala) atau <b>uncheck</b> (mati)</li>
+          <li>Role <b>Karyawan</b> otomatis di-set untuk semua orang (tidak bisa dihapus)</li>
+          <li>Semua Atasan bisa approve semua karyawan (karyawan pilih saat submit)</li>
+          <li>PJO otomatis assign berdasarkan site karyawan</li>
+        </ul>
+      </div>
+    </div>
+  )
 }

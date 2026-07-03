@@ -13,12 +13,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { tanggal, jam_mulai, jam_selesai, alasan, jenis_lembur, atasan_nrp } = body
 
-    // Validasi
     if (!tanggal || !jam_mulai || !jam_selesai || !alasan || !atasan_nrp) {
       return NextResponse.json({ error: 'Semua field wajib diisi (termasuk atasan)' }, { status: 400 })
     }
 
-    // Validasi atasan_nrp
     const { data: atasanCheck } = await supabase
       .from('employees')
       .select('nrp, nama')
@@ -32,17 +30,47 @@ export async function POST(request: NextRequest) {
     // Hitung total jam
     const [startH, startM] = jam_mulai.split(':').map(Number)
     const [endH, endM] = jam_selesai.split(':').map(Number)
-
     let totalMenit = (endH * 60 + endM) - (startH * 60 + startM)
-    if (totalMenit < 0) totalMenit += 1440 // kalau lewat tengah malam
-
+    if (totalMenit < 0) totalMenit += 1440
     const totalJam = Math.round((totalMenit / 60) * 100) / 100
 
     if (totalJam <= 0) {
       return NextResponse.json({ error: 'Jam selesai harus lebih besar dari jam mulai' }, { status: 400 })
     }
 
-    // Insert overtime request
+    // AUTO-DETECT PJO
+    const { data: karyawan } = await supabase
+      .from('employees')
+      .select('site')
+      .eq('nrp', session.nrp)
+      .single()
+
+    const { data: pjoRoles } = await supabase
+      .from('roles')
+      .select('nrp')
+      .eq('role', 'pjo')
+      .eq('active', true)
+
+    const pjoNrps = (pjoRoles || []).map(r => r.nrp)
+
+    if (pjoNrps.length === 0) {
+      return NextResponse.json({ error: 'Belum ada PJO yang di-set. Hubungi HRGA.' }, { status: 400 })
+    }
+
+    const { data: allPjo } = await supabase
+      .from('employees')
+      .select('nrp, nama, site')
+      .in('nrp', pjoNrps)
+      .eq('status_karyawan', 'Aktif')
+
+    if (!allPjo || allPjo.length === 0) {
+      return NextResponse.json({ error: 'PJO aktif tidak ditemukan' }, { status: 400 })
+    }
+
+    const samePjo = allPjo.find((p: any) => p.site === karyawan?.site)
+    const chosenPjo = samePjo || allPjo[0]
+
+    // Insert
     const { data: newOvertime, error: insertError } = await supabase
       .from('overtime_requests')
       .insert({
@@ -54,7 +82,9 @@ export async function POST(request: NextRequest) {
         alasan,
         jenis_lembur: jenis_lembur || 'BIASA',
         atasan_nrp,
+        pjo_nrp: chosenPjo.nrp,
         status_atasan: 'PENDING',
+        status_pjo: 'WAITING',
         status_final: 'MENUNGGU_ATASAN'
       })
       .select()
@@ -66,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `✅ Pengajuan lembur ${totalJam} jam berhasil dibuat. Menunggu approval atasan (${atasanCheck.nama}).`,
+      message: `✅ Pengajuan lembur ${totalJam} jam berhasil dibuat. Menunggu approval atasan (${atasanCheck.nama}), lalu final ke PJO (${chosenPjo.nama}).`,
       data: newOvertime
     })
 

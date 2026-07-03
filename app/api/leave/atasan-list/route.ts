@@ -9,49 +9,65 @@ export async function GET(request: NextRequest) {
   const session = await getSession(token)
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
+  // Ambil karyawan info (untuk tahu site-nya)
+  const { data: emp } = await supabase
+    .from('employees')
+    .select('site')
+    .eq('nrp', session.nrp)
+    .single()
+
   // Ambil semua karyawan yang punya role atasan
-  const { data: roleRows } = await supabase
+  const { data: atasanRoles } = await supabase
     .from('roles')
     .select('nrp')
     .eq('role', 'atasan')
     .eq('active', true)
 
-  const atasanNrps = (roleRows || []).map(r => r.nrp)
+  const atasanNrps = (atasanRoles || []).map(r => r.nrp)
 
-  if (atasanNrps.length === 0) {
-    return NextResponse.json({ atasan_list: [], pjo_nama: 'Belum diatur' })
+  let atasanList: any[] = []
+  if (atasanNrps.length > 0) {
+    const { data: employees } = await supabase
+      .from('employees')
+      .select('nrp, nama, jabatan, departemen, site')
+      .in('nrp', atasanNrps)
+      .eq('status_karyawan', 'Aktif')
+      .order('nama')
+
+    atasanList = employees || []
   }
 
-  const { data: employees } = await supabase
-    .from('employees')
-    .select('nrp, nama, jabatan, departemen, site')
-    .in('nrp', atasanNrps)
-    .eq('status_karyawan', 'Aktif')
-    .order('nama')
-
-  // Ambil info PJO dari matrix
-  const { data: matrix } = await supabase
-    .from('approval_matrix')
-    .select('pjo_nrp')
-    .eq('employee_nrp', session.nrp)
+  // Ambil semua PJO (untuk info karyawan siapa PJO-nya)
+  const { data: pjoRoles } = await supabase
+    .from('roles')
+    .select('nrp')
+    .eq('role', 'pjo')
     .eq('active', true)
-    .single()
 
-  let pjo_nama = null
-  if (matrix?.pjo_nrp) {
-    const { data: pjoEmp } = await supabase
+  const pjoNrps = (pjoRoles || []).map(r => r.nrp)
+
+  let pjoNama = 'Belum ada PJO'
+  if (pjoNrps.length > 0) {
+    // Cari PJO yang site-nya sama dengan karyawan
+    let pjoQuery = supabase
       .from('employees')
-      .select('nama, jabatan')
-      .eq('nrp', matrix.pjo_nrp)
-      .single()
+      .select('nrp, nama, jabatan, site')
+      .in('nrp', pjoNrps)
+      .eq('status_karyawan', 'Aktif')
 
-    if (pjoEmp) {
-      pjo_nama = `${pjoEmp.nama} (${pjoEmp.jabatan})`
+    const { data: allPjo } = await pjoQuery
+
+    if (allPjo && allPjo.length > 0) {
+      // Prioritas: PJO dengan site yang sama
+      const samePjo = allPjo.find((p: any) => p.site === emp?.site)
+      const chosenPjo = samePjo || allPjo[0]
+
+      pjoNama = `${chosenPjo.nama} (${chosenPjo.jabatan}${chosenPjo.site ? ' - ' + chosenPjo.site : ''})`
     }
   }
 
   return NextResponse.json({
-    atasan_list: employees || [],
-    pjo_nama: pjo_nama || 'Belum diatur oleh HRGA'
+    atasan_list: atasanList,
+    pjo_nama: pjoNama
   })
 }
