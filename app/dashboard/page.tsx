@@ -41,30 +41,43 @@ function DashboardContent() {
   if (data.type === 'roster_upload') return <RosterUpload title={data.title} />
   if (data.type === 'import_excel') return <ImportExcel title={data.title} table={data.table} />
   if (data.type === 'change_login') return <ChangeLoginView title={data.title} />
+  if (data.type === 'absensi_clock') return <AbsensiClockView title={data.title} />
+  if (data.type === 'form_lembur') return <FormLemburView title={data.title} onSuccess={loadData} />
+  if (data.type === 'export_absensi') return <ExportAbsensiView title={data.title} />
   if (data.type === 'table') return <TableView data={data} onReload={loadData} />
   return <div>Tipe konten tidak dikenali</div>
 }
 
+// ============ DASHBOARD ============
 function DashboardView({ title }: any) {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">🏠 {title}</h2>
-        <p className="text-sm text-gray-500 mt-1">Selamat datang di Portal Internal Perusahaan</p>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-1 h-8 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></div>
+          <h2 className="text-2xl font-bold text-slate-900">🏠 {title}</h2>
+        </div>
+        <p className="text-sm text-slate-500">Selamat datang di BTM Portal - PT. Boston Trikora Mahardika</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Status" value="✓ Online" color="text-green-600" />
-        <StatCard label="Sistem" value="Aktif" color="text-blue-600" />
-        <StatCard label="Versi" value="1.1.0" color="text-gray-900" />
-        <StatCard label="Server" value="Supabase" color="text-purple-600" />
+        <StatCard label="Status Sistem" value="✓ Online" color="text-emerald-600" />
+        <StatCard label="Portal" value="Aktif" color="text-blue-600" />
+        <StatCard label="Versi" value="1.2.0" color="text-slate-900" />
+        <StatCard label="Cloud" value="Supabase" color="text-amber-600" />
       </div>
-      <div className="bg-white rounded-2xl shadow-sm border p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">📋 Panduan</h3>
-        <div className="space-y-2 text-sm text-gray-600">
-          <p>• Klik menu di sidebar kiri untuk navigasi</p>
-          <p>• <b>Ajukan Cuti</b>: pilih tanggal dan atasan yang menyetujui</p>
-          <p>• <b>Roster Bulanan</b>: lihat jadwal kerja bulanan (PDF/gambar)</p>
-          <p>• <b>Ubah NRP Login</b>: ganti NRP untuk login (data tetap aman)</p>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center text-white text-lg shadow-md">
+            📋
+          </div>
+          <h3 className="text-lg font-bold text-slate-900">Panduan Penggunaan</h3>
+        </div>
+        <div className="space-y-2 text-sm text-slate-600 pl-13">
+          <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> Klik menu di sidebar kiri untuk navigasi</p>
+          <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> <b>Absensi Hari Ini</b>: clock in / clock out dengan GPS</p>
+          <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> <b>Ajukan Cuti / Lembur</b>: pilih atasan yang menyetujui</p>
+          <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> <b>Roster Bulanan</b>: lihat jadwal kerja bulanan (PDF/gambar)</p>
+          <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> <b>Ubah NRP Login</b>: ganti NRP untuk login (data tetap aman)</p>
         </div>
       </div>
     </div>
@@ -73,13 +86,14 @@ function DashboardView({ title }: any) {
 
 function StatCard({ label, value, color }: any) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border p-5">
-      <div className="text-sm text-gray-500 mb-2">{label}</div>
-      <div className={`text-lg font-bold ${color}`}>{value}</div>
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-md transition-shadow">
+      <div className="text-xs text-slate-500 mb-2 uppercase tracking-wide font-semibold">{label}</div>
+      <div className={`text-2xl font-bold ${color}`}>{value}</div>
     </div>
   )
 }
 
+// ============ FORM CUTI ============
 function FormCutiView({ title, onSuccess }: any) {
   const [form, setForm] = useState({ tanggal_mulai: '', tanggal_selesai: '', jenis_cuti: '', alasan: '', atasan_nrp: '' })
   const [atasanList, setAtasanList] = useState<any[]>([])
@@ -171,6 +185,7 @@ function FormCutiView({ title, onSuccess }: any) {
   )
 }
 
+// ============ ROSTER VIEW ============
 function RosterView({ title }: any) {
   const [files, setFiles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -238,6 +253,7 @@ function RosterView({ title }: any) {
   )
 }
 
+// ============ ROSTER UPLOAD ============
 function RosterUpload({ title }: any) {
   const [file, setFile] = useState<File | null>(null)
   const [form, setForm] = useState({ periode: '', site: '', departemen: '', keterangan: '' })
@@ -349,15 +365,31 @@ function RosterUpload({ title }: any) {
   )
 }
 
+// ============ IMPORT EXCEL ============
 function ImportExcel({ title, table }: any) {
   const [file, setFile] = useState<File | null>(null)
   const [msg, setMsg] = useState({ type: '', text: '' })
   const [details, setDetails] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [showFilter, setShowFilter] = useState(false)
+  const [filterOptions, setFilterOptions] = useState<any>({})
+
+  const [filters, setFilters] = useState<any>({
+    site: '', departemen: '', status: '', jabatan: '',
+    nrp: '', nama: '', periode_awal: '', periode_akhir: '',
+    jenis_sp: '', kondisi: '', role: '',
+    sort_by: '', sort_order: 'asc'
+  })
+
+  useEffect(() => {
+    fetch(`/api/filter-options?table=${table}`)
+      .then(r => r.json())
+      .then(d => setFilterOptions(d))
+  }, [table])
 
   async function handleImport(e: React.FormEvent) {
     e.preventDefault()
-    if (!file) { setMsg({ type: 'err', text: 'Pilih file Excel' }); return }
+    if (!file) { setMsg({ type: 'err', text: 'Pilih file Excel dulu' }); return }
     setLoading(true); setMsg({ type: '', text: '' }); setDetails(null)
 
     const fd = new FormData()
@@ -375,50 +407,330 @@ function ImportExcel({ title, table }: any) {
     finally { setLoading(false) }
   }
 
+  function buildDownloadUrl(mode: 'empty' | 'sample' | 'export', useFilter: boolean = false) {
+    let url = `/api/template-excel?table=${table}&mode=${mode}`
+    if (useFilter && mode === 'export') {
+      Object.keys(filters).forEach(key => {
+        const val = filters[key]
+        if (val) url += `&${key}=${encodeURIComponent(val)}`
+      })
+    }
+    return url
+  }
+
+  function downloadTemplate(mode: 'empty' | 'sample' | 'export', useFilter: boolean = false) {
+    window.open(buildDownloadUrl(mode, useFilter), '_blank')
+  }
+
+  function resetFilters() {
+    setFilters({
+      site: '', departemen: '', status: '', jabatan: '',
+      nrp: '', nama: '', periode_awal: '', periode_akhir: '',
+      jenis_sp: '', kondisi: '', role: '', sort_by: '', sort_order: 'asc'
+    })
+  }
+
+  const activeFilterCount = Object.keys(filters).filter(k =>
+    filters[k] && k !== 'sort_by' && k !== 'sort_order'
+  ).length
+
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">📥 {title}</h2>
-        <p className="text-sm text-gray-500 mt-1">Upload file Excel (.xlsx) untuk import massal ke tabel <b>{table}</b></p>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-1 h-8 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></div>
+          <h2 className="text-2xl font-bold text-slate-900">📥 {title}</h2>
+        </div>
+        <p className="text-sm text-slate-500">Kelola data massal dari Excel untuk tabel <b>{table}</b></p>
       </div>
-      <div className="bg-white rounded-2xl shadow-sm border p-6 max-w-2xl">
-        {msg.text && <div className={`p-3 rounded-xl mb-4 text-sm ${msg.type === 'ok' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>{msg.text}</div>}
-        {details && (
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4 text-sm">
-            <div className="font-bold mb-2">📊 Hasil Import:</div>
-            <div>✅ Berhasil: <b>{details.success}</b></div>
-            <div>❌ Gagal: <b>{details.failed}</b></div>
-            <div>📄 Total: <b>{details.total}</b></div>
-            {details.errors?.length > 0 && (
-              <div className="mt-2">
-                <div className="font-semibold">Error contoh:</div>
-                {details.errors.map((e: string, i: number) => <div key={i} className="text-xs text-red-700">• {e}</div>)}
-              </div>
-            )}
-          </div>
-        )}
-        <form onSubmit={handleImport} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">File Excel (.xlsx atau .xls)</label>
-            <input type="file" accept=".xlsx,.xls" onChange={e => setFile(e.target.files?.[0] || null)} required className="w-full px-4 py-2.5 rounded-xl border text-gray-900" />
-            <div className="text-xs text-gray-500 mt-2">
-              📌 <b>Format kolom Excel</b> (baris pertama sebagai header):<br />
-              {table === 'employees' && 'nrp, nama, jabatan, departemen, site, status_karyawan, tanggal_masuk, no_hp, alamat'}
-              {table === 'apd' && 'nrp, nama_barang, tanggal_terima, kondisi, keterangan'}
-              {table === 'pkwt' && 'nrp, no_kontrak, kontrak_ke, mulai_kontrak, akhir_kontrak, status'}
-              {table === 'kpi' && 'nrp, periode, nilai_kpi, catatan'}
-              {table === 'sp' && 'nrp, jenis_sp, tanggal_sp, alasan, keterangan'}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center text-white text-lg shadow-md">📄</div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Download Excel</h3>
+              <p className="text-xs text-slate-500">Pilih jenis file yang mau diunduh</p>
             </div>
           </div>
-          <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 rounded-xl">
-            {loading ? 'Mengimport...' : '📥 Import Data'}
-          </button>
-        </form>
+
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-4 text-xs text-emerald-900">
+            <p className="font-semibold mb-1">✨ Urutan Kolom Konsisten</p>
+            <p>File yang di-download punya urutan kolom SAMA dengan template import.</p>
+          </div>
+
+          <div className="space-y-3">
+            <button onClick={() => downloadTemplate('export')} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-base">
+              <span className="text-lg">📊</span>
+              <span>Download Semua Data</span>
+            </button>
+
+            <button onClick={() => setShowFilter(!showFilter)} className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${showFilter ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
+              <span>{showFilter ? '🔽' : '▶️'}</span>
+              <span>Download dengan Filter {activeFilterCount > 0 && `(${activeFilterCount} aktif)`}</span>
+            </button>
+
+            {showFilter && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-amber-900 text-sm">🔍 Filter Data</h4>
+                  {activeFilterCount > 0 && (
+                    <button onClick={resetFilters} className="text-xs text-red-600 hover:text-red-800 underline">Reset Semua</button>
+                  )}
+                </div>
+
+                {table === 'employees' && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Site</label>
+                      <select value={filters.site} onChange={e => setFilters({ ...filters, site: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900">
+                        <option value="">Semua Site</option>
+                        {(filterOptions.sites || []).map((s: string) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Departemen</label>
+                      <select value={filters.departemen} onChange={e => setFilters({ ...filters, departemen: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900">
+                        <option value="">Semua Departemen</option>
+                        {(filterOptions.departemens || []).map((d: string) => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Status Karyawan</label>
+                      <select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900">
+                        <option value="">Semua Status</option>
+                        {(filterOptions.statuses || []).map((s: string) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Cari Jabatan</label>
+                      <input type="text" value={filters.jabatan} onChange={e => setFilters({ ...filters, jabatan: e.target.value })} placeholder="Contoh: Operator" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-semibold text-amber-900 mb-1">Cari NRP</label>
+                        <input type="text" value={filters.nrp} onChange={e => setFilters({ ...filters, nrp: e.target.value })} placeholder="1001" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-amber-900 mb-1">Cari Nama</label>
+                        <input type="text" value={filters.nama} onChange={e => setFilters({ ...filters, nama: e.target.value })} placeholder="Budi" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {table === 'apd' && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Cari NRP</label>
+                      <input type="text" value={filters.nrp} onChange={e => setFilters({ ...filters, nrp: e.target.value })} placeholder="1001" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Kondisi</label>
+                      <select value={filters.kondisi} onChange={e => setFilters({ ...filters, kondisi: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900">
+                        <option value="">Semua Kondisi</option>
+                        <option value="Baik">Baik</option>
+                        <option value="Rusak">Rusak</option>
+                        <option value="Perlu Ganti">Perlu Ganti</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {table === 'pkwt' && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Cari NRP</label>
+                      <input type="text" value={filters.nrp} onChange={e => setFilters({ ...filters, nrp: e.target.value })} placeholder="1001" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Status Kontrak</label>
+                      <select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900">
+                        <option value="">Semua Status</option>
+                        <option value="Aktif">Aktif</option>
+                        <option value="Berakhir">Berakhir</option>
+                        <option value="Diperpanjang">Diperpanjang</option>
+                        <option value="Diputus">Diputus</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {table === 'kpi' && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Cari NRP</label>
+                      <input type="text" value={filters.nrp} onChange={e => setFilters({ ...filters, nrp: e.target.value })} placeholder="1001" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-semibold text-amber-900 mb-1">Periode Awal</label>
+                        <input type="text" value={filters.periode_awal} onChange={e => setFilters({ ...filters, periode_awal: e.target.value })} placeholder="2025-01" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-amber-900 mb-1">Periode Akhir</label>
+                        <input type="text" value={filters.periode_akhir} onChange={e => setFilters({ ...filters, periode_akhir: e.target.value })} placeholder="2025-12" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {table === 'sp' && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Cari NRP</label>
+                      <input type="text" value={filters.nrp} onChange={e => setFilters({ ...filters, nrp: e.target.value })} placeholder="1001" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Jenis SP</label>
+                      <select value={filters.jenis_sp} onChange={e => setFilters({ ...filters, jenis_sp: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900">
+                        <option value="">Semua Jenis</option>
+                        <option value="SP1">SP1</option>
+                        <option value="SP2">SP2</option>
+                        <option value="SP3">SP3</option>
+                        <option value="PHK">PHK</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {table === 'roles' && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Cari NRP</label>
+                      <input type="text" value={filters.nrp} onChange={e => setFilters({ ...filters, nrp: e.target.value })} placeholder="1001" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Role</label>
+                      <select value={filters.role} onChange={e => setFilters({ ...filters, role: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900">
+                        <option value="">Semua Role</option>
+                        <option value="karyawan">Karyawan</option>
+                        <option value="atasan">Atasan</option>
+                        <option value="pjo">PJO</option>
+                        <option value="hrga">HRGA</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {table === 'approval_matrix' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-amber-900 mb-1">Cari NRP Karyawan</label>
+                    <input type="text" value={filters.nrp} onChange={e => setFilters({ ...filters, nrp: e.target.value })} placeholder="1001" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                  </div>
+                )}
+
+                <div className="pt-3 border-t border-amber-300">
+                  <label className="block text-xs font-semibold text-amber-900 mb-1">Urutkan berdasarkan</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" value={filters.sort_by} onChange={e => setFilters({ ...filters, sort_by: e.target.value })} placeholder="nrp / nama" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
+                    <select value={filters.sort_order} onChange={e => setFilters({ ...filters, sort_order: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900">
+                      <option value="asc">A-Z</option>
+                      <option value="desc">Z-A</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button onClick={() => downloadTemplate('export', true)} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md mt-3">
+                  📥 Download dengan Filter Ini
+                </button>
+              </div>
+            )}
+
+            <div className="text-center text-xs text-slate-400 py-1">atau template kosong</div>
+
+            <button onClick={() => downloadTemplate('empty')} className="w-full bg-white border-2 border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-semibold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm">
+              <span>📄</span>
+              <span>Template Kosong</span>
+            </button>
+
+            <button onClick={() => downloadTemplate('sample')} className="w-full bg-white border-2 border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-semibold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm">
+              <span>📋</span>
+              <span>Template dengan Contoh</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white text-lg shadow-md">📤</div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Upload & Import</h3>
+              <p className="text-xs text-slate-500">Upload file Excel untuk import</p>
+            </div>
+          </div>
+
+          {msg.text && (
+            <div className={`p-3 rounded-xl mb-4 text-sm ${msg.type === 'ok' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+              {msg.text}
+            </div>
+          )}
+
+          {details && (
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4 text-sm">
+              <div className="font-bold mb-2 text-blue-900">📊 Hasil Import:</div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+                <div className="bg-white rounded-lg p-2 text-center">
+                  <div className="text-xs text-slate-500">Baru</div>
+                  <div className="text-lg font-bold text-emerald-600">{details.success}</div>
+                </div>
+                <div className="bg-white rounded-lg p-2 text-center">
+                  <div className="text-xs text-slate-500">Di-skip</div>
+                  <div className="text-lg font-bold text-amber-600">{details.skipped || 0}</div>
+                </div>
+                <div className="bg-white rounded-lg p-2 text-center">
+                  <div className="text-xs text-slate-500">Gagal</div>
+                  <div className="text-lg font-bold text-rose-600">{details.failed}</div>
+                </div>
+                <div className="bg-white rounded-lg p-2 text-center">
+                  <div className="text-xs text-slate-500">Total</div>
+                  <div className="text-lg font-bold text-slate-900">{details.total}</div>
+                </div>
+              </div>
+              {details.skipped > 0 && (
+                <div className="text-xs text-amber-800 bg-amber-50 rounded-lg p-2 mt-2">
+                  💡 <b>{details.skipped} baris di-skip</b> karena sudah ada di database
+                </div>
+              )}
+              {details.errors?.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-blue-200">
+                  <div className="font-semibold text-red-700 mb-1">Contoh Error:</div>
+                  {details.errors.map((e: string, i: number) => (
+                    <div key={i} className="text-xs text-red-700 pl-2">• {e}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <form onSubmit={handleImport} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Pilih File Excel (.xlsx atau .xls)</label>
+              <input type="file" accept=".xlsx,.xls" onChange={e => setFile(e.target.files?.[0] || null)} required className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-900 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-semibold hover:file:bg-blue-100" />
+              {file && (
+                <div className="mt-2 text-xs text-emerald-600 flex items-center gap-1">
+                  <span>✓</span>
+                  <span>File dipilih: <b>{file.name}</b></span>
+                </div>
+              )}
+            </div>
+
+            <button type="submit" disabled={loading || !file} className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-400 disabled:to-slate-400 text-white font-semibold py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2">
+              {loading ? (
+                <><span className="animate-spin">⏳</span><span>Mengimport...</span></>
+              ) : (
+                <><span>📥</span><span>Import Data</span></>
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )
 }
 
+// ============ CHANGE LOGIN ============
 function ChangeLoginView({ title }: any) {
   const [newNrp, setNewNrp] = useState('')
   const [msg, setMsg] = useState({ type: '', text: '' })
@@ -465,56 +777,733 @@ function ChangeLoginView({ title }: any) {
   )
 }
 
+// ============ ABSENSI CLOCK ============
+function AbsensiClockView({ title }: any) {
+  const [status, setStatus] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [processing, setProcessing] = useState(false)
+  const [msg, setMsg] = useState({ type: '', text: '' })
+  const [currentTime, setCurrentTime] = useState(new Date())
+  const [gpsStatus, setGpsStatus] = useState<'checking' | 'ready' | 'error'>('checking')
+  const [gpsLocation, setGpsLocation] = useState<{ lat: number, lng: number } | null>(null)
+  const [gpsError, setGpsError] = useState('')
+
+  useEffect(() => {
+    loadStatus()
+    checkGPS()
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  async function loadStatus() {
+    try {
+      const res = await fetch('/api/attendance/status')
+      const data = await res.json()
+      setStatus(data)
+    } catch { setMsg({ type: 'err', text: 'Gagal load status' }) }
+    finally { setLoading(false) }
+  }
+
+  function checkGPS() {
+    if (!navigator.geolocation) {
+      setGpsStatus('error')
+      setGpsError('Browser tidak support GPS')
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setGpsStatus('ready')
+      },
+      (err) => {
+        setGpsStatus('error')
+        if (err.code === 1) setGpsError('Izin GPS ditolak. Aktifkan di setting browser.')
+        else if (err.code === 2) setGpsError('GPS tidak tersedia. Coba di luar ruangan.')
+        else if (err.code === 3) setGpsError('Timeout mengambil GPS.')
+        else setGpsError('Error GPS: ' + err.message)
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    )
+  }
+
+  async function handleClockIn() {
+    if (!gpsLocation) {
+      setMsg({ type: 'err', text: 'GPS belum siap. Aktifkan GPS dan refresh.' })
+      return
+    }
+    setProcessing(true); setMsg({ type: '', text: '' })
+
+    try {
+      const res = await fetch('/api/attendance/clock-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude: gpsLocation.lat, longitude: gpsLocation.lng })
+      })
+      const data = await res.json()
+      if (!res.ok) { setMsg({ type: 'err', text: data.error }); return }
+      setMsg({ type: 'ok', text: data.message })
+      loadStatus()
+    } catch { setMsg({ type: 'err', text: 'Terjadi kesalahan' }) }
+    finally { setProcessing(false) }
+  }
+
+  async function handleClockOut() {
+    if (!gpsLocation) {
+      setMsg({ type: 'err', text: 'GPS belum siap. Aktifkan GPS dan refresh.' })
+      return
+    }
+    if (!confirm('Yakin clock out sekarang? Setelah clock out tidak bisa dibatalkan.')) return
+
+    setProcessing(true); setMsg({ type: '', text: '' })
+
+    try {
+      const res = await fetch('/api/attendance/clock-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude: gpsLocation.lat, longitude: gpsLocation.lng })
+      })
+      const data = await res.json()
+      if (!res.ok) { setMsg({ type: 'err', text: data.error }); return }
+      setMsg({ type: 'ok', text: data.message })
+      loadStatus()
+    } catch { setMsg({ type: 'err', text: 'Terjadi kesalahan' }) }
+    finally { setProcessing(false) }
+  }
+
+  if (loading) return <div className="text-center py-8 text-slate-500">Memuat...</div>
+
+  const today = status?.today
+  const hasClockIn = today && today.clock_in
+  const hasClockOut = today && today.clock_out
+  const stats = status?.stats || {}
+  const siteConfig = status?.site_config
+
+  return (
+    <div>
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-1 h-8 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></div>
+          <h2 className="text-2xl font-bold text-slate-900">⏰ {title}</h2>
+        </div>
+        <p className="text-sm text-slate-500">Clock in / Clock out untuk mencatat kehadiran</p>
+      </div>
+
+      {msg.text && (
+        <div className={`p-3 rounded-xl mb-4 text-sm ${msg.type === 'ok' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          {msg.text}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl shadow-lg text-white p-6">
+          <div className="text-center mb-6">
+            <div className="text-sm text-slate-400 mb-1">Waktu Sekarang</div>
+            <div className="text-4xl md:text-5xl font-bold text-white tracking-wider">
+              {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </div>
+            <div className="text-sm text-amber-400 mt-1">
+              {currentTime.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </div>
+          </div>
+
+          <div className={`p-3 rounded-xl mb-4 text-sm ${
+            gpsStatus === 'ready' ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-300' :
+            gpsStatus === 'error' ? 'bg-red-500/20 border border-red-500 text-red-300' :
+            'bg-yellow-500/20 border border-yellow-500 text-yellow-300'
+          }`}>
+            <div className="flex items-center gap-2">
+              <span>{gpsStatus === 'ready' ? '📍' : gpsStatus === 'error' ? '❌' : '⏳'}</span>
+              <span className="font-semibold">
+                {gpsStatus === 'ready' ? 'GPS Aktif' : gpsStatus === 'error' ? 'GPS Error' : 'Cek GPS...'}
+              </span>
+            </div>
+            {gpsStatus === 'ready' && (
+              <div className="text-xs mt-1 opacity-80">
+                Koordinat: {gpsLocation?.lat.toFixed(6)}, {gpsLocation?.lng.toFixed(6)}
+              </div>
+            )}
+            {gpsStatus === 'error' && (
+              <div className="text-xs mt-1">
+                {gpsError}
+                <button onClick={checkGPS} className="underline ml-2">Coba lagi</button>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {!hasClockIn ? (
+              <button onClick={handleClockIn} disabled={processing || gpsStatus !== 'ready'} className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg text-lg flex items-center justify-center gap-2">
+                {processing ? (
+                  <><span className="animate-spin">⏳</span> Memproses...</>
+                ) : (
+                  <>🟢 CLOCK IN Sekarang</>
+                )}
+              </button>
+            ) : !hasClockOut ? (
+              <button onClick={handleClockOut} disabled={processing || gpsStatus !== 'ready'} className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-slate-600 disabled:to-slate-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg text-lg flex items-center justify-center gap-2">
+                {processing ? (
+                  <><span className="animate-spin">⏳</span> Memproses...</>
+                ) : (
+                  <>🔴 CLOCK OUT</>
+                )}
+              </button>
+            ) : (
+              <div className="bg-emerald-500/20 border border-emerald-500 rounded-xl p-4 text-center">
+                <div className="text-2xl mb-1">✅</div>
+                <div className="text-white font-bold">Absensi Selesai</div>
+                <div className="text-xs text-slate-300 mt-1">Sudah clock in & clock out hari ini</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <span>📋</span>
+            <span>Status Hari Ini</span>
+          </h3>
+
+          {hasClockIn ? (
+            <div className="space-y-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                <div className="text-xs text-emerald-600 font-semibold">🟢 CLOCK IN</div>
+                <div className="text-lg font-bold text-slate-900">
+                  {new Date(today.clock_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  Shift: <b>{today.shift}</b> • Status: <span className={`font-bold ${today.status === 'HADIR' ? 'text-emerald-600' : today.status === 'TERLAMBAT' ? 'text-orange-600' : 'text-red-600'}`}>{today.status}</span>
+                </div>
+                {today.terlambat_menit > 0 && (
+                  <div className="text-xs text-orange-600 mt-1">
+                    Terlambat {today.terlambat_menit} menit
+                  </div>
+                )}
+              </div>
+
+              {hasClockOut ? (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                  <div className="text-xs text-red-600 font-semibold">🔴 CLOCK OUT</div>
+                  <div className="text-lg font-bold text-slate-900">
+                    {new Date(today.clock_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Total kerja: <b>{Math.floor((today.jam_kerja_menit || 0) / 60)}j {(today.jam_kerja_menit || 0) % 60}m</b>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                  <div className="text-xs text-yellow-600 font-semibold">⏳ Belum Clock Out</div>
+                  <div className="text-xs text-slate-500 mt-1">Jangan lupa clock out sebelum pulang</div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-slate-50 rounded-xl p-6 text-center">
+              <div className="text-4xl mb-2">📭</div>
+              <div className="font-semibold text-slate-700">Belum Absen Hari Ini</div>
+              <div className="text-xs text-slate-500 mt-1">Klik tombol CLOCK IN di sebelah kiri</div>
+            </div>
+          )}
+
+          {siteConfig && (
+            <div className="mt-4 pt-4 border-t border-slate-100">
+              <div className="text-xs text-slate-500 mb-2">📍 Jam Kerja Site Anda:</div>
+              <div className="text-xs text-slate-700 space-y-1">
+                <div>Shift SIANG: <b>{siteConfig.siang_jam_masuk?.slice(0,5)}</b> - <b>{siteConfig.siang_jam_pulang?.slice(0,5)}</b></div>
+                <div>Shift MALAM: <b>{siteConfig.malam_jam_masuk?.slice(0,5)}</b> - <b>{siteConfig.malam_jam_pulang?.slice(0,5)}</b></div>
+                <div>Batas telat: <b>{siteConfig.siang_batas_telat} menit</b></div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <span>📊</span>
+          <span>Statistik Bulan Ini ({stats.total || 0} hari)</span>
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <StatBox icon="✅" label="Hadir" value={stats.hadir || 0} color="emerald" />
+          <StatBox icon="⏰" label="Terlambat" value={stats.terlambat || 0} color="orange" />
+          <StatBox icon="🕐" label="1/2 Hari" value={stats.setengah_hari || 0} color="yellow" />
+          <StatBox icon="❌" label="Alpha" value={stats.alpha || 0} color="red" />
+          <StatBox icon="🏖️" label="Cuti" value={stats.cuti || 0} color="blue" />
+          <StatBox icon="🤒" label="Sakit" value={stats.sakit || 0} color="pink" />
+          <StatBox icon="📝" label="Izin" value={stats.izin || 0} color="purple" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StatBox({ icon, label, value, color }: any) {
+  const colorMap: any = {
+    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+    orange: 'bg-orange-50 border-orange-200 text-orange-700',
+    yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+    red: 'bg-red-50 border-red-200 text-red-700',
+    blue: 'bg-blue-50 border-blue-200 text-blue-700',
+    pink: 'bg-pink-50 border-pink-200 text-pink-700',
+    purple: 'bg-purple-50 border-purple-200 text-purple-700'
+  }
+  return (
+    <div className={`border rounded-xl p-3 text-center ${colorMap[color] || 'bg-slate-50'}`}>
+      <div className="text-xl mb-1">{icon}</div>
+      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-xs">{label}</div>
+    </div>
+  )
+}
+
+// ============ FORM LEMBUR ============
+function FormLemburView({ title, onSuccess }: any) {
+  const [form, setForm] = useState({
+    tanggal: '', jam_mulai: '', jam_selesai: '',
+    jenis_lembur: 'BIASA', alasan: '', atasan_nrp: ''
+  })
+  const [atasanList, setAtasanList] = useState<any[]>([])
+  const [msg, setMsg] = useState({ type: '', text: '' })
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/overtime/atasan-list')
+      .then(r => r.json())
+      .then(d => setAtasanList(d.atasan_list || []))
+  }, [])
+
+  const hitungJam = () => {
+    if (!form.jam_mulai || !form.jam_selesai) return 0
+    const [sH, sM] = form.jam_mulai.split(':').map(Number)
+    const [eH, eM] = form.jam_selesai.split(':').map(Number)
+    let totalMenit = (eH * 60 + eM) - (sH * 60 + sM)
+    if (totalMenit < 0) totalMenit += 1440
+    return Math.round((totalMenit / 60) * 100) / 100
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true); setMsg({ type: '', text: '' })
+    try {
+      const res = await fetch('/api/overtime/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+      const data = await res.json()
+      if (!res.ok) { setMsg({ type: 'err', text: data.error }); return }
+      setMsg({ type: 'ok', text: data.message })
+      setForm({ tanggal: '', jam_mulai: '', jam_selesai: '', jenis_lembur: 'BIASA', alasan: '', atasan_nrp: '' })
+    } catch { setMsg({ type: 'err', text: 'Terjadi kesalahan' }) }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div>
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-1 h-8 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></div>
+          <h2 className="text-2xl font-bold text-slate-900">⏱️ {title}</h2>
+        </div>
+        <p className="text-sm text-slate-500">Isi form untuk mengajukan lembur ke atasan</p>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 max-w-2xl">
+        {msg.text && (
+          <div className={`p-3 rounded-xl mb-4 text-sm ${msg.type === 'ok' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+            {msg.text}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Tanggal Lembur</label>
+            <input type="date" required value={form.tanggal} onChange={e => setForm({ ...form, tanggal: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-slate-900" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Jam Mulai</label>
+              <input type="time" required value={form.jam_mulai} onChange={e => setForm({ ...form, jam_mulai: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-amber-500 text-slate-900" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Jam Selesai</label>
+              <input type="time" required value={form.jam_selesai} onChange={e => setForm({ ...form, jam_selesai: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-amber-500 text-slate-900" />
+            </div>
+          </div>
+
+          {hitungJam() > 0 && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-sm">
+              ⏱️ Total lembur: <b>{hitungJam()} jam</b>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Jenis Lembur</label>
+            <select required value={form.jenis_lembur} onChange={e => setForm({ ...form, jenis_lembur: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-amber-500 text-slate-900">
+              <option value="BIASA">Lembur Hari Biasa</option>
+              <option value="LIBUR">Lembur Hari Libur</option>
+              <option value="HARI_BESAR">Lembur Hari Besar</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Pilih Atasan yang Menyetujui</label>
+            <select required value={form.atasan_nrp} onChange={e => setForm({ ...form, atasan_nrp: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-amber-500 text-slate-900">
+              <option value="">-- Pilih Atasan --</option>
+              {atasanList.map((a: any) => (
+                <option key={a.nrp} value={a.nrp}>{a.nama} - {a.jabatan} ({a.site})</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Alasan Lembur</label>
+            <textarea required value={form.alasan} onChange={e => setForm({ ...form, alasan: e.target.value })} placeholder="Jelaskan alasan lembur" className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-amber-500 min-h-[100px] text-slate-900" />
+          </div>
+
+          <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:from-slate-400 disabled:to-slate-400 text-white font-semibold py-3 rounded-xl transition-all shadow-md">
+            {loading ? 'Mengirim...' : '⏱️ Kirim Pengajuan Lembur'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ============ EXPORT ABSENSI ============
+function ExportAbsensiView({ title }: any) {
+  const [filters, setFilters] = useState({
+    tanggal_mulai: '', tanggal_selesai: '',
+    site: '', nrp: '', status: ''
+  })
+  const [sites, setSites] = useState<string[]>([])
+  const [msg, setMsg] = useState({ type: '', text: '' })
+
+  useEffect(() => {
+    fetch('/api/filter-options?table=employees')
+      .then(r => r.json())
+      .then(d => setSites(d.sites || []))
+  }, [])
+
+  function handleExport() {
+    if (!filters.tanggal_mulai || !filters.tanggal_selesai) {
+      setMsg({ type: 'err', text: 'Tanggal mulai & tanggal selesai wajib diisi' })
+      return
+    }
+
+    setMsg({ type: 'ok', text: '📥 Mendownload file Excel...' })
+
+    let url = '/api/export-absensi?'
+    Object.keys(filters).forEach(k => {
+      const val = (filters as any)[k]
+      if (val) url += `${k}=${encodeURIComponent(val)}&`
+    })
+
+    window.open(url, '_blank')
+
+    setTimeout(() => setMsg({ type: '', text: '' }), 3000)
+  }
+
+  function setBulanIni() {
+    const now = new Date()
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    setFilters({
+      ...filters,
+      tanggal_mulai: firstDay.toISOString().split('T')[0],
+      tanggal_selesai: lastDay.toISOString().split('T')[0]
+    })
+  }
+
+  function setBulanLalu() {
+    const now = new Date()
+    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0)
+    setFilters({
+      ...filters,
+      tanggal_mulai: firstDay.toISOString().split('T')[0],
+      tanggal_selesai: lastDay.toISOString().split('T')[0]
+    })
+  }
+
+  function setMingguIni() {
+    const now = new Date()
+    const day = now.getDay()
+    const monday = new Date(now)
+    monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1))
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    setFilters({
+      ...filters,
+      tanggal_mulai: monday.toISOString().split('T')[0],
+      tanggal_selesai: sunday.toISOString().split('T')[0]
+    })
+  }
+
+  return (
+    <div>
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-1 h-8 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></div>
+          <h2 className="text-2xl font-bold text-slate-900">📥 {title}</h2>
+        </div>
+        <p className="text-sm text-slate-500">Export laporan absensi karyawan ke Excel dengan filter</p>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 max-w-3xl">
+        {msg.text && (
+          <div className={`p-3 rounded-xl mb-4 text-sm ${msg.type === 'ok' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+            {msg.text}
+          </div>
+        )}
+
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs text-amber-900">
+          <p className="font-semibold mb-1">💡 Quick Filter:</p>
+          <div className="flex gap-2 flex-wrap mt-2">
+            <button onClick={setMingguIni} className="bg-white hover:bg-amber-100 border border-amber-300 text-amber-700 px-3 py-1 rounded-lg text-xs font-semibold">📅 Minggu Ini</button>
+            <button onClick={setBulanIni} className="bg-white hover:bg-amber-100 border border-amber-300 text-amber-700 px-3 py-1 rounded-lg text-xs font-semibold">📆 Bulan Ini</button>
+            <button onClick={setBulanLalu} className="bg-white hover:bg-amber-100 border border-amber-300 text-amber-700 px-3 py-1 rounded-lg text-xs font-semibold">🗓️ Bulan Lalu</button>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">
+                Tanggal Mulai <span className="text-red-500">*</span>
+              </label>
+              <input type="date" value={filters.tanggal_mulai} onChange={e => setFilters({ ...filters, tanggal_mulai: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-blue-500 text-slate-900" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">
+                Tanggal Selesai <span className="text-red-500">*</span>
+              </label>
+              <input type="date" value={filters.tanggal_selesai} onChange={e => setFilters({ ...filters, tanggal_selesai: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-blue-500 text-slate-900" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Site (opsional)</label>
+              <select value={filters.site} onChange={e => setFilters({ ...filters, site: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-blue-500 text-slate-900">
+                <option value="">Semua Site</option>
+                {sites.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">NRP (opsional)</label>
+              <input type="text" placeholder="Contoh: 10001" value={filters.nrp} onChange={e => setFilters({ ...filters, nrp: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-blue-500 text-slate-900" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Status (opsional)</label>
+              <select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-blue-500 text-slate-900">
+                <option value="">Semua Status</option>
+                <option value="HADIR">Hadir</option>
+                <option value="TERLAMBAT">Terlambat</option>
+                <option value="SETENGAH_HARI">Setengah Hari</option>
+                <option value="ALPHA">Alpha</option>
+                <option value="CUTI">Cuti</option>
+                <option value="SAKIT">Sakit</option>
+                <option value="IZIN">Izin</option>
+              </select>
+            </div>
+          </div>
+
+          <button onClick={handleExport} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-base">
+            <span className="text-lg">📥</span>
+            <span>Download Laporan Excel</span>
+          </button>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500">
+          <p className="font-semibold mb-1">📄 File Excel akan berisi:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Sheet <b>Data Absensi</b>: tanggal, NRP, nama, jam masuk-pulang, status, lokasi</li>
+            <li>Sheet <b>Ringkasan</b>: total data, filter yang dipakai, statistik status</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============ TABLE VIEW ============
 function TableView({ data, onReload }: any) {
   const { title, rows = [], columns = [], total = 0, table, access_mode } = data
   const [trackingId, setTrackingId] = useState<string | null>(null)
   const [formModal, setFormModal] = useState<any>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   const showApproval = access_mode === 'APPROVAL_ATASAN' || access_mode === 'APPROVAL_PJO'
+  const showApprovalLembur = access_mode === 'APPROVAL_LEMBUR'
   const showTracking = table === 'leave_requests'
   const showCrud = access_mode === 'CRUD'
+
+  useEffect(() => {
+    setSelectedIds([])
+  }, [rows])
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.length === rows.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(rows.map((r: any) => r.id).filter(Boolean))
+    }
+  }
+
+  const isAllSelected = rows.length > 0 && selectedIds.length === rows.length
+  const isSomeSelected = selectedIds.length > 0 && selectedIds.length < rows.length
+
+  async function handleBulkDelete() {
+    if (selectedIds.length === 0) {
+      alert('❌ Pilih minimal 1 data')
+      return
+    }
+
+    if (!confirm(`⚠️ Yakin hapus ${selectedIds.length} data terpilih?\n\nAksi ini TIDAK BISA dibatalkan.`)) return
+
+    setBulkLoading(true)
+    try {
+      const res = await fetch('/api/crud', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table, ids: selectedIds, action: 'bulk_delete' })
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        alert('❌ ' + (data.error || 'Gagal hapus'))
+        return
+      }
+
+      alert(data.message || `✅ ${selectedIds.length} data berhasil dihapus`)
+      setSelectedIds([])
+      onReload()
+    } catch {
+      alert('❌ Terjadi kesalahan')
+    } finally {
+      setBulkLoading(false)
+    }
+  }
 
   return (
     <div>
       <div className="mb-6 flex justify-between items-start flex-wrap gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-          <p className="text-sm text-gray-500 mt-1">Menampilkan <b>{total}</b> data</p>
+          <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+          <p className="text-sm text-slate-500 mt-1">Menampilkan <b>{total}</b> data</p>
         </div>
-        {showCrud && <button onClick={() => setFormModal({ mode: 'create' })} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl text-sm">+ Tambah Baru</button>}
+        <div className="flex gap-2">
+          {showCrud && (
+            <button onClick={() => setFormModal({ mode: 'create' })} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl text-sm shadow-md">
+              + Tambah Baru
+            </button>
+          )}
+        </div>
       </div>
+
+      {showCrud && selectedIds.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-4 mb-4 flex items-center justify-between flex-wrap gap-3 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-md">
+              {selectedIds.length}
+            </div>
+            <div>
+              <div className="font-bold text-amber-900">{selectedIds.length} data terpilih</div>
+              <div className="text-xs text-amber-700">Pilih aksi yang mau dilakukan pada data terpilih</div>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => setSelectedIds([])} className="bg-white hover:bg-slate-50 border-2 border-slate-300 text-slate-700 font-semibold px-4 py-2 rounded-xl text-sm">
+              Batal Pilih
+            </button>
+            <button onClick={handleBulkDelete} disabled={bulkLoading} className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-slate-400 disabled:to-slate-400 text-white font-semibold px-4 py-2 rounded-xl text-sm shadow-md flex items-center gap-2">
+              {bulkLoading ? (
+                <><span className="animate-spin">⏳</span> Menghapus...</>
+              ) : (
+                <>🗑️ Hapus {selectedIds.length} Data</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
           <div className="text-4xl mb-3">📭</div>
-          <div className="text-gray-500">Belum ada data</div>
+          <div className="text-slate-500">Belum ada data</div>
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b">
-                  {columns.map((col: string) => <th key={col} className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap">{formatColumnName(col)}</th>)}
-                  {(showApproval || showTracking || showCrud) && <th className="px-4 py-3 text-left font-semibold text-gray-700">Aksi</th>}
+                <tr className="bg-slate-50 border-b">
+                  {showCrud && (
+                    <th className="px-4 py-3 text-left w-12">
+                      <input type="checkbox" checked={isAllSelected} ref={(input) => { if (input) input.indeterminate = isSomeSelected }} onChange={toggleSelectAll} className="w-5 h-5 rounded border-2 border-slate-300 text-amber-600 focus:ring-2 focus:ring-amber-500 cursor-pointer" title="Pilih semua" />
+                    </th>
+                  )}
+                  {columns.map((col: string) => (
+                    <th key={col} className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">
+                      {formatColumnName(col)}
+                    </th>
+                  ))}
+                  {(showApproval || showApprovalLembur || showTracking || showCrud) && (
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700">Aksi</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row: any, i: number) => (
-                  <tr key={i} className="hover:bg-gray-50 border-b">
-                    {columns.map((col: string) => <td key={col} className="px-4 py-3 text-gray-700 whitespace-nowrap">{renderCell(col, row[col])}</td>)}
-                    {(showApproval || showTracking || showCrud) && (
+                  <tr key={i} className={`hover:bg-slate-50 border-b transition-colors ${selectedIds.includes(row.id) ? 'bg-amber-50 hover:bg-amber-100' : ''}`}>
+                    {showCrud && (
+                      <td className="px-4 py-3">
+                        <input type="checkbox" checked={selectedIds.includes(row.id)} onChange={() => toggleSelect(row.id)} className="w-5 h-5 rounded border-2 border-slate-300 text-amber-600 focus:ring-2 focus:ring-amber-500 cursor-pointer" />
+                      </td>
+                    )}
+                    {columns.map((col: string) => (
+                      <td key={col} className="px-4 py-3 text-slate-700 whitespace-nowrap">
+                        {renderCell(col, row[col])}
+                      </td>
+                    ))}
+                    {(showApproval || showApprovalLembur || showTracking || showCrud) && (
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex gap-2">
-                          {showTracking && row.id && <button onClick={() => setTrackingId(row.id)} className="bg-gray-600 hover:bg-gray-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">📋 Track</button>}
-                          {showApproval && row.id && (<>
-                            <button onClick={() => handleApprove(row.id, 'APPROVED', onReload)} className="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✓</button>
-                            <button onClick={() => handleApprove(row.id, 'REJECTED', onReload)} className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✗</button>
-                          </>)}
-                          {showCrud && row.id && (<>
-                            <button onClick={() => setFormModal({ mode: 'edit', row })} className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✏️</button>
-                            <button onClick={() => handleDelete(table, row.id, onReload)} className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">🗑️</button>
-                          </>)}
+                          {showTracking && row.id && (
+                            <button onClick={() => setTrackingId(row.id)} className="bg-slate-600 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">
+                              📋 Track
+                            </button>
+                          )}
+                          {showApproval && row.id && (
+                            <>
+                              <button onClick={() => handleApprove(row.id, 'APPROVED', onReload)} className="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✓</button>
+                              <button onClick={() => handleApprove(row.id, 'REJECTED', onReload)} className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✗</button>
+                            </>
+                          )}
+                          {showApprovalLembur && row.id && (
+                            <>
+                              <button onClick={() => handleApproveLembur(row.id, 'APPROVED', onReload)} className="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✓ Approve</button>
+                              <button onClick={() => handleApproveLembur(row.id, 'REJECTED', onReload)} className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✗ Reject</button>
+                            </>
+                          )}
+                          {showCrud && row.id && (
+                            <>
+                              <button onClick={() => setFormModal({ mode: 'edit', row })} className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✏️</button>
+                              <button onClick={() => handleDelete(table, row.id, onReload)} className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">🗑️</button>
+                            </>
+                          )}
                         </div>
                       </td>
                     )}
@@ -523,15 +1512,25 @@ function TableView({ data, onReload }: any) {
               </tbody>
             </table>
           </div>
+
+          {showCrud && rows.length > 0 && (
+            <div className="bg-slate-50 border-t border-slate-100 px-4 py-3 flex items-center justify-between text-xs text-slate-500">
+              <div>💡 <b>Tips:</b> Centang checkbox untuk pilih beberapa data, lalu klik tombol hapus massal di atas</div>
+              <div>{selectedIds.length > 0 ? `${selectedIds.length} dari ${rows.length} terpilih` : `${rows.length} data`}</div>
+            </div>
+          )}
         </div>
       )}
 
       {trackingId && <TrackingModal leaveId={trackingId} onClose={() => setTrackingId(null)} />}
-      {formModal && table && <CrudModal table={table} mode={formModal.mode} row={formModal.row} onClose={() => setFormModal(null)} onSuccess={() => { setFormModal(null); onReload() }} />}
+      {formModal && table && (
+        <CrudModal table={table} mode={formModal.mode} row={formModal.row} onClose={() => setFormModal(null)} onSuccess={() => { setFormModal(null); onReload() }} />
+      )}
     </div>
   )
 }
 
+// ============ CRUD MODAL ============
 function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   const [fields, setFields] = useState<any[]>([])
   const [values, setValues] = useState<any>({})
@@ -613,6 +1612,7 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   )
 }
 
+// ============ TRACKING MODAL ============
 function TrackingModal({ leaveId, onClose }: any) {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -674,6 +1674,7 @@ function TimelineItem({ icon, title, subtitle, date, status }: any) {
   )
 }
 
+// ============ HANDLERS ============
 async function handleApprove(id: string, action: string, onReload: () => void) {
   let catatan = ''
   if (action === 'REJECTED') { catatan = prompt('Catatan penolakan:') || ''; if (!catatan.trim()) { alert('❌ Catatan wajib'); return } }
@@ -681,6 +1682,27 @@ async function handleApprove(id: string, action: string, onReload: () => void) {
 
   try {
     const res = await fetch('/api/leave/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leave_id: id, action, catatan }) })
+    const d = await res.json()
+    if (!res.ok) { alert('❌ ' + d.error); return }
+    alert(d.message); onReload()
+  } catch { alert('❌ Error') }
+}
+
+async function handleApproveLembur(id: string, action: string, onReload: () => void) {
+  let catatan = ''
+  if (action === 'REJECTED') {
+    catatan = prompt('Catatan penolakan lembur:') || ''
+    if (!catatan.trim()) { alert('❌ Catatan wajib diisi'); return }
+  } else {
+    catatan = prompt('Catatan approval (opsional):') || ''
+  }
+
+  try {
+    const res = await fetch('/api/overtime/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ overtime_id: id, action, catatan })
+    })
     const d = await res.json()
     if (!res.ok) { alert('❌ ' + d.error); return }
     alert(d.message); onReload()
@@ -697,6 +1719,7 @@ async function handleDelete(table: string, id: string, onReload: () => void) {
   } catch { alert('❌ Error') }
 }
 
+// ============ UTILS ============
 function formatColumnName(col: string): string {
   return col.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 }
@@ -720,9 +1743,14 @@ function StatusBadge({ value }: any) {
     APPROVED: 'bg-green-100 text-green-800', REJECTED: 'bg-red-100 text-red-800',
     MENUNGGU_ATASAN: 'bg-yellow-100 text-yellow-800', MENUNGGU_PJO: 'bg-orange-100 text-orange-800',
     DISETUJUI: 'bg-green-100 text-green-800', DITOLAK_ATASAN: 'bg-red-100 text-red-800', DITOLAK_PJO: 'bg-red-100 text-red-800',
+    DITOLAK: 'bg-red-100 text-red-800',
+    HADIR: 'bg-green-100 text-green-800', TERLAMBAT: 'bg-orange-100 text-orange-800',
+    SETENGAH_HARI: 'bg-yellow-100 text-yellow-800', ALPHA: 'bg-red-100 text-red-800',
+    IZIN: 'bg-purple-100 text-purple-800',
     Aktif: 'bg-green-100 text-green-800', Nonaktif: 'bg-gray-100 text-gray-700',
     SIANG: 'bg-yellow-100 text-yellow-800', MALAM: 'bg-indigo-100 text-indigo-800',
     OFF: 'bg-gray-100 text-gray-700', CUTI: 'bg-blue-100 text-blue-800',
+    SAKIT: 'bg-pink-100 text-pink-800',
     Baik: 'bg-green-100 text-green-800', Rusak: 'bg-red-100 text-red-800',
     SP1: 'bg-yellow-100 text-yellow-800', SP2: 'bg-orange-100 text-orange-800', SP3: 'bg-red-100 text-red-800'
   }

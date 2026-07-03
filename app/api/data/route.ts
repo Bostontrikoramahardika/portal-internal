@@ -48,6 +48,41 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ type: 'import_excel', title: menu_label, table: target_table })
   }
 
+  if (access_mode === 'ABSENSI_CLOCK') {
+  return NextResponse.json({ type: 'absensi_clock', title: menu_label })
+}
+
+if (access_mode === 'FORM_LEMBUR') {
+  return NextResponse.json({ type: 'form_lembur', title: menu_label })
+}
+
+if (access_mode === 'EXPORT_ABSENSI') {
+  return NextResponse.json({ type: 'export_absensi', title: menu_label })
+}
+
+if (access_mode === 'APPROVAL_LEMBUR') {
+  const { data: rows, error } = await supabase
+    .from('overtime_requests')
+    .select('*')
+    .eq('atasan_nrp', session.nrp)
+    .eq('status_atasan', 'PENDING')
+    .order('created_at', { ascending: false })
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const columns = rows && rows.length > 0 ? Object.keys(rows[0]).filter(k => k !== 'id') : []
+
+  return NextResponse.json({
+    type: 'table',
+    title: menu_label,
+    table: 'overtime_requests',
+    access_mode,
+    columns,
+    rows: rows || [],
+    total: (rows || []).length
+  })
+}
+
   if (access_mode === 'CHANGE_LOGIN') {
     return NextResponse.json({ type: 'change_login', title: menu_label })
   }

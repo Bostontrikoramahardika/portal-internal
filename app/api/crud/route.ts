@@ -5,7 +5,8 @@ import { supabase } from '@/app/lib/supabase'
 // Daftar tabel yang boleh di-CRUD
 const ALLOWED_TABLES = [
   'employees', 'roles', 'approval_matrix',
-  'kpi', 'apd', 'pkwt', 'sp', 'roster', 'leave_requests', 'menus'
+  'kpi', 'apd', 'pkwt', 'sp', 'roster', 'leave_requests', 'menus',
+  'sites_config', 'attendance', 'overtime_requests'
 ]
 
 // Cek role HRGA
@@ -134,6 +135,70 @@ export async function PUT(request: NextRequest) {
 // ============================================
 // DELETE - Hapus data
 // ============================================
+
+// ============================================
+// PATCH - Bulk Delete (Hapus banyak sekaligus)
+// ============================================
+export async function PATCH(request: NextRequest) {
+  const token = request.cookies.get('session_token')?.value
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const session = await getSession(token)
+  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+
+  if (!isHrga(session)) {
+    return NextResponse.json({ error: 'Hanya HRGA yang bisa CRUD' }, { status: 403 })
+  }
+
+  try {
+    const body = await request.json()
+    const { table, ids, action } = body
+
+    if (action !== 'bulk_delete') {
+      return NextResponse.json({ error: 'Action tidak dikenali' }, { status: 400 })
+    }
+
+    if (!table || !ALLOWED_TABLES.includes(table)) {
+      return NextResponse.json({ error: 'Tabel tidak diizinkan' }, { status: 400 })
+    }
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: 'Pilih minimal 1 data' }, { status: 400 })
+    }
+
+    // Bulk delete
+    const { error, count } = await supabase
+      .from(table)
+      .delete({ count: 'exact' })
+      .in('id', ids)
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Audit log
+    await supabase.from('audit_logs').insert({
+      actor_nrp: session.nrp,
+      action: 'BULK_DELETE',
+      target_table: table,
+      target_id: null,
+      detail: {
+        total_deleted: count || ids.length,
+        ids: ids
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: `✅ ${count || ids.length} data berhasil dihapus`,
+      deleted_count: count || ids.length
+    })
+
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   const token = request.cookies.get('session_token')?.value
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

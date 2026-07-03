@@ -21,6 +21,26 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'role', label: 'Role', type: 'select', required: true, options: ['karyawan', 'atasan', 'admin', 'hrga', 'pjo'] },
     { key: 'active', label: 'Aktif', type: 'checkbox' },
   ],
+  sites_config: [
+    { key: 'nama_site', label: 'Nama Site', type: 'text', required: true, placeholder: 'Contoh: Site A' },
+    { key: 'siang_jam_masuk', label: 'Shift SIANG - Jam Masuk', type: 'time', required: true, placeholder: '06:00' },
+    { key: 'siang_jam_pulang', label: 'Shift SIANG - Jam Pulang', type: 'time', required: true, placeholder: '17:00' },
+    { key: 'siang_batas_telat', label: 'Shift SIANG - Batas Telat (menit)', type: 'number', placeholder: '15' },
+    { key: 'malam_jam_masuk', label: 'Shift MALAM - Jam Masuk', type: 'time', required: true, placeholder: '18:00' },
+    { key: 'malam_jam_pulang', label: 'Shift MALAM - Jam Pulang', type: 'time', required: true, placeholder: '05:00' },
+    { key: 'malam_batas_telat', label: 'Shift MALAM - Batas Telat (menit)', type: 'number', placeholder: '15' },
+    { key: 'latitude', label: 'Latitude GPS Site', type: 'number', placeholder: '-6.200000', required: true },
+    { key: 'longitude', label: 'Longitude GPS Site', type: 'number', placeholder: '106.816666', required: true },
+    { key: 'radius_meter', label: 'Radius Geofencing (meter)', type: 'number', placeholder: '500', required: true },
+    { key: 'active', label: 'Site Aktif', type: 'checkbox' },
+  ],
+  approval_matrix: [
+    { key: 'employee_nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'atasan_nrp', label: 'NRP Atasan', type: 'text', required: true },
+    { key: 'pjo_nrp', label: 'NRP PJO', type: 'text', required: true },
+    { key: 'active', label: 'Aktif', type: 'checkbox' },
+  ],
+
   approval_matrix: [
     { key: 'employee_nrp', label: 'NRP Karyawan', type: 'text', required: true },
     { key: 'atasan_nrp', label: 'NRP Atasan', type: 'text', required: true },
