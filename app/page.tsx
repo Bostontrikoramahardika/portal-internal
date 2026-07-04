@@ -12,25 +12,43 @@ export default function LoginPage() {
 
   // 🔍 CEK SESSION - Kalau masih valid, langsung ke dashboard
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const res = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include',
-        })
-
-        if (res.ok) {
-          console.log('✅ Session valid, redirect ke dashboard')
-          router.push('/dashboard')
-        }
-      } catch {
-        // Offline atau no session, tampilkan login form
-        console.log('📡 No session / offline, tampilkan login')
+  const checkSession = async () => {
+    // 🔍 Cek apakah user offline
+    if (!navigator.onLine) {
+      // Kalau offline, cek apakah pernah login sebelumnya (dari cookie/flag)
+      const wasLoggedIn = localStorage.getItem('btm_was_logged_in')
+      if (wasLoggedIn === 'true') {
+        console.log('📡 Offline tapi pernah login, redirect ke dashboard')
+        router.push('/dashboard?menu=absensi_saya')
+        return
       }
+      console.log('📡 Offline dan belum pernah login, tampilkan form login')
+      return
     }
 
-    checkSession()
-  }, [router])
+    // Online: cek session ke server
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (res.ok) {
+        console.log('✅ Session valid, redirect ke dashboard')
+        localStorage.setItem('btm_was_logged_in', 'true')
+        router.push('/dashboard?menu=absensi_saya')
+      } else {
+        // Session expired, hapus flag
+        localStorage.removeItem('btm_was_logged_in')
+        console.log('❌ Session expired')
+      }
+    } catch {
+      console.log('📡 Error fetch, tampilkan login')
+    }
+  }
+
+  checkSession()
+}, [router])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -47,11 +65,14 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || 'Login gagal')
-        return
-      }
+  setError(data.error || 'Login gagal')
+  return
+}
 
-      router.push('/dashboard?menu=absensi_saya')
+// 🔖 Simpan flag pernah login (untuk offline mode)
+localStorage.setItem('btm_was_logged_in', 'true')
+
+router.push('/dashboard?menu=absensi_saya')
     } catch {
       setError('Terjadi kesalahan. Coba lagi.')
     } finally {

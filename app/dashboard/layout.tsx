@@ -93,11 +93,15 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   async function handleLogout() {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' })
-    } catch {}
-    router.push('/')
-  }
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' })
+  } catch {}
+  
+  // 🔖 Hapus flag login (biar tidak auto-redirect saat offline)
+  localStorage.removeItem('btm_was_logged_in')
+  
+  router.push('/')
+}
 
   function groupMenus(items: MenuItem[]) {
     const groups: Record<string, MenuItem[]> = {}
