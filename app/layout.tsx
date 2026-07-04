@@ -32,7 +32,7 @@ export default function RootLayout({
     <html lang="id">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="BTM Portal" />
