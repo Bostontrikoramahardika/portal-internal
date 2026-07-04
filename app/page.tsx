@@ -13,16 +13,9 @@ export default function LoginPage() {
   // 🔍 CEK SESSION - Kalau masih valid, langsung ke dashboard
   useEffect(() => {
   const checkSession = async () => {
-    // 🔍 Cek apakah user offline
+    // Kalau offline, jangan cek session (biarkan user lihat form login)
     if (!navigator.onLine) {
-      // Kalau offline, cek apakah pernah login sebelumnya (dari cookie/flag)
-      const wasLoggedIn = localStorage.getItem('btm_was_logged_in')
-      if (wasLoggedIn === 'true') {
-        console.log('📡 Offline tapi pernah login, redirect ke dashboard')
-        router.push('/dashboard?menu=absensi_saya')
-        return
-      }
-      console.log('📡 Offline dan belum pernah login, tampilkan form login')
+      console.log('📡 Offline, tampilkan form login')
       return
     }
 
@@ -35,12 +28,7 @@ export default function LoginPage() {
 
       if (res.ok) {
         console.log('✅ Session valid, redirect ke dashboard')
-        localStorage.setItem('btm_was_logged_in', 'true')
         router.push('/dashboard?menu=absensi_saya')
-      } else {
-        // Session expired, hapus flag
-        localStorage.removeItem('btm_was_logged_in')
-        console.log('❌ Session expired')
       }
     } catch {
       console.log('📡 Error fetch, tampilkan login')
@@ -70,7 +58,7 @@ export default function LoginPage() {
 }
 
 // 🔖 Simpan flag pernah login (untuk offline mode)
-localStorage.setItem('btm_was_logged_in', 'true')
+
 
 router.push('/dashboard?menu=absensi_saya')
     } catch {
