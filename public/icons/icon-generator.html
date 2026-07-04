@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head><title>Download Icon BTM</title></head>
+<body style="font-family:Arial; padding:40px; text-align:center; background:#f5f5f5;">
+  <h1>🎨 Generator Icon BTM Portal</h1>
+  <p>Klik tombol di bawah. Browser akan otomatis download 8 file icon.</p>
+  <button onclick="downloadAll()" style="padding:20px 40px; font-size:20px; background:#f59e0b; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
+    ⬇️ Download 8 Icon
+  </button>
+  <div id="log" style="margin-top:30px; text-align:left; max-width:400px; margin-left:auto; margin-right:auto;"></div>
+  
+  <script>
+    function createIcon(size) {
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      const ctx = c.getContext('2d');
+      
+      // Background gradient (orange amber)
+      const g = ctx.createLinearGradient(0, 0, size, size);
+      g.addColorStop(0, '#f59e0b');
+      g.addColorStop(1, '#d97706');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, size, size);
+      
+      // Text "BTM"
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size * 0.3}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('BTM', size / 2, size / 2);
+      
+      return c;
+    }
+    
+    function downloadAll() {
+      const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+      const log = document.getElementById('log');
+      log.innerHTML = '<h3>Memulai download...</h3>';
+      
+      let i = 0;
+      function downloadNext() {
+        if (i >= sizes.length) {
+          log.innerHTML += '<p style="color:green; font-weight:bold;">✅ Selesai! Cek folder Download Anda.</p>';
+          log.innerHTML += '<p>Langkah selanjutnya: pindahkan file icon ke folder <code>public/icons/</code></p>';
+          return;
+        }
+        
+        const size = sizes[i];
+        const canvas = createIcon(size);
+        const link = document.createElement('a');
+        link.download = `icon-${size}x${size}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        log.innerHTML += `<p>✅ icon-${size}x${size}.png didownload</p>`;
+        i++;
+        setTimeout(downloadNext, 500);
+      }
+      downloadNext();
+    }
+  </script>
+</body>
+</html>
