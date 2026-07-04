@@ -51,7 +51,7 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/dashboard')
+      router.push('/dashboard?menu=absensi_saya')
     } catch {
       setError('Terjadi kesalahan. Coba lagi.')
     } finally {
