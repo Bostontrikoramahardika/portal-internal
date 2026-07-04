@@ -8,8 +8,9 @@ interface User {
   nrp: string
   nrp_login?: string
   nama: string
-  roles: string[]
-  primaryRole: string
+  jabatan?: string
+  departemen?: string
+  site?: string
 }
 
 interface MenuItem {
@@ -20,6 +21,7 @@ interface MenuItem {
   menu_icon: string
   menu_group: string
   sort_order: number
+  active?: boolean
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,6 +38,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [userRoles, setUserRoles] = useState<string[]>([])
   const [menus, setMenus] = useState<MenuItem[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [loading, setLoading] = useState(true)
@@ -43,35 +46,75 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams()
   const activeMenu = searchParams.get('menu') || 'dashboard'
 
-  useEffect(() => { checkAuth() }, [])
+  useEffect(() => { 
+    checkAuth() 
+  }, [])
 
   async function checkAuth() {
     try {
       const res = await fetch('/api/auth/me')
-      if (!res.ok) { router.push('/'); return }
+      if (!res.ok) { 
+        router.push('/')
+        return 
+      }
       const data = await res.json()
+      
+      // ✅ Simpan user
       setUser(data.user)
+      
+      // ✅ Ambil roles dari LEVEL LUAR (data.roles), bukan dari data.user.roles
+      const roles: string[] = Array.isArray(data.roles) ? data.roles : []
+      setUserRoles(roles)
 
+      // Fetch menus
       const menuRes = await fetch('/api/menus')
       const menuData = await menuRes.json()
-      setMenus(menuData.menus || [])
-    } catch { router.push('/') }
-    finally { setLoading(false) }
+      
+      // Handle berbagai struktur response
+      let menusArray: MenuItem[] = []
+      if (Array.isArray(menuData)) {
+        menusArray = menuData
+      } else if (menuData.menus && Array.isArray(menuData.menus)) {
+        menusArray = menuData.menus
+      } else if (menuData.data && Array.isArray(menuData.data)) {
+        menusArray = menuData.data
+      }
+      
+      // Filter menu berdasarkan role user
+      const filtered = menusArray.filter(m => roles.includes(m.role))
+      setMenus(filtered)
+    } catch (err) {
+      console.error('checkAuth error:', err)
+      router.push('/')
+    }
+    finally { 
+      setLoading(false) 
+    }
   }
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch {}
     router.push('/')
   }
 
   function groupMenus(items: MenuItem[]) {
     const groups: Record<string, MenuItem[]> = {}
+    if (!items || !Array.isArray(items)) return groups
+    
     items.forEach(m => {
+      if (m.active === false) return
       const rawGroup = m.menu_group || 'Lainnya'
       const cleanGroup = rawGroup.replace(/^\d+\.\s*/, '')
       if (!groups[cleanGroup]) groups[cleanGroup] = []
       groups[cleanGroup].push(m)
     })
+
+    Object.keys(groups).forEach(key => {
+      groups[key].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    })
+
     return groups
   }
 
@@ -98,7 +141,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         shadow-2xl
       `}>
         <div className="p-5">
-          {/* Brand with Logo */}
+          {/* Brand */}
           <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-800">
             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center flex-shrink-0 p-1.5 shadow-lg">
               <Image
@@ -119,7 +162,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 mb-6 border border-slate-700 shadow-inner">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
-                {user.nama.charAt(0).toUpperCase()}
+                {user.nama?.charAt(0).toUpperCase() || '?'}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-sm text-white truncate">{user.nama}</div>
@@ -127,7 +170,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <div className="flex flex-wrap gap-1 mt-2">
-              {user.roles.map(r => (
+              {userRoles.map(r => (
                 <span key={r} className="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded-full font-semibold uppercase tracking-wide">
                   {r}
                 </span>
@@ -143,7 +186,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               </div>
               {items.map(m => (
                 <button
-                  key={m.id}
+                  key={m.id || m.menu_key}
                   onClick={() => {
                     router.push(`/dashboard?menu=${m.menu_key}`)
                     if (window.innerWidth < 1024) setSidebarOpen(false)
@@ -183,7 +226,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main className="flex-1 min-w-0">
-        {/* Top bar with Logo */}
         <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center gap-4 sticky top-0 z-20 shadow-sm">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -192,7 +234,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
             ☰
           </button>
 
-          {/* Logo di top bar */}
           <div className="flex items-center gap-3 flex-1">
             <div className="w-10 h-10 flex items-center justify-center bg-slate-50 rounded-lg p-1">
               <Image
@@ -219,12 +260,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Page content */}
         <div className="p-6">
           {children}
         </div>
 
-        {/* Footer */}
         <div className="p-6 text-center text-xs text-slate-400 border-t border-slate-100 mt-8">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Image
