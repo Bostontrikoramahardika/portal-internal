@@ -9,7 +9,9 @@ const OFFLINE_URL = '/offline'
 // File yang di-cache agar bisa offline
 const PRECACHE_URLS = [
   '/',
+  '/login',
   '/dashboard',
+  '/dashboard?menu=absensi_hari_ini',
   '/offline',
   '/manifest.json',
 ]
@@ -55,24 +57,56 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
   
-  // SKIP: bukan dari domain kita
-  if (!url.origin.includes(self.location.origin)) return
-  
-  // SKIP: request ke API (biarkan IndexedDB yang handle offline)
+  // SKIP: request ke API
   if (url.pathname.startsWith('/api/')) {
-    // Untuk API attendance offline, kita handle khusus
-    if (url.pathname.includes('/api/attendance/') && !navigator.onLine) {
-      // Biarkan frontend yang handle via IndexedDB
-      return
-    }
     return
   }
   
-  // Untuk halaman & assets: Network First, fallback ke cache
+  // SKIP: extension chrome / bukan domain kita
+  if (!url.origin.includes(self.location.origin)) return
+  
+  // SKIP: request method bukan GET
+  if (event.request.method !== 'GET') return
+  
+  // Untuk HTML pages: Network First, fallback ke cache
+  if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Simpan ke cache untuk offline nanti
+          if (response.status === 200) {
+            const responseClone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone)
+            })
+          }
+          return response
+        })
+        .catch(() => {
+          // OFFLINE: ambil dari cache
+          return caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse
+            }
+            // Kalau halaman tidak ada di cache, tampilkan offline page
+            return caches.match('/offline').then((offlinePage) => {
+              return offlinePage || new Response('Offline', { 
+                status: 503, 
+                statusText: 'Offline - Silakan buka aplikasi saat online' 
+              })
+            })
+          })
+        })
+    )
+    return
+  }
+  
+  // Untuk assets (JS, CSS, images, fonts): Cache First
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Simpan ke cache untuk offline nanti
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse
+      
+      return fetch(event.request).then((response) => {
         if (response.status === 200) {
           const responseClone = response.clone()
           caches.open(CACHE_NAME).then((cache) => {
@@ -80,20 +114,10 @@ self.addEventListener('fetch', (event) => {
           })
         }
         return response
+      }).catch(() => {
+        return new Response('Asset not available', { status: 503 })
       })
-      .catch(() => {
-        // Offline: ambil dari cache
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse
-          }
-          // Kalau halaman tidak ada di cache, tampilkan offline page
-          if (event.request.mode === 'navigate') {
-            return caches.match('/offline')
-          }
-          return new Response('Offline', { status: 503 })
-        })
-      })
+    })
   )
 })
 
