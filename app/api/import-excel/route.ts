@@ -5,6 +5,28 @@ import * as XLSX from 'xlsx'
 
 const ALLOWED_TABLES = ['employees', 'apd', 'pkwt', 'kpi', 'sp', 'roles', 'approval_matrix']
 
+// Kolom yang WAJIB ada di setiap tabel
+const REQUIRED_COLUMNS: Record<string, string[]> = {
+  employees: ['nrp', 'nama'],
+  apd: ['nrp', 'nama_barang'],
+  pkwt: ['nrp', 'mulai_kontrak', 'akhir_kontrak'],
+  kpi: ['nrp', 'periode', 'nilai_kpi'],
+  sp: ['nrp', 'jenis_sp', 'tanggal_sp', 'alasan'],
+  roles: ['nrp', 'role'],
+  approval_matrix: ['employee_nrp', 'atasan_nrp', 'pjo_nrp']
+}
+
+// Kolom yang boleh masuk ke database untuk setiap tabel
+const ALLOWED_COLUMNS: Record<string, string[]> = {
+  employees: ['nrp', 'nrp_login', 'nama', 'jabatan', 'departemen', 'site', 'status_karyawan', 'tanggal_masuk', 'tempat_lahir', 'tanggal_lahir', 'no_hp', 'alamat'],
+  apd: ['nrp', 'nama_barang', 'tanggal_terima', 'kondisi', 'tanggal_expired', 'keterangan'],
+  pkwt: ['nrp', 'no_kontrak', 'kontrak_ke', 'mulai_kontrak', 'akhir_kontrak', 'status', 'keterangan'],
+  kpi: ['nrp', 'periode', 'nilai_kpi', 'catatan'],
+  sp: ['nrp', 'jenis_sp', 'tanggal_sp', 'alasan', 'keterangan', 'berlaku_sampai'],
+  roles: ['nrp', 'role', 'active'],
+  approval_matrix: ['employee_nrp', 'atasan_nrp', 'pjo_nrp', 'active']
+}
+
 export async function POST(request: NextRequest) {
   const token = request.cookies.get('session_token')?.value
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -29,6 +51,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Tabel tidak diizinkan untuk import' }, { status: 400 })
     }
 
+    const allowedCols = ALLOWED_COLUMNS[table] || []
+    const requiredCols = REQUIRED_COLUMNS[table] || []
+
     const arrayBuffer = await file.arrayBuffer()
     const workbook = XLSX.read(arrayBuffer, { type: 'array' })
     const sheetName = workbook.SheetNames[0]
@@ -39,17 +64,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File Excel kosong' }, { status: 400 })
     }
 
+    // Kolom info yang di-skip (tidak masuk database, tapi tidak error)
+    const INFO_COLUMNS = ['nama_karyawan', 'nama_atasan', 'nama_pjo', 'info_karyawan', 'info_atasan', 'info_pjo']
+
     // Bersihkan data
     const cleanedData = jsonData.map((row: any) => {
       const clean: any = {}
-      Object.keys(row).forEach(key => {
-        const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '_')
-        const val = row[key]
 
-        // Skip kolom sistem
+      Object.keys(row).forEach(rawKey => {
+        // Bersihkan nama kolom
+        const cleanKey = rawKey.trim().toLowerCase().replace(/\s+/g, '_')
+
+        // ⚡ SKIP kolom yang tidak dikenal atau kosong (fix error __empty)
+        if (!cleanKey || cleanKey.startsWith('__empty') || cleanKey.startsWith('_empty')) return
+
+        // ⚡ SKIP kolom sistem
         if (['id', 'created_at', 'updated_at'].includes(cleanKey)) return
 
-        if (cleanKey.includes('tanggal') || cleanKey.includes('mulai') || cleanKey.includes('akhir') || cleanKey.includes('expired')) {
+        // ⚡ SKIP kolom info (nama_karyawan, dll) — hanya untuk display di Excel
+        if (INFO_COLUMNS.includes(cleanKey)) return
+
+        // ⚡ SKIP kolom yang bukan bagian dari tabel
+        if (!allowedCols.includes(cleanKey)) return
+
+        const val = row[rawKey]
+
+        // Format tanggal
+        if (cleanKey.includes('tanggal') || cleanKey === 'mulai_kontrak' || cleanKey === 'akhir_kontrak' || cleanKey === 'tanggal_expired' || cleanKey === 'berlaku_sampai') {
           if (val && typeof val === 'string') {
             const parsed = new Date(val)
             if (!isNaN(parsed.getTime())) {
@@ -63,11 +104,16 @@ export async function POST(request: NextRequest) {
           } else {
             clean[cleanKey] = null
           }
+        } else if (cleanKey === 'active') {
+          // Convert active ke boolean
+          const s = String(val).toLowerCase().trim()
+          clean[cleanKey] = (s === 'true' || s === '1' || s === 'yes' || s === 'ya' || s === 'aktif')
         } else {
           clean[cleanKey] = val === '' ? null : val
         }
       })
 
+      // Auto-set nrp_login = nrp untuk employees
       if (table === 'employees' && clean.nrp && !clean.nrp_login) {
         clean.nrp_login = clean.nrp
       }
@@ -75,13 +121,23 @@ export async function POST(request: NextRequest) {
       return clean
     })
 
-    // Filter baris kosong (baris yang key utamanya kosong)
+    // Filter baris kosong (baris yang required key-nya kosong)
     const validData = cleanedData.filter((row: any) => {
-      if (table === 'employees') return row.nrp && row.nama
-      if (table === 'approval_matrix') return row.employee_nrp
-      if (table === 'roles') return row.nrp && row.role
-      return row.nrp // Default: harus ada NRP
+      return requiredCols.every(col => row[col] !== null && row[col] !== undefined && row[col] !== '')
     })
+
+    if (validData.length === 0) {
+      return NextResponse.json({
+        error: `Tidak ada baris valid. Pastikan kolom wajib terisi: ${requiredCols.join(', ')}`
+      }, { status: 400 })
+    }
+
+    // ⚡ VALIDASI TAMBAHAN: Cek NRP karyawan valid (untuk tabel yang refer ke employees)
+    let validEmployeeNrps = new Set<string>()
+    if (['apd', 'pkwt', 'kpi', 'sp', 'roles', 'approval_matrix'].includes(table)) {
+      const { data: allEmp } = await supabase.from('employees').select('nrp')
+      validEmployeeNrps = new Set((allEmp || []).map(e => String(e.nrp)))
+    }
 
     // Ambil data existing untuk cek duplikat
     let existingKeys: Set<string> = new Set()
@@ -96,7 +152,6 @@ export async function POST(request: NextRequest) {
       const { data } = await supabase.from('approval_matrix').select('employee_nrp')
       existingKeys = new Set((data || []).map(r => String(r.employee_nrp)))
     }
-    // Untuk apd/pkwt/kpi/sp, kita tidak cek duplikat (karena bisa ada banyak per karyawan)
 
     let successCount = 0
     let skippedCount = 0
@@ -105,6 +160,32 @@ export async function POST(request: NextRequest) {
 
     for (let i = 0; i < validData.length; i++) {
       const row = validData[i]
+
+      // Validasi NRP karyawan (kalau perlu)
+      if (validEmployeeNrps.size > 0) {
+        const nrpToCheck = row.nrp || row.employee_nrp
+        if (nrpToCheck && !validEmployeeNrps.has(String(nrpToCheck))) {
+          errorCount++
+          if (errors.length < 10) {
+            errors.push(`Baris ${i + 2}: NRP "${nrpToCheck}" tidak ada di data karyawan`)
+          }
+          continue
+        }
+
+        // Untuk approval_matrix, cek juga atasan_nrp & pjo_nrp
+        if (table === 'approval_matrix') {
+          if (row.atasan_nrp && !validEmployeeNrps.has(String(row.atasan_nrp))) {
+            errorCount++
+            if (errors.length < 10) errors.push(`Baris ${i + 2}: NRP atasan "${row.atasan_nrp}" tidak ada`)
+            continue
+          }
+          if (row.pjo_nrp && !validEmployeeNrps.has(String(row.pjo_nrp))) {
+            errorCount++
+            if (errors.length < 10) errors.push(`Baris ${i + 2}: NRP PJO "${row.pjo_nrp}" tidak ada`)
+            continue
+          }
+        }
+      }
 
       // Cek duplikat
       let key = ''
@@ -121,7 +202,7 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         errorCount++
-        if (errors.length < 5) {
+        if (errors.length < 10) {
           errors.push(`Baris ${i + 2}: ${error.message}`)
         }
       } else {

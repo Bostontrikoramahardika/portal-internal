@@ -1,0 +1,53 @@
+'use client'
+
+export default function OfflinePage() {
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 max-w-md w-full text-center">
+        <div className="text-6xl mb-4">📡</div>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">
+          Anda Sedang Offline
+        </h1>
+        <p className="text-slate-600 mb-6">
+          Tidak ada koneksi internet. Beberapa fitur tetap bisa digunakan.
+        </p>
+
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
+          <div className="font-semibold text-amber-900 mb-2">✅ Fitur yang bisa dipakai offline:</div>
+          <ul className="text-sm text-amber-800 space-y-1">
+            <li>• ⏰ Clock In / Clock Out (data tersimpan di HP)</li>
+            <li>• 📋 Lihat data yang sudah di-cache</li>
+          </ul>
+        </div>
+
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-left">
+          <div className="font-semibold text-red-900 mb-2">❌ Fitur yang butuh internet:</div>
+          <ul className="text-sm text-red-800 space-y-1">
+            <li>• 📝 Ajukan Cuti / Lembur</li>
+            <li>• ✅ Approval</li>
+            <li>• 📥 Import / Export Excel</li>
+          </ul>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            onClick={() => window.location.href = '/dashboard?menu=absensi_hari_ini'}
+            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold py-3 rounded-xl"
+          >
+            ⏰ Buka Absensi (Offline Mode)
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-3 rounded-xl"
+          >
+            🔄 Coba Lagi
+          </button>
+        </div>
+
+        <div className="mt-6 text-xs text-slate-400">
+          Data absensi offline akan otomatis di-upload saat koneksi kembali
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -4,7 +4,7 @@ import { supabase } from '@/app/lib/supabase'
 
 // Hitung jarak antar 2 koordinat (dalam meter)
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000 // radius bumi dalam meter
+  const R = 6371000
   const dLat = (lat2 - lat1) * Math.PI / 180
   const dLng = (lng2 - lng1) * Math.PI / 180
   const a =
@@ -17,8 +17,6 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 
 // Tentukan shift berdasarkan waktu clock in
 function detectShift(hour: number): 'SIANG' | 'MALAM' {
-  // Jam 04:00 - 15:00 dianggap shift SIANG
-  // Jam 15:00 - 04:00 dianggap shift MALAM
   if (hour >= 4 && hour < 15) return 'SIANG'
   return 'MALAM'
 }
@@ -32,13 +30,39 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { latitude, longitude, keterangan } = body
+    const { latitude, longitude, keterangan, offline_time, is_offline_sync } = body
 
     if (!latitude || !longitude) {
       return NextResponse.json({ error: 'Lokasi GPS wajib diisi. Aktifkan GPS di HP Anda.' }, { status: 400 })
     }
 
-    // 1. Ambil data karyawan (untuk tahu site-nya)
+    // ⚡ OFFLINE SYNC: Pakai waktu offline kalau ada
+    // Kalau dari offline sync → pakai waktu saat karyawan clock in offline
+    // Kalau online biasa → pakai waktu server sekarang
+    const clockTime = is_offline_sync && offline_time
+      ? new Date(offline_time)
+      : new Date()
+
+    // Validasi: waktu offline tidak boleh di masa depan atau > 7 hari yang lalu
+    if (is_offline_sync) {
+      const now = new Date()
+      const diffMs = now.getTime() - clockTime.getTime()
+      const diffDays = diffMs / (1000 * 60 * 60 * 24)
+
+      if (diffMs < 0) {
+        return NextResponse.json({
+          error: 'Waktu offline tidak valid (masa depan)'
+        }, { status: 400 })
+      }
+
+      if (diffDays > 7) {
+        return NextResponse.json({
+          error: 'Data offline terlalu lama (> 7 hari). Hubungi HRGA.'
+        }, { status: 400 })
+      }
+    }
+
+    // 1. Ambil data karyawan
     const { data: emp } = await supabase
       .from('employees')
       .select('site, nama')
@@ -53,7 +77,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Site karyawan belum diatur. Hubungi HRGA.' }, { status: 400 })
     }
 
-    // 2. Ambil config site (untuk cek jam kerja & GPS)
+    // 2. Ambil config site
     const { data: siteConfig } = await supabase
       .from('sites_config')
       .select('*')
@@ -67,7 +91,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // 3. Validasi jarak GPS (kalau site punya koordinat)
+    // 3. Validasi jarak GPS
     if (siteConfig.latitude && siteConfig.longitude) {
       const distance = calculateDistance(
         latitude,
@@ -83,26 +107,36 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Cek apakah sudah clock in hari ini
-    const now = new Date()
-    const today = now.toISOString().split('T')[0]
+    // 4. Cek apakah sudah clock in di tanggal tersebut
+    // ⚡ Pakai tanggal dari clockTime (bukan hari ini)
+    const targetDate = clockTime.toISOString().split('T')[0]
 
     const { data: existing } = await supabase
       .from('attendance')
       .select('*')
       .eq('nrp', session.nrp)
-      .eq('tanggal', today)
+      .eq('tanggal', targetDate)
       .single()
 
     if (existing && existing.clock_in) {
+      // Kalau offline sync dan sudah ada clock_in, skip (idempotent)
+      if (is_offline_sync) {
+        return NextResponse.json({
+          success: true,
+          message: `⏭️ Clock in tanggal ${targetDate} sudah ada, di-skip`,
+          data: existing,
+          skipped: true
+        })
+      }
+
       return NextResponse.json({
         error: `Anda sudah clock in hari ini pada ${new Date(existing.clock_in).toLocaleTimeString('id-ID')}`
       }, { status: 400 })
     }
 
-    // 5. Detect shift & hitung telat
-    const jamSekarang = now.getHours()
-    const menitSekarang = now.getMinutes()
+    // 5. Detect shift & hitung telat (pakai clockTime, bukan now)
+    const jamSekarang = clockTime.getHours()
+    const menitSekarang = clockTime.getMinutes()
     const shift = detectShift(jamSekarang)
 
     let batasJamMasuk: string
@@ -116,7 +150,6 @@ export async function POST(request: NextRequest) {
       batasTelatMenit = siteConfig.malam_batas_telat || 15
     }
 
-    // Parse batas jam masuk (format "HH:MM:SS")
     const [batasH, batasM] = batasJamMasuk.split(':').map(Number)
     const batasTotalMenit = batasH * 60 + batasM + batasTelatMenit
     const sekarangTotalMenit = jamSekarang * 60 + menitSekarang
@@ -130,7 +163,6 @@ export async function POST(request: NextRequest) {
         terlambatMenit = sekarangTotalMenit - (batasH * 60 + batasM)
       }
     } else {
-      // Shift malam: bandingkan dengan jam malam
       const batasSekarangMalam = batasH >= 12 ? batasTotalMenit : batasTotalMenit + 1440
       const sekarangMalam = jamSekarang >= 12 ? sekarangTotalMenit : sekarangTotalMenit + 1440
 
@@ -140,20 +172,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. Insert atau Update attendance
-    const attendanceData = {
+    // 6. Siapkan keterangan (tandai kalau dari offline sync)
+    let keteranganFinal = keterangan || null
+    if (is_offline_sync) {
+      const syncNote = `[OFFLINE SYNC] Clock in offline pada ${clockTime.toLocaleString('id-ID')}, di-upload ${new Date().toLocaleString('id-ID')}`
+      keteranganFinal = keteranganFinal ? `${keteranganFinal} | ${syncNote}` : syncNote
+    }
+
+    // 7. Insert atau Update attendance
+    const attendanceData: any = {
       nrp: session.nrp,
-      tanggal: today,
+      tanggal: targetDate,
       shift,
-      clock_in: now.toISOString(),
+      clock_in: clockTime.toISOString(),
       clock_in_lat: latitude,
       clock_in_lng: longitude,
       clock_in_lokasi: `${latitude}, ${longitude}`,
       status,
       terlambat_menit: terlambatMenit,
       site: emp.site,
-      keterangan: keterangan || null,
-      updated_at: now.toISOString()
+      keterangan: keteranganFinal,
+      updated_at: new Date().toISOString()
+    }
+
+    // Tambah flag offline sync kalau kolom-nya ada di database
+    if (is_offline_sync) {
+      attendanceData.is_offline_sync = true
+      attendanceData.synced_at = new Date().toISOString()
     }
 
     let result
@@ -178,10 +223,15 @@ export async function POST(request: NextRequest) {
       result = data
     }
 
+    const successMsg = is_offline_sync
+      ? `✅ Clock In offline berhasil di-sync (${clockTime.toLocaleString('id-ID')}) - ${status}`
+      : `✅ Clock In berhasil pada ${clockTime.toLocaleTimeString('id-ID')} (${status})`
+
     return NextResponse.json({
       success: true,
-      message: `✅ Clock In berhasil pada ${now.toLocaleTimeString('id-ID')} (${status})`,
-      data: result
+      message: successMsg,
+      data: result,
+      is_offline_sync: !!is_offline_sync
     })
 
   } catch (err: any) {

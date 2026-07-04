@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   const { data: employees } = await supabase
     .from('employees')
-    .select('nrp, nama, jabatan, departemen, site')
+    .select('nrp, nama, jabatan, departemen, site, no_hp')
     .in('nrp', atasanNrps)
     .eq('status_karyawan', 'Aktif')
     .order('nama')

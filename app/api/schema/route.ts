@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
+import { supabase } from '@/app/lib/supabase'
 
 // Definisi schema untuk setiap tabel
 const TABLE_SCHEMA: Record<string, any[]> = {
@@ -18,14 +19,14 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'alamat', label: 'Alamat', type: 'textarea' },
   ],
   roles: [
-    { key: 'nrp', label: 'NRP', type: 'text', required: true },
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'role', label: 'Role', type: 'select', required: true, options: ['karyawan', 'atasan', 'admin', 'hrga', 'pjo'] },
     { key: 'active', label: 'Aktif', type: 'checkbox' },
   ],
   approval_matrix: [
-    { key: 'employee_nrp', label: 'NRP Karyawan', type: 'text', required: true },
-    { key: 'atasan_nrp', label: 'NRP Atasan', type: 'text', required: true },
-    { key: 'pjo_nrp', label: 'NRP PJO', type: 'text', required: true },
+    { key: 'employee_nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
+    { key: 'atasan_nrp', label: '👔 Pilih Atasan', type: 'employee_picker', required: true },
+    { key: 'pjo_nrp', label: '🎯 Pilih PJO', type: 'employee_picker', required: true },
     { key: 'active', label: 'Aktif', type: 'checkbox' },
   ],
   sites_config: [
@@ -42,13 +43,13 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'active', label: 'Site Aktif', type: 'checkbox' },
   ],
   kpi: [
-    { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'periode', label: 'Periode (YYYY-MM)', type: 'text', required: true, placeholder: 'Contoh: 2025-06' },
     { key: 'nilai_kpi', label: 'Nilai KPI', type: 'number', required: true },
     { key: 'catatan', label: 'Catatan', type: 'textarea' },
   ],
   apd: [
-    { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'nama_barang', label: 'Nama Barang', type: 'text', required: true },
     { key: 'tanggal_terima', label: 'Tanggal Terima', type: 'date' },
     { key: 'kondisi', label: 'Kondisi', type: 'select', options: ['Baik', 'Rusak', 'Perlu Ganti'] },
@@ -56,7 +57,7 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'keterangan', label: 'Keterangan', type: 'textarea' },
   ],
   pkwt: [
-    { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'no_kontrak', label: 'No. Kontrak', type: 'text' },
     { key: 'kontrak_ke', label: 'Kontrak Ke-', type: 'number' },
     { key: 'mulai_kontrak', label: 'Mulai Kontrak', type: 'date', required: true },
@@ -65,7 +66,7 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'keterangan', label: 'Keterangan', type: 'textarea' },
   ],
   sp: [
-    { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'jenis_sp', label: 'Jenis SP', type: 'select', required: true, options: ['SP1', 'SP2', 'SP3', 'PHK'] },
     { key: 'tanggal_sp', label: 'Tanggal SP', type: 'date', required: true },
     { key: 'alasan', label: 'Alasan', type: 'textarea', required: true },
@@ -73,13 +74,13 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'berlaku_sampai', label: 'Berlaku Sampai', type: 'date' },
   ],
   roster: [
-    { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'tanggal', label: 'Tanggal', type: 'date', required: true },
     { key: 'shift', label: 'Shift', type: 'select', required: true, options: ['SIANG', 'MALAM', 'OFF', 'CUTI', 'SAKIT', 'IZIN', 'ALPHA', 'LIBUR', 'TRAINING'] },
     { key: 'keterangan', label: 'Keterangan', type: 'text' },
   ],
   attendance: [
-    { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'tanggal', label: 'Tanggal', type: 'date', required: true },
     { key: 'shift', label: 'Shift', type: 'select', options: ['SIANG', 'MALAM'] },
     { key: 'clock_in', label: 'Clock In', type: 'datetime-local' },
@@ -91,27 +92,27 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'site', label: 'Site', type: 'text' },
   ],
   overtime_requests: [
-    { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'tanggal', label: 'Tanggal Lembur', type: 'date', required: true },
     { key: 'jam_mulai', label: 'Jam Mulai', type: 'time', required: true },
     { key: 'jam_selesai', label: 'Jam Selesai', type: 'time', required: true },
     { key: 'total_jam', label: 'Total Jam', type: 'number' },
     { key: 'jenis_lembur', label: 'Jenis Lembur', type: 'select', options: ['BIASA', 'LIBUR', 'HARI_BESAR'] },
     { key: 'alasan', label: 'Alasan', type: 'textarea', required: true },
-    { key: 'atasan_nrp', label: 'NRP Atasan', type: 'text' },
+    { key: 'atasan_nrp', label: '👔 Pilih Atasan', type: 'employee_picker' },
     { key: 'status_atasan', label: 'Status Atasan', type: 'select', options: ['PENDING', 'APPROVED', 'REJECTED'] },
     { key: 'catatan_atasan', label: 'Catatan Atasan', type: 'textarea' },
     { key: 'status_final', label: 'Status Final', type: 'select', options: ['MENUNGGU_ATASAN', 'DISETUJUI', 'DITOLAK'] },
   ],
   leave_requests: [
-    { key: 'nrp', label: 'NRP Karyawan', type: 'text', required: true },
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'tanggal_mulai', label: 'Tanggal Mulai', type: 'date', required: true },
     { key: 'tanggal_selesai', label: 'Tanggal Selesai', type: 'date', required: true },
     { key: 'jumlah_hari', label: 'Jumlah Hari', type: 'number', required: true },
     { key: 'jenis_cuti', label: 'Jenis Cuti', type: 'select', required: true, options: ['Tahunan', 'Sakit', 'Khusus', 'Melahirkan', 'Menikah', 'Duka', 'Lainnya'] },
     { key: 'alasan', label: 'Alasan', type: 'textarea', required: true },
-    { key: 'atasan_nrp', label: 'NRP Atasan', type: 'text' },
-    { key: 'pjo_nrp', label: 'NRP PJO', type: 'text' },
+    { key: 'atasan_nrp', label: '👔 Pilih Atasan', type: 'employee_picker' },
+    { key: 'pjo_nrp', label: '🎯 Pilih PJO', type: 'employee_picker' },
     { key: 'status_atasan', label: 'Status Atasan', type: 'select', options: ['PENDING', 'APPROVED', 'REJECTED'] },
     { key: 'status_pjo', label: 'Status PJO', type: 'select', options: ['WAITING', 'PENDING', 'APPROVED', 'REJECTED'] },
     { key: 'status_final', label: 'Status Final', type: 'select', options: ['MENUNGGU_ATASAN', 'MENUNGGU_PJO', 'DISETUJUI', 'DITOLAK_ATASAN', 'DITOLAK_PJO'] },
@@ -138,6 +139,28 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const table = searchParams.get('table')
+  const searchEmployees = searchParams.get('search_employees')
+
+  // ⚡ ENDPOINT BARU: Search karyawan (untuk employee_picker)
+  if (searchEmployees !== null) {
+    const search = searchEmployees.trim()
+    let empQuery = supabase
+      .from('employees')
+      .select('nrp, nama, jabatan, departemen, site')
+      .eq('status_karyawan', 'Aktif')
+      .order('nama')
+      .limit(50)
+
+    if (search) {
+      empQuery = empQuery.or(`nama.ilike.%${search}%,nrp.ilike.%${search}%`)
+    }
+
+    const { data: employees, error } = await empQuery
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    return NextResponse.json({ employees: employees || [] })
+  }
 
   if (!table || !TABLE_SCHEMA[table]) {
     return NextResponse.json({ error: 'Schema tidak ditemukan' }, { status: 404 })

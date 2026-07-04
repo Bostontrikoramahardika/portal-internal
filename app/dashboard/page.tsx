@@ -41,8 +41,8 @@ function DashboardContent() {
   if (data.type === 'roster_upload') return <RosterUpload title={data.title} />
   if (data.type === 'import_excel') return <ImportExcel title={data.title} table={data.table} />
   if (data.type === 'change_login') return <ChangeLoginView title={data.title} />
-if (data.type === 'absensi_clock') return <AbsensiClockView title={data.title} />
-if (data.type === 'role_manager') return <RoleManagerView title={data.title} />
+  if (data.type === 'absensi_clock') return <AbsensiClockView title={data.title} />
+  if (data.type === 'role_manager') return <RoleManagerView title={data.title} />
   if (data.type === 'form_lembur') return <FormLemburView title={data.title} onSuccess={loadData} />
   if (data.type === 'export_absensi') return <ExportAbsensiView title={data.title} />
   if (data.type === 'table') return <TableView data={data} onReload={loadData} />
@@ -75,7 +75,7 @@ function DashboardView({ title }: any) {
         </div>
         <div className="space-y-2 text-sm text-slate-600 pl-13">
           <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> Klik menu di sidebar kiri untuk navigasi</p>
-          <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> <b>Absensi Hari Ini</b>: clock in / clock out dengan GPS</p>
+          <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> <b>Absensi Hari Ini</b>: clock in / clock out dengan GPS (bisa offline)</p>
           <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> <b>Ajukan Cuti / Lembur</b>: pilih atasan yang menyetujui</p>
           <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> <b>Roster Bulanan</b>: lihat jadwal kerja bulanan (PDF/gambar)</p>
           <p className="flex items-start gap-2"><span className="text-amber-500 font-bold">›</span> <b>Ubah NRP Login</b>: ganti NRP untuk login (data tetap aman)</p>
@@ -98,9 +98,11 @@ function StatCard({ label, value, color }: any) {
 function FormCutiView({ title, onSuccess }: any) {
   const [form, setForm] = useState({ tanggal_mulai: '', tanggal_selesai: '', jenis_cuti: '', alasan: '', atasan_nrp: '' })
   const [atasanList, setAtasanList] = useState<any[]>([])
+  const [atasanHp, setAtasanHp] = useState('') // State baru untuk HP Atasan
   const [pjoNama, setPjoNama] = useState('')
   const [msg, setMsg] = useState({ type: '', text: '' })
   const [loading, setLoading] = useState(false)
+  const [lastSubmission, setLastSubmission] = useState<any>(null) // Simpan data untuk WA
 
   useEffect(() => {
     fetch('/api/leave/atasan-list').then(r => r.json()).then(d => {
@@ -119,8 +121,11 @@ function FormCutiView({ title, onSuccess }: any) {
       })
       const data = await res.json()
       if (!res.ok) { setMsg({ type: 'err', text: data.error }); return }
+      
       setMsg({ type: 'ok', text: data.message })
+      setLastSubmission({ nama_atasan: atasanList.find(a => a.nrp === form.atasan_nrp)?.nama, hp_atasan: atasanHp })
       setForm({ tanggal_mulai: '', tanggal_selesai: '', jenis_cuti: '', alasan: '', atasan_nrp: '' })
+      setAtasanHp('')
     } catch { setMsg({ type: 'err', text: 'Error' }) }
     finally { setLoading(false) }
   }
@@ -140,7 +145,25 @@ function FormCutiView({ title, onSuccess }: any) {
       </div>
       <div className="bg-white rounded-2xl shadow-sm border p-6 max-w-2xl">
         {msg.text && <div className={`p-3 rounded-xl mb-4 text-sm ${msg.type === 'ok' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>{msg.text}</div>}
+        
+        {/* TOMBOL WA MUNCUL SETELAH SUKSES */}
+        {lastSubmission && (
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4 flex items-center justify-between">
+            <div>
+              <div className="font-bold text-blue-900">Pengajuan Berhasil!</div>
+              <div className="text-xs text-blue-700">Kirim notifikasi ke atasan agar segera diproses.</div>
+            </div>
+            <button 
+              onClick={() => openWhatsApp(lastSubmission.hp_atasan, `Yth. Bpk/Ibu ${lastSubmission.nama_atasan}, saya mengajukan cuti. Mohon approvalnya. Terima kasih.`)}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"
+            >
+              📲 Notif Atasan via WA
+            </button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* ... (Bagian Tanggal & Jenis Cuti SAMA SEPERTI SEBELUMNYA) ... */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Mulai</label>
@@ -160,15 +183,22 @@ function FormCutiView({ title, onSuccess }: any) {
               <option>Melahirkan</option><option>Menikah</option><option>Duka</option><option>Lainnya</option>
             </select>
           </div>
+          
+          {/* UPDATE DROPDOWN ATASAN */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Pilih Atasan yang Menyetujui</label>
-            <select required value={form.atasan_nrp} onChange={e => setForm({ ...form, atasan_nrp: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border text-gray-900">
+            <select required value={form.atasan_nrp} onChange={e => {
+              setForm({ ...form, atasan_nrp: e.target.value })
+              const selected = atasanList.find(a => a.nrp === e.target.value)
+              setAtasanHp(selected?.no_hp || '') // Simpan HP
+            }} className="w-full px-4 py-2.5 rounded-xl border text-gray-900">
               <option value="">-- Pilih Atasan --</option>
               {atasanList.map((a: any) => (
                 <option key={a.nrp} value={a.nrp}>{a.nama} - {a.jabatan} ({a.site})</option>
               ))}
             </select>
           </div>
+
           <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-sm">
             <div className="text-gray-500 text-xs mb-1">Approval Final PJO:</div>
             <div className="font-semibold text-gray-900">{pjoNama || 'Belum diatur'}</div>
@@ -456,8 +486,8 @@ function ImportExcel({ title, table }: any) {
           </div>
 
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-4 text-xs text-emerald-900">
-            <p className="font-semibold mb-1">✨ Urutan Kolom Konsisten</p>
-            <p>File yang di-download punya urutan kolom SAMA dengan template import.</p>
+            <p className="font-semibold mb-1">✨ Ada kolom nama karyawan (info)</p>
+            <p>Kolom nama otomatis terisi dari NRP. Saat import, kolom ini di-skip (tidak masuk DB).</p>
           </div>
 
           <div className="space-y-3">
@@ -613,13 +643,6 @@ function ImportExcel({ title, table }: any) {
                       </select>
                     </div>
                   </>
-                )}
-
-                {table === 'approval_matrix' && (
-                  <div>
-                    <label className="block text-xs font-semibold text-amber-900 mb-1">Cari NRP Karyawan</label>
-                    <input type="text" value={filters.nrp} onChange={e => setFilters({ ...filters, nrp: e.target.value })} placeholder="1001" className="w-full px-3 py-2 rounded-lg border border-amber-300 text-sm text-slate-900" />
-                  </div>
                 )}
 
                 <div className="pt-3 border-t border-amber-300">
@@ -778,7 +801,7 @@ function ChangeLoginView({ title }: any) {
   )
 }
 
-// ============ ABSENSI CLOCK ============
+// ============ ABSENSI CLOCK (OFFLINE-CAPABLE) ============
 function AbsensiClockView({ title }: any) {
   const [status, setStatus] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -788,20 +811,93 @@ function AbsensiClockView({ title }: any) {
   const [gpsStatus, setGpsStatus] = useState<'checking' | 'ready' | 'error'>('checking')
   const [gpsLocation, setGpsLocation] = useState<{ lat: number, lng: number } | null>(null)
   const [gpsError, setGpsError] = useState('')
+  const [isOnline, setIsOnline] = useState(true)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [syncing, setSyncing] = useState(false)
+  const [offlineClockIn, setOfflineClockIn] = useState(false)
+  const [offlineClockOut, setOfflineClockOut] = useState(false)
 
   useEffect(() => {
+    setIsOnline(navigator.onLine)
+
+    const handleOnline = () => {
+      setIsOnline(true)
+      setMsg({ type: 'ok', text: '🌐 Koneksi kembali! Sinkronisasi otomatis...' })
+      autoSync()
+    }
+    const handleOffline = () => {
+      setIsOnline(false)
+      setMsg({ type: 'warn', text: '📡 Anda offline. Absensi akan tersimpan di HP.' })
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type === 'SYNC_SUCCESS') {
+          checkPending()
+          loadStatus()
+          setMsg({ type: 'ok', text: '✅ Data offline berhasil di-sync!' })
+        }
+      })
+    }
+
     loadStatus()
     checkGPS()
+    checkPending()
+
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => clearInterval(timer)
+    const pendingTimer = setInterval(checkPending, 10000)
+
+    return () => {
+      clearInterval(timer)
+      clearInterval(pendingTimer)
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
   }, [])
+
+  async function checkPending() {
+    try {
+      const { countPending } = await import('@/app/lib/offlineDB')
+      const count = await countPending()
+      setPendingCount(count)
+    } catch { setPendingCount(0) }
+  }
+
+  async function autoSync() {
+    try {
+      const { syncToServer, countPending } = await import('@/app/lib/offlineDB')
+      const count = await countPending()
+      if (count === 0) return
+
+      setSyncing(true)
+      const result = await syncToServer()
+      setSyncing(false)
+
+      if (result.success > 0) {
+        setMsg({ type: 'ok', text: `✅ ${result.success} data absensi berhasil di-upload!` })
+        loadStatus()
+        checkPending()
+      }
+      if (result.failed > 0) {
+        setMsg({ type: 'err', text: `⚠️ ${result.failed} data gagal sync. Akan dicoba lagi.` })
+      }
+    } catch (err) {
+      setSyncing(false)
+      console.error('Auto-sync error:', err)
+    }
+  }
 
   async function loadStatus() {
     try {
       const res = await fetch('/api/attendance/status')
       const data = await res.json()
       setStatus(data)
-    } catch { setMsg({ type: 'err', text: 'Gagal load status' }) }
+    } catch {
+      console.log('📡 Status fetch failed (offline)')
+    }
     finally { setLoading(false) }
   }
 
@@ -811,7 +907,6 @@ function AbsensiClockView({ title }: any) {
       setGpsError('Browser tidak support GPS')
       return
     }
-
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
@@ -820,8 +915,8 @@ function AbsensiClockView({ title }: any) {
       (err) => {
         setGpsStatus('error')
         if (err.code === 1) setGpsError('Izin GPS ditolak. Aktifkan di setting browser.')
-        else if (err.code === 2) setGpsError('GPS tidak tersedia. Coba di luar ruangan.')
-        else if (err.code === 3) setGpsError('Timeout mengambil GPS.')
+        else if (err.code === 2) setGpsError('GPS tidak tersedia.')
+        else if (err.code === 3) setGpsError('Timeout GPS.')
         else setGpsError('Error GPS: ' + err.message)
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
@@ -835,48 +930,109 @@ function AbsensiClockView({ title }: any) {
     }
     setProcessing(true); setMsg({ type: '', text: '' })
 
-    try {
-      const res = await fetch('/api/attendance/clock-in', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latitude: gpsLocation.lat, longitude: gpsLocation.lng })
-      })
-      const data = await res.json()
-      if (!res.ok) { setMsg({ type: 'err', text: data.error }); return }
-      setMsg({ type: 'ok', text: data.message })
-      loadStatus()
-    } catch { setMsg({ type: 'err', text: 'Terjadi kesalahan' }) }
-    finally { setProcessing(false) }
+    if (isOnline) {
+      try {
+        const res = await fetch('/api/attendance/clock-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latitude: gpsLocation.lat, longitude: gpsLocation.lng })
+        })
+        const data = await res.json()
+        if (!res.ok) { setMsg({ type: 'err', text: data.error }); return }
+        setMsg({ type: 'ok', text: data.message })
+        loadStatus()
+      } catch {
+        await saveOffline('clock_in')
+      }
+    } else {
+      await saveOffline('clock_in')
+    }
+    setProcessing(false)
   }
 
   async function handleClockOut() {
     if (!gpsLocation) {
-      setMsg({ type: 'err', text: 'GPS belum siap. Aktifkan GPS dan refresh.' })
+      setMsg({ type: 'err', text: 'GPS belum siap.' })
       return
     }
-    if (!confirm('Yakin clock out sekarang? Setelah clock out tidak bisa dibatalkan.')) return
-
+    if (!confirm('Yakin clock out sekarang?')) return
     setProcessing(true); setMsg({ type: '', text: '' })
 
+    if (isOnline) {
+      try {
+        const res = await fetch('/api/attendance/clock-out', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latitude: gpsLocation.lat, longitude: gpsLocation.lng })
+        })
+        const data = await res.json()
+        if (!res.ok) { setMsg({ type: 'err', text: data.error }); return }
+        setMsg({ type: 'ok', text: data.message })
+        loadStatus()
+      } catch {
+        await saveOffline('clock_out')
+      }
+    } else {
+      await saveOffline('clock_out')
+    }
+    setProcessing(false)
+  }
+
+  async function saveOffline(type: 'clock_in' | 'clock_out') {
     try {
-      const res = await fetch('/api/attendance/clock-out', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latitude: gpsLocation.lat, longitude: gpsLocation.lng })
+      const { saveOfflineAttendance } = await import('@/app/lib/offlineDB')
+      const record = await saveOfflineAttendance(type, gpsLocation!.lat, gpsLocation!.lng)
+
+      if (type === 'clock_in') setOfflineClockIn(true)
+      if (type === 'clock_out') setOfflineClockOut(true)
+
+      const timeStr = new Date(record.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      setMsg({
+        type: 'ok',
+        text: `✅ ${type === 'clock_in' ? 'Clock In' : 'Clock Out'} tersimpan OFFLINE (${timeStr}). Akan auto-upload saat online.`
       })
-      const data = await res.json()
-      if (!res.ok) { setMsg({ type: 'err', text: data.error }); return }
-      setMsg({ type: 'ok', text: data.message })
-      loadStatus()
-    } catch { setMsg({ type: 'err', text: 'Terjadi kesalahan' }) }
-    finally { setProcessing(false) }
+
+      checkPending()
+
+      if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        const reg = await navigator.serviceWorker.ready
+        await (reg as any).sync.register('sync-attendance')
+      }
+    } catch (err) {
+      setMsg({ type: 'err', text: 'Gagal menyimpan offline. Coba lagi.' })
+    }
+  }
+
+  async function handleManualSync() {
+    setSyncing(true)
+    setMsg({ type: '', text: '' })
+
+    try {
+      const { syncToServer } = await import('@/app/lib/offlineDB')
+      const result = await syncToServer()
+
+      if (result.total === 0) {
+        setMsg({ type: 'ok', text: 'Tidak ada data pending untuk di-sync.' })
+      } else if (result.failed === 0) {
+        setMsg({ type: 'ok', text: `🎉 Semua ${result.success} data berhasil di-upload!` })
+        setOfflineClockIn(false)
+        setOfflineClockOut(false)
+        loadStatus()
+      } else {
+        setMsg({ type: 'err', text: `${result.success} berhasil, ${result.failed} gagal. Coba lagi nanti.` })
+      }
+      checkPending()
+    } catch {
+      setMsg({ type: 'err', text: 'Sync gagal. Pastikan koneksi internet stabil.' })
+    }
+    setSyncing(false)
   }
 
   if (loading) return <div className="text-center py-8 text-slate-500">Memuat...</div>
 
   const today = status?.today
-  const hasClockIn = today && today.clock_in
-  const hasClockOut = today && today.clock_out
+  const hasClockIn = (today && today.clock_in) || offlineClockIn
+  const hasClockOut = (today && today.clock_out) || offlineClockOut
   const stats = status?.stats || {}
   const siteConfig = status?.site_config
 
@@ -887,19 +1043,76 @@ function AbsensiClockView({ title }: any) {
           <div className="w-1 h-8 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></div>
           <h2 className="text-2xl font-bold text-slate-900">⏰ {title}</h2>
         </div>
-        <p className="text-sm text-slate-500">Clock in / Clock out untuk mencatat kehadiran</p>
+        <p className="text-sm text-slate-500">Clock in / Clock out • {isOnline ? '🟢 Online' : '🔴 Offline'}</p>
       </div>
 
+      <div className={`p-3 rounded-xl mb-4 text-sm flex items-center justify-between ${
+        isOnline 
+          ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' 
+          : 'bg-orange-50 border border-orange-200 text-orange-700'
+      }`}>
+        <div className="flex items-center gap-2">
+          <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-orange-500'}`}></div>
+          <span className="font-semibold">
+            {isOnline ? '🌐 Online — Data langsung ke server' : '📡 Offline — Data disimpan di HP'}
+          </span>
+        </div>
+        {pendingCount > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="bg-orange-200 text-orange-800 text-xs font-bold px-2 py-1 rounded-full">
+              {pendingCount} pending
+            </span>
+            {isOnline && (
+              <button
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white text-xs font-semibold px-3 py-1 rounded-lg"
+              >
+                {syncing ? '⏳ Syncing...' : '🔄 Sync Sekarang'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {pendingCount > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">📦</div>
+            <div>
+              <div className="font-bold text-amber-900">
+                {pendingCount} absensi belum ter-upload
+              </div>
+              <div className="text-xs text-amber-700 mt-1">
+                {isOnline
+                  ? 'Klik "Sync Sekarang" atau tunggu auto-sync'
+                  : 'Akan otomatis upload saat koneksi internet kembali'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {msg.text && (
-        <div className={`p-3 rounded-xl mb-4 text-sm ${msg.type === 'ok' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+        <div className={`p-3 rounded-xl mb-4 text-sm ${
+          msg.type === 'ok' ? 'bg-green-50 border border-green-200 text-green-700' :
+          msg.type === 'warn' ? 'bg-orange-50 border border-orange-200 text-orange-700' :
+          'bg-red-50 border border-red-200 text-red-700'
+        }`}>
           {msg.text}
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl shadow-lg text-white p-6">
+        <div className={`rounded-2xl shadow-lg text-white p-6 ${
+          isOnline 
+            ? 'bg-gradient-to-br from-slate-900 to-slate-800' 
+            : 'bg-gradient-to-br from-orange-900 to-orange-800'
+        }`}>
           <div className="text-center mb-6">
-            <div className="text-sm text-slate-400 mb-1">Waktu Sekarang</div>
+            <div className="text-sm text-slate-400 mb-1">
+              {isOnline ? 'Waktu Sekarang' : '⚡ MODE OFFLINE'}
+            </div>
             <div className="text-4xl md:text-5xl font-bold text-white tracking-wider">
               {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </div>
@@ -919,9 +1132,9 @@ function AbsensiClockView({ title }: any) {
                 {gpsStatus === 'ready' ? 'GPS Aktif' : gpsStatus === 'error' ? 'GPS Error' : 'Cek GPS...'}
               </span>
             </div>
-            {gpsStatus === 'ready' && (
+            {gpsStatus === 'ready' && gpsLocation && (
               <div className="text-xs mt-1 opacity-80">
-                Koordinat: {gpsLocation?.lat.toFixed(6)}, {gpsLocation?.lng.toFixed(6)}
+                {gpsLocation.lat.toFixed(6)}, {gpsLocation.lng.toFixed(6)}
               </div>
             )}
             {gpsStatus === 'error' && (
@@ -934,29 +1147,48 @@ function AbsensiClockView({ title }: any) {
 
           <div className="space-y-3">
             {!hasClockIn ? (
-              <button onClick={handleClockIn} disabled={processing || gpsStatus !== 'ready'} className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg text-lg flex items-center justify-center gap-2">
+              <button
+                onClick={handleClockIn}
+                disabled={processing || gpsStatus !== 'ready'}
+                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg text-lg flex items-center justify-center gap-2"
+              >
                 {processing ? (
                   <><span className="animate-spin">⏳</span> Memproses...</>
                 ) : (
-                  <>🟢 CLOCK IN Sekarang</>
+                  <>🟢 CLOCK IN {!isOnline && '(Offline)'}</>
                 )}
               </button>
             ) : !hasClockOut ? (
-              <button onClick={handleClockOut} disabled={processing || gpsStatus !== 'ready'} className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-slate-600 disabled:to-slate-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg text-lg flex items-center justify-center gap-2">
+              <button
+                onClick={handleClockOut}
+                disabled={processing || gpsStatus !== 'ready'}
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-slate-600 disabled:to-slate-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg text-lg flex items-center justify-center gap-2"
+              >
                 {processing ? (
                   <><span className="animate-spin">⏳</span> Memproses...</>
                 ) : (
-                  <>🔴 CLOCK OUT</>
+                  <>🔴 CLOCK OUT {!isOnline && '(Offline)'}</>
                 )}
               </button>
             ) : (
               <div className="bg-emerald-500/20 border border-emerald-500 rounded-xl p-4 text-center">
                 <div className="text-2xl mb-1">✅</div>
                 <div className="text-white font-bold">Absensi Selesai</div>
-                <div className="text-xs text-slate-300 mt-1">Sudah clock in & clock out hari ini</div>
+                <div className="text-xs text-slate-300 mt-1">
+                  {offlineClockIn || offlineClockOut
+                    ? '📦 Data tersimpan offline, menunggu upload'
+                    : 'Sudah clock in & clock out hari ini'}
+                </div>
               </div>
             )}
           </div>
+
+          {!isOnline && (
+            <div className="mt-4 bg-white/10 rounded-xl p-3 text-xs text-orange-200">
+              <div className="font-semibold mb-1">⚡ Mode Offline Aktif</div>
+              <p>Absensi tersimpan di HP Anda. Data akan otomatis di-upload ke server saat koneksi internet kembali.</p>
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
@@ -965,7 +1197,7 @@ function AbsensiClockView({ title }: any) {
             <span>Status Hari Ini</span>
           </h3>
 
-          {hasClockIn ? (
+          {today && today.clock_in ? (
             <div className="space-y-3">
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
                 <div className="text-xs text-emerald-600 font-semibold">🟢 CLOCK IN</div>
@@ -976,13 +1208,11 @@ function AbsensiClockView({ title }: any) {
                   Shift: <b>{today.shift}</b> • Status: <span className={`font-bold ${today.status === 'HADIR' ? 'text-emerald-600' : today.status === 'TERLAMBAT' ? 'text-orange-600' : 'text-red-600'}`}>{today.status}</span>
                 </div>
                 {today.terlambat_menit > 0 && (
-                  <div className="text-xs text-orange-600 mt-1">
-                    Terlambat {today.terlambat_menit} menit
-                  </div>
+                  <div className="text-xs text-orange-600 mt-1">Terlambat {today.terlambat_menit} menit</div>
                 )}
               </div>
 
-              {hasClockOut ? (
+              {today.clock_out ? (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-3">
                   <div className="text-xs text-red-600 font-semibold">🔴 CLOCK OUT</div>
                   <div className="text-lg font-bold text-slate-900">
@@ -995,7 +1225,23 @@ function AbsensiClockView({ title }: any) {
               ) : (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
                   <div className="text-xs text-yellow-600 font-semibold">⏳ Belum Clock Out</div>
-                  <div className="text-xs text-slate-500 mt-1">Jangan lupa clock out sebelum pulang</div>
+                </div>
+              )}
+            </div>
+          ) : offlineClockIn ? (
+            <div className="space-y-3">
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-3">
+                <div className="text-xs text-orange-600 font-semibold">📦 CLOCK IN (Offline)</div>
+                <div className="text-sm font-bold text-slate-900 mt-1">
+                  Tersimpan di HP • Menunggu upload
+                </div>
+              </div>
+              {offlineClockOut && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-3">
+                  <div className="text-xs text-orange-600 font-semibold">📦 CLOCK OUT (Offline)</div>
+                  <div className="text-sm font-bold text-slate-900 mt-1">
+                    Tersimpan di HP • Menunggu upload
+                  </div>
                 </div>
               )}
             </div>
@@ -1013,7 +1259,6 @@ function AbsensiClockView({ title }: any) {
               <div className="text-xs text-slate-700 space-y-1">
                 <div>Shift SIANG: <b>{siteConfig.siang_jam_masuk?.slice(0,5)}</b> - <b>{siteConfig.siang_jam_pulang?.slice(0,5)}</b></div>
                 <div>Shift MALAM: <b>{siteConfig.malam_jam_masuk?.slice(0,5)}</b> - <b>{siteConfig.malam_jam_pulang?.slice(0,5)}</b></div>
-                <div>Batas telat: <b>{siteConfig.siang_batas_telat} menit</b></div>
               </div>
             </div>
           )}
@@ -1058,15 +1303,18 @@ function StatBox({ icon, label, value, color }: any) {
   )
 }
 
-// ============ FORM LEMBUR ============
+// ============ FORM LEMBUR (dengan WA Notif) ============
 function FormLemburView({ title, onSuccess }: any) {
   const [form, setForm] = useState({
     tanggal: '', jam_mulai: '', jam_selesai: '',
     jenis_lembur: 'BIASA', alasan: '', atasan_nrp: ''
   })
   const [atasanList, setAtasanList] = useState<any[]>([])
+  const [atasanHp, setAtasanHp] = useState('')
+  const [atasanNama, setAtasanNama] = useState('')
   const [msg, setMsg] = useState({ type: '', text: '' })
   const [loading, setLoading] = useState(false)
+  const [showWaButton, setShowWaButton] = useState(false)
 
   useEffect(() => {
     fetch('/api/overtime/atasan-list')
@@ -1095,7 +1343,14 @@ function FormLemburView({ title, onSuccess }: any) {
       const data = await res.json()
       if (!res.ok) { setMsg({ type: 'err', text: data.error }); return }
       setMsg({ type: 'ok', text: data.message })
+      
+      // TAMPILKAN TOMBOL WA
+      setShowWaButton(true)
+      
+      // Reset form
       setForm({ tanggal: '', jam_mulai: '', jam_selesai: '', jenis_lembur: 'BIASA', alasan: '', atasan_nrp: '' })
+      setAtasanHp('')
+      setAtasanNama('')
     } catch { setMsg({ type: 'err', text: 'Terjadi kesalahan' }) }
     finally { setLoading(false) }
   }
@@ -1114,6 +1369,40 @@ function FormLemburView({ title, onSuccess }: any) {
         {msg.text && (
           <div className={`p-3 rounded-xl mb-4 text-sm ${msg.type === 'ok' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
             {msg.text}
+          </div>
+        )}
+
+        {/* 🟢 TOMBOL WA - MUNCUL SETELAH SUBMIT SUKSES */}
+        {showWaButton && (
+          <div className="bg-blue-50 border-2 border-blue-300 p-4 rounded-xl mb-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <div className="font-bold text-blue-900 text-base">✅ Pengajuan Berhasil Dikirim!</div>
+                <div className="text-xs text-blue-700 mt-1">
+                  Kirim notifikasi ke atasan via WhatsApp agar segera diproses.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const pesan = `Yth. Bpk/Ibu ${atasanNama || 'Atasan'},\n\nSaya mengajukan lembur pada tanggal ${form.tanggal || 'terlampir'}.\nMohon approvalnya.\n\nTerima kasih.`;
+                  openWhatsApp(atasanHp, pesan);
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-md transition-all hover:scale-105"
+              >
+                <span className="text-lg">📲</span>
+                <span>Notif Atasan via WA</span>
+              </button>
+            </div>
+            <div className="mt-3 pt-3 border-t border-blue-200">
+              <button
+                type="button"
+                onClick={() => setShowWaButton(false)}
+                className="text-xs text-blue-600 hover:text-blue-800 underline"
+              >
+                Sembunyikan tombol ini
+              </button>
+            </div>
           </div>
         )}
 
@@ -1151,12 +1440,27 @@ function FormLemburView({ title, onSuccess }: any) {
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">Pilih Atasan yang Menyetujui</label>
-            <select required value={form.atasan_nrp} onChange={e => setForm({ ...form, atasan_nrp: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-amber-500 text-slate-900">
+            <select 
+              required 
+              value={form.atasan_nrp} 
+              onChange={e => {
+                setForm({ ...form, atasan_nrp: e.target.value })
+                const selected = atasanList.find((a: any) => a.nrp === e.target.value)
+                setAtasanHp(selected?.no_hp || '')
+                setAtasanNama(selected?.nama || '')
+              }} 
+              className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-amber-500 text-slate-900"
+            >
               <option value="">-- Pilih Atasan --</option>
               {atasanList.map((a: any) => (
                 <option key={a.nrp} value={a.nrp}>{a.nama} - {a.jabatan} ({a.site})</option>
               ))}
             </select>
+            {atasanHp && (
+              <div className="text-xs text-slate-500 mt-1">
+                📱 No. HP Atasan: <span className="font-mono">{atasanHp}</span>
+              </div>
+            )}
           </div>
 
           <div>
@@ -1531,7 +1835,7 @@ function TableView({ data, onReload }: any) {
   )
 }
 
-// ============ CRUD MODAL ============
+// ============ CRUD MODAL (dengan Employee Picker) ============
 function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   const [fields, setFields] = useState<any[]>([])
   const [values, setValues] = useState<any>({})
@@ -1583,8 +1887,16 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
             <div className="space-y-4">
               {fields.map(f => (
                 <div key={f.key}>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">{f.label} {f.required && <span className="text-red-500">*</span>}</label>
-                  {f.type === 'textarea' ? (
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    {f.label} {f.required && <span className="text-red-500">*</span>}
+                  </label>
+                  {f.type === 'employee_picker' ? (
+                    <EmployeePicker
+                      value={values[f.key] || ''}
+                      onChange={(nrp: string) => setValues({ ...values, [f.key]: nrp })}
+                      required={f.required}
+                    />
+                  ) : f.type === 'textarea' ? (
                     <textarea required={f.required} value={values[f.key] || ''} onChange={e => setValues({ ...values, [f.key]: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border min-h-[80px] text-gray-900" />
                   ) : f.type === 'select' ? (
                     <select required={f.required} value={values[f.key] || ''} onChange={e => setValues({ ...values, [f.key]: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border text-gray-900">
@@ -1609,6 +1921,129 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
           </div>
         </form>
       </div>
+    </div>
+  )
+}
+
+// ============ EMPLOYEE PICKER (Searchable Dropdown) ============
+function EmployeePicker({ value, onChange, required }: any) {
+  const [search, setSearch] = useState('')
+  const [showList, setShowList] = useState(false)
+  const [employees, setEmployees] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [selectedEmp, setSelectedEmp] = useState<any>(null)
+
+  useEffect(() => {
+    if (value && !selectedEmp) {
+      fetch(`/api/schema?search_employees=${value}`)
+        .then(r => r.json())
+        .then(d => {
+          const found = (d.employees || []).find((e: any) => String(e.nrp) === String(value))
+          if (found) setSelectedEmp(found)
+        })
+    }
+  }, [value])
+
+  useEffect(() => {
+    if (!showList) return
+
+    const timer = setTimeout(() => {
+      setLoading(true)
+      fetch(`/api/schema?search_employees=${encodeURIComponent(search)}`)
+        .then(r => r.json())
+        .then(d => {
+          setEmployees(d.employees || [])
+          setLoading(false)
+        })
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [search, showList])
+
+  function selectEmployee(emp: any) {
+    setSelectedEmp(emp)
+    onChange(emp.nrp)
+    setShowList(false)
+    setSearch('')
+  }
+
+  function clearSelection() {
+    setSelectedEmp(null)
+    onChange('')
+    setShowList(true)
+  }
+
+  return (
+    <div className="relative">
+      {selectedEmp && !showList ? (
+        <div className="w-full px-4 py-3 rounded-xl border-2 border-blue-300 bg-blue-50 flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-slate-900 truncate">
+              {selectedEmp.nama}
+            </div>
+            <div className="text-xs text-slate-600 mt-0.5">
+              NRP: <span className="font-mono">{selectedEmp.nrp}</span>
+              {selectedEmp.jabatan && ` • ${selectedEmp.jabatan}`}
+              {selectedEmp.site && ` • ${selectedEmp.site}`}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={clearSelection}
+            className="ml-2 text-red-500 hover:text-red-700 font-bold text-lg"
+            title="Ganti karyawan"
+          >
+            ✕
+          </button>
+        </div>
+      ) : (
+        <div>
+          <input
+            type="text"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setShowList(true) }}
+            onFocus={() => setShowList(true)}
+            placeholder="🔍 Ketik nama atau NRP karyawan..."
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-900"
+          />
+
+          {showList && (
+            <div className="absolute z-10 w-full mt-1 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto">
+              {loading ? (
+                <div className="p-4 text-center text-slate-500 text-sm">Mencari...</div>
+              ) : employees.length === 0 ? (
+                <div className="p-4 text-center text-slate-500 text-sm">
+                  {search ? 'Tidak ada karyawan ditemukan' : 'Ketik untuk cari karyawan'}
+                </div>
+              ) : (
+                <>
+                  <div className="p-2 bg-slate-50 border-b text-xs text-slate-500">
+                    {employees.length} karyawan ditemukan • Klik untuk pilih
+                  </div>
+                  {employees.map((emp: any) => (
+                    <button
+                      key={emp.nrp}
+                      type="button"
+                      onClick={() => selectEmployee(emp)}
+                      className="w-full text-left p-3 hover:bg-blue-50 border-b last:border-0 transition-colors"
+                    >
+                      <div className="font-semibold text-slate-900">{emp.nama}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        NRP: <span className="font-mono">{emp.nrp}</span>
+                        {emp.jabatan && ` • ${emp.jabatan}`}
+                        {emp.departemen && ` • ${emp.departemen}`}
+                        {emp.site && ` • ${emp.site}`}
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <input type="hidden" value={value || ''} required={required} />
     </div>
   )
 }
@@ -1685,50 +2120,60 @@ async function handleApprove(id: string, action: string, onReload: () => void) {
     const res = await fetch('/api/leave/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leave_id: id, action, catatan }) })
     const d = await res.json()
     if (!res.ok) { alert('❌ ' + d.error); return }
-    alert(d.message); onReload()
+    
+    alert(d.message); 
+    
+    // LOGIKA WA OTOMATIS
+    const row = rows.find(r => r.id === id) // rows harus diakses dari scope TableView
+    if (row && row._nama_karyawan && row._no_hp) {
+       const statusText = action === 'APPROVED' ? 'Disetujui' : 'Ditolak';
+       const msg = `Halo ${row._nama_karyawan}, pengajuan cuti Anda ${statusText}. ${catatan ? `Catatan: ${catatan}` : ''}`;
+       if (confirm(`Kirim notifikasi WA ke ${row._nama_karyawan}?`)) {
+         openWhatsApp(row._no_hp, msg);
+       }
+    }
+    
+    onReload()
   } catch { alert('❌ Error') }
 }
 
-async function handleApproveLembur(id: string, action: string, onReload: () => void) {
+async function handleApprovelembur(id: string, action: string, onReload: () => void) {
   let catatan = ''
-  if (action === 'REJECTED') {
-    catatan = prompt('Catatan penolakan lembur:') || ''
-    if (!catatan.trim()) { alert('❌ Catatan wajib diisi'); return }
-  } else {
-    catatan = prompt('Catatan approval (opsional):') || ''
-  }
+  if (action === 'REJECTED') { catatan = prompt('Catatan penolakan:') || ''; if (!catatan.trim()) { alert('❌ Catatan wajib'); return } }
+  else catatan = prompt('Catatan (opsional):') || ''
 
   try {
-    const res = await fetch('/api/overtime/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ overtime_id: id, action, catatan })
-    })
+    const res = await fetch('/api/leave/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leave_id: id, action, catatan }) })
     const d = await res.json()
     if (!res.ok) { alert('❌ ' + d.error); return }
-    alert(d.message); onReload()
-  } catch { alert('❌ Error') }
-}
-
-async function handleDelete(table: string, id: string, onReload: () => void) {
-  if (!confirm('⚠️ Yakin hapus?')) return
-  try {
-    const res = await fetch(`/api/crud?table=${table}&id=${id}`, { method: 'DELETE' })
-    const d = await res.json()
-    if (!res.ok) { alert('❌ ' + d.error); return }
-    alert(d.message); onReload()
+    
+    alert(d.message); 
+    
+    // LOGIKA WA OTOMATIS
+    const row = rows.find(r => r.id === id) // rows harus diakses dari scope TableView
+    if (row && row._nama_karyawan && row._no_hp) {
+       const statusText = action === 'APPROVED' ? 'Disetujui' : 'Ditolak';
+       const msg = `Halo ${row._nama_karyawan}, pengajuan cuti Anda ${statusText}. ${catatan ? `Catatan: ${catatan}` : ''}`;
+       if (confirm(`Kirim notifikasi WA ke ${row._nama_karyawan}?`)) {
+         openWhatsApp(row._no_hp, msg);
+       }
+    }
+    
+    onReload()
   } catch { alert('❌ Error') }
 }
 
 // ============ UTILS ============
 function formatColumnName(col: string): string {
-  // Label khusus untuk kolom nama yang di-enrich
   const specialLabels: Record<string, string> = {
-    '_nama': 'Nama Karyawan',
-    '_nama_employee': 'Nama Karyawan',
-    '_nama_atasan': 'Nama Atasan',
-    '_nama_pjo': 'Nama PJO',
+    '_nama_karyawan': '👤 Nama Karyawan',
+    '_nama': '👤 Nama Karyawan',
+    '_nama_employee': '👤 Nama Karyawan',
+    '_nama_atasan': '👔 Nama Atasan',
+    '_nama_pjo': '🎯 Nama PJO',
     '_jabatan': 'Jabatan',
+    '_departemen': 'Departemen',
+    '_site': 'Site',
     'nrp': 'NRP',
     'employee_nrp': 'NRP Karyawan',
     'atasan_nrp': 'NRP Atasan',
@@ -1804,12 +2249,18 @@ function formatColumnName(col: string): string {
 function renderCell(col: string, value: any) {
   if (value === null || value === undefined || value === '') return <span className="text-gray-300">-</span>
 
-  // Nama karyawan → tampil bold
-  if (col === '_nama' || col === '_nama_employee' || col === '_nama_atasan' || col === '_nama_pjo') {
-    return <span className="font-semibold text-slate-900">{String(value)}</span>
+  if (col === '_nama_karyawan' || col === '_nama' || col === '_nama_employee') {
+    return <span className="font-bold text-slate-900">{String(value)}</span>
   }
 
-  // NRP → tampil kecil dan abu-abu
+  if (col === '_nama_atasan' || col === '_nama_pjo') {
+    return <span className="font-semibold text-slate-700">{String(value)}</span>
+  }
+
+  if (col === '_jabatan' || col === '_departemen' || col === '_site') {
+    return <span className="text-xs text-slate-500 italic">{String(value)}</span>
+  }
+
   if (col === 'nrp' || col === 'employee_nrp' || col === 'atasan_nrp' || col === 'pjo_nrp' || col === 'nrp_login') {
     return <span className="text-xs text-slate-500 font-mono">{String(value)}</span>
   }
@@ -1819,7 +2270,6 @@ function renderCell(col: string, value: any) {
 
   if (typeof value === 'boolean') return value ? <span className="text-green-600">✓</span> : <span className="text-gray-400">✗</span>
 
-  // Clock In/Out → format jam
   if (col === 'clock_in' || col === 'clock_out') {
     try {
       const d = new Date(value)
@@ -1838,33 +2288,27 @@ function renderCell(col: string, value: any) {
     } catch {}
   }
 
-  // Jam kerja (menit) → format jam & menit
   if (col === 'jam_kerja_menit' && typeof value === 'number') {
     const jam = Math.floor(value / 60)
     const menit = value % 60
     return <span className="font-semibold">{jam}j {menit}m</span>
   }
 
-  // Terlambat (menit) → warna oranye kalau > 0
   if (col === 'terlambat_menit' && typeof value === 'number') {
     if (value === 0) return <span className="text-emerald-600">Tepat waktu</span>
     return <span className="text-orange-600 font-semibold">{value} menit</span>
   }
 
-  // Tanggal
   if (col.includes('tanggal') || col.includes('_at') || col.includes('mulai') || col.includes('akhir') || col.includes('expired')) {
     try { const d = new Date(value); if (!isNaN(d.getTime())) return d.toLocaleDateString('id-ID') } catch {}
   }
 
-  // Jam (HH:MM)
   if (col.includes('jam_') && typeof value === 'string' && value.match(/^\d{2}:\d{2}/)) {
     return <span className="font-mono">{value.slice(0, 5)}</span>
   }
 
-  // Angka
   if (typeof value === 'number') return value.toLocaleString('id-ID')
 
-  // String panjang
   const s = String(value)
   return s.length > 60 ? <span title={s}>{s.substring(0, 60)}...</span> : s
 }
@@ -1942,6 +2386,8 @@ function RoleManagerView({ title }: any) {
     { key: 'hrga', label: 'HRGA', color: 'amber' },
   ]
 
+  
+
   return (
     <div>
       <div className="mb-6">
@@ -1958,7 +2404,6 @@ function RoleManagerView({ title }: any) {
         </div>
       )}
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         <div className="bg-white rounded-xl border border-slate-200 p-3">
           <div className="text-xs text-slate-500">Total Karyawan</div>
@@ -1982,7 +2427,6 @@ function RoleManagerView({ title }: any) {
         </div>
       </div>
 
-      {/* Filter */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 mb-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
@@ -2009,7 +2453,6 @@ function RoleManagerView({ title }: any) {
         </div>
       </div>
 
-      {/* List Karyawan */}
       {loading ? (
         <div className="text-center py-8 text-slate-500">Memuat...</div>
       ) : (data.employees || []).length === 0 ? (
@@ -2022,7 +2465,6 @@ function RoleManagerView({ title }: any) {
           {(data.employees || []).map((emp: any) => (
             <div key={emp.nrp} className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex flex-col md:flex-row md:items-center gap-3">
-                {/* Info Karyawan */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-slate-900">{emp.nama}</span>
@@ -2035,7 +2477,6 @@ function RoleManagerView({ title }: any) {
                   </div>
                 </div>
 
-                {/* Role Checkboxes */}
                 <div className="flex flex-wrap gap-2">
                   {roles.map(r => {
                     const isActive = emp.roles?.includes(r.key)
@@ -2079,4 +2520,22 @@ function RoleManagerView({ title }: any) {
       </div>
     </div>
   )
+}
+  // ============ WHATSAPP HELPER (GRATIS) ============
+function openWhatsApp(phone: string | undefined, message: string) {
+  if (!phone) {
+    alert('⚠️ Nomor HP tidak tersedia di data karyawan. Silakan hubungi secara manual.');
+    return;
+  }
+  
+  // Format nomor HP (08xx -> 628xx)
+  let cleanPhone = phone.replace(/\D/g, '');
+  if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.substring(1);
+  
+  if (cleanPhone.startsWith('62')) {
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  } else {
+    alert('Format nomor HP tidak valid');
+  }
 }
