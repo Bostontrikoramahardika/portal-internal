@@ -2,243 +2,93 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
 
-// Daftar tabel yang boleh di-CRUD
 const ALLOWED_TABLES = [
-  'employees', 'roles', 'approval_matrix',
-  'kpi', 'apd', 'pkwt', 'sp', 'roster', 'leave_requests', 'menus',
-  'sites_config', 'attendance', 'overtime_requests'
+  'employees', 'kpi', 'apd', 'pkwt', 'sp', 'roster', 
+  'attendance', 'roles', 'approval_matrix', 'announcements',
+  'bpjs', 'mcu', 'simper'
 ]
 
-// Cek role HRGA
-function isHrga(session: any): boolean {
-  return session.roles?.includes('hrga') || false
+function cleanData(obj: any) {
+  const cleaned = { ...obj }
+  for (const key in cleaned) {
+    if (cleaned[key] === "") cleaned[key] = null
+  }
+  return cleaned
 }
 
-// ============================================
-// CREATE - Insert data baru
-// ============================================
-export async function POST(request: NextRequest) {
-  const token = request.cookies.get('session_token')?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+async function checkAccess(req: NextRequest) {
+  const token = req.cookies.get('session_token')?.value
+  if (!token) return null
+  return await getSession(token)
+}
 
-  const session = await getSession(token)
-  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
-
-  if (!isHrga(session)) {
-    return NextResponse.json({ error: 'Hanya HRGA yang bisa CRUD' }, { status: 403 })
-  }
-
+// 1. TAMBAH DATA (POST)
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json()
-    const { table, values } = body
+    const session = await checkAccess(req)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { table, values } = await req.json()
+    if (!ALLOWED_TABLES.includes(table)) return NextResponse.json({ error: 'Tabel tidak diizinkan' }, { status: 400 })
 
-    if (!table || !ALLOWED_TABLES.includes(table)) {
-      return NextResponse.json({ error: 'Tabel tidak diizinkan' }, { status: 400 })
-    }
+    const dataToSave = cleanData({ ...values })
+    if (table === 'announcements') dataToSave.created_by = session.nrp
 
-    if (!values || typeof values !== 'object') {
-      return NextResponse.json({ error: 'Values wajib diisi' }, { status: 400 })
-    }
-
-    // Bersihkan field kosong
-    const cleanValues: any = {}
-    Object.keys(values).forEach(key => {
-      const val = values[key]
-      if (val !== '' && val !== null && val !== undefined) {
-        cleanValues[key] = val
-      }
-    })
-
-    const { data, error } = await supabase
-      .from(table)
-      .insert(cleanValues)
-      .select()
-      .single()
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-    // Audit log
-    await supabase.from('audit_logs').insert({
-      actor_nrp: session.nrp,
-      action: 'CREATE',
-      target_table: table,
-      target_id: data.id,
-      detail: cleanValues
-    })
-
-    return NextResponse.json({ success: true, message: '✅ Data berhasil ditambahkan', data })
-
+    const { data, error } = await supabase.from(table).insert(dataToSave).select()
+    if (error) throw error
+    return NextResponse.json({ data: data[0], message: 'Data berhasil ditambah' })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
 
-// ============================================
-// UPDATE - Ubah data
-// ============================================
-export async function PUT(request: NextRequest) {
-  const token = request.cookies.get('session_token')?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const session = await getSession(token)
-  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
-
-  if (!isHrga(session)) {
-    return NextResponse.json({ error: 'Hanya HRGA yang bisa CRUD' }, { status: 403 })
-  }
-
+// 2. UPDATE DATA (PUT)
+export async function PUT(req: NextRequest) {
   try {
-    const body = await request.json()
-    const { table, id, values } = body
+    const session = await checkAccess(req)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { table, id, values } = await req.json()
+    if (!ALLOWED_TABLES.includes(table)) return NextResponse.json({ error: 'Tabel tidak diizinkan' }, { status: 400 })
 
-    if (!table || !ALLOWED_TABLES.includes(table)) {
-      return NextResponse.json({ error: 'Tabel tidak diizinkan' }, { status: 400 })
-    }
-
-    if (!id) return NextResponse.json({ error: 'ID wajib diisi' }, { status: 400 })
-
-    // Bersihkan field kosong
-    const cleanValues: any = {}
-    Object.keys(values).forEach(key => {
-      if (key === 'id' || key === 'created_at') return
-      const val = values[key]
-      if (val !== undefined) {
-        cleanValues[key] = val === '' ? null : val
-      }
-    })
-
-    const { data, error } = await supabase
-      .from(table)
-      .update(cleanValues)
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-    // Audit log
-    await supabase.from('audit_logs').insert({
-      actor_nrp: session.nrp,
-      action: 'UPDATE',
-      target_table: table,
-      target_id: id,
-      detail: cleanValues
-    })
-
-    return NextResponse.json({ success: true, message: '✅ Data berhasil diupdate', data })
-
+    const dataToUpdate = cleanData({ ...values })
+    const { data, error } = await supabase.from(table).update(dataToUpdate).eq('id', id).select()
+    if (error) throw error
+    return NextResponse.json({ data: data[0], message: 'Data berhasil diupdate' })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
 
-// ============================================
-// DELETE - Hapus data
-// ============================================
-
-// ============================================
-// PATCH - Bulk Delete (Hapus banyak sekaligus)
-// ============================================
-export async function PATCH(request: NextRequest) {
-  const token = request.cookies.get('session_token')?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const session = await getSession(token)
-  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
-
-  if (!isHrga(session)) {
-    return NextResponse.json({ error: 'Hanya HRGA yang bisa CRUD' }, { status: 403 })
-  }
-
+// 3. HAPUS SATUAN (DELETE)
+export async function DELETE(req: NextRequest) {
   try {
-    const body = await request.json()
-    const { table, ids, action } = body
+    const session = await checkAccess(req)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { searchParams } = new URL(req.url)
+    const table = searchParams.get('table') || ''
+    const id = searchParams.get('id') || ''
+    if (!ALLOWED_TABLES.includes(table)) return NextResponse.json({ error: 'Tabel tidak diizinkan' }, { status: 400 })
 
-    if (action !== 'bulk_delete') {
-      return NextResponse.json({ error: 'Action tidak dikenali' }, { status: 400 })
-    }
-
-    if (!table || !ALLOWED_TABLES.includes(table)) {
-      return NextResponse.json({ error: 'Tabel tidak diizinkan' }, { status: 400 })
-    }
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json({ error: 'Pilih minimal 1 data' }, { status: 400 })
-    }
-
-    // Bulk delete
-    const { error, count } = await supabase
-      .from(table)
-      .delete({ count: 'exact' })
-      .in('id', ids)
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    // Audit log
-    await supabase.from('audit_logs').insert({
-      actor_nrp: session.nrp,
-      action: 'BULK_DELETE',
-      target_table: table,
-      target_id: null,
-      detail: {
-        total_deleted: count || ids.length,
-        ids: ids
-      }
-    })
-
-    return NextResponse.json({
-      success: true,
-      message: `✅ ${count || ids.length} data berhasil dihapus`,
-      deleted_count: count || ids.length
-    })
-
+    const { error } = await supabase.from(table).delete().eq('id', id)
+    if (error) throw error
+    return NextResponse.json({ message: 'Data berhasil dihapus' })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
 
-export async function DELETE(request: NextRequest) {
-  const token = request.cookies.get('session_token')?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const session = await getSession(token)
-  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
-
-  if (!isHrga(session)) {
-    return NextResponse.json({ error: 'Hanya HRGA yang bisa CRUD' }, { status: 403 })
-  }
-
+// 4. HAPUS MASSAL (PATCH) - Solusi Error 405
+export async function PATCH(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const table = searchParams.get('table')
-    const id = searchParams.get('id')
-
-    if (!table || !ALLOWED_TABLES.includes(table)) {
-      return NextResponse.json({ error: 'Tabel tidak diizinkan' }, { status: 400 })
+    const session = await checkAccess(req)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { table, ids, action } = await req.json()
+    
+    if (action === 'bulk_delete' && ALLOWED_TABLES.includes(table)) {
+      const { error } = await supabase.from(table).delete().in('id', ids)
+      if (error) throw error
+      return NextResponse.json({ message: `${ids.length} data berhasil dihapus` })
     }
-
-    if (!id) return NextResponse.json({ error: 'ID wajib diisi' }, { status: 400 })
-
-    const { error } = await supabase
-      .from(table)
-      .delete()
-      .eq('id', id)
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-    // Audit log
-    await supabase.from('audit_logs').insert({
-      actor_nrp: session.nrp,
-      action: 'DELETE',
-      target_table: table,
-      target_id: id,
-      detail: { deleted_by: session.nrp }
-    })
-
-    return NextResponse.json({ success: true, message: '✅ Data berhasil dihapus' })
-
+    return NextResponse.json({ error: 'Aksi tidak valid' }, { status: 400 })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

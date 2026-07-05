@@ -42,6 +42,15 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'radius_meter', label: 'Radius Geofencing (meter)', type: 'number', placeholder: '500', required: true },
     { key: 'active', label: 'Site Aktif', type: 'checkbox' },
   ],
+announcements: [
+  { key: 'title', label: 'Judul', type: 'text', required: true },
+  { key: 'content', label: 'Isi Pengumuman', type: 'textarea' },
+  { key: 'image_url', label: 'URL Gambar', type: 'text' },
+  { key: 'is_urgent', label: 'Urgent (Merah)', type: 'checkbox' },
+  { key: 'expires_at', label: 'Tanggal Expired', type: 'date' },
+  { key: 'active', label: 'Aktif', type: 'checkbox' },
+],
+
   kpi: [
     { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'periode', label: 'Periode (YYYY-MM)', type: 'text', required: true, placeholder: 'Contoh: 2025-06' },
@@ -127,7 +136,32 @@ const TABLE_SCHEMA: Record<string, any[]> = {
     { key: 'access_mode', label: 'Access Mode', type: 'text' },
     { key: 'sort_order', label: 'Urutan', type: 'number' },
     { key: 'active', label: 'Aktif', type: 'checkbox' },
-  ]
+  ],
+    bpjs: [
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
+    { key: 'jenis_bpjs', label: 'Jenis BPJS', type: 'select', options: ['Kesehatan', 'Ketenagakerjaan'], required: true },
+    { key: 'nomor_bpjs', label: 'Nomor Kartu', type: 'text', required: true },
+    { key: 'kelas_rawat', label: 'Kelas Rawat (Kesehatan)', type: 'select', options: ['Kelas I', 'Kelas II', 'Kelas III'] },
+    { key: 'status', label: 'Status', type: 'select', options: ['Aktif', 'Tidak Aktif'] },
+    { key: 'keterangan', label: 'Keterangan', type: 'textarea' },
+  ],
+  mcu: [
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
+    { key: 'tanggal_mcu', label: 'Tanggal MCU', type: 'date', required: true },
+    { key: 'jenis_mcu', label: 'Jenis MCU', type: 'select', options: ['Awal', 'Berkala', 'Tahunan', 'Khusus'] },
+    { key: 'hasil', label: 'Hasil MCU', type: 'select', options: ['Sehat', 'Perlu Tindak Lanjut', 'Tidak Sehat'] },
+    { key: 'tanggal_expired', label: 'Berlaku Sampai', type: 'date' },
+    { key: 'foto_catatan_url', label: 'Foto Catatan', type: 'text' }, // Gunakan key image_url jika ingin pakai logic upload pengumuman
+    { key: 'catatan_hrga', label: 'Catatan HRGA', type: 'textarea' },
+  ],
+  simper: [
+    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
+    { key: 'jenis_simper', label: 'Jenis Unit', type: 'text', placeholder: 'Contoh: LV, DT, Excavator', required: true },
+    { key: 'nomor_simper', label: 'Nomor SIMPER', type: 'text' },
+    { key: 'tanggal_terbit', label: 'Tanggal Terbit', type: 'date' },
+    { key: 'tanggal_expired', label: 'Tanggal Expired', type: 'date', required: true },
+    { key: 'status', label: 'Status', type: 'select', options: ['Aktif', 'Expired', 'Suspended'] },
+  ],
 }
 
 export async function GET(request: NextRequest) {

@@ -816,6 +816,7 @@ function AbsensiClockView({ title }: any) {
   const [syncing, setSyncing] = useState(false)
   const [offlineClockIn, setOfflineClockIn] = useState(false)
   const [offlineClockOut, setOfflineClockOut] = useState(false)
+  const [announcement, setAnnouncement] = useState<any>(null)
 
   useEffect(() => {
     setIsOnline(navigator.onLine)
@@ -844,8 +845,13 @@ function AbsensiClockView({ title }: any) {
     }
 
     loadStatus()
-    checkGPS()
-    checkPending()
+checkGPS()
+checkPending()
+
+// ✅ Ambil pengumuman aktif
+fetch('/api/announcements')
+  .then(r => r.json())
+  .then(d => setAnnouncement(d.announcement))
 
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     const pendingTimer = setInterval(checkPending, 10000)
@@ -1102,6 +1108,50 @@ function AbsensiClockView({ title }: any) {
           {msg.text}
         </div>
       )}
+
+{/* ✅ PENGUMUMAN (VERSI GAMBAR FULL - TIDAK TERPOTONG) */}
+{announcement && (
+  <div className={`mb-6 overflow-hidden rounded-2xl shadow-sm border ${
+    announcement.is_urgent ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'
+  }`}>
+    <div className="flex flex-col md:flex-row items-stretch">
+      
+      {/* Bagian Gambar: Full & Contained */}
+      {announcement.image_url && (
+        <div className="md:w-1/3 w-full bg-white/50 flex items-center justify-center p-2 border-b md:border-b-0 md:border-r border-black/5">
+          <img
+            src={announcement.image_url}
+            alt="Info"
+            className="max-w-full max-h-48 md:max-h-64 object-contain rounded-lg"
+            onError={(e: any) => e.target.style.display = 'none'} 
+          />
+        </div>
+      )}
+      
+      {/* Bagian Teks */}
+      <div className="p-5 flex-1 flex flex-col justify-center">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xl">{announcement.is_urgent ? '🚨' : '📢'}</span>
+          <h3 className={`font-bold text-lg ${announcement.is_urgent ? 'text-red-900' : 'text-amber-900'}`}>
+            {announcement.title}
+          </h3>
+        </div>
+        <p className="text-slate-700 text-sm whitespace-pre-line leading-relaxed">
+          {announcement.content}
+        </p>
+        
+        {announcement.expires_at && (
+          <div className="mt-4 pt-3 border-t border-black/5 flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+            <span>🗓️ Berlaku sampai:</span>
+            <span className="bg-white/50 px-2 py-0.5 rounded-full border border-black/5">
+              {new Date(announcement.expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className={`rounded-2xl shadow-lg text-white p-6 ${
@@ -1675,6 +1725,43 @@ function TableView({ data, onReload }: any) {
       alert('❌ Pilih minimal 1 data')
       return
     }
+  // ✅ Tambahkan fungsi ini
+  async function handleDelete(table: string, id: string, callback: () => void) {
+  if (!confirm('Yakin ingin menghapus data ini?')) return
+  try {
+    const res = await fetch(`/api/crud?table=${table}&id=${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      alert('✅ Berhasil dihapus')
+      callback()
+    } else {
+      const json = await res.json()
+      alert('❌ Gagal: ' + json.error)
+    }
+  } catch {
+    alert('❌ Terjadi kesalahan koneksi')
+  }
+}
+
+  // ✅ Tambahkan juga fungsi handleApprove & handleApproveLembur jika belum ada agar tidak error
+  async function handleApprove(id: string, status: string, callback: () => void) {
+    const res = await fetch('/api/leave/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status })
+    })
+    if (res.ok) callback()
+    else alert('Gagal memproses approval')
+  }
+
+  async function handleApproveLembur(id: string, status: string, callback: () => void) {
+    const res = await fetch('/api/overtime/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status })
+    })
+    if (res.ok) callback()
+    else alert('Gagal memproses approval lembur')
+  }
 
     if (!confirm(`⚠️ Yakin hapus ${selectedIds.length} data terpilih?\n\nAksi ini TIDAK BISA dibatalkan.`)) return
 
@@ -1908,8 +1995,43 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
                       <input type="checkbox" checked={values[f.key] === true || values[f.key] === 'true'} onChange={e => setValues({ ...values, [f.key]: e.target.checked })} className="w-5 h-5" />
                       <span className="text-sm text-gray-700">Aktif</span>
                     </label>
-                  ) : (
-                    <input type={f.type} required={f.required} value={values[f.key] || ''} onChange={e => setValues({ ...values, [f.key]: e.target.value })} placeholder={f.placeholder} className="w-full px-4 py-2.5 rounded-xl border text-gray-900" />
+                  // GANTI BAGIAN f.key === 'image_url' (atau foto_catatan_url) dengan ini:
+) : (f.key === 'image_url' || f.key === 'foto_catatan_url') ? (
+  <div className="space-y-2">
+    <input
+      type="file"
+      accept="image/*"
+      onChange={async (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        
+        const fd = new FormData()
+        fd.append('file', file)
+
+        try {
+          // Ganti teks input sementara untuk tanda loading
+          const res = await fetch('/api/announcements/upload', { method: 'POST', body: fd })
+          const data = await res.json()
+          if (res.ok) {
+            // ✅ SANGAT PENTING: Pastikan key-nya dinamis [f.key]
+            setValues((prev: any) => ({ ...prev, [f.key]: data.url }))
+            alert("✅ Gambar berhasil diupload!")
+          } else {
+            alert("❌ Gagal: " + data.error)
+          }
+        } catch {
+          alert("Gagal upload")
+        }
+      }}
+      className="w-full px-4 py-2 rounded-xl border text-sm"
+    />
+    {/* Preview gambar kecil di form agar user tahu upload berhasil */}
+    {values[f.key] && (
+      <img src={values[f.key]} className="w-20 h-20 object-cover rounded-lg border" alt="preview" />
+    )}
+  </div>
+) : (
+  <input type={f.type} required={f.required} value={values[f.key] || ''} onChange={e => setValues({ ...values, [f.key]: e.target.value })} placeholder={f.placeholder} className="w-full px-4 py-2.5 rounded-xl border text-gray-900" />
                   )}
                 </div>
               ))}
