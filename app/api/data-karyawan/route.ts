@@ -1,3 +1,8 @@
+export const dynamic = 'force-dynamic'; // Tambahkan ini
+
+import { supabase } from '@/lib/supabase'; // contoh import kamu
+// ... sisa kode lainnya
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSession } from '../../lib/auth'
