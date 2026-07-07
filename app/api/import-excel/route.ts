@@ -14,9 +14,9 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
   sp: ['nrp', 'jenis_sp', 'tanggal_sp', 'alasan'],
   roles: ['nrp', 'role'],
   approval_matrix: ['employee_nrp', 'atasan_nrp', 'pjo_nrp'],
-  bpjs: ['nama_karyawan'],   // ← TAMBAH INI
-  mcu: ['nrp', 'tanggal_mcu'], // ← TAMBAH INI  
-  simper: ['nrp', 'jenis_simper', 'tanggal_expired'], // ← TAMBAH INI
+  bpjs: ['nama_karyawan'],
+  mcu: ['nrp', 'tanggal_mcu'],
+  simper: ['nrp', 'jenis_simper', 'tanggal_expired'],
 }
 
 // Kolom yang boleh masuk ke database untuk setiap tabel
@@ -28,8 +28,6 @@ const ALLOWED_COLUMNS: Record<string, string[]> = {
   sp: ['nrp', 'jenis_sp', 'tanggal_sp', 'alasan', 'keterangan', 'berlaku_sampai'],
   roles: ['nrp', 'role', 'active'],
   approval_matrix: ['employee_nrp', 'atasan_nrp', 'pjo_nrp', 'active'],
-  
-  // ← TAMBAH 3 BARIS DI BAWAH INI
   bpjs: ['site', 'nama_karyawan', 'jabatan', 'tgl_masuk', 'bpjs_ketenagakerjaan', 'bpjs_kesehatan', 'no_ktp', 'istri_nama', 'istri_bpjs', 'anak1_nama', 'anak1_bpjs', 'anak2_nama', 'anak2_bpjs', 'anak3_nama', 'anak3_bpjs', 'keterangan'],
   mcu: ['nrp', 'nama_karyawan', 'tanggal_mcu', 'jenis_mcu', 'hasil', 'tanggal_expired', 'foto_catatan_url', 'catatan_hrga'],
   simper: ['nrp', 'nama_karyawan', 'jenis_simper', 'nomor_simper', 'tanggal_terbit', 'tanggal_expired', 'status'],
@@ -142,7 +140,7 @@ export async function POST(request: NextRequest) {
 
     // ⚡ VALIDASI TAMBAHAN: Cek NRP karyawan valid (untuk tabel yang refer ke employees)
     let validEmployeeNrps = new Set<string>()
-    if (['apd', 'pkwt', 'kpi', 'sp', 'roles', 'approval_matrix'].includes(table)) {
+    if (['apd', 'pkwt', 'kpi', 'sp', 'roles', 'approval_matrix', 'mcu', 'simper'].includes(table)) {
       const { data: allEmp } = await supabase.from('employees').select('nrp')
       validEmployeeNrps = new Set((allEmp || []).map(e => String(e.nrp)))
     }
@@ -150,6 +148,7 @@ export async function POST(request: NextRequest) {
     // Ambil data existing untuk cek duplikat
     let existingKeys: Set<string> = new Set()
 
+    // ✅ BAGIAN YANG DIPERBAIKI: Semua else if dalam satu blok if-else yang benar
     if (table === 'employees') {
       const { data } = await supabase.from('employees').select('nrp')
       existingKeys = new Set((data || []).map(r => String(r.nrp)))
@@ -159,11 +158,16 @@ export async function POST(request: NextRequest) {
     } else if (table === 'approval_matrix') {
       const { data } = await supabase.from('approval_matrix').select('employee_nrp')
       existingKeys = new Set((data || []).map(r => String(r.employee_nrp)))
-    }
     } else if (table === 'bpjs') {
-  const { data } = await supabase.from('bpjs').select('nama_karyawan')
-  existingKeys = new Set((data || []).map(r => String(r.nama_karyawan).toLowerCase().trim()))
-}
+      const { data } = await supabase.from('bpjs').select('nama_karyawan')
+      existingKeys = new Set((data || []).map(r => String(r.nama_karyawan).toLowerCase().trim()))
+    } else if (table === 'mcu') {
+      const { data } = await supabase.from('mcu').select('nrp, tanggal_mcu')
+      existingKeys = new Set((data || []).map(r => `${r.nrp}|${r.tanggal_mcu}`))
+    } else if (table === 'simper') {
+      const { data } = await supabase.from('simper').select('nrp, jenis_simper, tanggal_expired')
+      existingKeys = new Set((data || []).map(r => `${r.nrp}|${r.jenis_simper}|${r.tanggal_expired}`))
+    }
 
     let successCount = 0
     let skippedCount = 0
@@ -201,10 +205,19 @@ export async function POST(request: NextRequest) {
 
       // Cek duplikat
       let key = ''
-      if (table === 'employees') key = String(row.nrp || '')
-      else if (table === 'roles') key = `${row.nrp}|${row.role}`
-      else if (table === 'approval_matrix') key = String(row.employee_nrp || '')
-      else if (table === 'bpjs') key = String(row.nama_karyawan || '').toLowerCase().trim()
+      if (table === 'employees') {
+        key = String(row.nrp || '')
+      } else if (table === 'roles') {
+        key = `${row.nrp}|${row.role}`
+      } else if (table === 'approval_matrix') {
+        key = String(row.employee_nrp || '')
+      } else if (table === 'bpjs') {
+        key = String(row.nama_karyawan || '').toLowerCase().trim()
+      } else if (table === 'mcu') {
+        key = `${row.nrp}|${row.tanggal_mcu}`
+      } else if (table === 'simper') {
+        key = `${row.nrp}|${row.jenis_simper}|${row.tanggal_expired}`
+      }
 
       if (key && existingKeys.has(key)) {
         skippedCount++
