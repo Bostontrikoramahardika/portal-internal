@@ -138,13 +138,35 @@ announcements: [
     { key: 'active', label: 'Aktif', type: 'checkbox' },
   ],
     bpjs: [
-    { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
-    { key: 'jenis_bpjs', label: 'Jenis BPJS', type: 'select', options: ['Kesehatan', 'Ketenagakerjaan'], required: true },
-    { key: 'nomor_bpjs', label: 'Nomor Kartu', type: 'text', required: true },
-    { key: 'kelas_rawat', label: 'Kelas Rawat (Kesehatan)', type: 'select', options: ['Kelas I', 'Kelas II', 'Kelas III'] },
-    { key: 'status', label: 'Status', type: 'select', options: ['Aktif', 'Tidak Aktif'] },
-    { key: 'keterangan', label: 'Keterangan', type: 'textarea' },
-  ],
+  // 📋 DATA KARYAWAN
+  { key: 'nama_karyawan', label: '👤 Nama Karyawan', type: 'text', required: true, placeholder: 'Contoh: Achmad Probo Panggasti' },
+  { key: 'site', label: '📍 Site', type: 'text', placeholder: 'Contoh: PPA-SKS' },
+  { key: 'jabatan', label: '💼 Jabatan', type: 'text', placeholder: 'Contoh: SHE Officer' },
+  { key: 'tgl_masuk', label: '📅 Tanggal Masuk', type: 'date' },
+  
+  // 🛡️ BPJS PRIBADI
+  { key: 'bpjs_ketenagakerjaan', label: '🛡️ BPJS Ketenagakerjaan', type: 'text', placeholder: 'Nomor kartu ketenagakerjaan' },
+  { key: 'bpjs_kesehatan', label: '❤️ BPJS Kesehatan', type: 'text', placeholder: 'Nomor kartu kesehatan' },
+  { key: 'no_ktp', label: '🪪 Nomor KTP', type: 'text', placeholder: '16 digit NIK' },
+  
+  // 👰 ISTRI
+  { key: 'istri_nama', label: '👰 Nama Istri', type: 'text' },
+  { key: 'istri_bpjs', label: '💳 No. BPJS Istri', type: 'text' },
+  
+  // 👶 ANAK 1
+  { key: 'anak1_nama', label: '👶 Nama Anak 1', type: 'text' },
+  { key: 'anak1_bpjs', label: '💳 No. BPJS Anak 1', type: 'text' },
+  
+  // 👶 ANAK 2
+  { key: 'anak2_nama', label: '👶 Nama Anak 2', type: 'text' },
+  { key: 'anak2_bpjs', label: '💳 No. BPJS Anak 2', type: 'text' },
+  
+  // 👶 ANAK 3
+  { key: 'anak3_nama', label: '👶 Nama Anak 3', type: 'text' },
+  { key: 'anak3_bpjs', label: '💳 No. BPJS Anak 3', type: 'text' },
+  
+  { key: 'keterangan', label: '📝 Keterangan', type: 'textarea' },
+],
   mcu: [
     { key: 'nrp', label: '👤 Pilih Karyawan', type: 'employee_picker', required: true },
     { key: 'tanggal_mcu', label: 'Tanggal MCU', type: 'date', required: true },

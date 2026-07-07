@@ -3,7 +3,7 @@ import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
 import * as XLSX from 'xlsx'
 
-const ALLOWED_TABLES = ['employees', 'apd', 'pkwt', 'kpi', 'sp', 'roles', 'approval_matrix']
+const ALLOWED_TABLES = ['employees', 'apd', 'pkwt', 'kpi', 'sp', 'roles', 'approval_matrix', 'bpjs', 'mcu', 'simper']
 
 // Kolom yang WAJIB ada di setiap tabel
 const REQUIRED_COLUMNS: Record<string, string[]> = {
@@ -13,7 +13,10 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
   kpi: ['nrp', 'periode', 'nilai_kpi'],
   sp: ['nrp', 'jenis_sp', 'tanggal_sp', 'alasan'],
   roles: ['nrp', 'role'],
-  approval_matrix: ['employee_nrp', 'atasan_nrp', 'pjo_nrp']
+  approval_matrix: ['employee_nrp', 'atasan_nrp', 'pjo_nrp'],
+  bpjs: ['nama_karyawan'],   // ← TAMBAH INI
+  mcu: ['nrp', 'tanggal_mcu'], // ← TAMBAH INI  
+  simper: ['nrp', 'jenis_simper', 'tanggal_expired'], // ← TAMBAH INI
 }
 
 // Kolom yang boleh masuk ke database untuk setiap tabel
@@ -24,7 +27,12 @@ const ALLOWED_COLUMNS: Record<string, string[]> = {
   kpi: ['nrp', 'periode', 'nilai_kpi', 'catatan'],
   sp: ['nrp', 'jenis_sp', 'tanggal_sp', 'alasan', 'keterangan', 'berlaku_sampai'],
   roles: ['nrp', 'role', 'active'],
-  approval_matrix: ['employee_nrp', 'atasan_nrp', 'pjo_nrp', 'active']
+  approval_matrix: ['employee_nrp', 'atasan_nrp', 'pjo_nrp', 'active'],
+  
+  // ← TAMBAH 3 BARIS DI BAWAH INI
+  bpjs: ['site', 'nama_karyawan', 'jabatan', 'tgl_masuk', 'bpjs_ketenagakerjaan', 'bpjs_kesehatan', 'no_ktp', 'istri_nama', 'istri_bpjs', 'anak1_nama', 'anak1_bpjs', 'anak2_nama', 'anak2_bpjs', 'anak3_nama', 'anak3_bpjs', 'keterangan'],
+  mcu: ['nrp', 'nama_karyawan', 'tanggal_mcu', 'jenis_mcu', 'hasil', 'tanggal_expired', 'foto_catatan_url', 'catatan_hrga'],
+  simper: ['nrp', 'nama_karyawan', 'jenis_simper', 'nomor_simper', 'tanggal_terbit', 'tanggal_expired', 'status'],
 }
 
 export async function POST(request: NextRequest) {
@@ -152,6 +160,10 @@ export async function POST(request: NextRequest) {
       const { data } = await supabase.from('approval_matrix').select('employee_nrp')
       existingKeys = new Set((data || []).map(r => String(r.employee_nrp)))
     }
+    } else if (table === 'bpjs') {
+  const { data } = await supabase.from('bpjs').select('nama_karyawan')
+  existingKeys = new Set((data || []).map(r => String(r.nama_karyawan).toLowerCase().trim()))
+}
 
     let successCount = 0
     let skippedCount = 0
@@ -192,6 +204,7 @@ export async function POST(request: NextRequest) {
       if (table === 'employees') key = String(row.nrp || '')
       else if (table === 'roles') key = `${row.nrp}|${row.role}`
       else if (table === 'approval_matrix') key = String(row.employee_nrp || '')
+      else if (table === 'bpjs') key = String(row.nama_karyawan || '').toLowerCase().trim()
 
       if (key && existingKeys.has(key)) {
         skippedCount++

@@ -4,8 +4,7 @@ import { supabase } from '@/app/lib/supabase'
 
 const NRP_TABLES = [
   'kpi', 'apd', 'pkwt', 'sp', 'roster', 'attendance',
-  'overtime_requests', 'leave_requests', 'roles', 'approval_matrix',
-  'bpjs', 'mcu', 'simper'
+  'overtime_requests', 'leave_requests', 'roles', 'approval_matrix', 'mcu', 'simper'
 ]
 
 const HIDDEN_COLUMNS = [

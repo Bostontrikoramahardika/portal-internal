@@ -31,22 +31,52 @@ function DashboardContent() {
     finally { setLoading(false) }
   }
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="text-gray-500">Memuat...</div></div>
-  if (error) return <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">❌ {error}</div>
-  if (!data) return null
+  async function handleLogout() {
+    if (!confirm('Yakin ingin logout dari BTM Portal?')) return
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      window.location.href = '/'
+    } catch {
+      alert('Gagal logout. Coba refresh halaman.')
+    }
+  }
 
-  if (data.type === 'dashboard') return <DashboardView title={data.title} />
-  if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} />
-  if (data.type === 'roster_view') return <RosterView title={data.title} />
-  if (data.type === 'roster_upload') return <RosterUpload title={data.title} />
-  if (data.type === 'import_excel') return <ImportExcel title={data.title} table={data.table} />
-  if (data.type === 'change_login') return <ChangeLoginView title={data.title} />
-  if (data.type === 'absensi_clock') return <AbsensiClockView title={data.title} />
-  if (data.type === 'role_manager') return <RoleManagerView title={data.title} />
-  if (data.type === 'form_lembur') return <FormLemburView title={data.title} onSuccess={loadData} />
-  if (data.type === 'export_absensi') return <ExportAbsensiView title={data.title} />
-  if (data.type === 'table') return <TableView data={data} onReload={loadData} />
-  return <div>Tipe konten tidak dikenali</div>
+  // TOMBOL LOGOUT FLOATING
+  const LogoutBtn = () => (
+    <button
+      onClick={handleLogout}
+      className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold px-5 py-3 rounded-full shadow-2xl flex items-center gap-2 text-sm transition-all hover:scale-105"
+      title="Logout"
+    >
+      <span className="text-lg">🚪</span>
+      <span>Logout</span>
+    </button>
+  )
+
+  if (loading) return <><div className="flex items-center justify-center py-20"><div className="text-gray-500">Memuat...</div></div><LogoutBtn /></>
+  if (error) return <><div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">❌ {error}</div><LogoutBtn /></>
+  if (!data) return <LogoutBtn />
+
+  let content = <div>Tipe konten tidak dikenali</div>
+
+  if (data.type === 'dashboard') content = <DashboardView title={data.title} />
+  else if (data.type === 'form_cuti') content = <FormCutiView title={data.title} onSuccess={loadData} />
+  else if (data.type === 'roster_view') content = <RosterView title={data.title} />
+  else if (data.type === 'roster_upload') content = <RosterUpload title={data.title} />
+  else if (data.type === 'import_excel') content = <ImportExcel title={data.title} table={data.table} />
+  else if (data.type === 'change_login') content = <ChangeLoginView title={data.title} />
+  else if (data.type === 'absensi_clock') content = <AbsensiClockView title={data.title} />
+  else if (data.type === 'role_manager') content = <RoleManagerView title={data.title} />
+  else if (data.type === 'form_lembur') content = <FormLemburView title={data.title} onSuccess={loadData} />
+  else if (data.type === 'export_absensi') content = <ExportAbsensiView title={data.title} />
+  else if (data.type === 'table') content = <TableView data={data} onReload={loadData} />
+
+  return (
+    <>
+      {content}
+      <LogoutBtn />
+    </>
+  )
 }
 
 // ============ DASHBOARD ============

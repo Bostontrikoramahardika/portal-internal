@@ -142,26 +142,29 @@ const TAB_CONFIG = [
   }
 },
 
-  // TAB 7: IMPORT/EXPORT
-  {
-    key: 'import_export',
-    label: 'Import',
-    icon: '📥',
-    roles: ['hrga'],
-    customMatch: (m: MenuItem) => {
-      return (
-        m.menu_key === 'import_karyawan' ||
-        m.menu_key === 'import_apd' ||
-        m.menu_key === 'import_pkwt' ||
-        m.menu_key === 'import_kpi' ||
-        m.menu_key === 'import_sp' ||
-        m.menu_key === 'import_roles' ||
-        m.menu_key === 'import_matrix' ||
-        m.menu_key === 'export_absensi' ||
-        m.menu_key === 'audit_log'
-      )
-    }
-  },
+ // TAB 7: IMPORT/EXPORT
+{
+  key: 'import_export',
+  label: 'Import',
+  icon: '📥',
+  roles: ['hrga'],
+  customMatch: (m: MenuItem) => {
+    return (
+      m.menu_key === 'import_karyawan' ||
+      m.menu_key === 'import_apd' ||
+      m.menu_key === 'import_pkwt' ||
+      m.menu_key === 'import_kpi' ||
+      m.menu_key === 'import_sp' ||
+      m.menu_key === 'import_roles' ||
+      m.menu_key === 'import_matrix' ||
+      m.menu_key === 'import_bpjs' ||     // ✅ DITAMBAHKAN
+      m.menu_key === 'import_mcu' ||      // ✅ DITAMBAHKAN
+      m.menu_key === 'import_simper' ||   // ✅ DITAMBAHKAN
+      m.menu_key === 'export_absensi' ||
+      m.menu_key === 'audit_log'
+    )
+  }
+},
 
   // TAB 8: PROFILE
   {

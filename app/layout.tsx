@@ -48,7 +48,6 @@ export default function RootLayout({
   )
 }
 
-// Komponen untuk register Service Worker
 function ServiceWorkerRegister() {
   return (
     <script
