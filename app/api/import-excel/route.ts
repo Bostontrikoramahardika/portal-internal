@@ -133,10 +133,36 @@ export async function POST(request: NextRequest) {
     })
 
     if (validData.length === 0) {
-      return NextResponse.json({
-        error: `Tidak ada baris valid. Pastikan kolom wajib terisi: ${requiredCols.join(', ')}`
-      }, { status: 400 })
+  // 🔍 DEBUG MODE: Tampilkan info detail supaya kita bisa diagnosa
+  console.log('=== IMPORT DEBUG ===')
+  console.log('Table:', table)
+  console.log('Total raw rows from Excel:', jsonData.length)
+  console.log('Total cleaned rows:', cleanedData.length)
+  console.log('Total valid rows:', validData.length)
+  console.log('Required cols:', requiredCols)
+  console.log('Allowed cols:', allowedCols)
+  console.log('Info cols (skipped):', INFO_COLUMNS)
+  console.log('Sample RAW (2 baris):')
+  console.log(JSON.stringify(jsonData.slice(0, 2), null, 2))
+  console.log('Sample CLEANED (2 baris):')
+  console.log(JSON.stringify(cleanedData.slice(0, 2), null, 2))
+  console.log('=== END DEBUG ===')
+  
+  return NextResponse.json({
+    error: `Tidak ada baris valid. Pastikan kolom wajib terisi: ${requiredCols.join(', ')}`,
+    debug: {
+      table,
+      totalRawRows: jsonData.length,
+      totalCleanedRows: cleanedData.length,
+      totalValidRows: validData.length,
+      requiredCols,
+      allowedCols,
+      infoColsSkipped: INFO_COLUMNS,
+      sampleRaw: jsonData.slice(0, 2),
+      sampleCleaned: cleanedData.slice(0, 2)
     }
+  }, { status: 400 })
+}
 
     // ⚡ VALIDASI TAMBAHAN: Cek NRP karyawan valid (untuk tabel yang refer ke employees)
     let validEmployeeNrps = new Set<string>()
