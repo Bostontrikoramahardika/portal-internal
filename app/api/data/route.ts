@@ -7,6 +7,9 @@ const NRP_TABLES = [
   'overtime_requests', 'leave_requests', 'roles', 'approval_matrix', 'mcu', 'simper'
 ]
 
+// ✅ Tabel yang punya kolom 'nama_karyawan' (bukan NRP) - perlu filter khusus
+const NAME_BASED_TABLES = ['bpjs']
+
 const HIDDEN_COLUMNS = [
   'created_at', 'updated_at', 'id', 'nrp', 'atasan_nrp', 'pjo_nrp', 
   'employee_nrp', 'uploaded_by', 'is_offline_sync', 'synced_at',
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest) {
     const menuKey = searchParams.get('menu') || ''
     if (!menuKey) return NextResponse.json({ error: 'Menu key required' }, { status: 400 })
 
-    // 1. Ambil Menu (Gunakan select biasa, filter manual untuk kestabilan)
+    // 1. Ambil Menu
     const { data: menusFound, error: menuError } = await supabase
       .from('menus')
       .select('*')
@@ -77,9 +80,34 @@ export async function GET(request: NextRequest) {
 
     let query = supabase.from(target_table).select('*')
 
-    // Filter berdasarkan mode akses
+    // ✅ Filter berdasarkan mode akses - DITAMBAH LOGIC KHUSUS UNTUK BPJS
     if (access_mode === 'SELF') {
-      query = query.eq('nrp', session.nrp)
+      if (NAME_BASED_TABLES.includes(target_table)) {
+        // Untuk tabel bpjs: filter by nama_karyawan yang sesuai dengan user login
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('nama, nrp')
+          .eq('nrp', session.nrp)
+          .single()
+        
+        if (!employee) {
+          return NextResponse.json({ 
+            type: 'table', 
+            title: menu_label, 
+            table: target_table,
+            access_mode,
+            columns: [],
+            rows: [],
+            total: 0
+          })
+        }
+        
+        // ✅ Filter exact by nama (case-insensitive)
+        query = query.ilike('nama_karyawan', employee.nama)
+      } else {
+        // Tabel biasa dengan kolom nrp
+        query = query.eq('nrp', session.nrp)
+      }
     } else if (access_mode === 'TEAM_ATASAN' || access_mode === 'APPROVAL_ATASAN') {
       if (target_table === 'overtime_requests' || target_table === 'leave_requests') {
         query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
@@ -126,17 +154,50 @@ export async function GET(request: NextRequest) {
 }
 
 async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
-  if (!rows || rows.length === 0 || !NRP_TABLES.includes(table)) return rows
+  if (!rows || rows.length === 0) return rows
   
+  const isNameBased = NAME_BASED_TABLES.includes(table)
   const mainNrpField = table === 'approval_matrix' ? 'employee_nrp' : 'nrp'
   const allNrps = new Set<string>()
   
   rows.forEach(r => {
-    if (r[mainNrpField]) allNrps.add(String(r[mainNrpField]))
-    if (r.atasan_nrp) allNrps.add(String(r.atasan_nrp))
-    if (r.pjo_nrp) allNrps.add(String(r.pjo_nrp))
+    if (!isNameBased && r[mainNrpField]) allNrps.add(String(r[mainNrpField]))
+    if (!isNameBased && r.atasan_nrp) allNrps.add(String(r.atasan_nrp))
+    if (!isNameBased && r.pjo_nrp) allNrps.add(String(r.pjo_nrp))
   })
 
+  // Untuk tabel name-based, kita juga perlu lookup employees by nama
+  if (isNameBased && rows.length > 0) {
+    const namaSet = new Set<string>()
+    rows.forEach(r => {
+      if (r.nama_karyawan) namaSet.add(String(r.nama_karyawan))
+    })
+    
+    if (namaSet.size > 0) {
+      const { data: employees } = await supabase
+        .from('employees')
+        .select('nrp, nama, jabatan, departemen, site')
+        .in('nama', Array.from(namaSet))
+      
+      const empMap = new Map((employees || []).map((e: any) => [e.nama.toLowerCase().trim(), e]))
+      
+      return rows.map((r: any) => {
+        const enriched = { ...r }
+        const emp = empMap.get(String(r.nama_karyawan || '').toLowerCase().trim())
+        if (emp) {
+          enriched._nama_karyawan = emp.nama
+          enriched._nrp = emp.nrp
+          enriched._jabatan = emp.jabatan || '-'
+          enriched._departemen = emp.departemen || '-'
+          enriched._site = emp.site || '-'
+        }
+        return enriched
+      })
+    }
+    return rows
+  }
+  
+  // Logic lama untuk tabel NRP-based
   if (allNrps.size === 0) return rows
 
   const { data: employees } = await supabase
