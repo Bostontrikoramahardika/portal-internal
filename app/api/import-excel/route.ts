@@ -68,32 +68,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File Excel kosong' }, { status: 400 })
     }
 
-    // ✅ FIX: Kolom info yang di-skip HANYA untuk tabel yang NRP = primary key
-    // Untuk bpjs/mcu/simper, 'nama_karyawan' adalah KOLOM DATA, bukan info
+    // ✅ FIX: Info columns yang di-skip, pintar per tabel
     const infoColumnsToSkip = ['nama_atasan', 'nama_pjo', 'info_karyawan', 'info_atasan', 'info_pjo']
     if (table !== 'bpjs' && table !== 'mcu' && table !== 'simper') {
       infoColumnsToSkip.push('nama_karyawan')
     }
 
     // Bersihkan data
-    const cleanedData = jsonData.map((row: any, rowIdx: number) => {
+    const cleanedData = jsonData.map((row: any) => {
       const clean: any = {}
-
-      // ✅ LOG PERTAMA: Catat semua header yang ditemukan
-      const foundHeaders: string[] = []
-      let firstNamaFound = false  // Untuk track kolom "Nama" pertama di bpjs/mcu/simper
+      let firstNamaFound = false
 
       Object.keys(row).forEach(rawKey => {
         const cleanKey = rawKey.trim().toLowerCase().replace(/\s+/g, '_')
-        foundHeaders.push(cleanKey)
 
         if (!cleanKey || cleanKey.startsWith('__empty') || cleanKey.startsWith('_empty')) return
         if (['id', 'created_at', 'updated_at'].includes(cleanKey)) return
-
-        // ✅ Skip kolom info (hanya untuk tabel yang tepat)
         if (infoColumnsToSkip.includes(cleanKey)) return
 
-        // ✅ Untuk bpjs/mcu/simper: Auto-alias "nama" (pertama) → "nama_karyawan"
+        // ✅ Auto-alias "nama" (pertama) → "nama_karyawan" untuk bpjs/mcu/simper
         let actualKey = cleanKey
         if ((table === 'bpjs' || table === 'mcu' || table === 'simper') && cleanKey === 'nama' && !firstNamaFound) {
           actualKey = 'nama_karyawan'
@@ -132,7 +125,7 @@ export async function POST(request: NextRequest) {
         clean.nrp_login = clean.nrp
       }
 
-      return { ...clean, _foundHeaders: foundHeaders, _rowIdx: rowIdx }
+      return clean
     })
 
     // Filter baris kosong
@@ -141,31 +134,8 @@ export async function POST(request: NextRequest) {
     })
 
     if (validData.length === 0) {
-      // 🔍 DEBUG: Print ke console Vercel
-      console.log('=== IMPORT DEBUG ===')
-      console.log('Table:', table)
-      console.log('Total raw:', jsonData.length)
-      console.log('Total cleaned:', cleanedData.length)
-      console.log('Total valid:', validData.length)
-      console.log('Required cols:', requiredCols)
-      console.log('Allowed cols:', allowedCols)
-      console.log('Info cols skipped:', infoColumnsToSkip)
-      console.log('Raw sample:', JSON.stringify(jsonData.slice(0, 2), null, 2))
-      console.log('Cleaned sample:', JSON.stringify(cleanedData.slice(0, 2), null, 2))
-      
       return NextResponse.json({
-        error: `Tidak ada baris valid. Pastikan kolom wajib terisi: ${requiredCols.join(', ')}`,
-        debug: {
-          table,
-          totalRaw: jsonData.length,
-          totalCleaned: cleanedData.length,
-          totalValid: validData.length,
-          requiredCols,
-          allowedCols,
-          infoColsSkipped: infoColumnsToSkip,
-          sampleRaw: jsonData.slice(0, 1),
-          sampleCleaned: cleanedData.map(({ _foundHeaders, _rowIdx, ...rest }) => rest).slice(0, 1)
-        }
+        error: `Tidak ada baris valid. Pastikan kolom wajib terisi: ${requiredCols.join(', ')}`
       }, { status: 400 })
     }
 
@@ -244,6 +214,7 @@ export async function POST(request: NextRequest) {
         continue
       }
 
+      // ✅ Hanya insert row yang bersih (tanpa _foundHeaders / _rowIdx)
       const { error } = await supabase.from(table).insert(row)
 
       if (error) {
@@ -257,6 +228,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Audit log
     await supabase.from('audit_logs').insert({
       actor_nrp: session.nrp,
       action: 'IMPORT_EXCEL',
