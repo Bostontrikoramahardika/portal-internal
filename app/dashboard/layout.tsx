@@ -257,19 +257,29 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Klik tab → cari menu yang masuk tab ini
+   // Klik tab → cari menu yang masuk tab ini
   function handleTabClick(tab: typeof TAB_CONFIG[0]) {
     const tabMenus = menus.filter(m => tab.customMatch(m))
+
+    // Urutkan berdasarkan sort_order
+    tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+
+    // 💡 SOLUSI UTAMA: Jika tab yang diklik adalah PROFILE, paksa buka Bottom Sheet
+    // Tanpa peduli apakah menunya cuma 1 atau lebih, agar tombol Logout Merah selalu muncul!
+    if (tab.key === 'profile') {
+      setBottomSheetMenus(tabMenus)
+      setBottomSheetTitle(tab.label)
+      setActiveTab(tab.key)
+      setBottomSheetOpen(true)
+      return
+    }
 
     if (tabMenus.length === 0) {
       console.warn(`Tab "${tab.key}" tidak punya menu.`)
       return
     }
 
-    // Sort by sort_order
-    tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-
-    // Kalau cuma 1 menu → langsung navigate
+    // Jika menu hanya ada 1 (selain tab profile), langsung arahkan halaman tanpa buka sheet
     if (tabMenus.length === 1) {
       router.push(`/dashboard?menu=${tabMenus[0].menu_key}`)
       setActiveTab(tab.key)
@@ -277,7 +287,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Kalau lebih dari 1 → buka bottom sheet
+    // Jika menu lebih dari 1, buka Bottom Sheet
     setBottomSheetMenus(tabMenus)
     setBottomSheetTitle(tab.label)
     setActiveTab(tab.key)
