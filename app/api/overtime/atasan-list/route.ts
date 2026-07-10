@@ -9,27 +9,62 @@ export async function GET(request: NextRequest) {
   const session = await getSession(token)
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
-  // Ambil semua karyawan yang punya role atasan
-  const { data: roleRows } = await supabase
+  // Ambil info site karyawan yang login
+  const { data: emp } = await supabase
+    .from('employees')
+    .select('site')
+    .eq('nrp', session.nrp)
+    .single()
+
+  // 1. Ambil NRP yang memiliki role terkait approval
+  const { data: roleData } = await supabase
     .from('roles')
     .select('nrp')
-    .eq('role', 'atasan')
+    .in('role', ['atasan', 'pjo', 'admin_site', 'admin_plant'])
     .eq('active', true)
 
-  const atasanNrps = (roleRows || []).map(r => r.nrp)
+  const relevantNrps = (roleData || []).map(r => r.nrp)
 
-  if (atasanNrps.length === 0) {
-    return NextResponse.json({ atasan_list: [] })
-  }
-
-  const { data: employees } = await supabase
+  // 2. Ambil karyawan yang satu site & (punya role OR jabatan leader)
+  let atasanList: any[] = []
+  const { data: employees, error: empError } = await supabase
     .from('employees')
     .select('nrp, nama, jabatan, departemen, site, no_hp')
-    .in('nrp', atasanNrps)
+    .eq('site', emp?.site || '')
     .eq('status_karyawan', 'Aktif')
+    .or(`nrp.in.(${relevantNrps.join(',')}),jabatan.ilike.%GL%,jabatan.ilike.%Supervisor%,jabatan.ilike.%Foreman%,jabatan.ilike.%Manager%`)
     .order('nama')
 
+  if (!empError && employees) {
+    atasanList = employees.filter(e => e.nrp !== session.nrp)
+  }
+
+  // 3. Logika PJO (Filter Site Ketat)
+  const { data: pjoRoles } = await supabase
+    .from('roles')
+    .select('nrp')
+    .eq('role', 'pjo')
+    .eq('active', true)
+
+  const pjoNrps = (pjoRoles || []).map(r => r.nrp)
+  let pjoNama = 'Belum ada PJO di Site ini'
+  
+  if (pjoNrps.length > 0) {
+    const { data: sitePjo } = await supabase
+      .from('employees')
+      .select('nrp, nama, jabatan, site')
+      .in('nrp', pjoNrps)
+      .eq('site', emp?.site || '')
+      .eq('status_karyawan', 'Aktif')
+      .maybeSingle()
+
+    if (sitePjo) {
+      pjoNama = `${sitePjo.nama} (${sitePjo.jabatan}${sitePjo.site ? ' - ' + sitePjo.site : ''})`
+    }
+  }
+
   return NextResponse.json({
-    atasan_list: employees || []
+    atasan_list: atasanList,
+    pjo_nama: pjoNama
   })
 }

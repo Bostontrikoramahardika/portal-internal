@@ -3,194 +3,115 @@ import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
 import * as XLSX from 'xlsx'
 
-// ✅ DEFINISI KOLOM UNTUK SETIAP TABEL
-const TABLE_COLUMNS: Record<string, string[]> = {
-  employees: ['nrp', 'nrp_login', 'nama', 'jabatan', 'departemen', 'site', 'status_karyawan', 'tanggal_masuk', 'tempat_lahir', 'tanggal_lahir', 'no_hp', 'alamat'],
-  apd: ['nrp', 'nama_barang', 'tanggal_terima', 'kondisi', 'tanggal_expired', 'keterangan'],
-  pkwt: ['nrp', 'no_kontrak', 'kontrak_ke', 'mulai_kontrak', 'akhir_kontrak', 'status', 'keterangan'],
-  kpi: ['nrp', 'periode', 'nilai_kpi', 'catatan'],
-  sp: ['nrp', 'jenis_sp', 'tanggal_sp', 'alasan', 'keterangan', 'berlaku_sampai'],
-  roles: ['nrp', 'role', 'active'],
-  approval_matrix: ['employee_nrp', 'atasan_nrp', 'pjo_nrp', 'active'],
+// ============================================================
+// 🎯 SPECIAL HANDLER: Import ROSTER (Format Standar Baru)
+// ============================================================
+async function handleRosterImport(file: File) {
+  const arrayBuffer = await file.arrayBuffer()
+  const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+  const sheetName = workbook.SheetNames[0]
+  const sheet = workbook.Sheets[sheetName]
+  const json: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })
+
+  // 1. Ambil Periode dari Baris 1 (Indeks 0, Kolom A)
+  const periodeRaw = String(json[0]?.[0] || "").trim()
+  if (!periodeRaw) throw new Error("Baris 1 (Periode) tidak boleh kosong.")
+
+  const tahun = periodeRaw.match(/\d{4}/)?.[0] || new Date().getFullYear()
+  const bulanNama = periodeRaw.match(/JANUARI|FEBRUARI|MARET|APRIL|MEI|JUNI|JULI|AGUSTUS|SEPTEMBER|OKTOBER|NOVEMBER|DESEMBER/i)?.[0] || "JANUARI"
   
-  // ✅ BPJS: Kolom wajib 'nama_karyawan' (sesuai format Excel)
-  bpjs: ['site', 'nama_karyawan', 'jabatan', 'tgl_masuk', 'bpjs_ketenagakerjaan', 'bpjs_kesehatan', 'no_ktp', 'istri_nama', 'istri_bpjs', 'anak1_nama', 'anak1_bpjs', 'anak2_nama', 'anak2_bpjs', 'anak3_nama', 'anak3_bpjs', 'keterangan'],
-  
-  // ✅ MCU
-  mcu: ['nrp', 'nama_karyawan', 'tanggal_mcu', 'jenis_mcu', 'hasil', 'tanggal_expired', 'catatan_hrga'],
-  
-  // ✅ SIMPER
-  simper: ['nrp', 'nama_karyawan', 'jenis_simper', 'nomor_simper', 'tanggal_terbit', 'tanggal_expired', 'status'],
-}
+  const bulanMap: any = { "JANUARI":0,"FEBRUARI":1,"MARET":2,"APRIL":3,"MEI":4,"JUNI":5,"JULI":6,"AGUSTUS":7,"SEPTEMBER":8,"OKTOBER":9,"NOVEMBER":10,"DESEMBER":11 }
+  const bulanIndex = bulanMap[bulanNama.toUpperCase()]
 
-// ✅ SAMPLE DATA UNTUK SETIAP TABEL (1 row contoh)
-const SAMPLE_DATA: Record<string, any[]> = {
-  employees: [{
-    nrp: '1001', nrp_login: '1001', nama: 'Budi Santoso', jabatan: 'Operator',
-    departemen: 'Produksi', site: 'Site A', status_karyawan: 'Aktif',
-    tanggal_masuk: '2020-01-15', tempat_lahir: 'Surabaya',
-    tanggal_lahir: '1995-05-20', no_hp: '081234567890', alamat: 'Jl. Merdeka No. 1'
-  }],
-  apd: [{
-    nrp: '1001', nama_barang: 'Helm Safety', tanggal_terima: '2024-01-10',
-    kondisi: 'Baik', tanggal_expired: '2025-01-10', keterangan: 'Pengganti lama'
-  }],
-  pkwt: [{
-    nrp: '1001', no_kontrak: 'PKWT-2024-001', kontrak_ke: 1,
-    mulai_kontrak: '2024-01-01', akhir_kontrak: '2024-12-31',
-    status: 'Aktif', keterangan: 'Kontrak pertama'
-  }],
-  kpi: [{
-    nrp: '1001', periode: '2024-01', nilai_kpi: 85, catatan: 'Baik'
-  }],
-  sp: [{
-    nrp: '1001', jenis_sp: 'SP1', tanggal_sp: '2024-03-15',
-    alasan: 'Terlambat berkali-kali', keterangan: '', berlaku_sampai: '2024-09-15'
-  }],
-  roles: [{
-    nrp: '1001', role: 'karyawan', active: true
-  }],
-  approval_matrix: [{
-    employee_nrp: '1001', atasan_nrp: '2001', pjo_nrp: '3001', active: true
-  }],
-  
-  // ✅ SAMPLE BPJS - lengkap dengan istri & anak
-  bpjs: [{
-    site: 'PPA-SKS',
-    nama_karyawan: 'Dody Wanda Rukmana',
-    jabatan: 'PJO',
-    tgl_masuk: '2022-07-15',
-    bpjs_ketenagakerjaan: '22142012586',
-    bpjs_kesehatan: '0002906509961',
-    no_ktp: '3522063004920001',
-    istri_nama: 'Fifinda Lukitasari',
-    istri_bpjs: '0002906523189',
-    anak1_nama: 'Annasya Zahira Putri Rukmana',
-    anak1_bpjs: '0002906524326',
-    anak2_nama: '',
-    anak2_bpjs: '',
-    anak3_nama: '',
-    anak3_bpjs: '',
-    keterangan: ''
-  }],
-  
-  // ✅ SAMPLE MCU
-  mcu: [{
-    nrp: '1001', nama_karyawan: 'Budi Santoso', tanggal_mcu: '2024-03-20',
-    jenis_mcu: 'Tahunan', hasil: 'Sehat', tanggal_expired: '2025-03-20',
-    catatan_hrga: 'Tidak ada catatan'
-  }],
-  
-  // ✅ SAMPLE SIMPER
-  simper: [{
-    nrp: '1001', nama_karyawan: 'Budi Santoso', jenis_simper: 'SIMPER Operator',
-    nomor_simper: 'SIM-2024-001', tanggal_terbit: '2024-01-15',
-    tanggal_expired: '2025-01-15', status: 'Aktif'
-  }]
-}
+  const rostersToInsert: any[] = []
 
-// ✅ Kolom yang harus di-quote (untuk filter & sort)
-const STRING_COLUMNS: Record<string, string[]> = {
-  employees: ['nrp', 'nrp_login', 'nama', 'jabatan', 'departemen', 'site', 'status_karyawan', 'tempat_lahir', 'no_hp', 'alamat'],
-  apd: ['nrp', 'nama_barang', 'kondisi', 'keterangan'],
-  pkwt: ['nrp', 'no_kontrak', 'status', 'keterangan'],
-  kpi: ['nrp', 'periode', 'catatan'],
-  sp: ['nrp', 'jenis_sp', 'alasan', 'keterangan'],
-  roles: ['nrp', 'role'],
-  approval_matrix: ['employee_nrp', 'atasan_nrp', 'pjo_nrp'],
-  bpjs: ['site', 'nama_karyawan', 'jabatan', 'bpjs_ketenagakerjaan', 'bpjs_kesehatan', 'no_ktp', 'istri_nama', 'istri_bpjs', 'anak1_nama', 'anak1_bpjs', 'anak2_nama', 'anak2_bpjs', 'anak3_nama', 'anak3_bpjs', 'keterangan'],
-  mcu: ['nrp', 'nama_karyawan', 'jenis_mcu', 'hasil', 'catatan_hrga'],
-  simper: ['nrp', 'nama_karyawan', 'jenis_simper', 'nomor_simper', 'status']
-}
+  // 2. Data mulai Baris 3 (Indeks 2)
+  for (let i = 2; i < json.length; i++) {
+    const row = json[i]
+    if (!row) continue
 
-export async function GET(request: NextRequest) {
-  const token = request.cookies.get('session_token')?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // NRP di KOLOM A (Indeks 0)
+    const nrp = String(row[0] || "").trim()
+    if (!nrp || nrp === "null" || isNaN(Number(nrp))) continue
 
-  const session = await getSession(token)
-  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+    // 3. Roster mulai KOLOM D (Indeks 3) s/d Kolom AH (Indeks 33)
+    for (let day = 1; day <= 31; day++) {
+      const colIndex = 2 + day // Day 1 = Index 3 (Kolom D)
+      const shiftCode = row[colIndex]
+      
+      // Abaikan jika kosong atau "-"
+      if (!shiftCode || ["", "-", "null"].includes(String(shiftCode).trim().toLowerCase())) continue
 
-  const { searchParams } = new URL(request.url)
-  const table = searchParams.get('table')
-  const mode = searchParams.get('mode') || 'empty' // empty | sample | export
+      // Validasi tanggal bulan berjalan
+      const tglObj = new Date(Number(tahun), bulanIndex, day)
+      if (tglObj.getMonth() !== bulanIndex) continue 
 
-  if (!table) {
-    return NextResponse.json({ error: 'Table parameter required' }, { status: 400 })
-  }
-
-  const columns = TABLE_COLUMNS[table]
-  if (!columns) {
-    return NextResponse.json({ error: 'Template tidak ditemukan' }, { status: 404 })
-  }
-
-  try {
-    let data: any[] = []
-
-    if (mode === 'empty') {
-      // Template kosong - hanya header
-      data = [{}]
-    } else if (mode === 'sample') {
-      // Template dengan 1 row contoh
-      data = SAMPLE_DATA[table] || [{}]
-    } else if (mode === 'export') {
-      // Export data existing dari database
-      const { data: rows, error } = await supabase
-        .from(table)
-        .select('*')
-        .limit(1000)
-
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 })
-      }
-
-      // Format data sesuai kolom
-      data = (rows || []).map((row: any) => {
-        const formatted: any = {}
-        columns.forEach(col => {
-          let val = row[col]
-          // Format tanggal agar lebih readable di Excel
-          if (val && typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) {
-            val = val.split('T')[0]
-          }
-          formatted[col] = val ?? ''
-        })
-        return formatted
+      rostersToInsert.push({
+        nrp: nrp,
+        tanggal: tglObj.toISOString().split('T')[0],
+        shift_code: String(shiftCode).toUpperCase().trim(),
+        periode: periodeRaw
       })
+    }
+  }
 
-      if (data.length === 0) {
-        data = [{}]
-      }
+  if (rostersToInsert.length === 0) {
+    throw new Error("Gagal membaca data. Pastikan NRP di Kolom A dan data mulai Baris 3.")
+  }
+
+  // Upsert ke database
+  const { error } = await supabase.from('rosters').upsert(rostersToInsert, { onConflict: 'nrp,tanggal' })
+  if (error) throw error
+
+  return NextResponse.json({ 
+    success: true, 
+    message: `✅ Berhasil import ${rostersToInsert.length} jadwal roster periode ${periodeRaw}.` 
+  })
+}
+
+// ============================================================
+// 🎯 MAIN ROUTE HANDLER (POST)
+// ============================================================
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Cek Auth
+    const token = request.cookies.get('session_token')?.value
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const session = await getSession(token)
+    if (!session || !session.roles.includes('hrga')) {
+      return NextResponse.json({ error: 'Akses ditolak (Hanya HRGA)' }, { status: 403 })
     }
 
-    // Buat worksheet dengan header yang di-style (bold, dengan filter)
-    const ws = XLSX.utils.json_to_sheet(data, { header: columns })
+    // 2. Baca Form Data
+    const formData = await request.formData()
+    const file = formData.get('file') as File
+    const table = formData.get('table') as string
 
-    // Tambah filter di header (auto-filter)
-    if (data.length > 0) {
-      ws['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(columns.length - 1)}${data.length}` }
+    if (!file) return NextResponse.json({ error: 'File tidak ditemukan' }, { status: 400 })
+
+    // 3. Jalankan Handler Sesuai Tabel
+    if (table === 'roster') {
+      return await handleRosterImport(file)
     }
 
-    // Set lebar kolom otomatis
-    ws['!cols'] = columns.map(col => ({
-      wch: Math.max(col.length + 2, 15)
-    }))
+    // 4. Handler Generic untuk tabel lain (Employees, BPJS, dll)
+    const arrayBuffer = await file.arrayBuffer()
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+    const sheet = workbook.Sheets[workbook.SheetNames[0]]
+    const data: any[] = XLSX.utils.sheet_to_json(sheet)
 
-    // Buat workbook
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, table.charAt(0).toUpperCase() + table.slice(1))
+    const targetTable = table === 'apd' ? 'apd_history' : table
+    const { error } = await supabase.from(targetTable).upsert(data)
+    if (error) throw error
 
-    // Generate buffer
-    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
-
-    // Return sebagai file download
-    return new NextResponse(buffer, {
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="template_${table}_${mode}_${Date.now()}.xlsx"`,
-      },
+    return NextResponse.json({ 
+      success: true, 
+      message: `✅ Berhasil import data ke tabel ${targetTable}` 
     })
 
   } catch (err: any) {
+    console.error("IMPORT_ERROR:", err.message)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

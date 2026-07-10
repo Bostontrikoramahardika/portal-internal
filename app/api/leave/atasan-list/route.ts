@@ -17,27 +17,34 @@ export async function GET(request: NextRequest) {
     .single()
 
   // Ambil semua karyawan yang punya role atasan
-  const { data: atasanRoles } = await supabase
+  const { data: roleData } = await supabase
     .from('roles')
     .select('nrp')
-    .eq('role', 'atasan')
+    .in('role', ['atasan', 'pjo', 'admin_site', 'admin_plant'])
     .eq('active', true)
 
-  const atasanNrps = (atasanRoles || []).map(r => r.nrp)
+  const relevantNrps = (roleData || []).map(r => r.nrp)
 
+  // 2. Ambil karyawan yang:
+  //    - Satu site dengan user
+  //    - Status Aktif
+  //    - (Punya role di atas OR punya jabatan Leader: GL, Supervisor, Foreman, Manager)
   let atasanList: any[] = []
-  if (atasanNrps.length > 0) {
-    const { data: employees } = await supabase
-      .from('employees')
-      .select('nrp, nama, jabatan, departemen, site, no_hp')
-      .in('nrp', atasanNrps)
-      .eq('status_karyawan', 'Aktif')
-      .order('nama')
+  
+  const { data: employees, error: empError } = await supabase
+    .from('employees')
+    .select('nrp, nama, jabatan, departemen, site, no_hp')
+    .eq('site', emp?.site || '') // Filter Site Wajib
+    .eq('status_karyawan', 'Aktif')
+    .or(`nrp.in.(${relevantNrps.join(',')}),jabatan.ilike.%GL%,jabatan.ilike.%Supervisor%,jabatan.ilike.%Foreman%,jabatan.ilike.%Manager%`)
+    .order('nama')
 
-    atasanList = employees || []
+  if (!empError && employees) {
+    // Filter tambahan untuk memastikan tidak ada duplikat dan bukan dirinya sendiri
+    atasanList = employees.filter(e => e.nrp !== session.nrp)
   }
 
-  // Ambil semua PJO (untuk info karyawan siapa PJO-nya)
+  // 3. Logika PJO (Tetap dipertahankan namun difilter by site lebih ketat)
   const { data: pjoRoles } = await supabase
     .from('roles')
     .select('nrp')
@@ -46,23 +53,18 @@ export async function GET(request: NextRequest) {
 
   const pjoNrps = (pjoRoles || []).map(r => r.nrp)
 
-  let pjoNama = 'Belum ada PJO'
+  let pjoNama = 'Belum ada PJO di Site ini'
   if (pjoNrps.length > 0) {
-    // Cari PJO yang site-nya sama dengan karyawan
-    let pjoQuery = supabase
+    const { data: sitePjo } = await supabase
       .from('employees')
       .select('nrp, nama, jabatan, site')
       .in('nrp', pjoNrps)
+      .eq('site', emp?.site || '') // Harus satu site
       .eq('status_karyawan', 'Aktif')
+      .single()
 
-    const { data: allPjo } = await pjoQuery
-
-    if (allPjo && allPjo.length > 0) {
-      // Prioritas: PJO dengan site yang sama
-      const samePjo = allPjo.find((p: any) => p.site === emp?.site)
-      const chosenPjo = samePjo || allPjo[0]
-
-      pjoNama = `${chosenPjo.nama} (${chosenPjo.jabatan}${chosenPjo.site ? ' - ' + chosenPjo.site : ''})`
+    if (sitePjo) {
+      pjoNama = `${sitePjo.nama} (${sitePjo.jabatan}${sitePjo.site ? ' - ' + sitePjo.site : ''})`
     }
   }
 
