@@ -15,9 +15,17 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c
 }
 
-// Tentukan shift berdasarkan waktu clock in
-function detectShift(hour: number): 'SIANG' | 'MALAM' {
-  if (hour >= 4 && hour < 15) return 'SIANG'
+// Tentukan shift berdasarkan waktu clock in & config site (v1.6.0 Dynamic)
+function detectShift(hour: number, siteConfig: any): 'SIANG' | 'MALAM' {
+  // Ambil jam siang dari DB, default jam 6 pagi
+  const siangStartH = siteConfig?.siang_jam_masuk ? parseInt(siteConfig.siang_jam_masuk.split(':')[0]) : 6
+  // Ambil jam malam dari DB, default jam 18 (6 sore)
+  const malamStartH = siteConfig?.malam_jam_masuk ? parseInt(siteConfig.malam_jam_masuk.split(':')[0]) : 18
+
+  // Jika jam clock in di antara jam masuk siang dan sebelum jam malam
+  if (hour >= siangStartH && hour < malamStartH) {
+    return 'SIANG'
+  }
   return 'MALAM'
 }
 
@@ -137,10 +145,20 @@ export async function POST(request: NextRequest) {
     // 5. Detect shift & hitung telat (pakai clockTime, bukan now)
     const jamSekarang = clockTime.getHours()
     const menitSekarang = clockTime.getMinutes()
-    const shift = detectShift(jamSekarang)
+    
+    // v1.6.0: Deteksi shift pakai config dari DB
+    const shift = detectShift(jamSekarang, siteConfig)
 
     let batasJamMasuk: string
     let batasTelatMenit: number
+
+    if (shift === 'SIANG') {
+      batasJamMasuk = siteConfig.siang_jam_masuk || "06:00"
+      batasTelatMenit = Number(siteConfig.siang_batas_telat) || 0
+    } else {
+      batasJamMasuk = siteConfig.malam_jam_masuk || "18:00"
+      batasTelatMenit = Number(siteConfig.malam_batas_telat) || 0
+    }
 
     if (shift === 'SIANG') {
       batasJamMasuk = siteConfig.siang_jam_masuk

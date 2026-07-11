@@ -311,7 +311,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       <main className="flex-1 min-w-0 lg:ml-64 pb-24 lg:pb-6">
         <div className="lg:hidden bg-white border-b p-3 flex items-center gap-3 sticky top-0 z-20 shadow-sm">
           <Image src="/btm-fix.png" alt="BTM" width={24} height={24} />
-          <div className="flex-1"><h1 className="text-xs font-bold uppercase">BTM Portal</h1></div>
+          <div className="flex-1"><h1 className="text-xs font-bold uppercase">BTM Mobile App</h1></div>
           <div className="text-right text-[10px]"><div className="font-bold">{user.nama}</div><div className="text-slate-500">{user.nrp_login || user.nrp}</div></div>
         </div>
         <div className="p-4 lg:p-6">{children}</div>
