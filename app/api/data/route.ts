@@ -17,11 +17,21 @@ const SECONDARY_COLUMNS = ['_nama_atasan', '_nama_pjo']
 //   06:00 - 17:59 → SIANG
 //   18:00 - 05:59 → MALAM
 // TODO Fase 2: Ambil konfigurasi jam per site dari tabel 'sites'
-function detectShiftFromClockIn(clockInTime: string): string {
-  if (!clockInTime || clockInTime === '00:00') return 'HADIR'
+function detectShiftFromClockIn(clockInTime: string, siteConfig?: any): string {
+  if (!clockInTime || clockInTime === '00:00' || clockInTime === '--:--') return 'HADIR'
+  
   const jam = parseInt(clockInTime.split(':')[0])
   if (isNaN(jam)) return 'HADIR'
-  return (jam >= 6 && jam < 18) ? 'SIANG' : 'MALAM'
+
+  // Ambil referensi jam dari config (fallback ke default Pama 06:00 & 18:00)
+  const siangStart = siteConfig?.siang_jam_masuk ? parseInt(siteConfig.siang_jam_masuk.split(':')[0]) : 6
+  const malamStart = siteConfig?.malam_jam_masuk ? parseInt(siteConfig.malam_jam_masuk.split(':')[0]) : 18
+
+  // Logic: Jika jam masuk di antara jam siang dan sebelum jam malam
+  if (jam >= siangStart && jam < malamStart) {
+    return 'SIANG'
+  }
+  return 'MALAM'
 }
 
 export async function GET(request: NextRequest) {
@@ -65,6 +75,13 @@ const menuInfo = menusFound.find((m: any) =>
       const { data: attendance } = await supabase.from('attendance').select('*').in('nrp', [nrpString, nrpWithZero])
       const { data: evidences } = await supabase.from('attendance_evidences').select('*').ilike('nama_karyawan', session.nama)
 
+      // v1.6.0: Ambil config shift untuk site user ini
+      const { data: siteConfig } = await supabase
+        .from('sites_config')
+        .select('siang_jam_masuk, malam_jam_masuk')
+        .eq('site_name', session.site)
+        .single()
+
       const finalRows = (rosters || []).map(r => {
         const absensi = attendance?.find(a => String(a.tanggal) === String(r.tanggal))
         const buktiSakit = evidences?.find(e => String(e.tanggal) === String(r.tanggal))
@@ -75,8 +92,8 @@ const menuInfo = menusFound.find((m: any) =>
           const jamMasuk = absensi.clock_in?.split('T')[1]?.slice(0,5) || '--:--'
           const jamPulang = absensi.clock_out?.split('T')[1]?.slice(0,5) || '--:--'
           
-          // Auto deteksi SIANG/MALAM dari jam clock in
-          actual = detectShiftFromClockIn(jamMasuk)
+                    // Auto deteksi SIANG/MALAM dari jam clock in (v1.6.0 Dynamic)
+          actual = detectShiftFromClockIn(jamMasuk, siteConfig)
           evident = `${jamMasuk} / ${jamPulang}`
           keterangan = absensi.status === 'TERLAMBAT' ? '⚠️ TERLAMBAT' : '✅ SUKSES'
         } 
