@@ -9,6 +9,21 @@ const HIDDEN_COLUMNS = ['created_at', 'updated_at', 'id', 'nrp', 'atasan_nrp', '
 const PRIORITY_COLUMNS = ['_nama_karyawan', '_jabatan', '_site', '_departemen']
 const SECONDARY_COLUMNS = ['_nama_atasan', '_nama_pjo']
 
+
+// ========================================================
+// 🕐 HELPER: Deteksi Shift dari Jam Clock In
+// ========================================================
+// Aturan Hardcoded (Fase 1):
+//   06:00 - 17:59 → SIANG
+//   18:00 - 05:59 → MALAM
+// TODO Fase 2: Ambil konfigurasi jam per site dari tabel 'sites'
+function detectShiftFromClockIn(clockInTime: string): string {
+  if (!clockInTime || clockInTime === '00:00') return 'HADIR'
+  const jam = parseInt(clockInTime.split(':')[0])
+  if (isNaN(jam)) return 'HADIR'
+  return (jam >= 6 && jam < 18) ? 'SIANG' : 'MALAM'
+}
+
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get('session_token')?.value
@@ -55,16 +70,33 @@ const menuInfo = menusFound.find((m: any) =>
         const buktiSakit = evidences?.find(e => String(e.tanggal) === String(r.tanggal))
         let actual = "-"; let evident = "-"; let keterangan = ""
 
+        // 🎯 PRIORITAS 1: Ada Absensi (aksi nyata mengalahkan roster)
         if (absensi) {
-          actual = r.shift_code === 'OFF' ? 'MASUK OFF' : (['S','P'].includes(r.shift_code) ? 'SIANG' : 'MALAM')
-          evident = `${absensi.clock_in?.split('T')[1]?.slice(0,5) || '--'} / ${absensi.clock_out?.split('T')[1]?.slice(0,5) || '--'}`
+          const jamMasuk = absensi.clock_in?.split('T')[1]?.slice(0,5) || '--:--'
+          const jamPulang = absensi.clock_out?.split('T')[1]?.slice(0,5) || '--:--'
+          
+          // Auto deteksi SIANG/MALAM dari jam clock in
+          actual = detectShiftFromClockIn(jamMasuk)
+          evident = `${jamMasuk} / ${jamPulang}`
           keterangan = absensi.status === 'TERLAMBAT' ? '⚠️ TERLAMBAT' : '✅ SUKSES'
-        } else if (buktiSakit) {
-          actual = "SAKIT"; evident = buktiSakit.foto_url; keterangan = buktiSakit.keterangan || "SAKIT"
-        } else {
-          if (r.shift_code === 'OFF') { actual = "OFF"; keterangan = "-" }
-          else if (['S', 'M', 'P', 'L'].includes(r.shift_code)) { actual = "MANGKIR"; keterangan = "TIDAK ADA ABSENSI" }
-          else { actual = r.shift_code || "-"; keterangan = "IZIN / CUTI" }
+        } 
+        // 🎯 PRIORITAS 2: Ada Bukti Sakit
+        else if (buktiSakit) {
+          actual = "SAKIT"
+          evident = buktiSakit.foto_url
+          keterangan = buktiSakit.keterangan || "SAKIT"
+        } 
+        // 🎯 PRIORITAS 3: Tidak Ada Aktivitas → Fallback ke Roster
+        else {
+          if (r.shift_code === 'OFF') { 
+            actual = "OFF"; keterangan = "-" 
+          }
+          else if (['S', 'M', 'P', 'L'].includes(r.shift_code)) { 
+            actual = "MANGKIR"; keterangan = "TIDAK ADA ABSENSI" 
+          }
+          else { 
+            actual = r.shift_code || "-"; keterangan = "IZIN / CUTI" 
+          }
         }
         return { tanggal: r.tanggal, roster: r.shift_code, actual, evident, keterangan, is_foto: !!buktiSakit }
       })

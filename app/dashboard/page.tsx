@@ -1374,7 +1374,9 @@ function RosterUpload({ title }: any) {
 
 // ============ 🗓️ RIWAYAT ABSENSI ============
 function RiwayatAbsensiCustom({ data }: any) {
-  const rows = data.rows || []
+  const rows = [...(data.rows || [])].sort((a, b) => 
+    new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime()
+  )
   return (
     <div className="animate-in fade-in duration-500">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -1402,7 +1404,21 @@ function RiwayatAbsensiCustom({ data }: any) {
               <tr key={i} className="hover:bg-slate-50/50 transition-all">
                 <td className="px-8 py-5 font-black text-slate-900">{new Date(r.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</td>
                 <td className="px-8 py-5">
-                    <span className={`px-3 py-1.5 rounded-xl font-black text-[10px] tracking-widest ${r.roster === 'M' ? 'bg-indigo-100 text-indigo-700' : r.roster === 'S' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>{r.roster}</span>
+                    {(() => {
+                      const shiftMap: any = {
+                        'S': { label: 'S (Siang)', color: 'bg-amber-100 text-amber-700' },
+                        'M': { label: 'M (Malam)', color: 'bg-indigo-100 text-indigo-700' },
+                        'OFF': { label: 'OFF', color: 'bg-slate-100 text-slate-500' },
+                        'ID': { label: 'ID (Induksi)', color: 'bg-emerald-100 text-emerald-700' },
+                        'CR': { label: 'CR (Cuti Roster)', color: 'bg-purple-100 text-purple-700' }
+                      };
+                      const shift = shiftMap[r.roster] || { label: r.roster || '-', color: 'bg-slate-100 text-slate-500' };
+                      return (
+                        <span className={`px-3 py-1.5 rounded-xl font-black text-[10px] tracking-widest ${shift.color}`}>
+                          {shift.label}
+                        </span>
+                      );
+                    })()}
                 </td>
                 <td className="px-8 py-5 font-black text-slate-700 tracking-tighter">{r.actual}</td>
                 <td className="px-8 py-5">
