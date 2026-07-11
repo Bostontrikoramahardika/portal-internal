@@ -104,7 +104,7 @@ export default function DashboardPage() {
 
 function DashboardContent() {
   const searchParams = useSearchParams()
-  const menuKey = searchParams.get('menu') || 'dashboard'
+  const menuKey = searchParams.get('menu') || 'absensi_saya'
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
