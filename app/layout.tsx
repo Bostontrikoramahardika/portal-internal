@@ -1,5 +1,14 @@
 import type { Metadata, Viewport } from 'next'
+import { Plus_Jakarta_Sans } from 'next/font/google' // Import Font Berkelas
 import './globals.css'
+
+// 1. Konfigurasi Font Plus Jakarta Sans
+const jakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-jakarta', // Variabel CSS untuk digunakan di Tailwind
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'BTM Portal',
@@ -16,7 +25,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#f59e0b',
+  themeColor: '#003D79', // Diubah ke Biru Pama agar sinkron
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -29,18 +38,20 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="id">
+    // 2. Tambahkan variable font ke tag html
+    <html lang="id" className={`${jakartaSans.variable} scroll-smooth`}>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/logo.png" />
+        <link rel="apple-touch-icon" href="/btm-fix.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="BTM Portal" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="msapplication-TileColor" content="#f59e0b" />
+        <meta name="msapplication-TileColor" content="#003D79" />
         <meta name="msapplication-tap-highlight" content="no" />
       </head>
-      <body className="bg-slate-50 min-h-screen">
+      {/* 3. Gunakan class font-sans di body */}
+      <body className="font-sans min-h-screen text-slate-800 antialiased">
         {children}
         <ServiceWorkerRegister />
       </body>
@@ -48,6 +59,7 @@ export default function RootLayout({
   )
 }
 
+// Fungsi Registrasi Service Worker (PWA Offline)
 function ServiceWorkerRegister() {
   return (
     <script

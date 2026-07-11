@@ -3,84 +3,128 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-// ============================================================
-// 📊 SIMULATOR BOBOT KPI (v1.4.0)
-// ============================================================
-function KPISettingsSimulator({ data }: { data: any[] }) {
-  if (!data || data.length === 0) return null;
+/**
+ * 📊 HELPER: Salam Dinamis
+ */
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 11) return 'Selamat Pagi';
+  if (hour < 15) return 'Selamat Siang';
+  if (hour < 19) return 'Selamat Sore';
+  return 'Selamat Malam';
+};
 
-  // Ambil Skor Awal & Bobot Atasan dari database
-  const baseScore = data.find(d => d.kode === 'SKOR_AWAL_SISTEM')?.persen || 70;
-  const maxAtasan = data.find(d => d.kode === 'SKOR_AWAL_ATASAN')?.persen || 30;
-
-  // Filter hanya yang kategori pengurang
-  const reducers = data.filter(d => d.kategori === 'PENGURANG');
+/**
+ * 🏠 DASHBOARD VIEW v1.6.0 (Luxury Mobile Edition)
+ * Menggabungkan Visual 1Pama dengan Data Real Perusahaan
+ */
+function DashboardView({ title, data }: any) {
+  // 1. Ambil stats & data user
+  const stats = data?.stats || { 
+    total: 0, done: 0, hadir: 0, expired: 0, periode: '-', 
+    user_name: '', clock_in_time: '--:--', clock_out_time: '--:--' 
+  }
+  
+  // 2. Data Riwayat 7 Hari (Masih Dummy/Bohongan untuk UI)
+  const last7Days = [
+    { day: 'S', status: 'hadir' }, 
+    { day: 'S', status: 'hadir' }, 
+    { day: 'R', status: 'hadir' },
+    { day: 'K', status: 'mangkir' }, 
+    { day: 'J', status: 'hadir' }, 
+    { day: 'S', status: 'off' }, 
+    { day: 'M', status: 'off' }
+  ];
 
   return (
-    <div className="mt-8 bg-white rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-slate-900 p-6">
-        <div className="flex items-center gap-3 mb-1">
-          <span className="text-xl">📊</span>
-          <h3 className="text-white font-bold text-lg">Simulasi Dampak Skor Akhir</h3>
-        </div>
-        <p className="text-slate-400 text-xs font-medium">
-          Rumus: Skor Sistem = {baseScore} - ({baseScore} × Total Persen Pengurang)
-        </p>
-      </div>
+    <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-28">
       
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-black tracking-widest">
-            <tr>
-              <th className="px-6 py-4">Jenis Pelanggaran</th>
-              <th className="px-6 py-4 text-center">Bobot Pengurang (%)</th>
-              <th className="px-6 py-4 text-right">Potongan Poin</th>
-              <th className="px-6 py-4 text-right font-bold text-slate-900">Skor Sistem Netto</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {reducers.map((item) => {
-              const pointLoss = (baseScore * (item.persen / 100)).toFixed(2);
-              const netto = (baseScore - parseFloat(pointLoss)).toFixed(2);
-              
-              return (
-                <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 font-bold text-slate-700">{item.label}</td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-[10px] font-black">
-                      -{item.persen}%
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right text-rose-600 font-bold">-{pointLoss}</td>
-                  <td className="px-6 py-4 text-right font-black text-blue-600 text-base">{netto}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="p-6 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-          <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest block mb-1">Potensi Skor Maksimal</span>
-          <div className="flex items-center gap-2">
-            <span className="bg-slate-900 text-white px-3 py-1 rounded-lg text-sm font-bold">{baseScore} Sistem</span>
-            <span className="text-slate-400">+</span>
-            <span className="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-bold">{maxAtasan} Atasan</span>
+      {/* BANNER NAVY & GREETING */}
+      <div className="relative mb-12">
+        <div className="bg-[#003D79] rounded-[2.5rem] p-8 pt-10 pb-24 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+          <div className="relative z-10">
+            <p className="text-blue-200/70 font-bold text-[10px] uppercase tracking-[0.3em] mb-2">{getGreeting()}</p>
+            <h2 className="text-2xl font-black text-white tracking-tight">{data.user_name || stats.user_name || 'Rekan BTM'} 👋</h2>
+            <p className="text-blue-200/50 text-[10px] font-medium mt-1 uppercase tracking-widest italic">{stats.periode}</p>
           </div>
         </div>
-        <div className="text-right">
-          <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest block mb-1">Total Nilai Sempurna</span>
-          <span className="text-3xl font-black text-slate-900">{baseScore + maxAtasan} <span className="text-sm text-slate-400">Poin</span></span>
+
+        {/* FLOATING ATTENDANCE CARD (Riwayat Ada di Sini) */}
+        <div className="bg-white rounded-[2.2rem] mx-4 -mt-16 p-6 shadow-[0_20px_50px_rgba(0,61,121,0.12)] border border-white relative z-20">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-xl">⏰</div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Hari Ini</p>
+                <h4 className="text-xs font-black text-[#003D79] uppercase">Shift Normal</h4>
+              </div>
+            </div>
+            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${stats.clock_in_time !== '--:--' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+              {stats.clock_in_time !== '--:--' ? 'Hadir' : 'Belum Absen'}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
+              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock In</p>
+              <p className="text-xl font-black text-slate-900">{stats.clock_in_time || '--:--'}</p>
+            </div>
+            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
+              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock Out</p>
+              <p className="text-xl font-black text-slate-300">{stats.clock_out_time || '--:--'}</p>
+            </div>
+          </div>
+
+          {/* BAGIAN RIWAYAT 7 HARI (DOTS) */}
+          <div className="pt-5 border-t border-slate-100">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Riwayat 7 Hari Terakhir</p>
+            <div className="flex justify-between items-center px-1">
+              {last7Days.map((d, i) => (
+                <div key={i} className="flex flex-col items-center gap-2">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm transition-all ${
+                    d.status === 'hadir' ? 'bg-[#003D79] text-white shadow-blue-200' : 
+                    d.status === 'mangkir' ? 'bg-rose-500 text-white shadow-rose-200' : 
+                    'bg-slate-100 text-slate-400'
+                  }`}>
+                    {d.day}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* STATS GRID */}
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Anggota</p>
+            <p className="text-2xl font-black text-slate-900">{stats.total}</p>
+        </div>
+        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
+            <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Hadir (Site)</p>
+            <p className="text-2xl font-black text-blue-600">{stats.hadir}</p>
+        </div>
+        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
+            <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">KPI Selesai</p>
+            <p className="text-2xl font-black text-emerald-600">{stats.done}</p>
+        </div>
+        <div className="bg-rose-50 p-6 rounded-[2rem] border-2 border-rose-100 shadow-xl">
+            <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest mb-1">Dok. Expired</p>
+            <p className="text-2xl font-black text-rose-600">{stats.expired}</p>
         </div>
       </div>
     </div>
   );
 }
 
+/**
+ * 🚀 MAIN COMPONENT
+ */
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="animate-pulse text-slate-500 font-bold">Memuat BTM Portal...</div></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="animate-pulse text-slate-500 font-bold tracking-widest uppercase text-xs">BTM Portal Loading...</div></div>}>
       <DashboardContent />
     </Suspense>
   )
@@ -106,158 +150,35 @@ function DashboardContent() {
     finally { setLoading(false) }
   }
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+  if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#003D79]"></div></div>
   if (error) return <div className="bg-red-50 border-2 border-red-100 text-red-700 p-6 rounded-3xl mx-4 mt-10 text-center font-bold">❌ {error}</div>
   if (!data) return null
 
-  let content = <div className="p-10 text-center text-gray-500">Tipe konten tidak dikenali</div>
-
   // RENDERER LOGIC
-  if (data.type === 'dashboard') content = <DashboardView title={data.title} data={data} />
-  else if (data.type === 'form_cuti') content = <FormCutiView title={data.title} onSuccess={loadData} />
-  else if (data.type === 'form_lembur') content = <FormLemburView title={data.title} onSuccess={loadData} />
-  else if (data.type === 'form_sakit') content = <FormSakitView title={data.title} onSuccess={loadData} data={data} />
-  else if (data.type === 'pkwt_saya') content = <PKWTSayaView title={data.title} data={data} onSuccess={loadData} />
-  else if (data.type === 'apd_history') content = <APDHistoryView data={data} onReload={loadData} />
-  else if (data.type === 'absensi_clock') content = <AbsensiClockView title={data.title} />
-  else if (data.type === 'riwayat_approval') content = <RiwayatApprovalView data={data} onReload={loadData} />
-  else if (data.type === 'table') {
-    content = (
-
-
-      <>
-        <TableView data={data} onReload={loadData} />
-        {menuKey === 'kelola_bobot_kpi' && <KPISettingsSimulator data={data.rows} />}
-      </>
-    )
-  }
-  else if (data.type === 'import_excel') content = <ImportExcel title={data.title} table={data.table} />
-  else if (data.type === 'roster_view') content = <RosterView title={data.title} />
-  else if (data.type === 'roster_upload') content = <RosterUpload title={data.title} />
-  else if (data.type === 'role_manager') content = <RoleManagerView title={data.title} />
-  else if (data.type === 'change_login') content = <ChangeLoginView title={data.title} />
-  else if (data.type === 'export_absensi') content = <ExportAbsensiView title={data.title} />
-  else if (data.type === 'riwayat_absensi_custom') content = <RiwayatAbsensiCustom data={data} />
-  else if (data.type === 'kpi_saya') content = <KPISayaRaportView data={data} />
-  else if (data.type === 'penilaian_tim') content = <PenilaianBawahanView data={data} onReload={loadData} />
-
-
-  return (
-    <div className="min-h-screen pb-20">
-      <div className="max-w-7xl mx-auto p-4 md:p-6">
-        {content}
-      </div>
-    </div>
+  if (data.type === 'dashboard') return <DashboardView title={data.title} data={data} />
+  if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} />
+  if (data.type === 'form_lembur') return <FormLemburView title={data.title} onSuccess={loadData} />
+  if (data.type === 'form_sakit') return <FormSakitView title={data.title} onSuccess={loadData} data={data} />
+  if (data.type === 'pkwt_saya') return <PKWTSayaView title={data.title} data={data} onSuccess={loadData} />
+  if (data.type === 'apd_history') return <APDHistoryView data={data} onReload={loadData} />
+  if (data.type === 'absensi_clock') return <AbsensiClockView title={data.title} />
+  if (data.type === 'riwayat_approval') return <RiwayatApprovalView data={data} onReload={loadData} />
+  if (data.type === 'table') return (
+    <>
+      <TableView data={data} onReload={loadData} />
+    </>
   )
-}
+  if (data.type === 'import_excel') return <ImportExcel title={data.title} table={data.table} />
+  if (data.type === 'roster_view') return <RosterView title={data.title} />
+  if (data.type === 'roster_upload') return <RosterUpload title={data.title} />
+  if (data.type === 'role_manager') return <RoleManagerView title={data.title} />
+  if (data.type === 'change_login') return <ChangeLoginView title={data.title} />
+  if (data.type === 'export_absensi') return <ExportAbsensiView title={data.title} />
+  if (data.type === 'riwayat_absensi_custom') return <RiwayatAbsensiCustom data={data} />
+  if (data.type === 'kpi_saya') return <KPISayaRaportView data={data} />
+  if (data.type === 'penilaian_tim') return <PenilaianBawahanView data={data} onReload={loadData} />
 
-// ============ 🏠 DASHBOARD v1.5.0 (With Graphics) ============
-function DashboardView({ title, data }: any) {
-  const stats = data?.stats || { total: 0, done: 0, pending: 0, hadir: 0, expired: 0, periode: '-', deptStats: [] }
-  const percent = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0
-  const hadirPercent = stats.total > 0 ? Math.round((stats.hadir / stats.total) * 100) : 0
-
-  return (
-    <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-10">
-      {/* Header & Stats Cards Tetap Sama (Seperti sebelumnya) */}
-      <div className="mb-8 flex justify-between items-end">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-1.5 h-10 bg-blue-600 rounded-full"></div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">{title}</h2>
-          </div>
-          <p className="text-sm text-slate-500 font-medium italic">PT. Boston Trikora Mahardika - v1.5.0</p>
-        </div>
-        <div className="text-right hidden md:block">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Periode</p>
-            <p className="text-sm font-bold text-blue-600">{stats.periode}</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Anggota</p>
-            <p className="text-2xl font-black text-slate-900">{stats.total}</p>
-        </div>
-        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Hadir Hari Ini</p>
-            <p className="text-2xl font-black text-blue-600">{stats.hadir}</p>
-        </div>
-        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">KPI Selesai</p>
-            <p className="text-2xl font-black text-emerald-600">{stats.done}</p>
-        </div>
-        <div className="bg-rose-50 p-6 rounded-[2rem] border-2 border-rose-100 shadow-xl">
-            <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Dokumen Expired</p>
-            <p className="text-2xl font-black text-rose-600">{stats.expired}</p>
-        </div>
-      </div>
-
-      {/* Progress Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
-            <div className="relative z-10">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold">Progress Penilaian</h3>
-                    <span className="text-amber-400 font-black">{percent}%</span>
-                </div>
-                <div className="w-full h-4 bg-white/10 rounded-full overflow-hidden mb-4">
-                    <div className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-1000" style={{ width: `${percent}%` }}></div>
-                </div>
-                <p className="text-xs text-slate-400">Kelengkapan raport periode berjalan.</p>
-            </div>
-        </div>
-
-        <div className="bg-white rounded-[2.5rem] p-8 border-2 border-slate-50 shadow-2xl overflow-hidden">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold text-slate-900">Persentase Kehadiran</h3>
-                <span className="text-blue-600 font-black">{hadirPercent}%</span>
-            </div>
-            <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden mb-4">
-                <div className="h-full bg-blue-600 transition-all duration-1000" style={{ width: `${hadirPercent}%` }}></div>
-            </div>
-            <p className="text-xs text-slate-400 text-right italic">Berdasarkan Clock In hari ini.</p>
-        </div>
-      </div>
-
-      {/* --- GRAFIK DEPARTEMEN (v1.5.0) --- */}
-      <div className="bg-white rounded-[2.5rem] p-8 border-2 border-slate-50 shadow-2xl">
-        <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-            <span>📊</span> Distribusi Karyawan per Departemen
-        </h3>
-        
-        <div className="space-y-4">
-          {stats.deptStats && stats.deptStats.length > 0 ? stats.deptStats.map((dept: any, i: number) => (
-            <div key={i} className="group">
-              <div className="flex justify-between items-center mb-1.5 px-1">
-                <span className="text-xs font-black text-slate-700 uppercase tracking-wide">{dept.name}</span>
-                <span className="text-xs font-bold text-slate-400">{dept.count} Orang ({dept.percent}%)</span>
-              </div>
-              <div className="w-full h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                <div 
-                  className={`h-full transition-all duration-1000 ease-out rounded-full ${i === 0 ? 'bg-blue-600' : 'bg-slate-300 group-hover:bg-blue-400'}`} 
-                  style={{ width: `${dept.percent}%` }}
-                ></div>
-              </div>
-            </div>
-          )) : (
-            <p className="text-center py-10 text-slate-300 font-bold italic">Data departemen tidak tersedia</p>
-          )}
-        </div>
-      </div>
-      
-      {/* Alert Dokumen Expired (Tetap ada di bawah) */}
-      {stats.expired > 0 && (
-        <div className="mt-8 bg-amber-50 border-2 border-amber-200 p-6 rounded-[2rem] flex items-center gap-4 animate-pulse">
-            <span className="text-3xl">⚠️</span>
-            <div>
-                <p className="font-black text-amber-900">Perhatian: Ada {stats.expired} dokumen expired/mendekati kadaluarsa!</p>
-                <p className="text-sm text-amber-700 font-medium italic">Segera cek menu Data {'>'} Monitoring Expired.</p>
-            </div>
-        </div>
-      )}
-    </div>
-  )
+  return <div className="p-10 text-center text-gray-500 italic">Tipe konten '{data.type}' tidak dikenali</div>
 }
 
 function StatCard({ label, value, color }: any) {
@@ -278,61 +199,42 @@ function FormCutiView({ title, onSuccess, data }: any) {
   const riwayat = data?.riwayat || []
 
   useEffect(() => {
-  const controller = new AbortController()
-  
-  fetch('/api/leave/atasan-list', { signal: controller.signal })
-    .then(r => r.json())
-    .then(d => setAtasanList(d.atasan_list || []))
-    .catch(err => {
-      if (err.name !== 'AbortError') console.log('Load atasan gagal:', err)
-    })
-  
-  return () => controller.abort()
-}, [])
+    const controller = new AbortController()
+    fetch('/api/leave/atasan-list', { signal: controller.signal })
+      .then(r => r.json())
+      .then(d => setAtasanList(d.atasan_list || []))
+      .catch(err => {
+        if (err.name !== 'AbortError') console.log('Load atasan gagal:', err)
+      })
+    return () => controller.abort()
+  }, [])
 
   async function handleSubmit(e: any) {
-  e.preventDefault()
-  if (!form.foto_url) return alert("⚠️ Mohon upload foto bukti (SKS)!")
-  setLoading(true)
-  try {
-    // Ambil data user dari session
-    const meRes = await fetch('/api/auth/me')
-    const meData = await meRes.json()
-    
-    const payload = {
-      table: 'attendance_evidences',
-      values: {
-        ...form,
-        nama_karyawan: meData?.user?.nama || '', // Auto-fill nama
-        status_atasan: 'PENDING'
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const res = await fetch('/api/leave/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+      const resData = await res.json()
+      if (res.ok) {
+        setMsg({ type: 'ok', text: '✅ Pengajuan cuti berhasil dikirim' })
+        setForm({ tanggal_mulai: '', tanggal_selesai: '', jenis_cuti: '', alasan: '', atasan_nrp: '' })
+        onSuccess()
+      } else {
+        setMsg({ type: 'err', text: resData.error })
       }
+    } catch (err: any) {
+      setMsg({ type: 'err', text: err.message })
+    } finally {
+      setLoading(false)
     }
-
-    const res = await fetch('/api/crud', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    
-    const resData = await res.json()
-
-    if (res.ok) {
-      alert("✅ Pengajuan Sakit/Izin berhasil dikirim!")
-      setForm({ tanggal: '', keterangan: '', foto_url: '', atasan_nrp: '' })
-      onSuccess()
-    } else {
-      alert("❌ Gagal: " + (resData.error || 'Kesalahan tidak diketahui'))
-    }
-  } catch (err: any) {
-    alert("❌ Koneksi Bermasalah: " + err.message)
-  } finally {
-    setLoading(false)
   }
-}
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* FORM CUTI */}
       <div className="bg-white p-8 rounded-[2.5rem] border shadow-xl">
         <h2 className="text-2xl font-black mb-6">✍️ {title}</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -356,7 +258,6 @@ function FormCutiView({ title, onSuccess, data }: any) {
         </form>
       </div>
 
-      {/* RIWAYAT CUTI BULAN INI */}
       <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden">
         <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
           <h3 className="font-black text-slate-800">📜 Riwayat Cuti Periode <span className="text-blue-600">{data?.periode || 'Bulan Ini'}</span></h3>
@@ -393,6 +294,7 @@ function FormCutiView({ title, onSuccess, data }: any) {
   )
 }
 
+
 // ============ ⏱️ FORM LEMBUR ============
 function FormLemburView({ title, onSuccess, data }: any) {
   const [form, setForm] = useState({ tanggal: '', jam_mulai: '', jam_selesai: '', jenis_lembur: 'BIASA', alasan: '', atasan_nrp: '' })
@@ -402,17 +304,15 @@ function FormLemburView({ title, onSuccess, data }: any) {
   const riwayat = data?.riwayat || []
 
   useEffect(() => {
-  const controller = new AbortController()
-  
-  fetch('/api/overtime/atasan-list', { signal: controller.signal })
-    .then(r => r.json())
-    .then(d => setAtasanList(d.atasan_list || []))
-    .catch(err => {
-      if (err.name !== 'AbortError') console.log('Load atasan gagal:', err)
-    })
-  
-  return () => controller.abort()
-}, [])
+    const controller = new AbortController()
+    fetch('/api/overtime/atasan-list', { signal: controller.signal })
+      .then(r => r.json())
+      .then(d => setAtasanList(d.atasan_list || []))
+      .catch(err => {
+        if (err.name !== 'AbortError') console.log('Load atasan gagal:', err)
+      })
+    return () => controller.abort()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -457,7 +357,6 @@ function FormLemburView({ title, onSuccess, data }: any) {
         </form>
       </div>
 
-      {/* RIWAYAT LEMBUR BULAN INI */}
       <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden">
         <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
           <h3 className="font-black text-slate-800">📜 Riwayat Lembur Periode <span className="text-amber-600">{data?.periode || 'Bulan Ini'}</span></h3>
@@ -502,7 +401,6 @@ function FormSakitView({ title, onSuccess, data }: any) {
   const [uploading, setUploading] = useState(false)
   const riwayat = data?.rows || []
 
-  // ✅ SINKRONISASI v1.5.0: Menggunakan endpoint khusus attendance/atasan-list
   useEffect(() => {
     fetch('/api/attendance/atasan-list')
       .then(r => r.json())
@@ -525,7 +423,6 @@ function FormSakitView({ title, onSuccess, data }: any) {
 
   async function handleSubmit(e: any) {
     e.preventDefault()
-    // Validasi Wajib
     if (!form.atasan_nrp) return alert("⚠️ Mohon pilih Atasan Approval terlebih dahulu!")
     if (!form.foto_url) return alert("⚠️ Mohon upload foto bukti (SKS) terlebih dahulu!")
     
@@ -537,14 +434,14 @@ function FormSakitView({ title, onSuccess, data }: any) {
           table: 'attendance_evidences', 
           values: { 
             ...form, 
-            status_atasan: 'PENDING' // Set default status
+            status_atasan: 'PENDING'
           } 
         })
       })
       if (res.ok) {
         alert("✅ Pengajuan berhasil dikirim ke atasan!")
         setForm({ tanggal: '', keterangan: '', foto_url: '', atasan_nrp: '' })
-        onSuccess() // Refresh riwayat di bawah
+        onSuccess()
       } else {
         const err = await res.json()
         alert("❌ Gagal: " + err.error)
@@ -762,7 +659,7 @@ function PKWTSayaView({ title, data, onSuccess }: any) {
   )
 }
 
-// ============ ⏰ ABSENSI CLOCK (FIXED v1.4.0) ============
+// ============ ⏰ ABSENSI CLOCK ============
 function AbsensiClockView({ title }: any) {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [gps, setGps] = useState<any>(null)
@@ -871,14 +768,13 @@ function AbsensiClockView({ title }: any) {
   )
 }
 
-// ============ 📊 TABLE VIEW ============
+// ============ 📊 TABLE VIEW (BUG FIXED - handleApprove Duplikat DIHAPUS) ============
 function TableView({ data, onReload }: any) {
   const { title, rows = [], columns = [], table, access_mode } = data
   const [formModal, setFormModal] = useState<any>(null)
-  const [searchTerm, setSearchTerm] = useState('') // 🔍 State pencarian
+  const [searchTerm, setSearchTerm] = useState('')
   const isApproval = access_mode?.includes('APPROVAL')
 
-  // 🔍 Logic Filter Baris
   const filteredRows = rows.filter((r: any) => {
     return Object.values(r).some(val => 
       String(val).toLowerCase().includes(searchTerm.toLowerCase())
@@ -888,23 +784,11 @@ function TableView({ data, onReload }: any) {
   async function handleApprove(id: string, action: string) {
     const note = action === 'REJECTED' ? prompt("Alasan Penolakan:") : "OK"
     if (!note && action === 'REJECTED') return
-    const endpoint = table === 'leave_requests' ? 'leave' : 'overtime'
-    const res = await fetch(`/api/${endpoint}/approve`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ [table === 'leave_requests' ? 'leave_id' : 'id']: id, action, catatan: note, status: action })
-    })
-    if (res.ok) { alert("✅ Data Berhasil Diproses"); onReload() }
-  }
 
-    async function handleApprove(id: string, action: string) {
-    const note = action === 'REJECTED' ? prompt("Alasan Penolakan:") : "OK"
-    if (!note && action === 'REJECTED') return
-
-    // Tentukan endpoint berdasarkan tabel
     let endpoint = 'crud'
     if (table === 'leave_requests') endpoint = 'leave'
     else if (table === 'overtime_requests') endpoint = 'overtime'
-    else if (table === 'attendance_evidences') endpoint = 'attendance' // Endpoint untuk bukti sakit
+    else if (table === 'attendance_evidences') endpoint = 'attendance'
 
     const res = await fetch(`/api/${endpoint}/approve`, {
       method: 'POST', 
@@ -929,7 +813,6 @@ function TableView({ data, onReload }: any) {
         </div>
         
         <div className="flex w-full md:w-auto gap-3">
-          {/* 🔍 SEARCH BAR */}
           <input 
             type="text" 
             placeholder="🔍 Cari Data..." 
@@ -960,24 +843,22 @@ function TableView({ data, onReload }: any) {
                 {columns.map((c: string) => <td key={c} className="px-8 py-5 whitespace-nowrap font-medium text-slate-700">{renderCell(c, r[c])}</td>)}
                 <td className="px-8 py-5 whitespace-nowrap">
                   <div className="flex justify-center gap-2">
-  {/* TOMBOL LIHAT FOTO (v1.5.0) */}
-  {r.foto_url && (
-    <button 
-      onClick={() => window.open(r.foto_url, '_blank')}
-      className="bg-indigo-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-indigo-600 transition-colors shadow-sm"
-    >
-      LIHAT FOTO
-    </button>
-  )}
+                    {r.foto_url && (
+                      <button 
+                        onClick={() => window.open(r.foto_url, '_blank')}
+                        className="bg-indigo-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-indigo-600 transition-colors shadow-sm"
+                      >
+                        LIHAT FOTO
+                      </button>
+                    )}
 
-  {isApproval && r.status_atasan === 'PENDING' && (
-    <>
-      <button onClick={() => handleApprove(r.id, 'APPROVED')} className="bg-emerald-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-emerald-600 transition-colors shadow-sm">APPROVE</button>
-      <button onClick={() => handleApprove(r.id, 'REJECTED')} className="bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-rose-600 transition-colors shadow-sm">REJECT</button>
-    </>
-  )}
-  {/* ... sisa tombol CRUD (EDIT/HAPUS) ... */}
-</div>
+                    {isApproval && r.status_atasan === 'PENDING' && (
+                      <>
+                        <button onClick={() => handleApprove(r.id, 'APPROVED')} className="bg-emerald-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-emerald-600 transition-colors shadow-sm">APPROVE</button>
+                        <button onClick={() => handleApprove(r.id, 'REJECTED')} className="bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-rose-600 transition-colors shadow-sm">REJECT</button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -990,7 +871,7 @@ function TableView({ data, onReload }: any) {
   )
 }
 
-// ============ 📦 CRUD MODAL (v1.4.0) ============
+// ============ 📦 CRUD MODAL ============
 function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   const [fields, setFields] = useState<any[]>([])
   const [values, setValues] = useState<any>({})
@@ -1000,7 +881,6 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   const [searchEmp, setSearchEmp] = useState('')
 
   useEffect(() => {
-    // 1. Ambil Schema Form
     fetch(`/api/schema?table=${table}`)
       .then(r => r.json())
       .then(d => {
@@ -1017,12 +897,10 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
         setLoading(false)
       })
 
-    // 2. Ambil Daftar Karyawan (HANYA JIKA NRP KOSONG / BUKAN PENILAIAN TIM)
-    // Ini untuk mencegah Error 403 bagi Atasan
     if (!row?.nrp) {
       fetch('/api/data?menu=kelola_karyawan')
         .then(r => {
-          if (r.status === 403) return { rows: [] } // Abaikan jika dilarang
+          if (r.status === 403) return { rows: [] }
           return r.json()
         })
         .then(d => setEmployees(d.rows || []))
@@ -1044,7 +922,7 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
       const resData = await res.json()
       
       if (res.ok) {
-        alert("✅ Data Berhasil Disimpan!") // Notifikasi Sukses
+        alert("✅ Data Berhasil Disimpan!")
         onSuccess() 
       } else {
         alert("❌ Gagal: " + (resData.error || 'Terjadi kesalahan'))
@@ -1074,47 +952,46 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
               <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">{f.label}{f.required && <span className="text-rose-500 ml-1">*</span>}</label>
               
               {f.type === 'employee_select' ? (
-  row?.nrp && mode === 'create' ? (
-    // MODE LOCKED - Karyawan sudah dipilih dari halaman Tim
-    <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl">
-      <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1">Menilai Karyawan:</p>
-      <p className="font-black text-slate-900 text-sm">{row.nama || 'Karyawan Terpilih'}</p>
-      <p className="text-[10px] font-bold text-slate-500">NRP: {row.nrp}</p>
-    </div>
-  ) : (
-    <div className="relative">
-      <input
-        type="text"
-        placeholder="🔍 Cari NRP atau Nama Karyawan..."
-        value={searchEmp || (mode === 'edit' ? values[f.key] : '')}
-        onChange={(e) => setSearchEmp(e.target.value)}
-        className="w-full p-4 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm"
-      />
-      {searchEmp && !searchEmp.includes(' - ') && (
-        <div className="absolute z-[100] w-full bg-white border-2 border-slate-100 mt-2 rounded-2xl shadow-2xl max-h-60 overflow-y-auto">
-          {employees
-            .filter(emp => 
-              (emp.nama || '').toLowerCase().includes(searchEmp.toLowerCase()) || 
-              (emp.nrp || '').toLowerCase().includes(searchEmp.toLowerCase())
-            )
-            .slice(0, 15)
-            .map(emp => (
-              <div
-                key={emp.nrp}
-                className="p-4 hover:bg-blue-600 hover:text-white cursor-pointer border-b border-slate-50 last:border-0 transition-all flex flex-col"
-                onClick={() => {
-                  setValues({ ...values, [f.key]: emp.nrp })
-                  setSearchEmp(`${emp.nrp} - ${emp.nama}`)
-                }}
-              >
-                <span className="font-black text-sm">{emp.nama}</span>
-                <span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{emp.nrp} • {emp.jabatan}</span>
-              </div>
-            ))}
-        </div>
-      )}
-    </div>
-  )
+                row?.nrp && mode === 'create' ? (
+                  <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl">
+                    <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1">Menilai Karyawan:</p>
+                    <p className="font-black text-slate-900 text-sm">{row.nama || 'Karyawan Terpilih'}</p>
+                    <p className="text-[10px] font-bold text-slate-500">NRP: {row.nrp}</p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="🔍 Cari NRP atau Nama Karyawan..."
+                      value={searchEmp || (mode === 'edit' ? values[f.key] : '')}
+                      onChange={(e) => setSearchEmp(e.target.value)}
+                      className="w-full p-4 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm"
+                    />
+                    {searchEmp && !searchEmp.includes(' - ') && (
+                      <div className="absolute z-[100] w-full bg-white border-2 border-slate-100 mt-2 rounded-2xl shadow-2xl max-h-60 overflow-y-auto">
+                        {employees
+                          .filter(emp => 
+                            (emp.nama || '').toLowerCase().includes(searchEmp.toLowerCase()) || 
+                            (emp.nrp || '').toLowerCase().includes(searchEmp.toLowerCase())
+                          )
+                          .slice(0, 15)
+                          .map(emp => (
+                            <div
+                              key={emp.nrp}
+                              className="p-4 hover:bg-blue-600 hover:text-white cursor-pointer border-b border-slate-50 last:border-0 transition-all flex flex-col"
+                              onClick={() => {
+                                setValues({ ...values, [f.key]: emp.nrp })
+                                setSearchEmp(`${emp.nrp} - ${emp.nama}`)
+                              }}
+                            >
+                              <span className="font-black text-sm">{emp.nama}</span>
+                              <span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{emp.nrp} • {emp.jabatan}</span>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )
               ) : f.type === 'select' ? (
                 <select value={values[f.key] || ''} onChange={e => setValues({...values, [f.key]: e.target.value})} className="w-full p-4 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm" required={f.required}>
                   <option value="">-- Pilih --</option>
@@ -1139,11 +1016,12 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   )
 }
 
+
 // ============ 👤 ROLE MANAGER ============
 function RoleManagerView({ title }: any) {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('') // 🔍 State pencarian
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     fetch('/api/role-manager').then(r => r.json()).then(d => { setData(d); setLoading(false) })
@@ -1163,7 +1041,6 @@ function RoleManagerView({ title }: any) {
 
   if (loading) return <div className="p-20 text-center font-black animate-pulse text-slate-400">MEMUAT AKSES ROLE...</div>
 
-  // 🔍 Logic Filter Pencarian
   const filteredEmployees = (data?.employees || []).filter((e: any) => 
     e.nama.toLowerCase().includes(searchTerm.toLowerCase()) || 
     e.nrp.toLowerCase().includes(searchTerm.toLowerCase())
@@ -1177,7 +1054,6 @@ function RoleManagerView({ title }: any) {
           <p className="text-sm text-slate-500 font-medium">Kelola hak akses karyawan per modul aplikasi.</p>
         </div>
         
-        {/* 🔍 SEARCH BAR */}
         <div className="w-full md:w-80 relative">
           <input 
             type="text" 
@@ -1203,27 +1079,27 @@ function RoleManagerView({ title }: any) {
                   </div>
               </div>
               <div className="flex flex-wrap gap-2">
-  {[
-    'atasan', 
-    'pjo', 
-    'admin_site',   // ⭐ TAMBAHKAN
-    'admin_plant',  // ⭐ TAMBAHKAN
-    'hrga_site', 
-    'hrga_oprek'
-  ].map(role => (
-    <button 
-      key={role} 
-      onClick={() => toggleRole(e.nrp, role, e.roles?.includes(role))}
-      className={`px-3 py-1.5 rounded-xl text-[9px] font-black tracking-widest uppercase transition-all active:scale-90 border-2 ${
-        e.roles?.includes(role) 
-          ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200' 
-          : 'bg-white text-slate-300 border-slate-100 hover:border-slate-300'
-      }`}
-    >
-      {role.replace('_', ' ')}
-    </button>
-  ))}
-</div>
+                {[
+                  'atasan', 
+                  'pjo', 
+                  'admin_site',
+                  'admin_plant',
+                  'hrga_site', 
+                  'hrga_oprek'
+                ].map(role => (
+                  <button 
+                    key={role} 
+                    onClick={() => toggleRole(e.nrp, role, e.roles?.includes(role))}
+                    className={`px-3 py-1.5 rounded-xl text-[9px] font-black tracking-widest uppercase transition-all active:scale-90 border-2 ${
+                      e.roles?.includes(role) 
+                        ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200' 
+                        : 'bg-white text-slate-300 border-slate-100 hover:border-slate-300'
+                    }`}
+                  >
+                    {role.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
             </div>
           ))
         )}
@@ -1475,8 +1351,7 @@ function RiwayatAbsensiCustom({ data }: any) {
   )
 }
 
-
-// ============ 📜 RIWAYAT APPROVAL VIEW (v1.5.0) ============
+// ============ 📜 RIWAYAT APPROVAL VIEW ============
 function RiwayatApprovalView({ data, onReload }: any) {
   const rows = data?.rows || []
   const [bulan, setBulan] = useState(data?.bulan || String(new Date().getMonth() + 1).padStart(2, '0'))
@@ -1498,13 +1373,11 @@ function RiwayatApprovalView({ data, onReload }: any) {
 
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
-      {/* Header */}
       <div>
         <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-1">📜 {data.title}</h2>
         <p className="text-sm text-slate-500 font-medium italic">Daftar pengajuan yang pernah Anda proses (Approve/Reject)</p>
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border-2 border-slate-50 shadow-lg">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Diproses</p>
@@ -1520,7 +1393,6 @@ function RiwayatApprovalView({ data, onReload }: any) {
         </div>
       </div>
 
-      {/* Filter Bar */}
       <div className="bg-white p-5 rounded-2xl border-2 border-slate-50 shadow-lg flex flex-wrap gap-3 items-center">
         <span className="text-xs font-black text-slate-500 uppercase">Filter Periode:</span>
         <select value={bulan} onChange={e => setBulan(e.target.value)} className="p-2 border-2 border-slate-100 rounded-xl text-xs font-bold">
@@ -1543,7 +1415,6 @@ function RiwayatApprovalView({ data, onReload }: any) {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-2xl overflow-hidden overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
@@ -1594,7 +1465,6 @@ function RiwayatApprovalView({ data, onReload }: any) {
     </div>
   )
 }
-
 
 // ============ 📊 RAPORT KPI KARYAWAN (70/30) ============
 function KPISayaRaportView({ data }: any) {
@@ -1724,7 +1594,7 @@ function KPISayaRaportView({ data }: any) {
         <div className="mt-20 pt-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="text-[10px] text-slate-400 text-center md:text-left leading-relaxed font-bold">
             <p className="font-black uppercase tracking-widest mb-1 text-slate-900">PT. Boston Trikora Mahardika</p>
-            <p>Generated by BTM Portal Digital System • Internal v1.4.0</p>
+            <p>Generated by BTM Portal Digital System • Internal v1.6.0</p>
             <p>Timestamp: {new Date().toLocaleString('id-ID')}</p>
           </div>
           <div className="bg-slate-950 text-white px-10 py-4 rounded-3xl text-[10px] font-black tracking-[0.4em] uppercase border-b-4 border-amber-500 shadow-2xl">
@@ -1739,68 +1609,7 @@ function KPISayaRaportView({ data }: any) {
   )
 }
 
-// ============ UTILITY COMPONENTS (v1.4.0) ============
-function Input({ label, onChange, ...props }: any) {
-  return (
-    <div>
-      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
-      <input {...props} onChange={e => onChange(e.target.value)} className="w-full p-3.5 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm" />
-    </div>
-  )
-}
-
-function Select({ label, options, onChange, ...props }: any) {
-  return (
-    <div>
-      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
-      <select {...props} onChange={e => onChange(e.target.value)} className="w-full p-3.5 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm">
-        <option value="">-- Pilih --</option>
-        {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
-      </select>
-    </div>
-  )
-}
-
-function Textarea({ label, onChange, ...props }: any) {
-  return (
-    <div>
-      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
-      <textarea {...props} onChange={e => onChange(e.target.value)} className="w-full p-4 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm min-h-[120px]" />
-    </div>
-  )
-}
-
-function StatusBadge({ value }: any) {
-  const m: any = {
-    PENDING: 'bg-amber-50 text-amber-700 border-amber-200', APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200', REJECTED: 'bg-rose-50 text-rose-700 border-rose-200',
-    DISETUJUI: 'bg-emerald-50 text-emerald-700 border-emerald-200', HADIR: 'bg-emerald-50 text-emerald-700 border-emerald-200', TERLAMBAT: 'bg-amber-50 text-amber-700 border-amber-200',
-    Aktif: 'bg-emerald-50 text-emerald-700 border-emerald-200', Nonaktif: 'bg-slate-100 text-slate-500 border-slate-200'
-  }
-  return <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${m[value] || 'bg-slate-50 text-slate-400 border-slate-100'}`}>{value}</span>
-}
-
-function formatColumnName(col: string) {
-  const special: any = {
-    _nama_karyawan: '👤 Karyawan', _jabatan: 'Jabatan', _site: 'Site', _departemen: 'Dept',
-    nrp: 'NRP', clock_in: 'Masuk', clock_out: 'Pulang', status_atasan: 'Atasan', status_pjo: 'PJO', status_final: 'Status',
-    latitude: 'LAT', longitude: 'LNG', radius_meter: 'Radius', nama_site: 'Site Name', active: 'Status', kode: 'ID SISTEM', persen: 'Persen (%)'
-  }
-  return special[col] || col.replace(/_/g, ' ').toUpperCase()
-}
-
-function renderCell(col: string, val: any) {
-  if (val === null || val === undefined) return <span className="text-slate-200 italic font-bold text-[10px]">EMPTY</span>
-  if (typeof val === 'boolean') return val ? <span className="text-emerald-500 font-black">YES</span> : <span className="text-slate-300 font-black">NO</span>
-  if (col.includes('status')) return <StatusBadge value={String(val)} />
-  if (col === 'persen') return <span className="font-black text-slate-900">{val}%</span>
-  if (col.includes('tanggal') && !col.includes('jam')) { try { return new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) } catch { return String(val) } }
-  if (col.includes('foto') || col === 'image_url') return <a href={val} target="_blank" className="text-blue-600 font-black uppercase text-[9px] underline tracking-widest">👁️ DOKUMEN</a>
-  return String(val)
-}
-
-
-// app/dashboard/page.tsx - REVISI PenilaianBawahanView v1.5.0
-
+// ============ 👥 PENILAIAN BAWAHAN ============
 function PenilaianBawahanView({ data, onReload }: any) {
   const [selectedEmp, setSelectedEmp] = useState<any>(null)
   const [activeFilter, setActiveFilter] = useState('OPERATOR')
@@ -1808,24 +1617,20 @@ function PenilaianBawahanView({ data, onReload }: any) {
 
   const currentMonth = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase()
 
-  // 1. Logika Filter & Search (Membagi ke Operator, Plant/Mekanik, Support)
   const filteredBySearch = data.rows.filter((e: any) => 
     e.nama.toLowerCase().includes(searchTim.toLowerCase()) || 
     e.nrp.toLowerCase().includes(searchTim.toLowerCase())
   )
 
-  // KATEGORI OPERATOR
   const operators = filteredBySearch.filter((e: any) => 
     /operator|driver|huler|dt|exca|dozer|grader|compactor/i.test(e.jabatan)
   )
 
-  // KATEGORI PLANT / MEKANIK
   const mechanics = filteredBySearch.filter((e: any) => 
     /mechanic|mekanik|welder|tyreman|electric|helper|plant/i.test(e.jabatan) || 
     (e.departemen && e.departemen.toLowerCase().includes('plant'))
   )
 
-  // KATEGORI SUPPORT / LAINNYA
   const support = filteredBySearch.filter((e: any) => 
     !operators.includes(e) && !mechanics.includes(e)
   )
@@ -1931,4 +1736,63 @@ function PenilaianBawahanView({ data, onReload }: any) {
       )}
     </div>
   )
+}
+
+// ============ UTILITY COMPONENTS ============
+function Input({ label, onChange, ...props }: any) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
+      <input {...props} onChange={e => onChange(e.target.value)} className="w-full p-3.5 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm" />
+    </div>
+  )
+}
+
+function Select({ label, options, onChange, ...props }: any) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
+      <select {...props} onChange={e => onChange(e.target.value)} className="w-full p-3.5 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm">
+        <option value="">-- Pilih --</option>
+        {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  )
+}
+
+function Textarea({ label, onChange, ...props }: any) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
+      <textarea {...props} onChange={e => onChange(e.target.value)} className="w-full p-4 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm min-h-[120px]" />
+    </div>
+  )
+}
+
+function StatusBadge({ value }: any) {
+  const m: any = {
+    PENDING: 'bg-amber-50 text-amber-700 border-amber-200', APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200', REJECTED: 'bg-rose-50 text-rose-700 border-rose-200',
+    DISETUJUI: 'bg-emerald-50 text-emerald-700 border-emerald-200', HADIR: 'bg-emerald-50 text-emerald-700 border-emerald-200', TERLAMBAT: 'bg-amber-50 text-amber-700 border-amber-200',
+    Aktif: 'bg-emerald-50 text-emerald-700 border-emerald-200', Nonaktif: 'bg-slate-100 text-slate-500 border-slate-200'
+  }
+  return <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${m[value] || 'bg-slate-50 text-slate-400 border-slate-100'}`}>{value}</span>
+}
+
+function formatColumnName(col: string) {
+  const special: any = {
+    _nama_karyawan: '👤 Karyawan', _jabatan: 'Jabatan', _site: 'Site', _departemen: 'Dept',
+    nrp: 'NRP', clock_in: 'Masuk', clock_out: 'Pulang', status_atasan: 'Atasan', status_pjo: 'PJO', status_final: 'Status',
+    latitude: 'LAT', longitude: 'LNG', radius_meter: 'Radius', nama_site: 'Site Name', active: 'Status', kode: 'ID SISTEM', persen: 'Persen (%)'
+  }
+  return special[col] || col.replace(/_/g, ' ').toUpperCase()
+}
+
+function renderCell(col: string, val: any) {
+  if (val === null || val === undefined) return <span className="text-slate-200 italic font-bold text-[10px]">EMPTY</span>
+  if (typeof val === 'boolean') return val ? <span className="text-emerald-500 font-black">YES</span> : <span className="text-slate-300 font-black">NO</span>
+  if (col.includes('status')) return <StatusBadge value={String(val)} />
+  if (col === 'persen') return <span className="font-black text-slate-900">{val}%</span>
+  if (col.includes('tanggal') && !col.includes('jam')) { try { return new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) } catch { return String(val) } }
+  if (col.includes('foto') || col === 'image_url') return <a href={val} target="_blank" className="text-blue-600 font-black uppercase text-[9px] underline tracking-widest">👁️ DOKUMEN</a>
+  return String(val)
 }

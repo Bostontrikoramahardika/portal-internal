@@ -266,22 +266,31 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const visibleTabs = TAB_CONFIG.filter(tab => tab.roles.some(r => userRoles.includes(r)))
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      <aside className="hidden lg:flex flex-col w-64 bg-slate-950 text-white fixed top-0 left-0 bottom-0 z-40 overflow-y-auto">
+    <div className="min-h-screen bg-[#F1F5F9] flex relative overflow-hidden">
+  {/* Pattern Logo Background (Luxury v1.6.0) */}
+  <div 
+    className="fixed inset-0 pointer-events-none opacity-[0.03] z-0"
+    style={{ 
+      backgroundImage: `url('https://i.ibb.co/LzN4Qzq/image.png')`, 
+      backgroundRepeat: 'repeat',
+      backgroundSize: '150px',
+    }}
+  />
+      <aside className="hidden lg:flex flex-col w-64 bg-[#003D79] text-white fixed top-0 left-0 bottom-0 z-40 overflow-y-auto">
         <div className="p-5 border-b border-slate-800 flex items-center gap-3">
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg">
-            <Image src="/logo.png" alt="BTM" width={32} height={32} className="object-contain" />
+            <Image src="/btm-fix.png" alt="BTM" width={32} height={32} className="object-contain" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-sm truncate">BTM Portal</div>
-            <div className="text-[10px] text-amber-500 font-black uppercase truncate leading-tight">{user.nama}</div>
+            <div className="font-bold text-sm truncate">BTM Mobile App</div>
+            <div className="text-[10px] text-blue-200 font-black uppercase truncate leading-tight">{user.nama}</div>
             <div className="text-[9px] text-slate-500 font-medium">NRP: {user.nrp_login || user.nrp}</div>
           </div>
         </div>
         <div className="p-4 space-y-1">
           {visibleTabs.map(tab => (
             <div key={tab.key}>
-              <button onClick={() => handleTabClick(tab)} className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === tab.key ? 'bg-amber-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>
+              <button onClick={() => handleTabClick(tab)} className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === tab.key ? 'bg-white/10 border-l-4 border-white text-white' : 'text-slate-400 hover:bg-slate-800'}`}>
                 <span>{tab.icon}</span><span className="font-semibold">{tab.label}</span>
               </button>
               {activeTab === tab.key && menus.filter(m => tab.customMatch(m)).length > 1 && (
@@ -301,29 +310,41 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 min-w-0 lg:ml-64 pb-24 lg:pb-6">
         <div className="lg:hidden bg-white border-b p-3 flex items-center gap-3 sticky top-0 z-20 shadow-sm">
-          <Image src="/logo.png" alt="BTM" width={24} height={24} />
+          <Image src="/btm-fix.png" alt="BTM" width={24} height={24} />
           <div className="flex-1"><h1 className="text-xs font-bold uppercase">BTM Portal</h1></div>
           <div className="text-right text-[10px]"><div className="font-bold">{user.nama}</div><div className="text-slate-500">{user.nrp_login || user.nrp}</div></div>
         </div>
         <div className="p-4 lg:p-6">{children}</div>
       </main>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t flex overflow-x-auto px-2 py-2 safe-area-inset-bottom">
-        {visibleTabs.map(tab => (
-          <button key={tab.key} onClick={() => handleTabClick(tab)} className={`flex flex-col items-center min-w-[65px] flex-1 py-1 ${activeTab === tab.key ? 'text-amber-600' : 'text-slate-400'}`}>
-            <span className="text-xl">{tab.icon}</span><span className="text-[9px] font-bold mt-1">{tab.label}</span>
-          </button>
-        ))}
-      </nav>
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-slate-100 flex overflow-x-auto px-4 py-3 pb-8 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,61,121,0.08)] no-scrollbar">
+  {visibleTabs.map(tab => (
+    <button 
+      key={tab.key} 
+      onClick={() => handleTabClick(tab)} 
+      className={`flex flex-col items-center min-w-[75px] flex-1 py-1 transition-all duration-300 ${activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'}`}
+    >
+      <div className={`text-2xl mb-1 ${activeTab === tab.key ? 'filter-none' : 'grayscale'}`}>
+        {tab.icon}
+      </div>
+      <span className={`text-[10px] tracking-tight font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>
+        {tab.label}
+      </span>
+      {activeTab === tab.key && (
+        <div className="w-1 h-1 bg-[#003D79] rounded-full mt-1 animate-pulse"></div>
+      )}
+    </button>
+  ))}
+</nav>
 
       {bottomSheetOpen && (
         <>
           <div className="fixed inset-0 bg-black/50 z-50 lg:hidden" onClick={() => setBottomSheetOpen(false)} />
-          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white rounded-t-3xl p-4 max-h-[70vh] overflow-y-auto">
+          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white rounded-t-[2.5rem] p-8 shadow-2xl">
             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4" /><h3 className="font-bold mb-4 px-2 text-slate-800">{bottomSheetTitle}</h3>
             <div className="space-y-2">
               {bottomSheetMenus.map(m => (
-                <button key={m.menu_key} onClick={() => navigateMenu(m.menu_key)} className={`w-full text-left p-4 rounded-2xl flex items-center gap-3 border ${activeMenu === m.menu_key ? 'bg-amber-50 border-amber-200 text-amber-700 font-bold' : 'border-slate-100 text-slate-700'}`}>
+                <button key={m.menu_key} onClick={() => navigateMenu(m.menu_key)} className={`w-full text-left p-4 rounded-2xl flex items-center gap-3 border ${activeMenu === m.menu_key ? 'bg-blue-50 border-blue-100 text-[#003D79] text-amber-700 font-bold' : 'border-slate-100 text-slate-700'}`}>
                   <span className="text-xl">{m.menu_icon || '📄'}</span><span className="text-sm">{m.menu_label}</span>
                 </button>
               ))}

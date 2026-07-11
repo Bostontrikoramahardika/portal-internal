@@ -1,163 +1,180 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
+/**
+ * BTM PORTAL v1.6.0 - LOGIN SCREEN (Luxury Mobile Edition)
+ * Style: 1Pama Mobile App
+ */
+
 export default function LoginPage() {
   const [nrp, setNrp] = useState('')
+  const [site, setSite] = useState('')
+  // Hardcode site sementara karena API /api/data butuh auth (401)
+  const sites = ['PPA-MLP', 'HO', 'PPA-BIB', 'PPA-MCB'] 
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  // 🔍 CEK SESSION - Kalau masih valid, langsung ke dashboard
-  useEffect(() => {
-  const checkSession = async () => {
-    // Kalau offline, jangan cek session (biarkan user lihat form login)
-    if (!navigator.onLine) {
-      console.log('📡 Offline, tampilkan form login')
-      return
-    }
-
-    // Online: cek session ke server
-    try {
-      const res = await fetch('/api/auth/me', {
-        method: 'GET',
-        credentials: 'include',
-      })
-
-      if (res.ok) {
-        console.log('✅ Session valid, redirect ke dashboard')
-        router.push('/dashboard?menu=absensi_saya')
-      }
-    } catch {
-      console.log('📡 Error fetch, tampilkan login')
-    }
-  }
-
-  checkSession()
-}, [router])
-
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
+    if (!site) { setError('Pilih Site Kerja'); return }
     setLoading(true)
+    setError('')
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nrp: nrp.trim() })
+        body: JSON.stringify({ nrp: nrp.trim(), site: site })
       })
-
+      
       const data = await res.json()
-
+      
       if (!res.ok) {
-  setError(data.error || 'Login gagal')
-  return
-}
-
-// 🔖 Simpan flag pernah login (untuk offline mode)
-
-
-router.push('/dashboard?menu=absensi_saya')
-    } catch {
-      setError('Terjadi kesalahan. Coba lagi.')
-    } finally {
+        setError(data.error || 'NRP tidak terdaftar')
+        setLoading(false)
+        return
+      }
+      
+      // Redirect ke dashboard setelah session terbentuk
+      router.push('/dashboard?menu=absensi_saya')
+    } catch (err) {
+      setError('Koneksi Gagal ke Server')
       setLoading(false)
     }
   }
 
-  return (
-    <div className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: "url('/bg-login.jpg')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      ></div>
-
-      {/* Dark Overlay untuk keterbacaan */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-br from-slate-950/85 via-slate-900/80 to-slate-800/85"></div>
-
-      {/* Decorative Accent */}
-      <div className="absolute inset-0 z-10 opacity-20">
-        <div className="absolute top-20 left-20 w-96 h-96 bg-amber-500 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
+  // Animasi Loading Screen (Swivel Logo)
+  if (loading) return (
+    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[999]">
+      <div className="animate-swivel mb-6">
+        <Image 
+          src="/btm-fix.png" 
+          alt="Logo" 
+          width={180} 
+          height={180} 
+          priority 
+        />
       </div>
+      <p className="text-[#003D79] font-black text-xs tracking-[0.3em] animate-pulse uppercase">Authenticating...</p>
+    </div>
+  )
 
-      {/* Login Card */}
-      <div className="w-full max-w-md relative z-20">
-        <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 sm:p-10 border border-white/20">
-          {/* Logo & Brand */}
-          <div className="text-center mb-8">
-            <div className="w-24 h-24 mx-auto mb-4 flex items-center justify-center bg-white rounded-2xl shadow-md p-2">
-              <Image
-                src="/logo.png"
-                alt="BTM Logo"
-                width={80}
-                height={80}
-                className="object-contain"
-                priority
-              />
-            </div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-              BTM Portal
-            </h1>
-            <p className="text-slate-500 text-sm mt-1 font-medium">
-              PT. Boston Trikora Mahardika
-            </p>
-            <div className="w-16 h-1 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full mx-auto mt-3"></div>
+  return (
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 relative overflow-hidden bg-[#F8FAFC]">
+      
+      {/* --- LAYER 1: PATTERN LOGO (Watermark Style) --- */}
+      <div 
+        className="fixed inset-0 pointer-events-none opacity-[0.01] z-0"
+        style={{ 
+          backgroundImage: `url('https://i.ibb.co/LzN4Qzq/image.png')`, 
+          backgroundRepeat: 'repeat',
+          backgroundSize: '160px',
+        }}
+      />
+      
+      {/* --- LAYER 2: BLUR BLOBS (Pama depth effect) --- */}
+      <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[120px] pointer-events-none z-[1]" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-[#003D79]/10 rounded-full blur-[120px] pointer-events-none z-[1]" />
+      
+      {/* --- LAYER 3: CONTENT --- */}
+      <div className="relative z-10 w-full max-w-[360px] flex flex-col items-center">
+        
+        {/* Versi Info */}
+        <div className="fixed top-8 right-8 text-slate-400 text-[10px] font-bold tracking-widest opacity-50">
+          V.1.6.0
+        </div>
+
+        {/* Header Logo */}
+        <div className="flex flex-col items-center mb-10 text-center">
+          <div className="mb-6 drop-shadow-sm">
+            <Image 
+              src="/btm-fix.png" 
+              alt="Logo BTM" 
+              width={180} 
+              height={180} 
+              priority
+              className="object-contain" 
+            />
           </div>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">BTM Mobile App</h1>
+          <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.5em] mt-3 opacity-60">
+            INTERNAL PRODUCTION
+          </p>
+        </div>
 
-          {/* Error */}
-          {error && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl mb-4 text-sm flex items-center gap-2">
-              <span>⚠️</span>
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleLogin}>
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Nomor Registrasi Pegawai (NRP)
-              </label>
+        {/* Card Login Utama */}
+        <div className="w-full bg-white/80 backdrop-blur-md rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,61,121,0.12)] p-9 border border-white/50">
+          <h2 className="text-center font-bold text-[#003D79] text-[11px] mb-8 tracking-[0.3em] uppercase opacity-80">
+            Secure Login
+          </h2>
+          
+          <form onSubmit={handleLogin} className="space-y-4">
+            
+            {/* NRP Input */}
+            <div className="flex items-center bg-slate-100/50 border-2 border-transparent rounded-2xl px-5 py-4 focus-within:border-[#003D79] focus-within:bg-white transition-all group">
+              <span className="text-slate-400 group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">👤</span>
               <input
                 type="text"
+                placeholder="NRP Pengguna"
                 value={nrp}
                 onChange={(e) => setNrp(e.target.value)}
-                placeholder="Masukkan NRP Anda"
-                className="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-lg text-center tracking-widest text-slate-900 transition-all"
-                autoFocus
+                className="w-full bg-transparent outline-none font-bold text-sm text-slate-700 placeholder:text-slate-400"
                 required
               />
             </div>
 
+            {/* Site Selection */}
+            <div className="flex items-center bg-slate-100/50 border-2 border-transparent rounded-2xl px-5 py-4 focus-within:border-[#003D79] focus-within:bg-white transition-all group">
+              <span className="text-slate-400 group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">🏢</span>
+              <select
+                value={site}
+                onChange={(e) => setSite(e.target.value)}
+                className="w-full bg-transparent outline-none font-bold text-sm text-slate-700 appearance-none cursor-pointer"
+                required
+              >
+                <option value="">Pilih Site Kerja</option>
+                {sites.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <span className="text-slate-400 text-[10px]">▼</span>
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 disabled:from-slate-400 disabled:to-slate-400 text-white font-semibold py-3.5 rounded-xl transition-all text-base shadow-lg hover:shadow-xl"
+              className="w-full bg-[#003D79] text-white py-5 rounded-full font-black text-sm tracking-[0.2em] mt-6 uppercase shadow-xl shadow-blue-900/20 active:scale-[0.97] hover:brightness-110 transition-all"
             >
-              {loading ? 'Memproses...' : 'Masuk ke Portal'}
+              Log In
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-            <p className="text-xs text-slate-400">
-              Sistem Internal Perusahaan
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              © {new Date().getFullYear()} PT. Boston Trikora Mahardika
-            </p>
+          {error && (
+            <div className="flex justify-center items-center mt-6 gap-2">
+              <div className="w-1 h-1 bg-rose-500 rounded-full animate-ping"></div>
+              <p className="text-rose-500 text-[10px] font-bold uppercase tracking-wider">{error}</p>
+            </div>
+          )}
+          
+          <div className="text-center mt-8">
+            <button type="button" className="text-[#003D79] text-[10px] font-black tracking-widest uppercase border-b-2 border-blue-100 pb-1 hover:border-[#003D79] transition-all">
+              Bantuan Login
+            </button>
           </div>
         </div>
+
+        {/* Footer Berkelas */}
+        <div className="mt-12 text-center px-6">
+          <p className="text-[9px] text-slate-400 leading-relaxed mb-6 font-medium">
+            Sistem Informasi SDM Terpadu <br/>
+            <span className="text-[#003D79] font-bold cursor-pointer">PT Boston Trikora Mahardika</span>
+          </p>
+          <div className="flex items-center justify-center gap-4 opacity-30 grayscale">
+             {/* Placeholder jika ada logo partner/sertifikasi */}
+          </div>
+        </div>
+
       </div>
     </div>
   )
