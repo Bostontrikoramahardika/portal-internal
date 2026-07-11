@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
@@ -12,11 +12,29 @@ import Image from 'next/image'
 export default function LoginPage() {
   const [nrp, setNrp] = useState('')
   const [site, setSite] = useState('')
-  // Hardcode site sementara karena API /api/data butuh auth (401)
-  const sites = ['PPA-MLP', 'HO', 'PPA-BIB', 'PPA-MCB'] 
+  const [sites, setSites] = useState<string[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  // 🌐 Fetch daftar site dari database saat halaman dimuat
+  useEffect(() => {
+    fetch('/api/public/sites')
+      .then(r => r.json())
+      .then(d => {
+        const siteList = (d.sites || []).map((s: any) => s.nama_site)
+        // Fallback ke hardcoded jika API gagal / kosong
+        if (siteList.length > 0) {
+          setSites(siteList)
+        } else {
+          setSites(['PPA-MLP', 'HO', 'PPA-BIB', 'PPA-MCB'])
+        }
+      })
+      .catch(() => {
+        // Fallback jika error koneksi
+        setSites(['PPA-MLP', 'HO', 'PPA-BIB', 'PPA-MCB'])
+      })
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
