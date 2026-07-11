@@ -74,7 +74,7 @@ const TAB_CONFIG = [
         m.menu_key === 'mcu_saya' ||
         m.menu_key === 'simper_saya' ||
         m.menu_key === 'roster_saya' ||
-        m.menu_key === 'monitoring_expired' // ✅ SINKRON DENGAN MONITORING EXPIRED
+        m.menu_key === 'monitoring_expired'
       )
     }
   },
@@ -110,7 +110,7 @@ const TAB_CONFIG = [
         m.menu_key === 'approval_cuti' ||
         m.menu_key === 'approval_lembur' ||
         m.menu_key === 'approval_sakit' ||
-        m.menu_key === 'riwayat_approval' // 🌟 TAMBAHKAN INI
+        m.menu_key === 'riwayat_approval'
       )
     }
   },
@@ -200,12 +200,19 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
   const [bottomSheetMenus, setBottomSheetMenus] = useState<MenuItem[]>([])
   const [bottomSheetTitle, setBottomSheetTitle] = useState('')
+  // v1.6.0: State Notifikasi
+  const [notifCount, setNotifCount] = useState(0)
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
 
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeMenu = searchParams.get('menu') || 'absensi_saya'
 
-  useEffect(() => { checkAuth() }, [])
+  // v1.6.0: Panggil auth + notif sekali di awal
+  useEffect(() => { 
+    checkAuth()
+    fetchNotif()
+  }, [])
 
   useEffect(() => {
     if (menus.length > 0) {
@@ -233,6 +240,17 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       setMenus(filtered)
     } catch { router.push('/') }
     finally { setLoading(false) }
+  }
+
+  // v1.6.0: Fungsi ambil notifikasi
+  async function fetchNotif() {
+    try {
+      const res = await fetch('/api/notifikasi')
+      if (res.ok) {
+        const data = await res.json()
+        setNotifCount(data.total_notifikasi || 0)
+      }
+    } catch (err) { console.error("Notif Error:", err) }
   }
 
   async function handleLogout() {
@@ -267,15 +285,15 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] flex relative overflow-hidden">
-  {/* Pattern Logo Background (Luxury v1.6.0) */}
-  <div 
-    className="fixed inset-0 pointer-events-none opacity-[0.03] z-0"
-    style={{ 
-      backgroundImage: `url('/bg-pattern.png')`, 
-      backgroundRepeat: 'repeat',
-      backgroundSize: '150px',
-    }}
-  />
+      {/* Pattern Logo Background (Luxury v1.6.0) */}
+      <div 
+        className="fixed inset-0 pointer-events-none opacity-[0.03] z-0"
+        style={{ 
+          backgroundImage: `url('/bg-pattern.png')`, 
+          backgroundRepeat: 'repeat',
+          backgroundSize: '150px',
+        }}
+      />
       <aside className="hidden lg:flex flex-col w-64 bg-[#003D79] text-white fixed top-0 left-0 bottom-0 z-40 overflow-y-auto">
         <div className="p-5 border-b border-slate-800 flex items-center gap-3">
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg">
@@ -286,6 +304,20 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
             <div className="text-[10px] text-blue-200 font-black uppercase truncate leading-tight">{user.nama}</div>
             <div className="text-[9px] text-slate-500 font-medium">NRP: {user.nrp_login || user.nrp}</div>
           </div>
+
+          {/* v1.6.0: Bell Icon Desktop Sidebar */}
+          <button 
+            type="button"
+            onClick={() => setIsNotifOpen(true)} 
+            className="relative p-2 flex items-center justify-center active:scale-90 transition-transform cursor-pointer hover:bg-white/10 rounded-full"
+          >
+            <span className="text-xl pointer-events-none">🔔</span>
+            {notifCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black h-5 w-5 flex items-center justify-center rounded-full border-2 border-[#003D79] shadow-lg animate-bounce pointer-events-none">
+                {notifCount}
+              </span>
+            )}
+          </button>
         </div>
         <div className="p-4 space-y-1">
           {visibleTabs.map(tab => (
@@ -309,33 +341,48 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="flex-1 min-w-0 lg:ml-64 pb-24 lg:pb-6">
-        <div className="lg:hidden bg-white border-b p-3 flex items-center gap-3 sticky top-0 z-20 shadow-sm">
+        <div className="lg:hidden bg-white border-b p-3 flex items-center gap-3 sticky top-0 z-[60] shadow-sm">
           <Image src="/btm-fix.png" alt="BTM" width={24} height={24} />
-          <div className="flex-1"><h1 className="text-xs font-bold uppercase">BTM Mobile App</h1></div>
-          <div className="text-right text-[10px]"><div className="font-bold">{user.nama}</div><div className="text-slate-500">{user.nrp_login || user.nrp}</div></div>
+          <div className="flex-1"><h1 className="text-xs font-bold uppercase text-[#003D79]">BTM Mobile App</h1></div>
+
+          {/* v1.6.0: Bell Icon Mobile - FIXED CLICKABLE */}
+          <button 
+            type="button"
+            onClick={() => setIsNotifOpen(true)} 
+            className="relative p-2 flex items-center justify-center active:scale-90 transition-transform cursor-pointer z-[70]"
+          >
+            <span className="text-xl pointer-events-none">🔔</span>
+            {notifCount > 0 && (
+              <span className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black h-5 w-5 flex items-center justify-center rounded-full border-2 border-white shadow-lg animate-bounce pointer-events-none">
+                {notifCount}
+              </span>
+            )}
+          </button>
+
+          <div className="text-right text-[10px]"><div className="font-bold">{user.nama.split(' ')[0]}</div><div className="text-slate-500">{user.nrp_login || user.nrp}</div></div>
         </div>
         <div className="p-4 lg:p-6">{children}</div>
       </main>
 
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-slate-100 flex overflow-x-auto px-4 py-3 pb-8 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,61,121,0.08)] no-scrollbar">
-  {visibleTabs.map(tab => (
-    <button 
-      key={tab.key} 
-      onClick={() => handleTabClick(tab)} 
-      className={`flex flex-col items-center min-w-[75px] flex-1 py-1 transition-all duration-300 ${activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'}`}
-    >
-      <div className={`text-2xl mb-1 ${activeTab === tab.key ? 'filter-none' : 'grayscale'}`}>
-        {tab.icon}
-      </div>
-      <span className={`text-[10px] tracking-tight font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>
-        {tab.label}
-      </span>
-      {activeTab === tab.key && (
-        <div className="w-1 h-1 bg-[#003D79] rounded-full mt-1 animate-pulse"></div>
-      )}
-    </button>
-  ))}
-</nav>
+        {visibleTabs.map(tab => (
+          <button 
+            key={tab.key} 
+            onClick={() => handleTabClick(tab)} 
+            className={`flex flex-col items-center min-w-[75px] flex-1 py-1 transition-all duration-300 ${activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'}`}
+          >
+            <div className={`text-2xl mb-1 ${activeTab === tab.key ? 'filter-none' : 'grayscale'}`}>
+              {tab.icon}
+            </div>
+            <span className={`text-[10px] tracking-tight font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>
+              {tab.label}
+            </span>
+            {activeTab === tab.key && (
+              <div className="w-1 h-1 bg-[#003D79] rounded-full mt-1 animate-pulse"></div>
+            )}
+          </button>
+        ))}
+      </nav>
 
       {bottomSheetOpen && (
         <>
@@ -349,6 +396,45 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                 </button>
               ))}
               {activeTab === 'profile' && <button onClick={handleLogout} className="w-full text-left p-4 rounded-2xl flex items-center gap-3 text-red-600 bg-red-50 font-bold mt-4"><span>🚪</span><span>Keluar</span></button>}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* v1.6.0: Modal Notification Center (Luxury Style) */}
+      {isNotifOpen && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[999]" onClick={() => setIsNotifOpen(false)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[1000] overflow-hidden">
+            <div className="p-8 bg-[#003D79] text-white flex justify-between items-center">
+              <div>
+                <h3 className="font-black text-xl tracking-tight">Pusat Notifikasi</h3>
+                <p className="text-blue-200 text-[10px] font-bold uppercase tracking-[0.2em]">Update Real-time</p>
+              </div>
+              <button onClick={() => setIsNotifOpen(false)} className="bg-white/10 hover:bg-white/20 h-10 w-10 flex items-center justify-center rounded-full transition-colors">✕</button>
+            </div>
+            
+            <div className="p-6 max-h-[60vh] overflow-y-auto bg-slate-50/50 space-y-4">
+              {notifCount === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-4 opacity-20">🏝️</div>
+                  <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Semua Aman!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Item 1: Approval */}
+                  <button onClick={() => { setIsNotifOpen(false); router.push('/dashboard?menu=approval_atasan') }} className="w-full text-left p-5 bg-white border border-slate-100 rounded-[2rem] flex gap-4 items-center shadow-sm hover:shadow-md transition-all active:scale-95">
+                    <div className="h-12 w-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl">📝</div>
+                    <div className="flex-1"><div className="font-black text-[#003D79] text-sm uppercase">Persetujuan</div><p className="text-[11px] text-slate-500 font-bold leading-tight mt-1">Cek pengajuan yang butuh approval Anda.</p></div>
+                  </button>
+
+                  {/* Item 2: Expired */}
+                  <button onClick={() => { setIsNotifOpen(false); router.push('/dashboard?menu=monitoring_expired') }} className="w-full text-left p-5 bg-white border border-slate-100 rounded-[2rem] flex gap-4 items-center shadow-sm hover:shadow-md transition-all active:scale-95">
+                    <div className="h-12 w-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl">⚠️</div>
+                    <div className="flex-1"><div className="font-black text-amber-600 text-sm uppercase">Dokumen Expired</div><p className="text-[11px] text-slate-500 font-bold leading-tight mt-1">Periksa masa berlaku MCU/SIMPER/PKWT.</p></div>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </>

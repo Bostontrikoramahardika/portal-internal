@@ -1,84 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { getSession } from '../../lib/auth'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSession } from '@/app/lib/auth'
+import { supabase } from '@/app/lib/supabase'
 
 export async function GET(req: NextRequest) {
-  const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   try {
-    const now = new Date()
-    const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+    const token = req.cookies.get('session_token')?.value
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getSession(token)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Cek MCU expired / akan expired
-    const { data: mcuData } = await supabase
-      .from('mcu')
-      .select('id, nrp, nama_karyawan, tanggal_expired, hasil')
-      .not('tanggal_expired', 'is', null)
-      .lte('tanggal_expired', thirtyDaysFromNow.toISOString().split('T')[0])
+    const now = new Date().toISOString().split('T')[0]
+    const nextMonth = new Date()
+    nextMonth.setDate(nextMonth.getDate() + 30)
+    const dateLimit = nextMonth.toISOString().split('T')[0]
 
-    // Cek SIMPER expired / akan expired
-    const { data: simperData } = await supabase
-      .from('simper')
-      .select('id, nrp, nama_karyawan, tanggal_expired, jenis_simper')
-      .not('tanggal_expired', 'is', null)
-      .lte('tanggal_expired', thirtyDaysFromNow.toISOString().split('T')[0])
+    // 1. HITUNG DOKUMEN EXPIRED (Milik Sendiri)
+    const { data: mcu } = await supabase.from('mcu').select('id').eq('nrp', session.nrp).lte('tanggal_expired', dateLimit)
+    const { data: simper } = await supabase.from('simper').select('id').eq('nrp', session.nrp).lte('tanggal_expired', dateLimit)
+    const { data: pkwt } = await supabase.from('pkwt').select('id').eq('nrp', session.nrp).lte('tanggal_berakhir', dateLimit)
+    
+    const totalExpired = (mcu?.length || 0) + (simper?.length || 0) + (pkwt?.length || 0)
 
-    // Filter sesuai role
-    // Karyawan: cuma lihat punya sendiri
-    // HRGA/Admin: lihat semua
-    const { data: roleData } = await supabase
-      .from('roles')
-      .select('role')
-      .eq('nrp', session.nrp)
-      .eq('active', true)
-    const roles = roleData?.map((r: any) => r.role) || []
-    const isStaff = roles.some((r: string) => ['hrga', 'admin', 'pjo', 'atasan'].includes(r))
+    // 2. HITUNG PENDING APPROVAL (Jika user adalah Atasan/PJO)
+    let totalPending = 0
+    const roles = (session.roles || []).map((r: string) => r.toLowerCase())
+    const isApprover = roles.some(r => ['atasan', 'pjo', 'hrga_site', 'admin_site'].includes(r))
 
-    let mcuFiltered = mcuData || []
-    let simperFiltered = simperData || []
-
-    if (!isStaff) {
-      mcuFiltered = mcuFiltered.filter((m: any) => m.nrp === session.nrp)
-      simperFiltered = simperFiltered.filter((s: any) => s.nrp === session.nrp)
+    if (isApprover) {
+      const [cuti, lembur, sakit] = await Promise.all([
+        supabase.from('leave_requests').select('id', { count: 'exact', head: true }).eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING'),
+        supabase.from('overtime_requests').select('id', { count: 'exact', head: true }).eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING'),
+        supabase.from('attendance_evidences').select('id', { count: 'exact', head: true }).eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
+      ])
+      totalPending = (cuti.count || 0) + (lembur.count || 0) + (sakit.count || 0)
     }
 
-    // Tambahkan info days_left
-    const enrichExpired = (items: any[]) => items.map((item: any) => {
-      const exp = new Date(item.tanggal_expired)
-      const daysLeft = Math.floor((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      return { ...item, days_left: daysLeft, is_expired: daysLeft < 0 }
-    })
-
-    const mcuExpired = enrichExpired(mcuFiltered.filter((m: any) => new Date(m.tanggal_expired) < now))
-    const mcuSoonExpired = enrichExpired(mcuFiltered.filter((m: any) => {
-      const exp = new Date(m.tanggal_expired)
-      return exp >= now && exp <= thirtyDaysFromNow
-    }))
-
-    const simperExpired = enrichExpired(simperFiltered.filter((s: any) => new Date(s.tanggal_expired) < now))
-    const simperSoonExpired = enrichExpired(simperFiltered.filter((s: any) => {
-      const exp = new Date(s.tanggal_expired)
-      return exp >= now && exp <= thirtyDaysFromNow
-    }))
-
     return NextResponse.json({
-      mcu: {
-        expired: mcuExpired,
-        expiring_soon: mcuSoonExpired,
-        total: mcuExpired.length + mcuSoonExpired.length,
-      },
-      simper: {
-        expired: simperExpired,
-        expiring_soon: simperSoonExpired,
-        total: simperExpired.length + simperSoonExpired.length,
-      },
-      total_notifikasi: mcuExpired.length + mcuSoonExpired.length + simperExpired.length + simperSoonExpired.length,
+      total_expired: totalExpired,
+      total_pending: totalPending,
+      total_notifikasi: totalExpired + totalPending
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
