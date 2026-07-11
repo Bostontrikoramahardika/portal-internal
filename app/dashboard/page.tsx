@@ -25,16 +25,6 @@ function DashboardView({ title, data }: any) {
     user_name: '', clock_in_time: '--:--', clock_out_time: '--:--' 
   }
   
-  // 2. Data Riwayat 7 Hari (Masih Dummy/Bohongan untuk UI)
-  const last7Days = [
-    { day: 'S', status: 'hadir' }, 
-    { day: 'S', status: 'hadir' }, 
-    { day: 'R', status: 'hadir' },
-    { day: 'K', status: 'mangkir' }, 
-    { day: 'J', status: 'hadir' }, 
-    { day: 'S', status: 'off' }, 
-    { day: 'M', status: 'off' }
-  ];
 
   return (
     <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-28">
@@ -73,24 +63,6 @@ function DashboardView({ title, data }: any) {
             <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
               <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock Out</p>
               <p className="text-xl font-black text-slate-300">{stats.clock_out_time || '--:--'}</p>
-            </div>
-          </div>
-
-          {/* BAGIAN RIWAYAT 7 HARI (DOTS) */}
-          <div className="pt-5 border-t border-slate-100">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Riwayat 7 Hari Terakhir</p>
-            <div className="flex justify-between items-center px-1">
-              {last7Days.map((d, i) => (
-                <div key={i} className="flex flex-col items-center gap-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shadow-sm transition-all ${
-                    d.status === 'hadir' ? 'bg-[#003D79] text-white shadow-blue-200' : 
-                    d.status === 'mangkir' ? 'bg-rose-500 text-white shadow-rose-200' : 
-                    'bg-slate-100 text-slate-400'
-                  }`}>
-                    {d.day}
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>
@@ -667,12 +639,30 @@ function AbsensiClockView({ title }: any) {
   const [status, setStatus] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [announcement, setAnnouncement] = useState<any>(null)
+  const [riwayat7Hari, setRiwayat7Hari] = useState<any[]>([])
 
-  useEffect(() => {
+    useEffect(() => {
     setIsOnline(navigator.onLine)
     const interval = setInterval(() => setCurrentTime(new Date()), 1000)
     loadStatus()
     fetch('/api/announcements').then(r => r.json()).then(d => setAnnouncement(d.announcement)).catch(() => {})
+        fetch('/api/data?menu=riwayat_absensi').then(r => r.json()).then(d => {
+      const today = new Date()
+      today.setHours(23, 59, 59, 999) // Batas atas: akhir hari ini
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      sevenDaysAgo.setHours(0, 0, 0, 0) // Batas bawah: 7 hari lalu (jam 00:00)
+      
+      const filtered = (d.rows || [])
+        .filter((r: any) => {
+          const rowDate = new Date(r.tanggal)
+          return rowDate >= sevenDaysAgo && rowDate < today
+        })
+        .sort((a: any, b: any) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
+        .slice(0, 7)
+      
+      setRiwayat7Hari(filtered)
+    }).catch(() => {})
     navigator.geolocation.getCurrentPosition(
       pos => setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       err => console.log(err),
@@ -762,6 +752,85 @@ function AbsensiClockView({ title }: any) {
         <div className="bg-white p-8 rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-rose-100 transition-all">
           <div className="text-[10px] text-slate-400 font-black mb-2 uppercase tracking-widest">Record Pulang</div>
           <div className="text-3xl font-black text-slate-900 group-hover:text-rose-600 transition-colors">{hasOut ? new Date(hasOut).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
+        </div>
+      </div>
+
+      {/* 🆕 RIWAYAT 7 HARI TERAKHIR (Luxury Minimalis) */}
+            {/* 🆕 RIWAYAT 7 HARI TERAKHIR (Luxury Minimalis - Data Real) */}
+      <div className="mt-6 bg-white rounded-[2rem] border-2 border-slate-50 shadow-sm overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100">
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">History</p>
+            <h4 className="text-sm font-black text-[#003D79] tracking-tight">Riwayat 7 Hari Terakhir</h4>
+          </div>
+          <a href="/dashboard?menu=riwayat_absensi" className="text-[9px] font-black text-slate-400 hover:text-[#003D79] uppercase tracking-widest transition-colors">
+            Lihat Semua →
+          </a>
+        </div>
+
+        {/* List Riwayat */}
+        <div className="divide-y divide-slate-50">
+          {riwayat7Hari.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Belum ada riwayat absensi</p>
+            </div>
+          ) : (
+            riwayat7Hari.map((item, i) => {
+              // Parse jam dari format "08:00 / 17:00"
+              const [jamMasuk, jamPulang] = (item.evident || '-- / --').split(' / ');
+              
+              // Tentukan status & warna berdasarkan keterangan
+              const ket = String(item.keterangan || '').toUpperCase();
+              let statusLabel = 'HADIR';
+              let statusColor = { dot: 'bg-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50' };
+              
+              if (ket.includes('TERLAMBAT')) {
+                statusLabel = 'TERLAMBAT';
+                statusColor = { dot: 'bg-amber-500', text: 'text-amber-600', bg: 'bg-amber-50' };
+              } else if (ket.includes('MANGKIR') || ket.includes('TIDAK ADA')) {
+                statusLabel = 'MANGKIR';
+                statusColor = { dot: 'bg-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' };
+              } else if (item.actual === 'OFF' || item.actual === 'MASUK OFF') {
+                statusLabel = 'OFF';
+                statusColor = { dot: 'bg-slate-300', text: 'text-slate-400', bg: 'bg-slate-50' };
+              } else if (item.actual === 'SAKIT') {
+                statusLabel = 'SAKIT';
+                statusColor = { dot: 'bg-blue-500', text: 'text-blue-600', bg: 'bg-blue-50' };
+              } else if (ket.includes('IZIN') || ket.includes('CUTI')) {
+                statusLabel = 'IZIN';
+                statusColor = { dot: 'bg-purple-500', text: 'text-purple-600', bg: 'bg-purple-50' };
+              }
+              
+              // Format tanggal jadi "Jumat, 10 Jul"
+              const tglObj = new Date(item.tanggal);
+              const tglFormatted = tglObj.toLocaleDateString('id-ID', { 
+                weekday: 'long', 
+                day: '2-digit', 
+                month: 'short' 
+              });
+              
+              return (
+                <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
+                  {/* Status Dot */}
+                  <div className={`w-2.5 h-2.5 rounded-full ${statusColor.dot} shadow-sm flex-shrink-0`}></div>
+                  
+                  {/* Tanggal & Jam */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-black text-slate-900 tracking-tight mb-0.5 capitalize">{tglFormatted}</p>
+                    <p className="text-[10px] font-bold text-slate-400 font-mono tracking-widest">
+                      {jamMasuk?.trim() || '--:--'} <span className="text-slate-300 mx-1">→</span> {jamPulang?.trim() || '--:--'}
+                    </p>
+                  </div>
+                  
+                  {/* Badge Status */}
+                  <div className={`${statusColor.bg} ${statusColor.text} px-3 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase`}>
+                    {statusLabel}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

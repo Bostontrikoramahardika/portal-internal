@@ -5,12 +5,12 @@
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#1e3a8a",
+  "theme_color": "#003D79",
   "orientation": "portrait-primary",
   "scope": "/",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/btm-fix.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"

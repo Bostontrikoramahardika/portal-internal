@@ -70,7 +70,7 @@ export default function LoginPage() {
       <div 
         className="fixed inset-0 pointer-events-none opacity-[0.01] z-0"
         style={{ 
-          backgroundImage: `url('https://i.ibb.co/LzN4Qzq/image.png')`, 
+          backgroundImage: `url('/bg-pattern.png')`, 
           backgroundRepeat: 'repeat',
           backgroundSize: '160px',
         }}

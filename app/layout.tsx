@@ -39,7 +39,7 @@ export default function RootLayout({
 }) {
   return (
     // 2. Tambahkan variable font ke tag html
-    <html lang="id" className={`${jakartaSans.variable} scroll-smooth`}>
+    <html lang="id" className={`${jakartaSans.variable} scroll-smooth`} data-scroll-behavior="smooth">
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/btm-fix.png" />
