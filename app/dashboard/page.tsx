@@ -1906,7 +1906,7 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
     finally { setLoading(false); }
   };
 
-  const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
+    const InfoItem = ({ icon, label, value, subValue, color = "text-slate-800" }: any) => (
     <div className="flex items-center gap-4 group">
       <div className="w-10 h-10 bg-slate-50 group-hover:bg-blue-50 rounded-2xl flex items-center justify-center text-lg shadow-sm border border-slate-100 transition-colors">
         {icon}
@@ -1914,6 +1914,10 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
       <div className="flex-1 border-b border-slate-50 pb-2">
         <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{label}</div>
         <div className={`text-sm font-black tracking-tight ${color}`}>{value || '-'}</div>
+        {/* Tambahkan baris di bawah ini untuk Nomor BPJS */}
+        {subValue && subValue !== 'BPJS: -' && (
+          <div className="text-[10px] font-bold text-blue-500 mt-0.5">{subValue}</div>
+        )}
       </div>
     </div>
   )
@@ -1991,13 +1995,43 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
         </div>
       </section>
 
-            {/* OTHER 3: Keluarga */}
+      {/* OTHER 3: KELUARGA & BPJS KELUARGA */}
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-        <SectionTitle>3. Keluarga</SectionTitle>
+        <SectionTitle>3. Data Keluarga & BPJS</SectionTitle>
         <div className="space-y-6">
           <InfoItem icon="💳" label="Nomor KK" value={data.no_kk} />
-          <InfoItem icon="💍" label="Nama Istri/Suami" value={data.nama_istri} />
-          <InfoItem icon="👶" label="Nama Anak" value={data.nama_anak} />
+          
+          {/* Istri dengan BPJS di bawahnya */}
+          <InfoItem 
+            icon="💍" 
+            label="Nama Istri / Suami" 
+            value={data.nama_istri} 
+            subValue={data.bpjs_istri !== '-' ? `BPJS: ${data.bpjs_istri}` : null} 
+          />
+
+          {/* Anak 1 dengan BPJS di bawahnya */}
+          <InfoItem 
+            icon="👶" 
+            label="Anak ke-1" 
+            value={data.nama_anak1} 
+            subValue={data.bpjs_anak1 !== '-' ? `BPJS: ${data.bpjs_anak1}` : null} 
+          />
+
+          {/* Anak 2 dengan BPJS di bawahnya */}
+          <InfoItem 
+            icon="👶" 
+            label="Anak ke-2" 
+            value={data.nama_anak2} 
+            subValue={data.bpjs_anak2 !== '-' ? `BPJS: ${data.bpjs_anak2}` : null} 
+          />
+
+          {/* Anak 3 dengan BPJS di bawahnya */}
+          <InfoItem 
+            icon="👶" 
+            label="Anak ke-3" 
+            value={data.nama_anak3} 
+            subValue={data.bpjs_anak3 !== '-' ? `BPJS: ${data.bpjs_anak3}` : null} 
+          />
         </div>
       </section>
 
