@@ -1927,22 +1927,12 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* 1. PERSONAL INFORMATION */}
+       {/* 1. PERSONAL INFORMATION */}
       <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
         <SectionTitle>Personal Information</SectionTitle>
         <div className="space-y-6">
           <InfoItem icon="👤" label="Nama" value={data.nama} />
           <InfoItem icon="🆔" label="NRP" value={data.nrp} />
-          {/* Tambahan Status Karyawan */}
-          <InfoItem 
-            icon="⚡" 
-            label="Status Karyawan" 
-            value={data.status_karyawan} 
-            color={data.status_karyawan === 'Aktif' ? 'text-emerald-600' : 'text-rose-600'} 
-          />
-          {/* Tambahan PKWT */}
-          <InfoItem icon="📄" label="Kontrak PKWT" value={data.pkwt_periode} color="text-blue-600" />
-          
           <InfoItem icon="💼" label="Jabatan" value={data.jabatan} />
           <InfoItem icon="🏢" label="Departemen" value={data.departemen} />
           <InfoItem icon="📍" label="Site" value={data.site} />
@@ -1950,6 +1940,15 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
           <InfoItem icon="🎂" label="Tempat Lahir" value={data.tmpt_lahir} />
           <InfoItem icon="🗓️" label="Tanggal Lahir" value={data.tgl_lahir} />
           <InfoItem icon="💍" label="Status Pernikahan" value={data.status_pernikahan} />
+          
+          {/* PINDAH KE BAWAH SINI SESUAI REQUEST */}
+          <InfoItem icon="📄" label="Kontrak PKWT" value={data.pkwt_periode} color="text-blue-600" />
+          <InfoItem 
+            icon="⚡" 
+            label="Status Karyawan" 
+            value={data.status_karyawan} 
+            color={data.status_karyawan === 'Aktif' ? 'text-emerald-600' : 'text-rose-600'} 
+          />
         </div>
       </section>
 

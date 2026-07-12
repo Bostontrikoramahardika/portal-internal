@@ -497,50 +497,52 @@ const menuInfo = menusFound.find((m: any) =>
 
     if (specialModes[access_mode]) return NextResponse.json({ type: specialModes[access_mode], title: menu_label, table: target_table })
 
-    // ==========================================
-    // 🎯 CASE: DATA SAYA (My Identity v1.6.0 Updated)
+       // ==========================================
+    // 🎯 CASE: DATA SAYA (My Identity v1.6.0 Name-Based BPJS)
     // ==========================================
     if (menuKey === 'data_saya') {
-      // 1. Ambil data dasar karyawan
-      const { data: employeeData, error: empErr } = await supabase
+      const nrpStr = String(session.nrp).trim();
+      const nrpWithZero = nrpStr.startsWith('0') ? nrpStr : '0' + nrpStr;
+
+      // 1. Ambil data dasar karyawan (Tetap pakai NRP agar akurat)
+      const { data: employeeData } = await supabase
         .from('employees')
         .select('*')
-        .eq('nrp', session.nrp)
+        .in('nrp', [nrpStr, nrpWithZero])
         .single()
 
-      if (empErr) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
+      if (!employeeData) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
 
-      // 2. Ambil data PKWT terbaru
+      // 2. Ambil data PKWT (Berdasarkan NRP)
       const { data: pkwtData } = await supabase
         .from('pkwt')
         .select('mulai_kontrak, akhir_kontrak')
-        .eq('nrp', session.nrp)
+        .in('nrp', [nrpStr, nrpWithZero])
         .order('created_at', { ascending: false })
         .limit(1)
         .single()
 
-      // 3. Ambil data BPJS (Jika Anda punya tabel bpjs terpisah)
+      // 3. AMBIL DATA BPJS BERDASARKAN NAMA (Sesuai Request)
+      // Kita pakai .ilike agar tidak masalah dengan huruf besar/kecil
       const { data: bpjsTable } = await supabase
         .from('bpjs')
         .select('*')
-        .eq('nrp', session.nrp)
+        .ilike('nama_karyawan', session.nama) // Mencari berdasarkan nama dari session
         .limit(1)
         .single()
 
       // 4. Cek pengajuan pending
       const { data: lastRequest } = await supabase
         .from('data_change_requests')
-        .select('*')
-        .eq('nrp', session.nrp)
+        .select('id')
+        .eq('nrp', nrpStr)
         .eq('status', 'pending')
-        .limit(1)
 
-      // Gabungkan semua data agar bisa dibaca UI
       const finalData = {
         ...employeeData,
-        // Jika di tabel employees kosong, ambil dari tabel bpjs
-        bpjs_tk: employeeData.bpjs_tk || bpjsTable?.no_bpjs_tk || bpjsTable?.bpjs_ketenagakerjaan,
-        bpjs_kes: employeeData.bpjs_kes || bpjsTable?.no_bpjs_kes || bpjsTable?.bpjs_kesehatan,
+        // Logika BPJS: Ambil dari tabel bpjs yang dicari berdasarkan nama tadi
+        bpjs_tk: bpjsTable?.bpjs_ketenagakerjaan || bpjsTable?.no_bpjs_tk || bpjsTable?.nomor_bpjs_tk || employeeData.bpjs_tk || '-',
+        bpjs_kes: bpjsTable?.bpjs_kesehatan || bpjsTable?.no_bpjs_kes || bpjsTable?.nomor_bpjs_kes || employeeData.bpjs_kes || '-',
         pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-'
       }
 
