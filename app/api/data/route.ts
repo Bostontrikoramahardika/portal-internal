@@ -500,21 +500,34 @@ const menuInfo = menusFound.find((m: any) =>
     // ==========================================
     // 🎯 CASE: DATA SAYA (My Identity v1.6.0 Structured)
     // ==========================================
-    if (menuKey === 'data_saya') {
+        if (menuKey === 'data_saya') {
       const nrpStr = String(session.nrp).trim();
       const nrpWithZero = nrpStr.startsWith('0') ? nrpStr : '0' + nrpStr;
+      const today = new Date().toISOString().split('T')[0];
 
+      // 1. Ambil data dasar karyawan
       const { data: employeeData } = await supabase.from('employees').select('*').in('nrp', [nrpStr, nrpWithZero]).single()
       if (!employeeData) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
 
+      // 2. Ambil data PKWT
       const { data: pkwtData } = await supabase.from('pkwt').select('*').in('nrp', [nrpStr, nrpWithZero]).order('created_at', { ascending: false }).limit(1).single()
+
+      // 3. Ambil data BPJS (berdasarkan nama)
       const { data: bpjsTable } = await supabase.from('bpjs').select('*').ilike('nama_karyawan', session.nama).limit(1).single()
-      const { data: lastRequest } = await supabase.from('data_change_requests').select('id').eq('nrp', nrpStr).eq('status', 'pending')
+
+      // 4. Ambil SP yang MASIH BERLAKU (berlaku_sampai >= hari ini)
+      const { data: spData } = await supabase
+        .from('sp')
+        .select('*')
+        .in('nrp', [nrpStr, nrpWithZero])
+        .gte('berlaku_sampai', today) // Hanya ambil yang belum expired
+        .order('created_at', { ascending: false })
 
       const finalData = {
         ...employeeData,
         pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-',
-        // Data BPJS & Nama (Untuk seksi BPJS)
+        punishments: spData || [], // Simpan daftar SP aktif
+        // BPJS Mapping
         bpjs_tk_no: bpjsTable?.bpjs_ketenagakerjaan || '-',
         bpjs_tk_nama: session.nama, 
         bpjs_kes_no: bpjsTable?.bpjs_kesehatan || '-',
@@ -529,7 +542,7 @@ const menuInfo = menusFound.find((m: any) =>
         bpjs_anak3_nama: bpjsTable?.anak3_nama || '-',
       }
 
-      return NextResponse.json({ type: 'identity_view', data: finalData, pending_request: (lastRequest?.length || 0) > 0 })
+      return NextResponse.json({ type: 'identity_view', data: finalData })
     }
 
     // ==========================================
