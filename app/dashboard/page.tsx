@@ -128,7 +128,7 @@ function DashboardContent() {
 
   // RENDERER LOGIC
   if (data.type === 'dashboard') return <DashboardView title={data.title} data={data} />
-  if (data.type === 'identity_view') return <IdentityView data={data.data} isPending={data.pending_request} />
+  if (data.type === 'identity_view') return <IdentityView data={data.data} />
   if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} />
   if (data.type === 'form_lembur') return <FormLemburView title={data.title} onSuccess={loadData} />
   if (data.type === 'form_sakit') return <FormSakitView title={data.title} onSuccess={loadData} data={data} />
@@ -1883,13 +1883,8 @@ function renderCell(col: string, val: any) {
   return String(val)
 }
 
-// ============ 👤 MY IDENTITY VIEW v1.6.0 (Luxury Final Structure) ============
-function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
-  const [showModal, setShowModal] = useState(false);
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  // Komponen Kecil untuk Baris Data Biasa
+// ============ 👤 MY IDENTITY VIEW v1.6.1 (Luxury Final) ============
+function IdentityView({ data }: { data: any }) {
   const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
     <div className="flex items-center gap-4 group">
       <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100">{icon}</div>
@@ -1900,7 +1895,6 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
     </div>
   )
 
-  // Komponen Khusus BPJS (Label -> Nomor -> Nama)
   const BpjsItem = ({ icon, label, no, nama }: any) => (
     <div className="flex items-start gap-4">
       <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100 mt-1">{icon}</div>
@@ -1932,7 +1926,7 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
           <InfoItem icon="📅" label="Tanggal Masuk" value={data.tgl_masuk} />
           <InfoItem icon="🎂" label="Tempat Lahir" value={data.tmpt_lahir} />
           <InfoItem icon="🗓️" label="Tanggal Lahir" value={data.tgl_lahir} />
-          <InfoItem icon="🏠" label="Alamat" value={data.alamat} /> {/* TEPAT DI BAWAH TGL LAHIR */}
+          <InfoItem icon="🏠" label="Alamat" value={data.alamat} />
           <InfoItem icon="💍" label="Status Pernikahan" value={data.status_pernikahan} />
           <InfoItem icon="📄" label="Kontrak PKWT" value={data.pkwt_periode} color="text-blue-600" />
           <InfoItem icon="⚡" label="Status Karyawan" value={data.status_karyawan} color="text-emerald-600" />
@@ -1945,10 +1939,11 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
         <div className="space-y-6">
           <InfoItem icon="📧" label="Email" value={data.email} />
           <InfoItem icon="📞" label="Nomor HP" value={data.no_hp} />
+          <InfoItem icon="🚨" label="Nomor Darurat" value={data.no_darurat} color="text-rose-600" />
         </div>
       </section>
 
-      {/* 3. VALIDITY & PERMITS (Data Karyawan Diubah) */}
+      {/* 3. VALIDITY & PERMITS */}
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>Validity & Permits</SectionTitle>
         <div className="space-y-6">
@@ -1959,7 +1954,7 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
         </div>
       </section>
 
-      {/* 4. BPJS SECTION (Urutan Baru) */}
+      {/* 4. BPJS SECTION */}
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>BPJS Information</SectionTitle>
         <div className="space-y-8">
@@ -1967,8 +1962,6 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
           <BpjsItem icon="🏥" label="BPJS Kesehatan" no={data.bpjs_kes_no} nama={data.bpjs_kes_nama} />
           <BpjsItem icon="👩‍💼" label="BPJS Istri / Suami" no={data.bpjs_istri_no} nama={data.bpjs_istri_nama} />
           <BpjsItem icon="🧒" label="BPJS Anak 1" no={data.bpjs_anak1_no} nama={data.bpjs_anak1_nama} />
-          <BpjsItem icon="🧒" label="BPJS Anak 2" no={data.bpjs_anak2_no} nama={data.bpjs_anak2_nama} />
-          <BpjsItem icon="🧒" label="BPJS Anak 3" no={data.bpjs_anak3_no} nama={data.bpjs_anak3_nama} />
         </div>
       </section>
 
@@ -1977,38 +1970,74 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
         <SectionTitle>Data Keluarga</SectionTitle>
         <div className="space-y-6">
           <InfoItem icon="💳" label="Nomor KK" value={data.no_kk} />
-          <InfoItem icon="👤" label="Nama Suami" value={data.jabatan?.includes('ISTRI') ? data.nama_istri : data.nama} />
           <InfoItem icon="💍" label="Nama Istri" value={data.nama_istri} />
           <InfoItem icon="👶" label="Nama Anak ke-1" value={data.nama_anak1} />
           <InfoItem icon="👶" label="Nama Anak ke-2" value={data.nama_anak2} />
         </div>
       </section>
 
-      {/* ACTION BUTTON */}
-      <div className="px-4">
-        <button onClick={() => setShowModal(true)} disabled={isPending} className={`w-full py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-lg transition-all ${isPending ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-[#003D79] text-white'}`}>
-          {isPending ? '⏳ Sedang Pending Direview' : '📝 Ajukan Perubahan Data'}
-        </button>
-      </div>
-
-      {/* MODAL PENGAJUAN (Sama seperti sebelumnya) */}
-      {showModal && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[999] flex items-center justify-center p-6">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-200">
-            <h3 className="font-black text-xl text-[#003D79] mb-2 uppercase tracking-tight">Revisi Data</h3>
-            <textarea 
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Contoh: Ubah No KK menjadi 3201..."
-              className="w-full h-40 p-5 bg-slate-50 border-2 border-slate-100 rounded-3xl outline-none focus:border-blue-500 font-bold text-sm transition-all"
-            />
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest">Batal</button>
-              <button onClick={handleRequest} disabled={loading} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest">Kirim</button>
-            </div>
+      {/* 6. HISTORICAL PUNISHMENT */}
+      {data.punishments && data.punishments.length > 0 && (
+        <section className="bg-rose-50 rounded-[2.5rem] p-8 shadow-sm border border-rose-100">
+          <SectionTitle>Historical Punishment</SectionTitle>
+          <div className="space-y-6">
+            {data.punishments.map((sp: any, idx: number) => (
+              <div key={idx} className="flex items-start gap-4 bg-white p-4 rounded-3xl border border-rose-200">
+                <div className="text-2xl mt-1">⚠️</div>
+                <div>
+                  <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">{sp.jenis_sp}</div>
+                  <div className="text-sm font-black text-slate-900 tracking-tight">{sp.alasan || 'Pelanggaran Kedisiplinan'}</div>
+                  <div className="text-[9px] font-bold text-slate-400 uppercase mt-1 italic">Berlaku Sampai: {new Date(sp.berlaku_sampai).toLocaleDateString('id-ID')}</div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        </section>
       )}
+
+      <p className="text-[8px] text-center text-slate-300 mt-10 font-bold uppercase tracking-widest px-8 italic">
+        BTM Portal v1.6.1 • Data disinkronkan otomatis.
+      </p>
     </div>
   )
+}
+
+// Utility Components (Keep these at the very bottom)
+function Input({ label, onChange, ...props }: any) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
+      <input {...props} onChange={e => onChange(e.target.value)} className="w-full p-3.5 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm" />
+    </div>
+  )
+}
+
+function Select({ label, options, onChange, ...props }: any) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
+      <select {...props} onChange={e => onChange(e.target.value)} className="w-full p-3.5 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm">
+        <option value="">-- Pilih --</option>
+        {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  )
+}
+
+function Textarea({ label, onChange, ...props }: any) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
+      <textarea {...props} onChange={e => onChange(e.target.value)} className="w-full p-4 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm min-h-[120px]" />
+    </div>
+  )
+}
+
+function StatusBadge({ value }: any) {
+  const m: any = {
+    PENDING: 'bg-amber-50 text-amber-700 border-amber-200', APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200', REJECTED: 'bg-rose-50 text-rose-700 border-rose-200',
+    DISETUJUI: 'bg-emerald-50 text-emerald-700 border-emerald-200', HADIR: 'bg-emerald-50 text-emerald-700 border-emerald-200', TERLAMBAT: 'bg-amber-50 text-amber-700 border-amber-200',
+    Aktif: 'bg-emerald-50 text-emerald-700 border-emerald-200', Nonaktif: 'bg-slate-100 text-slate-500 border-slate-200'
+  }
+  return <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${m[value] || 'bg-slate-50 text-slate-400 border-slate-100'}`}>{value}</span>
 }
