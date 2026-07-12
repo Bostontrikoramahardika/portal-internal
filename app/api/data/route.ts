@@ -497,33 +497,57 @@ const menuInfo = menusFound.find((m: any) =>
 
     if (specialModes[access_mode]) return NextResponse.json({ type: specialModes[access_mode], title: menu_label, table: target_table })
 
-        // ==========================================
-    // 🎯 CASE: DATA SAYA (My Identity v1.6.0)
+    // ==========================================
+    // 🎯 CASE: DATA SAYA (My Identity v1.6.0 Updated)
     // ==========================================
     if (menuKey === 'data_saya') {
+      // 1. Ambil data dasar karyawan
       const { data: employeeData, error: empErr } = await supabase
         .from('employees')
         .select('*')
         .eq('nrp', session.nrp)
         .single()
 
-      if (empErr) return NextResponse.json({ error: 'Data karyawan tidak ditemukan' }, { status: 404 })
+      if (empErr) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
 
-      // Ambil status pengajuan perubahan data terakhir (jika ada)
+      // 2. Ambil data PKWT terbaru
+      const { data: pkwtData } = await supabase
+        .from('pkwt')
+        .select('mulai_kontrak, akhir_kontrak')
+        .eq('nrp', session.nrp)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      // 3. Ambil data BPJS (Jika Anda punya tabel bpjs terpisah)
+      const { data: bpjsTable } = await supabase
+        .from('bpjs')
+        .select('*')
+        .eq('nrp', session.nrp)
+        .limit(1)
+        .single()
+
+      // 4. Cek pengajuan pending
       const { data: lastRequest } = await supabase
         .from('data_change_requests')
         .select('*')
         .eq('nrp', session.nrp)
         .eq('status', 'pending')
-        .order('created_at', { ascending: false })
         .limit(1)
-        .single()
+
+      // Gabungkan semua data agar bisa dibaca UI
+      const finalData = {
+        ...employeeData,
+        // Jika di tabel employees kosong, ambil dari tabel bpjs
+        bpjs_tk: employeeData.bpjs_tk || bpjsTable?.no_bpjs_tk || bpjsTable?.bpjs_ketenagakerjaan,
+        bpjs_kes: employeeData.bpjs_kes || bpjsTable?.no_bpjs_kes || bpjsTable?.bpjs_kesehatan,
+        pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-'
+      }
 
       return NextResponse.json({ 
         type: 'identity_view', 
-        title: 'My Identity', 
-        data: employeeData,
-        pending_request: !!lastRequest 
+        data: finalData,
+        pending_request: (lastRequest?.length || 0) > 0 
       })
     }
 

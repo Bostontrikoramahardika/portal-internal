@@ -1933,6 +1933,16 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
         <div className="space-y-6">
           <InfoItem icon="👤" label="Nama" value={data.nama} />
           <InfoItem icon="🆔" label="NRP" value={data.nrp} />
+          {/* Tambahan Status Karyawan */}
+          <InfoItem 
+            icon="⚡" 
+            label="Status Karyawan" 
+            value={data.status_karyawan} 
+            color={data.status_karyawan === 'Aktif' ? 'text-emerald-600' : 'text-rose-600'} 
+          />
+          {/* Tambahan PKWT */}
+          <InfoItem icon="📄" label="Kontrak PKWT" value={data.pkwt_periode} color="text-blue-600" />
+          
           <InfoItem icon="💼" label="Jabatan" value={data.jabatan} />
           <InfoItem icon="🏢" label="Departemen" value={data.departemen} />
           <InfoItem icon="📍" label="Site" value={data.site} />
