@@ -497,87 +497,34 @@ const menuInfo = menusFound.find((m: any) =>
 
     if (specialModes[access_mode]) return NextResponse.json({ type: specialModes[access_mode], title: menu_label, table: target_table })
 
-         // ==========================================
-    // 🎯 CASE: UNIVERSAL MONITORING EXPIRED (v1.5.0 Global Support)
+        // ==========================================
+    // 🎯 CASE: DATA SAYA (My Identity v1.6.0)
     // ==========================================
-    if (menuKey === 'monitoring_expired') {
-      const now = new Date();
-      const offset = now.getTimezoneOffset() * 60000;
-      const today = new Date(now.getTime() - offset).toISOString().split('T')[0];
-      
-      const nextMonth = new Date();
-      nextMonth.setDate(nextMonth.getDate() + 30); 
-      const dateLimit = nextMonth.toISOString().split('T')[0];
+    if (menuKey === 'data_saya') {
+      const { data: employeeData, error: empErr } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('nrp', session.nrp)
+        .single()
 
-      // Flag Role: Ricky (hrga_oprek) masuk ke isHrgaAll
-      const userSite = session.scope_site || session.site || '';
-      console.log(`DEBUG MONITORING: User ${session.nama} (Role: ${rolesLower}) Accessing Site: ${isHrgaAll ? 'ALL' : userSite}`);
+      if (empErr) return NextResponse.json({ error: 'Data karyawan tidak ditemukan' }, { status: 404 })
 
-      // 1. Dapatkan Daftar NRP
-      let empQuery = supabase.from('employees').select('nrp, site');
-      
-      // JIKA BUKAN HRGA GLOBAL, baru filter berdasarkan site
-      if (!isHrgaAll) {
-        if (userSite) {
-          empQuery = empQuery.eq('site', userSite);
-        } else {
-          // Jika HRGA Site tapi tidak punya site, cegah tarik semua data
-          return NextResponse.json({ type: 'table', title: 'Monitoring Expired', rows: [], message: 'Site tidak terdefinisi' });
-        }
-      }
-      
-      const { data: siteEmps } = await empQuery;
-      const nrps = (siteEmps || []).map(e => String(e.nrp));
-
-      if (nrps.length === 0) return NextResponse.json({ type: 'table', title: 'Monitoring Expired', rows: [] });
-
-      // 2. Tarik Data dari Semua Tabel (Sama seperti sebelumnya)
-      const [pkwtRes, simperRes, mcuRes, spRes] = await Promise.all([
-        supabase.from('pkwt').select('*').in('nrp', nrps),
-        supabase.from('simper').select('*').in('nrp', nrps),
-        supabase.from('mcu').select('*').in('nrp', nrps),
-        supabase.from('sp').select('*').in('nrp', nrps)
-      ]);
-
-      const combinedRows: any[] = [];
-
-      // --- LOGIC GROUPING & FALLBACK COLUMN ---
-      (pkwtRes.data || []).forEach(p => {
-        const tgl = p.tanggal_berakhir || p.berlaku_sampai || p.tgl_akhir;
-        if (tgl && tgl <= dateLimit) combinedRows.push({ ...p, kategori: '📄 PKWT', tgl_habis: tgl });
-      });
-
-      (simperRes.data || []).forEach(s => {
-        const tgl = s.tanggal_expired || s.tgl_expired || s.berlaku_sampai;
-        if (tgl && tgl <= dateLimit) combinedRows.push({ ...s, kategori: '🚗 SIMPER/KIMPER', tgl_habis: tgl });
-      });
-
-      (mcuRes.data || []).forEach(m => {
-        const tgl = m.tanggal_expired || m.tanggal_mcu_berikutnya || m.berlaku_sampai;
-        if (tgl && tgl <= dateLimit) combinedRows.push({ ...m, kategori: '🏥 MCU', tgl_habis: tgl });
-      });
-
-      (spRes.data || []).forEach(sp => {
-        const tgl = sp.berlaku_sampai || sp.tanggal_berakhir;
-        if (tgl && tgl <= dateLimit) combinedRows.push({ ...sp, kategori: `⚠️ SP (${sp.jenis_sp})`, tgl_habis: tgl });
-      });
-
-      const enriched = await enrichWithNames(combinedRows, 'employees');
-
-      // 3. Urutkan berdasarkan Kategori & Tanggal
-      enriched.sort((a, b) => {
-        if (a.kategori < b.kategori) return -1;
-        if (a.kategori > b.kategori) return 1;
-        return new Date(a.tgl_habis).getTime() - new Date(b.tgl_habis).getTime();
-      });
+      // Ambil status pengajuan perubahan data terakhir (jika ada)
+      const { data: lastRequest } = await supabase
+        .from('data_change_requests')
+        .select('*')
+        .eq('nrp', session.nrp)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
 
       return NextResponse.json({ 
-        type: 'table', 
-        title: `Monitoring Expired: ${isHrgaAll ? 'Semua Site' : 'Site ' + userSite}`, 
-        columns: ['kategori', 'nrp', '_nama_karyawan', '_site', 'tgl_habis', 'keterangan'],
-        rows: enriched,
-        access_mode: 'VIEW'
-      });
+        type: 'identity_view', 
+        title: 'My Identity', 
+        data: employeeData,
+        pending_request: !!lastRequest 
+      })
     }
 
     // ==========================================

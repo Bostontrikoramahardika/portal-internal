@@ -128,6 +128,7 @@ function DashboardContent() {
 
   // RENDERER LOGIC
   if (data.type === 'dashboard') return <DashboardView title={data.title} data={data} />
+  if (data.type === 'identity_view') return <IdentityView data={data.data} isPending={data.pending_request} />
   if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} />
   if (data.type === 'form_lembur') return <FormLemburView title={data.title} onSuccess={loadData} />
   if (data.type === 'form_sakit') return <FormSakitView title={data.title} onSuccess={loadData} data={data} />
@@ -1880,4 +1881,98 @@ function renderCell(col: string, val: any) {
   if (col.includes('tanggal') && !col.includes('jam')) { try { return new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) } catch { return String(val) } }
   if (col.includes('foto') || col === 'image_url') return <a href={val} target="_blank" className="text-blue-600 font-black uppercase text-[9px] underline tracking-widest">👁️ DOKUMEN</a>
   return String(val)
+}
+
+// ============ 👤 MY IDENTITY VIEW (v1.6.0 Luxury) ============
+function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
+  const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
+    <div className="flex items-center gap-4 group">
+      <div className="w-10 h-10 bg-slate-50 group-hover:bg-blue-50 rounded-2xl flex items-center justify-center text-lg shadow-sm border border-slate-100 transition-colors">
+        {icon}
+      </div>
+      <div className="flex-1 border-b border-slate-50 pb-2">
+        <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{label}</div>
+        <div className={`text-sm font-black tracking-tight ${color}`}>{value || '-'}</div>
+      </div>
+    </div>
+  )
+
+  const SectionTitle = ({ children }: { children: string }) => (
+    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600/50 mb-6 flex items-center gap-2">
+      <span className="w-4 h-[2px] bg-blue-600/20"></span> {children}
+    </h3>
+  )
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      {/* CARD 1: PERSONAL INFORMATION */}
+      <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
+        <SectionTitle>Personal Information</SectionTitle>
+        <div className="space-y-6">
+          <InfoItem icon="👤" label="Nama Lengkap" value={data.nama} />
+          <InfoItem icon="🆔" label="NRP" value={data.nrp} />
+          <InfoItem icon="💼" label="Jabatan" value={data.jabatan} />
+          <InfoItem icon="🏢" label="Departemen" value={data.departemen} />
+          <InfoItem icon="📍" label="Site" value={data.site} />
+          <InfoItem icon="📅" label="Tanggal Masuk" value={data.tgl_masuk} />
+          <InfoItem icon="🎂" label="Tempat, Tgl Lahir" value={`${data.tmpt_lahir || '-'}, ${data.tgl_lahir || '-'}`} />
+          <InfoItem icon="❤️" label="Status Pernikahan" value={data.status_pernikahan} />
+          <InfoItem icon="📧" label="Email Address" value={data.email} />
+          <InfoItem icon="📞" label="Nomor HP Active" value={data.no_hp} />
+        </div>
+      </section>
+
+      {/* CARD 2: DATA KARYAWAN (OTHER) */}
+      <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
+        <SectionTitle>1. Data Karyawan</SectionTitle>
+        <div className="space-y-6">
+          <InfoItem icon="🆔" label="NRP" value={data.nrp} />
+          <InfoItem icon="🪪" label="Nomor SIMPOL" value={data.no_simpol} />
+          <InfoItem icon="⏳" label="Exp SIMPOL" value={data.exp_simpol} color="text-amber-600" />
+          <InfoItem icon="🎖️" label="Exp SIMPER" value={data.exp_simper} color="text-blue-600" />
+          <InfoItem icon="🩺" label="Exp MCU" value={data.exp_mcu} color="text-red-600" />
+        </div>
+      </section>
+
+      {/* CARD 3: BPJS SECTION */}
+      <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
+        <SectionTitle>2. BPJS Information</SectionTitle>
+        <div className="space-y-6">
+          <InfoItem icon="🛡️" label="BPJS Ketenagakerjaan" value={data.bpjs_tk} />
+          <InfoItem icon="🏥" label="BPJS Kesehatan" value={data.bpjs_kes} />
+          <InfoItem icon="👩‍💼" label="BPJS Istri/Suami" value={data.bpjs_istri} />
+          <InfoItem icon="🧒" label="BPJS Anak 1" value={data.bpjs_anak1} />
+          <InfoItem icon="🧒" label="BPJS Anak 2" value={data.bpjs_anak2} />
+          <InfoItem icon="🧒" label="BPJS Anak 3" value={data.bpjs_anak3} />
+        </div>
+      </section>
+
+      {/* CARD 4: KELUARGA */}
+      <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
+        <SectionTitle>3. Data Keluarga</SectionTitle>
+        <div className="space-y-6">
+          <InfoItem icon="💳" label="Nomor KK" value={data.no_kk} />
+          <InfoItem icon="💍" label="Nama Istri/Suami" value={data.nama_istri} />
+          <InfoItem icon="👶" label="Nama Anak" value={data.nama_anak} />
+        </div>
+      </section>
+
+      {/* ACTION BUTTON */}
+      <div className="px-4">
+        <button 
+          disabled={isPending}
+          className={`w-full py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-lg transition-all active:scale-95 ${isPending ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-[#003D79] text-white'}`}
+        >
+          {isPending ? '⏳ Sedang Direview HRGA' : '📝 Ajukan Perubahan Data'}
+        </button>
+        <p className="text-[9px] text-center text-slate-400 mt-5 font-bold uppercase tracking-widest px-8 leading-relaxed">
+          {isPending 
+            ? "Pengajuan perubahan data Anda masih pending. Data di atas akan diperbarui secara otomatis setelah sukses direview oleh HRGA."
+            : "Jika data di atas belum sesuai, silakan klik tombol untuk mengajukan revisi data ke tim HRGA."
+          }
+        </p>
+      </div>
+    </div>
+  )
 }
