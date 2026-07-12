@@ -332,10 +332,13 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       {/* MAIN CONTENT */}
       <main className="flex-1 min-w-0 lg:ml-64 pb-24 lg:pb-6">
         {/* HEADER MOBILE */}
-        <div className="lg:hidden bg-white border-b p-3 flex items-center justify-between sticky top-0 z-[60] shadow-sm">
-          <div className="flex items-center gap-3">
-            <Image src="/btm-fix.png" alt="BTM" width={24} height={24} />
-            <h1 className="text-xs font-black uppercase text-[#003D79] tracking-tight">BTM Mobile</h1>
+         <div className="lg:hidden bg-white border-b p-2.5 flex items-center justify-between sticky top-0 z-[60] shadow-sm">
+          <div className="flex items-center gap-2">
+            <Image src="/btm-fix.png" alt="BTM" width={22} height={22} />
+            <div className="leading-none">
+              <h1 className="text-[10px] font-black uppercase text-[#003D79] tracking-tight">BTM Mobile</h1>
+              <p className="text-[8px] font-bold text-slate-400 mt-0.5">v1.6.2</p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -354,9 +357,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                 </>
               )}
             </button>
-            <div className="text-right leading-none shrink-0 pl-1">
-              <div className="text-[10px] font-black text-[#003D79]">{user.nama.split(' ')[0]}</div>
-              <div className="text-[9px] text-slate-400 font-bold">{user.nrp_login || user.nrp}</div>
+                        <div className="text-right leading-tight shrink-0 pl-1 max-w-[130px]">
+              <div className="text-[9px] font-black text-[#003D79] uppercase truncate leading-tight">{user.nama}</div>
+              <div className="text-[8px] text-slate-500 font-bold mt-0.5">NRP: {user.nrp_login || user.nrp}</div>
+              <div className="text-[8px] text-blue-600 font-black mt-0.5">{user.site || '-'}</div>
             </div>
           </div>
         </div>
@@ -365,16 +369,16 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* BOTTOM NAVIGATION MOBILE */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-100 flex overflow-x-auto px-2 py-3 pb-8 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,61,121,0.08)] no-scrollbar">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-100 flex overflow-x-auto px-1 py-2 pb-6 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,61,121,0.08)] no-scrollbar">
         {visibleTabs.map(tab => (
           <button 
             key={tab.key} 
             onClick={() => handleTabClick(tab)} 
-            className={`flex flex-col items-center min-w-[70px] flex-1 py-1 transition-all duration-300 ${activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-50'}`}
+            className={`flex flex-col items-center min-w-[60px] flex-1 py-1 transition-all duration-300 ${activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-50'}`}
           >
-            <div className={`text-2xl mb-1 ${activeTab === tab.key ? '' : 'grayscale'}`}>{tab.icon}</div>
-            <span className={`text-[9px] tracking-tighter font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>{tab.label}</span>
-            {activeTab === tab.key && <div className="w-1 h-1 bg-[#003D79] rounded-full mt-1 animate-pulse"></div>}
+            <div className={`text-lg mb-0.5 ${activeTab === tab.key ? '' : 'grayscale'}`}>{tab.icon}</div>
+            <span className={`text-[8px] tracking-tighter font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>{tab.label}</span>
+            {activeTab === tab.key && <div className="w-1 h-1 bg-[#003D79] rounded-full mt-0.5 animate-pulse"></div>}
           </button>
         ))}
       </nav>

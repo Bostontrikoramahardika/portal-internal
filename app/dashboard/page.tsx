@@ -815,37 +815,37 @@ function AbsensiClockView({ title }: any) {
         </div>
       )}
 
-      <div className="bg-slate-950 text-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 text-center shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] mb-6 border border-white/5 relative overflow-hidden">
+            <div className="bg-slate-950 text-white rounded-[1.5rem] md:rounded-[3rem] p-4 md:p-10 text-center shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] mb-4 md:mb-6 border border-white/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none"></div>
-        <div className="text-4xl md:text-7xl font-black mb-2 tracking-tighter text-white font-mono">
+        <div className="text-3xl md:text-7xl font-black mb-1 md:mb-2 tracking-tighter text-white font-mono">
           {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
         </div>
-        <div className="text-blue-400 font-black uppercase text-[9px] md:text-xs tracking-[0.3em] md:tracking-[0.4em] mb-6 md:mb-12">
+        <div className="text-blue-400 font-black uppercase text-[8px] md:text-xs tracking-[0.25em] md:tracking-[0.4em] mb-4 md:mb-12">
           {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
         <div className="flex justify-center gap-4 relative z-10">
           {!hasIn ? (
-            <button onClick={() => handleClock('in')} className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 md:px-12 py-4 md:py-6 rounded-[1.5rem] md:rounded-[2rem] font-black text-lg md:text-2xl shadow-2xl shadow-emerald-500/20 active:scale-90 transition-all">🟢 CLOCK IN</button>
+            <button onClick={() => handleClock('in')} className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 md:px-12 py-3 md:py-6 rounded-[1.2rem] md:rounded-[2rem] font-black text-sm md:text-2xl shadow-2xl shadow-emerald-500/20 active:scale-90 transition-all">🟢 CLOCK IN</button>
           ) : !hasOut ? (
-            <button onClick={() => handleClock('out')} className="bg-rose-500 hover:bg-rose-600 text-white px-8 md:px-12 py-4 md:py-6 rounded-[1.5rem] md:rounded-[2rem] font-black text-lg md:text-2xl shadow-2xl shadow-rose-500/20 active:scale-90 transition-all">🔴 CLOCK OUT</button>
+            <button onClick={() => handleClock('out')} className="bg-rose-500 hover:bg-rose-600 text-white px-6 md:px-12 py-3 md:py-6 rounded-[1.2rem] md:rounded-[2rem] font-black text-sm md:text-2xl shadow-2xl shadow-rose-500/20 active:scale-90 transition-all">🔴 CLOCK OUT</button>
           ) : (
-            <div className="bg-white/5 px-6 md:px-10 py-4 md:py-6 rounded-[1.5rem] md:rounded-[2rem] border-2 border-white/10 font-black text-base md:text-xl tracking-tight text-slate-400">✅ SHIFT SELESAI</div>
+            <div className="bg-white/5 px-5 md:px-10 py-3 md:py-6 rounded-[1.2rem] md:rounded-[2rem] border-2 border-white/10 font-black text-xs md:text-xl tracking-tight text-slate-400">✅ SHIFT SELESAI</div>
           )}
         </div>
-        <div className="mt-6 md:mt-10 text-[8px] md:text-[9px] text-white/30 flex items-center justify-center gap-2 md:gap-3 font-black tracking-widest">
-          <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-rose-500'}`}></div>
-          {isOnline ? 'NETWORK CONNECTED' : 'OFFLINE MODE'} • {gps ? `${gps.lat.toFixed(6)}, ${gps.lng.toFixed(6)}` : 'WAITING FOR GPS...'}
+        <div className="mt-4 md:mt-10 text-[7px] md:text-[9px] text-white/30 flex items-center justify-center gap-2 md:gap-3 font-black tracking-widest">
+          <div className={`w-2 h-2 md:w-2.5 md:h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-rose-500'}`}></div>
+          {isOnline ? 'CONNECTED' : 'OFFLINE'} • {gps ? `${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}` : 'WAITING GPS...'}
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-3 md:gap-6">
-        <div className="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-emerald-100 transition-all">
-          <div className="text-[9px] md:text-[10px] text-slate-400 font-black mb-1 md:mb-2 uppercase tracking-widest">Record Masuk</div>
-          <div className="text-xl md:text-3xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{hasIn ? new Date(hasIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
+            <div className="grid grid-cols-2 gap-3 md:gap-6">
+        <div className="bg-white p-3 md:p-8 rounded-[1.2rem] md:rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-emerald-100 transition-all">
+          <div className="text-[8px] md:text-[10px] text-slate-400 font-black mb-1 md:mb-2 uppercase tracking-widest">Record Masuk</div>
+          <div className="text-lg md:text-3xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{hasIn ? new Date(hasIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
         </div>
-        <div className="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-rose-100 transition-all">
-          <div className="text-[9px] md:text-[10px] text-slate-400 font-black mb-1 md:mb-2 uppercase tracking-widest">Record Pulang</div>
-          <div className="text-xl md:text-3xl font-black text-slate-900 group-hover:text-rose-600 transition-colors">{hasOut ? new Date(hasOut).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
+        <div className="bg-white p-3 md:p-8 rounded-[1.2rem] md:rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-rose-100 transition-all">
+          <div className="text-[8px] md:text-[10px] text-slate-400 font-black mb-1 md:mb-2 uppercase tracking-widest">Record Pulang</div>
+          <div className="text-lg md:text-3xl font-black text-slate-900 group-hover:text-rose-600 transition-colors">{hasOut ? new Date(hasOut).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
         </div>
       </div>
 
