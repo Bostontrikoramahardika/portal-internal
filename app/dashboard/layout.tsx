@@ -301,9 +301,24 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-bold text-sm truncate">BTM Mobile App</div>
-            <div className="text-[10px] text-blue-200 font-black uppercase truncate leading-tight">{user.nama}</div>
-            <div className="text-[9px] text-slate-500 font-medium">NRP: {user.nrp_login || user.nrp}</div>
-          </div>
+            <div className="flex items-center">
+  <button 
+    type="button"
+    onClick={() => setIsNotifOpen(true)} 
+    className="relative w-10 h-10 flex items-center justify-center active:scale-90 transition-all cursor-pointer bg-slate-50 rounded-xl border border-slate-100 shadow-sm z-[70]"
+  >
+    <span className="text-xl pointer-events-none">🔔</span>
+    {notifCount > 0 && (
+      <>
+        {/* Efek Ping (Lingkaran Berdenyut) - Luxury Touch */}
+        <span className="absolute -top-1 -right-1 animate-ping h-4 w-4 rounded-full bg-red-400 opacity-75"></span>
+        <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black h-5 w-5 flex items-center justify-center rounded-full border-2 border-white shadow-lg pointer-events-none">
+          {notifCount}
+        </span>
+      </>
+    )}
+  </button>
+</div>
 
           {/* v1.6.0: Bell Icon Desktop Sidebar */}
           <button 
