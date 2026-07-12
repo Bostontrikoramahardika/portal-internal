@@ -1991,7 +1991,7 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
         </div>
       </section>
 
-      {/* OTHER 3: KELUARGA */}
+            {/* OTHER 3: Keluarga */}
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>3. Keluarga</SectionTitle>
         <div className="space-y-6">

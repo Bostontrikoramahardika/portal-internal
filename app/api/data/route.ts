@@ -538,40 +538,23 @@ const menuInfo = menusFound.find((m: any) =>
         .eq('nrp', nrpStr)
         .eq('status', 'pending')
 
-      // Gabungkan data Karyawan + PKWT + BPJS
+      // Gabungkan data Karyawan + PKWT + BPJS (Mapping Sesuai Database)
       const finalData = {
         ...employeeData,
-        // BPJS KARYAWAN (Sudah Muncul)
-        bpjs_tk: bpjsTable?.bpjs_ketenagakerjaan || bpjsTable?.no_bpjs_tk || employeeData.bpjs_tk || '-',
-        bpjs_kes: bpjsTable?.bpjs_kesehatan || bpjsTable?.no_bpjs_kes || employeeData.bpjs_kes || '-',
+        // 1. BPJS KARYAWAN
+        bpjs_tk: bpjsTable?.bpjs_ketenagakerjaan || employeeData.bpjs_tk || '-',
+        bpjs_kes: bpjsTable?.bpjs_kesehatan || employeeData.bpjs_kes || '-',
         
-        // BPJS ISTRI (Mencoba berbagai kemungkinan nama kolom)
-        bpjs_istri: bpjsTable?.bpjs_istri || 
-                    bpjsTable?.no_bpjs_istri || 
-                    bpjsTable?.bpjs_pasangan || 
-                    bpjsTable?.istri || 
-                    '-',
+        // 2. BPJS KELUARGA (Sesuai JSON: istri_bpjs, anak1_bpjs, dst)
+        bpjs_istri: bpjsTable?.istri_bpjs || employeeData.bpjs_istri || '-',
+        bpjs_anak1: bpjsTable?.anak1_bpjs || employeeData.bpjs_anak1 || '-',
+        bpjs_anak2: bpjsTable?.anak2_bpjs || employeeData.bpjs_anak2 || '-',
+        bpjs_anak3: bpjsTable?.anak3_bpjs || employeeData.bpjs_anak3 || '-',
         
-        // BPJS ANAK 1
-        bpjs_anak1: bpjsTable?.bpjs_anak1 || 
-                    bpjsTable?.no_bpjs_anak1 || 
-                    bpjsTable?.bpjs_anak_1 || 
-                    bpjsTable?.anak1 || 
-                    '-',
-
-        // BPJS ANAK 2
-        bpjs_anak2: bpjsTable?.bpjs_anak2 || 
-                    bpjsTable?.no_bpjs_anak2 || 
-                    bpjsTable?.bpjs_anak_2 || 
-                    bpjsTable?.anak2 || 
-                    '-',
-
-        // BPJS ANAK 3
-        bpjs_anak3: bpjsTable?.bpjs_anak3 || 
-                    bpjsTable?.no_bpjs_anak3 || 
-                    bpjsTable?.bpjs_anak_3 || 
-                    bpjsTable?.anak3 || 
-                    '-',
+        // 3. NAMA KELUARGA (Sesuai JSON: istri_nama, anak1_nama)
+        nama_istri: bpjsTable?.istri_nama || employeeData.nama_istri || '-',
+        // Menggabungkan nama anak jika ada lebih dari satu, atau ambil anak 1 saja
+        nama_anak: bpjsTable?.anak1_nama || employeeData.nama_anak || '-',
         
         pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-'
       }
