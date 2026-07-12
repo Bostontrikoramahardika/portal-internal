@@ -15,83 +15,6 @@ const getGreeting = () => {
 };
 
 /**
- * 🏠 DASHBOARD VIEW v1.6.0 (Luxury Mobile Edition)
- * Menggabungkan Visual 1Pama dengan Data Real Perusahaan
- */
-function DashboardView({ title, data }: any) {
-  // 1. Ambil stats & data user
-  const stats = data?.stats || { 
-    total: 0, done: 0, hadir: 0, expired: 0, periode: '-', 
-    user_name: '', clock_in_time: '--:--', clock_out_time: '--:--' 
-  }
-  
-
-  return (
-    <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-28">
-      
-      {/* BANNER NAVY & GREETING */}
-      <div className="relative mb-12">
-        <div className="bg-[#003D79] rounded-[2.5rem] p-8 pt-10 pb-24 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
-          <div className="relative z-10">
-            <p className="text-blue-200/70 font-bold text-[10px] uppercase tracking-[0.3em] mb-2">{getGreeting()}</p>
-            <h2 className="text-2xl font-black text-white tracking-tight">{data.user_name || stats.user_name || 'Rekan BTM'} 👋</h2>
-            <p className="text-blue-200/50 text-[10px] font-medium mt-1 uppercase tracking-widest italic">{stats.periode}</p>
-          </div>
-        </div>
-
-        {/* FLOATING ATTENDANCE CARD (Riwayat Ada di Sini) */}
-        <div className="bg-white rounded-[2.2rem] mx-4 -mt-16 p-6 shadow-[0_20px_50px_rgba(0,61,121,0.12)] border border-white relative z-20">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-xl">⏰</div>
-              <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Hari Ini</p>
-                <h4 className="text-xs font-black text-[#003D79] uppercase">Shift Normal</h4>
-              </div>
-            </div>
-            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${stats.clock_in_time !== '--:--' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
-              {stats.clock_in_time !== '--:--' ? 'Hadir' : 'Belum Absen'}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
-              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock In</p>
-              <p className="text-xl font-black text-slate-900">{stats.clock_in_time || '--:--'}</p>
-            </div>
-            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
-              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock Out</p>
-              <p className="text-xl font-black text-slate-300">{stats.clock_out_time || '--:--'}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* STATS GRID */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Anggota</p>
-            <p className="text-2xl font-black text-slate-900">{stats.total}</p>
-        </div>
-        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
-            <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Hadir (Site)</p>
-            <p className="text-2xl font-black text-blue-600">{stats.hadir}</p>
-        </div>
-        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
-            <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">KPI Selesai</p>
-            <p className="text-2xl font-black text-emerald-600">{stats.done}</p>
-        </div>
-        <div className="bg-rose-50 p-6 rounded-[2rem] border-2 border-rose-100 shadow-xl">
-            <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest mb-1">Dok. Expired</p>
-            <p className="text-2xl font-black text-rose-600">{stats.expired}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
  * 🚀 MAIN COMPONENT
  */
 export default function DashboardPage() {
@@ -127,13 +50,9 @@ function DashboardContent() {
   if (!data) return null
 
   // ==========================================
-  // 🎯 RENDERER LOGIC (Pusat Kendali Menu)
+  // 🎯 RENDERER LOGIC
   // ==========================================
-  
-  // Menu Baru: My Identity (v1.6.1)
   if (data.type === 'identity_view') return <IdentityView data={data.data} />
-  
-  // Menu Lainnya
   if (data.type === 'dashboard') return <DashboardView title={data.title} data={data} />
   if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} />
   if (data.type === 'form_lembur') return <FormLemburView title={data.title} onSuccess={loadData} />
@@ -269,13 +188,74 @@ function IdentityView({ data }: { data: any }) {
       )}
 
       <p className="text-[8px] text-center text-slate-300 mt-10 font-bold uppercase tracking-widest px-8 italic">
-        BTM Portal v1.6.1 • Data disinkronkan otomatis.
+        BTM Portal v1.6.1 Final • Data disinkronkan otomatis.
       </p>
     </div>
   )
 }
 
-// Komponen Utility (StatusBadge, Input, dll - tetap biarkan di paling bawah)
+/**
+ * 🏠 DASHBOARD VIEW (Header & Banner)
+ */
+function DashboardView({ data }: any) {
+  const stats = data?.stats || { total: 0, done: 0, hadir: 0, expired: 0, periode: '-', user_name: '', clock_in_time: '--:--', clock_out_time: '--:--' }
+  return (
+    <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-28">
+      <div className="relative mb-12">
+        <div className="bg-[#003D79] rounded-[2.5rem] p-8 pt-10 pb-24 shadow-2xl relative overflow-hidden">
+          <div className="relative z-10">
+            <p className="text-blue-200/70 font-bold text-[10px] uppercase tracking-[0.3em] mb-2">{getGreeting()}</p>
+            <h2 className="text-2xl font-black text-white tracking-tight">{data.user_name || stats.user_name || 'Rekan BTM'} 👋</h2>
+            <p className="text-blue-200/50 text-[10px] font-medium mt-1 uppercase tracking-widest italic">{stats.periode}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-[2.2rem] mx-4 -mt-16 p-6 shadow-[0_20px_50px_rgba(0,61,121,0.12)] border border-white relative z-20">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-xl">⏰</div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Hari Ini</p>
+                <h4 className="text-xs font-black text-[#003D79] uppercase">Shift Normal</h4>
+              </div>
+            </div>
+            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${stats.clock_in_time !== '--:--' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+              {stats.clock_in_time !== '--:--' ? 'Hadir' : 'Belum Absen'}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
+              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock In</p>
+              <p className="text-xl font-black text-slate-900">{stats.clock_in_time || '--:--'}</p>
+            </div>
+            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
+              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock Out</p>
+              <p className="text-xl font-black text-slate-300">{stats.clock_out_time || '--:--'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        <StatCard label="Total Anggota" value={stats.total} color="text-slate-900" />
+        <StatCard label="Hadir (Site)" value={stats.hadir} color="text-blue-600" />
+        <StatCard label="KPI Selesai" value={stats.done} color="text-emerald-600" />
+        <StatCard label="Dok. Expired" value={stats.expired} color="text-rose-600" />
+      </div>
+    </div>
+  );
+}
+
+// ============ UTILITIES & OTHER VIEWS (REDACTED FOR BREVITY - PLEASE KEEP YOUR EXISTING ONES) ============
+// Pastikan Anda tetap menyertakan fungsi TableView, FormCutiView, dll yang ada di file lama Anda di bawah sini.
+
+function StatCard({ label, value, color }: any) {
+  return (
+    <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
+      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+      <p className={`text-2xl font-black ${color}`}>{value}</p>
+    </div>
+  )
+}
+
 function StatusBadge({ value }: any) {
   const m: any = {
     PENDING: 'bg-amber-50 text-amber-700 border-amber-200', APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200', REJECTED: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -284,6 +264,7 @@ function StatusBadge({ value }: any) {
   }
   return <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${m[value] || 'bg-slate-50 text-slate-400 border-slate-100'}`}>{value}</span>
 }
+
 
 function Input({ label, onChange, ...props }: any) {
   return (
