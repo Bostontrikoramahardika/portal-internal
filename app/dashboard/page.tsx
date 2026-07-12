@@ -15,6 +15,76 @@ const getGreeting = () => {
 };
 
 /**
+ * 🏠 DASHBOARD VIEW v1.6.0 (Luxury Mobile Edition)
+ */
+function DashboardView({ title, data }: any) {
+  const stats = data?.stats || { 
+    total: 0, done: 0, hadir: 0, expired: 0, periode: '-', 
+    user_name: '', clock_in_time: '--:--', clock_out_time: '--:--' 
+  }
+
+  return (
+    <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-28">
+      <div className="relative mb-12">
+        <div className="bg-[#003D79] rounded-[2.5rem] p-8 pt-10 pb-24 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+          <div className="relative z-10">
+            <p className="text-blue-200/70 font-bold text-[10px] uppercase tracking-[0.3em] mb-2">{getGreeting()}</p>
+            <h2 className="text-2xl font-black text-white tracking-tight">{data.user_name || stats.user_name || 'Rekan BTM'} 👋</h2>
+            <p className="text-blue-200/50 text-[10px] font-medium mt-1 uppercase tracking-widest italic">{stats.periode}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-[2.2rem] mx-4 -mt-16 p-6 shadow-[0_20px_50px_rgba(0,61,121,0.12)] border border-white relative z-20">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-xl">⏰</div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Hari Ini</p>
+                <h4 className="text-xs font-black text-[#003D79] uppercase">Shift Normal</h4>
+              </div>
+            </div>
+            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${stats.clock_in_time !== '--:--' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+              {stats.clock_in_time !== '--:--' ? 'Hadir' : 'Belum Absen'}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
+              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock In</p>
+              <p className="text-xl font-black text-slate-900">{stats.clock_in_time || '--:--'}</p>
+            </div>
+            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
+              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock Out</p>
+              <p className="text-xl font-black text-slate-300">{stats.clock_out_time || '--:--'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Anggota</p>
+            <p className="text-2xl font-black text-slate-900">{stats.total}</p>
+        </div>
+        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
+            <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Hadir (Site)</p>
+            <p className="text-2xl font-black text-blue-600">{stats.hadir}</p>
+        </div>
+        <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
+            <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">KPI Selesai</p>
+            <p className="text-2xl font-black text-emerald-600">{stats.done}</p>
+        </div>
+        <div className="bg-rose-50 p-6 rounded-[2rem] border-2 border-rose-100 shadow-xl">
+            <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest mb-1">Dok. Expired</p>
+            <p className="text-2xl font-black text-rose-600">{stats.expired}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * 🚀 MAIN COMPONENT
  */
 export default function DashboardPage() {
@@ -49,14 +119,14 @@ function DashboardContent() {
   if (error) return <div className="bg-red-50 border-2 border-red-100 text-red-700 p-6 rounded-3xl mx-4 mt-10 text-center font-bold">❌ {error}</div>
   if (!data) return null
 
-  // ==========================================
-  // 🎯 RENDERER LOGIC (HANYA SATU DEFINISI)
-  // ==========================================
+  // RENDERER LOGIC (SATU DEFINISI)
   if (data.type === 'identity_view') return <IdentityView data={data.data} />
   if (data.type === 'dashboard') return <DashboardView title={data.title} data={data} />
   if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} data={data} />
   if (data.type === 'form_lembur') return <FormLemburView title={data.title} onSuccess={loadData} data={data} />
   if (data.type === 'form_sakit') return <FormSakitView title={data.title} onSuccess={loadData} data={data} />
+  if (data.type === 'pkwt_saya') return <PKWTSayaView title={data.title} data={data} onSuccess={loadData} />
+  if (data.type === 'apd_history') return <APDHistoryView data={data} onReload={loadData} />
   if (data.type === 'absensi_clock') return <AbsensiClockView title={data.title} />
   if (data.type === 'riwayat_approval') return <RiwayatApprovalView data={data} onReload={loadData} />
   if (data.type === 'table') return <TableView data={data} onReload={loadData} />
@@ -73,7 +143,7 @@ function DashboardContent() {
   return <div className="p-10 text-center text-gray-500 italic">Tipe konten '{data.type}' tidak dikenali</div>
 }
 
-// ============ 👤 MY IDENTITY VIEW v1.6.2 (CLEANED) ============
+// ============ 👤 MY IDENTITY VIEW v1.6.1 (Luxury Final) ============
 function IdentityView({ data }: { data: any }) {
   const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
     <div className="flex items-center gap-4 group">
@@ -108,7 +178,6 @@ function IdentityView({ data }: { data: any }) {
         <SectionTitle>Personal Information</SectionTitle>
         <div className="space-y-6">
           <InfoItem icon="👤" label="Nama" value={data.nama} />
-          <InfoItem icon="🆔" label="NRP" value={data.nrp} />
           <InfoItem icon="💼" label="Jabatan" value={data.jabatan} />
           <InfoItem icon="🏢" label="Departemen" value={data.departemen} />
           <InfoItem icon="📍" label="Site" value={data.site} />
@@ -118,7 +187,7 @@ function IdentityView({ data }: { data: any }) {
           <InfoItem icon="🏠" label="Alamat" value={data.alamat} />
           <InfoItem icon="💍" label="Status Pernikahan" value={data.status_pernikahan} />
           <InfoItem icon="📄" label="Kontrak PKWT" value={data.pkwt_periode} color="text-blue-600" />
-          <InfoItem icon="⚡" label="Status" value={data.status_karyawan} color={data.status_karyawan === 'Aktif' ? 'text-emerald-600' : 'text-rose-600'} />
+          <InfoItem icon="⚡" label="Status Karyawan" value={data.status_karyawan} color="text-emerald-600" />
         </div>
       </section>
 
@@ -166,261 +235,24 @@ function IdentityView({ data }: { data: any }) {
       {data.punishments && data.punishments.length > 0 && (
         <section className="bg-rose-50 rounded-[2.5rem] p-8 shadow-sm border border-rose-100">
           <SectionTitle>Historical Punishment</SectionTitle>
-          <div className="space-y-4">
-            {data.punishments.map((sp: any, i: number) => (
-              <div key={i} className="bg-white p-4 rounded-2xl border border-rose-200 flex gap-3">
-                <span className="text-xl">⚠️</span>
+          <div className="space-y-6">
+            {data.punishments.map((sp: any, idx: number) => (
+              <div key={idx} className="flex items-start gap-4 bg-white p-4 rounded-3xl border border-rose-200">
+                <div className="text-2xl mt-1">⚠️</div>
                 <div>
-                  <div className="text-[10px] font-black text-rose-600 uppercase">{sp.jenis_sp}</div>
-                  <div className="text-xs font-bold text-slate-800">{sp.alasan}</div>
-                  <div className="text-[9px] text-slate-400 mt-1 italic">Hingga: {sp.berlaku_sampai}</div>
+                  <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">{sp.jenis_sp}</div>
+                  <div className="text-sm font-black text-slate-900 tracking-tight">{sp.alasan || 'Pelanggaran Kedisiplinan'}</div>
+                  <div className="text-[9px] font-bold text-slate-400 uppercase mt-1 italic">Berlaku Sampai: {new Date(sp.berlaku_sampai).toLocaleDateString('id-ID')}</div>
                 </div>
               </div>
             ))}
           </div>
         </section>
       )}
-    </div>
-  )
-}
 
-/**
- * 🏠 DASHBOARD VIEW
- */
-function DashboardView({ data }: any) {
-  const stats = data?.stats || { total: 0, done: 0, hadir: 0, expired: 0, periode: '-', user_name: '', clock_in_time: '--:--', clock_out_time: '--:--' }
-  return (
-    <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-28">
-      <div className="relative mb-12">
-        <div className="bg-[#003D79] rounded-[2.5rem] p-8 pt-10 pb-24 shadow-2xl relative overflow-hidden">
-          <div className="relative z-10">
-            <p className="text-blue-200/70 font-bold text-[10px] uppercase tracking-[0.3em] mb-2">{getGreeting()}</p>
-            <h2 className="text-2xl font-black text-white tracking-tight">{data.user_name || stats.user_name || 'Rekan BTM'} 👋</h2>
-            <p className="text-blue-200/50 text-[10px] font-medium mt-1 uppercase tracking-widest italic">{stats.periode}</p>
-          </div>
-        </div>
-        <div className="bg-white rounded-[2.2rem] mx-4 -mt-16 p-6 shadow-[0_20px_50px_rgba(0,61,121,0.12)] border border-white relative z-20">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-xl">⏰</div>
-              <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Hari Ini</p>
-                <h4 className="text-xs font-black text-[#003D79] uppercase">Shift Normal</h4>
-              </div>
-            </div>
-            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${stats.clock_in_time !== '--:--' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
-              {stats.clock_in_time !== '--:--' ? 'Hadir' : 'Belum Absen'}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
-              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock In</p>
-              <p className="text-xl font-black text-slate-900">{stats.clock_in_time || '--:--'}</p>
-            </div>
-            <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
-              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock Out</p>
-              <p className="text-xl font-black text-slate-300">{stats.clock_out_time || '--:--'}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard label="Total Anggota" value={stats.total} color="text-slate-900" />
-        <StatCard label="Hadir (Site)" value={stats.hadir} color="text-blue-600" />
-        <StatCard label="KPI Selesai" value={stats.done} color="text-emerald-600" />
-        <StatCard label="Dok. Expired" value={stats.expired} color="text-rose-600" />
-      </div>
-    </div>
-  );
-}
-
-// ============ ✍️ FORM VIEWS ============
-function FormCutiView({ title, onSuccess, data }: any) {
-  const [form, setForm] = useState({ tanggal_mulai: '', tanggal_selesai: '', jenis_cuti: '', alasan: '', atasan_nrp: '' })
-  const [atasanList, setAtasanList] = useState([])
-  const [loading, setLoading] = useState(false)
-  const riwayat = data?.riwayat || []
-
-  useEffect(() => {
-    fetch('/api/leave/atasan-list').then(r => r.json()).then(d => setAtasanList(d.atasan_list || []))
-  }, [])
-
-  async function handleSubmit(e: any) {
-    e.preventDefault()
-    setLoading(true)
-    const res = await fetch('/api/leave/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
-    if (res.ok) { alert('✅ Pengajuan terkirim'); onSuccess() }
-    setLoading(false)
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-[2rem] shadow-xl">
-        <h2 className="font-black text-xl mb-4">✍️ {title}</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="Mulai" type="date" required value={form.tanggal_mulai} onChange={(v:any) => setForm({...form, tanggal_mulai: v})} />
-          <Input label="Selesai" type="date" required value={form.tanggal_selesai} onChange={(v:any) => setForm({...form, tanggal_selesai: v})} />
-          <Select label="Jenis Cuti" required value={form.jenis_cuti} onChange={(v:any) => setForm({...form, jenis_cuti: v})} options={['Tahunan', 'Sakit', 'Khusus', 'Melahirkan', 'Duka']} />
-          <Textarea label="Alasan" required value={form.alasan} onChange={(v:any) => setForm({...form, alasan: v})} />
-          <button disabled={loading} className="w-full bg-[#003D79] text-white py-4 rounded-2xl font-black">{loading ? 'MENGIRIM...' : 'KIRIM'}</button>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-function FormLemburView({ title, onSuccess, data }: any) {
-  const [form, setForm] = useState({ tanggal: '', jam_mulai: '', jam_selesai: '', alasan: '', atasan_nrp: '' })
-  const [loading, setLoading] = useState(false)
-  const riwayat = data?.riwayat || []
-
-  async function handleSubmit(e: any) {
-    e.preventDefault()
-    setLoading(true)
-    const res = await fetch('/api/overtime/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
-    if (res.ok) { alert('✅ Lembur terkirim'); onSuccess() }
-    setLoading(false)
-  }
-
-  return (
-    <div className="bg-white p-6 rounded-[2rem] shadow-xl">
-      <h2 className="font-black text-xl mb-4">⏰ {title}</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Tanggal" type="date" required value={form.tanggal} onChange={(v:any) => setForm({...form, tanggal: v})} />
-        <div className="grid grid-cols-2 gap-4">
-          <Input label="Jam Mulai" type="time" required value={form.jam_mulai} onChange={(v:any) => setForm({...form, jam_mulai: v})} />
-          <Input label="Jam Selesai" type="time" required value={form.jam_selesai} onChange={(v:any) => setForm({...form, jam_selesai: v})} />
-        </div>
-        <Textarea label="Pekerjaan" required value={form.alasan} onChange={(v:any) => setForm({...form, alasan: v})} />
-        <button disabled={loading} className="w-full bg-amber-500 text-white py-4 rounded-2xl font-black">KIRIM</button>
-      </form>
-    </div>
-  )
-}
-
-function FormSakitView({ title, onSuccess, data }: any) {
-  const [form, setForm] = useState({ tanggal: '', keterangan: '', foto_url: '', atasan_nrp: '' })
-  const [loading, setLoading] = useState(false)
-  const riwayat = data?.rows || []
-
-  async function handleSubmit(e: any) {
-    e.preventDefault()
-    setLoading(true)
-    const res = await fetch('/api/crud', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ table: 'attendance_evidences', values: form }) })
-    if (res.ok) { alert('✅ Berhasil'); onSuccess() }
-    setLoading(false)
-  }
-
-  return (
-    <div className="bg-white p-6 rounded-[2rem] shadow-xl">
-      <h2 className="font-black text-xl mb-4">🤒 {title}</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Tanggal Sakit" type="date" required value={form.tanggal} onChange={(v:any) => setForm({...form, tanggal: v})} />
-        <Textarea label="Keterangan" value={form.keterangan} onChange={(v:any) => setForm({...form, keterangan: v})} />
-        <button disabled={loading} className="w-full bg-rose-500 text-white py-4 rounded-2xl font-black">KIRIM</button>
-      </form>
-    </div>
-  )
-}
-
-// ============ 📊 TABLE & OTHER VIEWS ============
-function TableView({ data, onReload }: any) {
-  const { title, rows = [], columns = [] } = data
-  return (
-    <div className="bg-white rounded-[2rem] border shadow-xl overflow-hidden">
-      <div className="p-6 border-b"><h2 className="font-black text-xl">{title}</h2></div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-slate-950 text-white text-[9px] font-black uppercase">
-            <tr>{columns.map((c: string) => <th key={c} className="px-6 py-4">{formatColumnName(c)}</th>)}</tr>
-          </thead>
-          <tbody className="divide-y">
-            {rows.map((r: any, i: number) => (
-              <tr key={i} className="hover:bg-slate-50">{columns.map((c: string) => <td key={c} className="px-6 py-4">{renderCell(c, r[c])}</td>)}</tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-function AbsensiClockView({ title }: any) {
-  return <div className="text-center p-20 bg-white rounded-[2rem]">Halaman Absensi sedang dimuat...</div>
-}
-
-function RiwayatApprovalView({ data }: any) { return <div>Riwayat Approval</div> }
-function ImportExcel({ title }: any) { return <div>Import Excel</div> }
-function RosterView({ title }: any) { return <div>Roster View</div> }
-function RosterUpload({ title }: any) { return <div>Roster Upload</div> }
-function RoleManagerView({ title }: any) { return <div>Role Manager</div> }
-function ChangeLoginView({ title }: any) { return <div>Change Login</div> }
-function ExportAbsensiView({ title }: any) { return <div>Export Absensi</div> }
-function RiwayatAbsensiCustom({ data }: any) { return <div>Riwayat Absensi</div> }
-function KPISayaRaportView({ data }: any) { return <div>Raport KPI</div> }
-function PenilaianBawahanView({ data }: any) { return <div>Penilaian Bawahan</div> }
-
-// ============ 🛠️ UTILITY COMPONENTS (DEFINISI TUNGGAL) ============
-function StatCard({ label, value, color }: any) {
-  return (
-    <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
-      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-      <p className={`text-2xl font-black ${color}`}>{value}</p>
-    </div>
-  )
-}
-
-function Input({ label, onChange, ...props }: any) {
-  return (
-    <div>
-      <label className="block text-xs font-bold text-slate-700 mb-1">{label}</label>
-      <input {...props} onChange={e => onChange(e.target.value)} className="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 focus:bg-white outline-none text-sm font-bold" />
-    </div>
-  )
-}
-
-function Select({ label, options, onChange, ...props }: any) {
-  return (
-    <div>
-      <label className="block text-xs font-bold text-slate-700 mb-1">{label}</label>
-      <select {...props} onChange={e => onChange(e.target.value)} className="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 outline-none text-sm font-bold">
-        <option value="">-- Pilih --</option>
-        {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
-      </select>
-    </div>
-  )
-}
-
-function Textarea({ label, onChange, ...props }: any) {
-  return (
-    <div>
-      <label className="block text-xs font-bold text-slate-700 mb-1">{label}</label>
-      <textarea {...props} onChange={e => onChange(e.target.value)} className="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 outline-none text-sm font-bold min-h-[100px]" />
-    </div>
-  )
-}
-
-function StatusBadge({ value }: any) {
-  const m: any = { PENDING: 'bg-amber-50 text-amber-700', APPROVED: 'bg-emerald-50 text-emerald-700', REJECTED: 'bg-rose-50 text-rose-700', Aktif: 'bg-emerald-50 text-emerald-700' }
-  return <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase ${m[value] || 'bg-slate-100 text-slate-500'}`}>{value}</span>
-}
-
-function formatColumnName(col: string) {
-  const special: any = { _nama_karyawan: '👤 Karyawan', _jabatan: 'Jabatan', nrp: 'NRP' }
-  return special[col] || col.replace(/_/g, ' ').toUpperCase()
-}
-
-function renderCell(col: string, val: any) {
-  if (val === null || val === undefined) return '-'
-  if (col.includes('status')) return <StatusBadge value={String(val)} />
-  return String(val)
-}
-
-function StatCard({ label, value, color }: any) {
-  return (
-    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-5 hover:shadow-lg transition-shadow">
-      <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1">{label}</div>
-      <div className={`text-xl font-black ${color}`}>{value}</div>
+      <p className="text-[8px] text-center text-slate-300 mt-10 font-bold uppercase tracking-widest px-8 italic">
+        BTM Portal v1.6.1 • Data disinkronkan otomatis.
+      </p>
     </div>
   )
 }
@@ -529,7 +361,6 @@ function FormCutiView({ title, onSuccess, data }: any) {
   )
 }
 
-
 // ============ ⏱️ FORM LEMBUR ============
 function FormLemburView({ title, onSuccess, data }: any) {
   const [form, setForm] = useState({ tanggal: '', jam_mulai: '', jam_selesai: '', jenis_lembur: 'BIASA', alasan: '', atasan_nrp: '' })
@@ -628,7 +459,7 @@ function FormLemburView({ title, onSuccess, data }: any) {
   )
 }
 
-// ============ 🤒 FORM SAKIT (v1.5.0 Multi-Site) ============
+// ============ 🤒 FORM SAKIT ============
 function FormSakitView({ title, onSuccess, data }: any) {
   const [form, setForm] = useState({ tanggal: '', keterangan: '', foto_url: '', atasan_nrp: '' })
   const [atasanList, setAtasanList] = useState([])
@@ -904,17 +735,17 @@ function AbsensiClockView({ title }: any) {
   const [announcement, setAnnouncement] = useState<any>(null)
   const [riwayat7Hari, setRiwayat7Hari] = useState<any[]>([])
 
-    useEffect(() => {
+  useEffect(() => {
     setIsOnline(navigator.onLine)
     const interval = setInterval(() => setCurrentTime(new Date()), 1000)
     loadStatus()
     fetch('/api/announcements').then(r => r.json()).then(d => setAnnouncement(d.announcement)).catch(() => {})
-        fetch('/api/data?menu=riwayat_absensi').then(r => r.json()).then(d => {
+    fetch('/api/data?menu=riwayat_absensi').then(r => r.json()).then(d => {
       const today = new Date()
-      today.setHours(23, 59, 59, 999) // Batas atas: akhir hari ini
+      today.setHours(23, 59, 59, 999)
       const sevenDaysAgo = new Date()
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-      sevenDaysAgo.setHours(0, 0, 0, 0) // Batas bawah: 7 hari lalu (jam 00:00)
+      sevenDaysAgo.setHours(0, 0, 0, 0)
       
       const filtered = (d.rows || [])
         .filter((r: any) => {
@@ -1018,10 +849,7 @@ function AbsensiClockView({ title }: any) {
         </div>
       </div>
 
-      {/* 🆕 RIWAYAT 7 HARI TERAKHIR (Luxury Minimalis) */}
-            {/* 🆕 RIWAYAT 7 HARI TERAKHIR (Luxury Minimalis - Data Real) */}
       <div className="mt-6 bg-white rounded-[2rem] border-2 border-slate-50 shadow-sm overflow-hidden">
-        {/* Header */}
         <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100">
           <div>
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">History</p>
@@ -1032,7 +860,6 @@ function AbsensiClockView({ title }: any) {
           </a>
         </div>
 
-        {/* List Riwayat */}
         <div className="divide-y divide-slate-50">
           {riwayat7Hari.length === 0 ? (
             <div className="px-6 py-10 text-center">
@@ -1040,10 +867,7 @@ function AbsensiClockView({ title }: any) {
             </div>
           ) : (
             riwayat7Hari.map((item, i) => {
-              // Parse jam dari format "08:00 / 17:00"
               const [jamMasuk, jamPulang] = (item.evident || '-- / --').split(' / ');
-              
-              // Tentukan status & warna berdasarkan keterangan
               const ket = String(item.keterangan || '').toUpperCase();
               let statusLabel = 'HADIR';
               let statusColor = { dot: 'bg-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50' };
@@ -1065,7 +889,6 @@ function AbsensiClockView({ title }: any) {
                 statusColor = { dot: 'bg-purple-500', text: 'text-purple-600', bg: 'bg-purple-50' };
               }
               
-              // Format tanggal jadi "Jumat, 10 Jul"
               const tglObj = new Date(item.tanggal);
               const tglFormatted = tglObj.toLocaleDateString('id-ID', { 
                 weekday: 'long', 
@@ -1075,18 +898,13 @@ function AbsensiClockView({ title }: any) {
               
               return (
                 <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
-                  {/* Status Dot */}
                   <div className={`w-2.5 h-2.5 rounded-full ${statusColor.dot} shadow-sm flex-shrink-0`}></div>
-                  
-                  {/* Tanggal & Jam */}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-black text-slate-900 tracking-tight mb-0.5 capitalize">{tglFormatted}</p>
                     <p className="text-[10px] font-bold text-slate-400 font-mono tracking-widest">
                       {jamMasuk?.trim() || '--:--'} <span className="text-slate-300 mx-1">→</span> {jamPulang?.trim() || '--:--'}
                     </p>
                   </div>
-                  
-                  {/* Badge Status */}
                   <div className={`${statusColor.bg} ${statusColor.text} px-3 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase`}>
                     {statusLabel}
                   </div>
@@ -1100,7 +918,7 @@ function AbsensiClockView({ title }: any) {
   )
 }
 
-// ============ 📊 TABLE VIEW (BUG FIXED - handleApprove Duplikat DIHAPUS) ============
+// ============ 📊 TABLE VIEW ============
 function TableView({ data, onReload }: any) {
   const { title, rows = [], columns = [], table, access_mode } = data
   const [formModal, setFormModal] = useState<any>(null)
@@ -1347,7 +1165,6 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
     </div>
   )
 }
-
 
 // ============ 👤 ROLE MANAGER ============
 function RoleManagerView({ title }: any) {
@@ -1872,87 +1689,7 @@ function KPISayaRaportView({ data }: any) {
             </div>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <div className="space-y-10">
-            <section>
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-2.5 h-6 bg-rose-500 rounded-full"></div>
-                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Discipline Breakdown</h3>
-                </div>
-                <div className="bg-rose-50/50 border-2 border-rose-100 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 text-4xl grayscale group-hover:scale-110 transition-transform">⚠️</div>
-                    <div className="relative z-10">
-                        <p className="text-[10px] text-rose-800 font-black uppercase tracking-widest mb-3">Detail Pelanggaran:</p>
-                        <p className="text-sm text-rose-600 font-black leading-relaxed tracking-tight italic uppercase">{raport.pelanggaran || 'Zero Violation Recorded'}</p>
-                        {raport.persen_pengurang > 0 && (
-                            <div className="mt-6 pt-6 border-t border-rose-200 flex items-center justify-between">
-                                <span className="text-[10px] text-rose-800 font-black uppercase tracking-widest">Skor Pinalti:</span>
-                                <span className="bg-rose-600 text-white px-4 py-1.5 rounded-full text-[11px] font-black shadow-lg shadow-rose-200">
-                                -{raport.persen_pengurang}%
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </section>
-            <section>
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-2.5 h-6 bg-blue-500 rounded-full"></div>
-                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Manager Feedback</h3>
-                </div>
-                <div className="bg-slate-50/80 border-2 border-slate-100 p-8 rounded-[2.5rem] relative italic text-slate-700 text-sm leading-relaxed min-h-[140px] shadow-inner font-medium">
-                    <span className="absolute -top-2 left-6 text-7xl opacity-5 font-serif select-none pointer-events-none">&quot;</span>
-                    {raport.catatan || 'Kinerja dipertahankan, tingkatkan konsistensi kedisiplinan harian.'}
-                </div>
-            </section>
-          </div>
-
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-2.5 h-6 bg-emerald-500 rounded-full"></div>
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Professional Competency</h3>
-            </div>
-            <div className="bg-white border-2 border-slate-50 rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-50">
-              <table className="w-full text-sm">
-                <tbody className="divide-y divide-slate-50">
-                  {[
-                    { l: 'Kompetensi & Kinerja', v: raport.cat_kinerja },
-                    { l: 'Sikap & Tanggung Jawab', v: raport.cat_sikap },
-                    { l: 'Kedisiplinan & Kerja Sama', v: raport.cat_disiplin },
-                  ].map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50 transition-all">
-                      <td className="px-8 py-6 text-slate-500 font-black text-[10px] uppercase tracking-widest">{item.l}</td>
-                      <td className="px-8 py-6 text-right">
-                        <span className="text-xl font-black text-slate-900">{item.v || 0}</span>
-                        <span className="text-[10px] text-slate-300 ml-2 font-black uppercase">/ 10</span>
-                      </td>
-                    </tr>
-                  ))}
-                  <tr className="bg-slate-900 text-white">
-                    <td className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em]">Total Performance Score</td>
-                    <td className="px-8 py-5 text-right font-black text-amber-500 text-base">{raport.nilai_performa || 0} <span className="text-[10px] opacity-40 ml-1">/ 30</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </div>
-
-        <div className="mt-20 pt-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-[10px] text-slate-400 text-center md:text-left leading-relaxed font-bold">
-            <p className="font-black uppercase tracking-widest mb-1 text-slate-900">PT. Boston Trikora Mahardika</p>
-            <p>Generated by BTM Portal Digital System • Internal v1.6.0</p>
-            <p>Timestamp: {new Date().toLocaleString('id-ID')}</p>
-          </div>
-          <div className="bg-slate-950 text-white px-10 py-4 rounded-3xl text-[10px] font-black tracking-[0.4em] uppercase border-b-4 border-amber-500 shadow-2xl">
-            Official Report Card
-          </div>
-        </div>
       </div>
-      <p className="text-center mt-10 text-slate-300 text-[9px] font-black tracking-widest uppercase italic">
-        This document is strictly confidential and for internal company use only.
-      </p>
     </div>
   )
 }
@@ -2028,7 +1765,6 @@ function PenilaianBawahanView({ data, onReload }: any) {
       {currentList.length === 0 ? (
         <div className="p-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
            <p className="text-slate-300 font-black uppercase tracking-widest italic text-lg">Tidak ada anggota tim ditemukan di kategori ini</p>
-           <p className="text-slate-400 text-xs mt-2">Pastikan NRP bawahan sudah terdaftar di Approval Matrix Anda.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2048,17 +1784,6 @@ function PenilaianBawahanView({ data, onReload }: any) {
                     <h3 className="font-black text-slate-900 leading-tight truncate">{emp.nama}</h3>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">{emp.jabatan}</p>
                     <p className="text-[9px] font-bold text-slate-400 italic">{emp.nrp}</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="bg-white/50 p-3 rounded-2xl border border-slate-100">
-                    <p className="text-[8px] font-black text-slate-400 uppercase">Terakhir</p>
-                    <p className="text-[10px] font-bold text-slate-700">{emp.last_periode || '-'}</p>
-                  </div>
-                  <div className={`${isDone ? 'bg-emerald-100' : 'bg-blue-50'} p-3 rounded-2xl border border-transparent`}>
-                    <p className={`text-[8px] font-black uppercase ${isDone ? 'text-emerald-600' : 'text-blue-400'}`}>Skor</p>
-                    <p className={`text-sm font-black ${isDone ? 'text-emerald-700' : 'text-blue-600'}`}>{emp.last_score || '0'}</p>
                   </div>
                 </div>
 
@@ -2086,7 +1811,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
   )
 }
 
-// ============ UTILITY COMPONENTS ============
+// ============ 🛠️ UTILITY COMPONENTS (DEFINISI TUNGGAL) ============
 function Input({ label, onChange, ...props }: any) {
   return (
     <div>
@@ -2143,163 +1868,4 @@ function renderCell(col: string, val: any) {
   if (col.includes('tanggal') && !col.includes('jam')) { try { return new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) } catch { return String(val) } }
   if (col.includes('foto') || col === 'image_url') return <a href={val} target="_blank" className="text-blue-600 font-black uppercase text-[9px] underline tracking-widest">👁️ DOKUMEN</a>
   return String(val)
-}
-
-// ============ 👤 MY IDENTITY VIEW v1.6.1 (Luxury Final) ============
-function IdentityView({ data }: { data: any }) {
-  const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
-    <div className="flex items-center gap-4 group">
-      <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100">{icon}</div>
-      <div className="flex-1 border-b border-slate-50 pb-2">
-        <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{label}</div>
-        <div className={`text-sm font-black tracking-tight ${color}`}>{value || '-'}</div>
-      </div>
-    </div>
-  )
-
-  const BpjsItem = ({ icon, label, no, nama }: any) => (
-    <div className="flex items-start gap-4">
-      <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100 mt-1">{icon}</div>
-      <div className="flex-1 border-b border-slate-50 pb-3">
-        <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">{label}</div>
-        <div className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1">{no || '-'}</div>
-        <div className="text-[11px] font-bold text-slate-400 uppercase">{nama || '-'}</div>
-      </div>
-    </div>
-  )
-
-  const SectionTitle = ({ children }: { children: string }) => (
-    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 flex items-center gap-2">
-      <span className="w-4 h-[2px] bg-blue-600/20"></span> {children}
-    </h3>
-  )
-
-  return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-32 animate-in fade-in duration-500">
-      
-      {/* 1. PERSONAL INFORMATION */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-        <SectionTitle>Personal Information</SectionTitle>
-        <div className="space-y-6">
-          <InfoItem icon="👤" label="Nama" value={data.nama} />
-          <InfoItem icon="💼" label="Jabatan" value={data.jabatan} />
-          <InfoItem icon="🏢" label="Departemen" value={data.departemen} />
-          <InfoItem icon="📍" label="Site" value={data.site} />
-          <InfoItem icon="📅" label="Tanggal Masuk" value={data.tgl_masuk} />
-          <InfoItem icon="🎂" label="Tempat Lahir" value={data.tmpt_lahir} />
-          <InfoItem icon="🗓️" label="Tanggal Lahir" value={data.tgl_lahir} />
-          <InfoItem icon="🏠" label="Alamat" value={data.alamat} />
-          <InfoItem icon="💍" label="Status Pernikahan" value={data.status_pernikahan} />
-          <InfoItem icon="📄" label="Kontrak PKWT" value={data.pkwt_periode} color="text-blue-600" />
-          <InfoItem icon="⚡" label="Status Karyawan" value={data.status_karyawan} color="text-emerald-600" />
-        </div>
-      </section>
-
-      {/* 2. CONTACT INFORMATION */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-        <SectionTitle>Contact Information</SectionTitle>
-        <div className="space-y-6">
-          <InfoItem icon="📧" label="Email" value={data.email} />
-          <InfoItem icon="📞" label="Nomor HP" value={data.no_hp} />
-          <InfoItem icon="🚨" label="Nomor Darurat" value={data.no_darurat} color="text-rose-600" />
-        </div>
-      </section>
-
-      {/* 3. VALIDITY & PERMITS */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-        <SectionTitle>Validity & Permits</SectionTitle>
-        <div className="space-y-6">
-          <InfoItem icon="🪪" label="Nomor SIMPOL" value={data.no_simpol} />
-          <InfoItem icon="⏳" label="Exp SIMPOL" value={data.exp_simpol} color="text-amber-600" />
-          <InfoItem icon="🎖️" label="Exp SIMPER" value={data.exp_simper} color="text-blue-600" />
-          <InfoItem icon="🏥" label="Exp MCU" value={data.exp_mcu} color="text-red-600" />
-        </div>
-      </section>
-
-      {/* 4. BPJS SECTION */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-        <SectionTitle>BPJS Information</SectionTitle>
-        <div className="space-y-8">
-          <BpjsItem icon="🛡️" label="BPJS Ketenagakerjaan" no={data.bpjs_tk_no} nama={data.bpjs_tk_nama} />
-          <BpjsItem icon="🏥" label="BPJS Kesehatan" no={data.bpjs_kes_no} nama={data.bpjs_kes_nama} />
-          <BpjsItem icon="👩‍💼" label="BPJS Istri / Suami" no={data.bpjs_istri_no} nama={data.bpjs_istri_nama} />
-          <BpjsItem icon="🧒" label="BPJS Anak 1" no={data.bpjs_anak1_no} nama={data.bpjs_anak1_nama} />
-        </div>
-      </section>
-
-      {/* 5. DATA KELUARGA */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-        <SectionTitle>Data Keluarga</SectionTitle>
-        <div className="space-y-6">
-          <InfoItem icon="💳" label="Nomor KK" value={data.no_kk} />
-          <InfoItem icon="💍" label="Nama Istri" value={data.nama_istri} />
-          <InfoItem icon="👶" label="Nama Anak ke-1" value={data.nama_anak1} />
-          <InfoItem icon="👶" label="Nama Anak ke-2" value={data.nama_anak2} />
-        </div>
-      </section>
-
-      {/* 6. HISTORICAL PUNISHMENT */}
-      {data.punishments && data.punishments.length > 0 && (
-        <section className="bg-rose-50 rounded-[2.5rem] p-8 shadow-sm border border-rose-100">
-          <SectionTitle>Historical Punishment</SectionTitle>
-          <div className="space-y-6">
-            {data.punishments.map((sp: any, idx: number) => (
-              <div key={idx} className="flex items-start gap-4 bg-white p-4 rounded-3xl border border-rose-200">
-                <div className="text-2xl mt-1">⚠️</div>
-                <div>
-                  <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">{sp.jenis_sp}</div>
-                  <div className="text-sm font-black text-slate-900 tracking-tight">{sp.alasan || 'Pelanggaran Kedisiplinan'}</div>
-                  <div className="text-[9px] font-bold text-slate-400 uppercase mt-1 italic">Berlaku Sampai: {new Date(sp.berlaku_sampai).toLocaleDateString('id-ID')}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <p className="text-[8px] text-center text-slate-300 mt-10 font-bold uppercase tracking-widest px-8 italic">
-        BTM Portal v1.6.1 • Data disinkronkan otomatis.
-      </p>
-    </div>
-  )
-}
-
-// Utility Components (Keep these at the very bottom)
-function Input({ label, onChange, ...props }: any) {
-  return (
-    <div>
-      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
-      <input {...props} onChange={e => onChange(e.target.value)} className="w-full p-3.5 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm" />
-    </div>
-  )
-}
-
-function Select({ label, options, onChange, ...props }: any) {
-  return (
-    <div>
-      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
-      <select {...props} onChange={e => onChange(e.target.value)} className="w-full p-3.5 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm">
-        <option value="">-- Pilih --</option>
-        {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
-      </select>
-    </div>
-  )
-}
-
-function Textarea({ label, onChange, ...props }: any) {
-  return (
-    <div>
-      <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
-      <textarea {...props} onChange={e => onChange(e.target.value)} className="w-full p-4 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm min-h-[120px]" />
-    </div>
-  )
-}
-
-function StatusBadge({ value }: any) {
-  const m: any = {
-    PENDING: 'bg-amber-50 text-amber-700 border-amber-200', APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200', REJECTED: 'bg-rose-50 text-rose-700 border-rose-200',
-    DISETUJUI: 'bg-emerald-50 text-emerald-700 border-emerald-200', HADIR: 'bg-emerald-50 text-emerald-700 border-emerald-200', TERLAMBAT: 'bg-amber-50 text-amber-700 border-amber-200',
-    Aktif: 'bg-emerald-50 text-emerald-700 border-emerald-200', Nonaktif: 'bg-slate-100 text-slate-500 border-slate-200'
-  }
-  return <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${m[value] || 'bg-slate-50 text-slate-400 border-slate-100'}`}>{value}</span>
 }
