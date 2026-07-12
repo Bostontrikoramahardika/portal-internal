@@ -538,22 +538,40 @@ const menuInfo = menusFound.find((m: any) =>
         .eq('nrp', nrpStr)
         .eq('status', 'pending')
 
-            // Gabungkan data Karyawan + PKWT + BPJS (Termasuk Keluarga)
+      // Gabungkan data Karyawan + PKWT + BPJS
       const finalData = {
         ...employeeData,
-        // BPJS Ketenagakerjaan & Kesehatan
+        // BPJS KARYAWAN (Sudah Muncul)
         bpjs_tk: bpjsTable?.bpjs_ketenagakerjaan || bpjsTable?.no_bpjs_tk || employeeData.bpjs_tk || '-',
         bpjs_kes: bpjsTable?.bpjs_kesehatan || bpjsTable?.no_bpjs_kes || employeeData.bpjs_kes || '-',
         
-        // DATA KELUARGA DARI TABEL BPJS (Pindahkan ke sini)
-        bpjs_istri: bpjsTable?.bpjs_istri || bpjsTable?.istri || employeeData.bpjs_istri || '-',
-        bpjs_anak1: bpjsTable?.bpjs_anak1 || bpjsTable?.anak1 || employeeData.bpjs_anak1 || '-',
-        bpjs_anak2: bpjsTable?.bpjs_anak2 || bpjsTable?.anak2 || employeeData.bpjs_anak2 || '-',
-        bpjs_anak3: bpjsTable?.bpjs_anak3 || bpjsTable?.anak3 || employeeData.bpjs_anak3 || '-',
+        // BPJS ISTRI (Mencoba berbagai kemungkinan nama kolom)
+        bpjs_istri: bpjsTable?.bpjs_istri || 
+                    bpjsTable?.no_bpjs_istri || 
+                    bpjsTable?.bpjs_pasangan || 
+                    bpjsTable?.istri || 
+                    '-',
         
-        // Data Tambahan Lain dari tabel BPJS jika ada
-        nama_istri: employeeData.nama_istri || bpjsTable?.nama_istri || '-',
-        nama_anak: employeeData.nama_anak || bpjsTable?.nama_anak || '-',
+        // BPJS ANAK 1
+        bpjs_anak1: bpjsTable?.bpjs_anak1 || 
+                    bpjsTable?.no_bpjs_anak1 || 
+                    bpjsTable?.bpjs_anak_1 || 
+                    bpjsTable?.anak1 || 
+                    '-',
+
+        // BPJS ANAK 2
+        bpjs_anak2: bpjsTable?.bpjs_anak2 || 
+                    bpjsTable?.no_bpjs_anak2 || 
+                    bpjsTable?.bpjs_anak_2 || 
+                    bpjsTable?.anak2 || 
+                    '-',
+
+        // BPJS ANAK 3
+        bpjs_anak3: bpjsTable?.bpjs_anak3 || 
+                    bpjsTable?.no_bpjs_anak3 || 
+                    bpjsTable?.bpjs_anak_3 || 
+                    bpjsTable?.anak3 || 
+                    '-',
         
         pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-'
       }
