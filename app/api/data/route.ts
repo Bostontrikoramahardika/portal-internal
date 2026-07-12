@@ -538,11 +538,23 @@ const menuInfo = menusFound.find((m: any) =>
         .eq('nrp', nrpStr)
         .eq('status', 'pending')
 
+            // Gabungkan data Karyawan + PKWT + BPJS (Termasuk Keluarga)
       const finalData = {
         ...employeeData,
-        // Logika BPJS: Ambil dari tabel bpjs yang dicari berdasarkan nama tadi
-        bpjs_tk: bpjsTable?.bpjs_ketenagakerjaan || bpjsTable?.no_bpjs_tk || bpjsTable?.nomor_bpjs_tk || employeeData.bpjs_tk || '-',
-        bpjs_kes: bpjsTable?.bpjs_kesehatan || bpjsTable?.no_bpjs_kes || bpjsTable?.nomor_bpjs_kes || employeeData.bpjs_kes || '-',
+        // BPJS Ketenagakerjaan & Kesehatan
+        bpjs_tk: bpjsTable?.bpjs_ketenagakerjaan || bpjsTable?.no_bpjs_tk || employeeData.bpjs_tk || '-',
+        bpjs_kes: bpjsTable?.bpjs_kesehatan || bpjsTable?.no_bpjs_kes || employeeData.bpjs_kes || '-',
+        
+        // DATA KELUARGA DARI TABEL BPJS (Pindahkan ke sini)
+        bpjs_istri: bpjsTable?.bpjs_istri || bpjsTable?.istri || employeeData.bpjs_istri || '-',
+        bpjs_anak1: bpjsTable?.bpjs_anak1 || bpjsTable?.anak1 || employeeData.bpjs_anak1 || '-',
+        bpjs_anak2: bpjsTable?.bpjs_anak2 || bpjsTable?.anak2 || employeeData.bpjs_anak2 || '-',
+        bpjs_anak3: bpjsTable?.bpjs_anak3 || bpjsTable?.anak3 || employeeData.bpjs_anak3 || '-',
+        
+        // Data Tambahan Lain dari tabel BPJS jika ada
+        nama_istri: employeeData.nama_istri || bpjsTable?.nama_istri || '-',
+        nama_anak: employeeData.nama_anak || bpjsTable?.nama_anak || '-',
+        
         pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-'
       }
 

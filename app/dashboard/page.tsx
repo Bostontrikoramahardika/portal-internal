@@ -1978,7 +1978,7 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
         </div>
       </section>
 
-      {/* OTHER 2: BPJS */}
+          {/* OTHER 2: BPJS */}
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>2. BPJS</SectionTitle>
         <div className="space-y-6">
