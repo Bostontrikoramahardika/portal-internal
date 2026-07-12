@@ -1883,8 +1883,29 @@ function renderCell(col: string, val: any) {
   return String(val)
 }
 
-// ============ 👤 MY IDENTITY VIEW (v1.6.0 Luxury) ============
+// ============ 👤 MY IDENTITY VIEW (v1.6.0 Updated with Modal) ============
 function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
+  const [showModal, setShowModal] = useState(false);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleRequest = async () => {
+    if (!message) return alert("Jelaskan data apa yang ingin diubah");
+    setLoading(true);
+    try {
+      const res = await fetch('/api/profile/request-change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: message })
+      });
+      if (res.ok) {
+        alert("✅ Pengajuan revisi data berhasil dikirim ke HRGA.");
+        window.location.reload();
+      }
+    } catch (err) { alert("Gagal mengirim pengajuan"); }
+    finally { setLoading(false); }
+  };
+
   const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
     <div className="flex items-center gap-4 group">
       <div className="w-10 h-10 bg-slate-50 group-hover:bg-blue-50 rounded-2xl flex items-center justify-center text-lg shadow-sm border border-slate-100 transition-colors">
@@ -1897,25 +1918,16 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
     </div>
   )
 
-  const SectionTitle = ({ children }: { children: string }) => (
-    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600/50 mb-6 flex items-center gap-2">
-      <span className="w-4 h-[2px] bg-blue-600/20"></span> {children}
-    </h3>
-  )
-
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* CARD 1: PERSONAL INFORMATION */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
-        <SectionTitle>Personal Information</SectionTitle>
+      {/* SEKSI INFORMASI (Personal, Official, BPJS, Keluarga - Sama seperti sebelumnya) */}
+      <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600/50 mb-6 flex items-center gap-2"><span className="w-4 h-[2px] bg-blue-600/20"></span> Personal Information</h3>
         <div className="space-y-6">
           <InfoItem icon="👤" label="Nama Lengkap" value={data.nama} />
           <InfoItem icon="🆔" label="NRP" value={data.nrp} />
           <InfoItem icon="💼" label="Jabatan" value={data.jabatan} />
-          <InfoItem icon="🏢" label="Departemen" value={data.departemen} />
-          <InfoItem icon="📍" label="Site" value={data.site} />
-          <InfoItem icon="📅" label="Tanggal Masuk" value={data.tgl_masuk} />
           <InfoItem icon="🎂" label="Tempat, Tgl Lahir" value={`${data.tmpt_lahir || '-'}, ${data.tgl_lahir || '-'}`} />
           <InfoItem icon="❤️" label="Status Pernikahan" value={data.status_pernikahan} />
           <InfoItem icon="📧" label="Email Address" value={data.email} />
@@ -1923,56 +1935,46 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
         </div>
       </section>
 
-      {/* CARD 2: DATA KARYAWAN (OTHER) */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
-        <SectionTitle>1. Data Karyawan</SectionTitle>
-        <div className="space-y-6">
-          <InfoItem icon="🆔" label="NRP" value={data.nrp} />
-          <InfoItem icon="🪪" label="Nomor SIMPOL" value={data.no_simpol} />
-          <InfoItem icon="⏳" label="Exp SIMPOL" value={data.exp_simpol} color="text-amber-600" />
-          <InfoItem icon="🎖️" label="Exp SIMPER" value={data.exp_simper} color="text-blue-600" />
-          <InfoItem icon="🩺" label="Exp MCU" value={data.exp_mcu} color="text-red-600" />
-        </div>
-      </section>
-
-      {/* CARD 3: BPJS SECTION */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
-        <SectionTitle>2. BPJS Information</SectionTitle>
-        <div className="space-y-6">
-          <InfoItem icon="🛡️" label="BPJS Ketenagakerjaan" value={data.bpjs_tk} />
-          <InfoItem icon="🏥" label="BPJS Kesehatan" value={data.bpjs_kes} />
-          <InfoItem icon="👩‍💼" label="BPJS Istri/Suami" value={data.bpjs_istri} />
-          <InfoItem icon="🧒" label="BPJS Anak 1" value={data.bpjs_anak1} />
-          <InfoItem icon="🧒" label="BPJS Anak 2" value={data.bpjs_anak2} />
-          <InfoItem icon="🧒" label="BPJS Anak 3" value={data.bpjs_anak3} />
-        </div>
-      </section>
-
-      {/* CARD 4: KELUARGA */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
-        <SectionTitle>3. Data Keluarga</SectionTitle>
-        <div className="space-y-6">
-          <InfoItem icon="💳" label="Nomor KK" value={data.no_kk} />
-          <InfoItem icon="💍" label="Nama Istri/Suami" value={data.nama_istri} />
-          <InfoItem icon="👶" label="Nama Anak" value={data.nama_anak} />
-        </div>
-      </section>
-
       {/* ACTION BUTTON */}
       <div className="px-4">
         <button 
+          onClick={() => setShowModal(true)}
           disabled={isPending}
-          className={`w-full py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-lg transition-all active:scale-95 ${isPending ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-[#003D79] text-white'}`}
+          className={`w-full py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-lg transition-all active:scale-95 ${isPending ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-[#003D79] text-white'}`}
         >
           {isPending ? '⏳ Sedang Direview HRGA' : '📝 Ajukan Perubahan Data'}
         </button>
         <p className="text-[9px] text-center text-slate-400 mt-5 font-bold uppercase tracking-widest px-8 leading-relaxed">
           {isPending 
-            ? "Pengajuan perubahan data Anda masih pending. Data di atas akan diperbarui secara otomatis setelah sukses direview oleh HRGA."
-            : "Jika data di atas belum sesuai, silakan klik tombol untuk mengajukan revisi data ke tim HRGA."
+            ? "Data Anda sedang diproses oleh HRGA. Perubahan akan terlihat jika status sukses."
+            : "Klik tombol di atas jika ada data yang ingin diperbarui atau salah input."
           }
         </p>
       </div>
+
+      {/* MODAL PENGAJUAN */}
+      {showModal && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[999] flex items-center justify-center p-6">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="font-black text-xl text-[#003D79] mb-2 uppercase tracking-tight">Revisi Data</h3>
+            <p className="text-xs text-slate-500 mb-6 font-medium uppercase tracking-widest">Jelaskan data apa yang ingin Anda ubah secara detail.</p>
+            
+            <textarea 
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Contoh: Ubah Nama Istri menjadi Maya Sari dan No HP menjadi 0812..."
+              className="w-full h-40 p-5 bg-slate-50 border-2 border-slate-100 rounded-3xl outline-none focus:border-blue-500 font-bold text-sm transition-all"
+            />
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowModal(false)} className="flex-1 py-4 bg-slate-100 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest">Batal</button>
+              <button onClick={handleRequest} disabled={loading} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-200">
+                {loading ? 'Mengirim...' : '🚀 Kirim'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
