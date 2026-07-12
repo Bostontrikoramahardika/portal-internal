@@ -497,78 +497,39 @@ const menuInfo = menusFound.find((m: any) =>
 
     if (specialModes[access_mode]) return NextResponse.json({ type: specialModes[access_mode], title: menu_label, table: target_table })
 
-       // ==========================================
-    // 🎯 CASE: DATA SAYA (My Identity v1.6.0 Name-Based BPJS)
+    // ==========================================
+    // 🎯 CASE: DATA SAYA (My Identity v1.6.0 Structured)
     // ==========================================
     if (menuKey === 'data_saya') {
       const nrpStr = String(session.nrp).trim();
       const nrpWithZero = nrpStr.startsWith('0') ? nrpStr : '0' + nrpStr;
 
-      // 1. Ambil data dasar karyawan (Tetap pakai NRP agar akurat)
-      const { data: employeeData } = await supabase
-        .from('employees')
-        .select('*')
-        .in('nrp', [nrpStr, nrpWithZero])
-        .single()
-
+      const { data: employeeData } = await supabase.from('employees').select('*').in('nrp', [nrpStr, nrpWithZero]).single()
       if (!employeeData) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
 
-      // 2. Ambil data PKWT (Berdasarkan NRP)
-      const { data: pkwtData } = await supabase
-        .from('pkwt')
-        .select('mulai_kontrak, akhir_kontrak')
-        .in('nrp', [nrpStr, nrpWithZero])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
+      const { data: pkwtData } = await supabase.from('pkwt').select('*').in('nrp', [nrpStr, nrpWithZero]).order('created_at', { ascending: false }).limit(1).single()
+      const { data: bpjsTable } = await supabase.from('bpjs').select('*').ilike('nama_karyawan', session.nama).limit(1).single()
+      const { data: lastRequest } = await supabase.from('data_change_requests').select('id').eq('nrp', nrpStr).eq('status', 'pending')
 
-      // 3. AMBIL DATA BPJS BERDASARKAN NAMA (Sesuai Request)
-      // Kita pakai .ilike agar tidak masalah dengan huruf besar/kecil
-      const { data: bpjsTable } = await supabase
-        .from('bpjs')
-        .select('*')
-        .ilike('nama_karyawan', session.nama) // Mencari berdasarkan nama dari session
-        .limit(1)
-        .single()
-
-      // 4. Cek pengajuan pending
-      const { data: lastRequest } = await supabase
-        .from('data_change_requests')
-        .select('id')
-        .eq('nrp', nrpStr)
-        .eq('status', 'pending')
-
-      // Gabungkan data Karyawan + PKWT + BPJS (Mapping Sesuai Database)
       const finalData = {
         ...employeeData,
-        // BPJS KARYAWAN
-        bpjs_tk: bpjsTable?.bpjs_ketenagakerjaan || employeeData.bpjs_tk || '-',
-        bpjs_kes: bpjsTable?.bpjs_kesehatan || employeeData.bpjs_kes || '-',
-        
-        // DATA PASANGAN
-        nama_istri: bpjsTable?.istri_nama || '-',
-        bpjs_istri: bpjsTable?.istri_bpjs || '-',
-        
-        // DATA ANAK 1
-        nama_anak1: bpjsTable?.anak1_nama || '-',
-        bpjs_anak1: bpjsTable?.anak1_bpjs || '-',
-
-        // DATA ANAK 2
-        nama_anak2: bpjsTable?.anak2_nama || '-',
-        bpjs_anak2: bpjsTable?.anak2_bpjs || '-',
-
-        // DATA ANAK 3
-        nama_anak3: bpjsTable?.anak3_nama || '-',
-        bpjs_anak3: bpjsTable?.anak3_bpjs || '-',
-        
-        pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-'
+        pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-',
+        // Data BPJS & Nama (Untuk seksi BPJS)
+        bpjs_tk_no: bpjsTable?.bpjs_ketenagakerjaan || '-',
+        bpjs_tk_nama: session.nama, 
+        bpjs_kes_no: bpjsTable?.bpjs_kesehatan || '-',
+        bpjs_kes_nama: session.nama,
+        bpjs_istri_no: bpjsTable?.istri_bpjs || '-',
+        bpjs_istri_nama: bpjsTable?.istri_nama || '-',
+        bpjs_anak1_no: bpjsTable?.anak1_bpjs || '-',
+        bpjs_anak1_nama: bpjsTable?.anak1_nama || '-',
+        bpjs_anak2_no: bpjsTable?.anak2_bpjs || '-',
+        bpjs_anak2_nama: bpjsTable?.anak2_nama || '-',
+        bpjs_anak3_no: bpjsTable?.anak3_bpjs || '-',
+        bpjs_anak3_nama: bpjsTable?.anak3_nama || '-',
       }
 
-      return NextResponse.json({ 
-        type: 'identity_view', 
-        data: finalData,
-        pending_request: (lastRequest?.length || 0) > 0 
-      })
+      return NextResponse.json({ type: 'identity_view', data: finalData, pending_request: (lastRequest?.length || 0) > 0 })
     }
 
     // ==========================================

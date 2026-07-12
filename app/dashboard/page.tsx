@@ -1889,35 +1889,25 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleRequest = async () => {
-    if (!message) return alert("Jelaskan data apa yang ingin diubah");
-    setLoading(true);
-    try {
-      const res = await fetch('/api/profile/request-change', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ note: message })
-      });
-      if (res.ok) {
-        alert("✅ Pengajuan revisi data berhasil dikirim ke HRGA.");
-        window.location.reload();
-      }
-    } catch (err) { alert("Gagal mengirim pengajuan"); }
-    finally { setLoading(false); }
-  };
-
-    const InfoItem = ({ icon, label, value, subValue, color = "text-slate-800" }: any) => (
+  // Komponen Kecil untuk Baris Data Biasa
+  const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
     <div className="flex items-center gap-4 group">
-      <div className="w-10 h-10 bg-slate-50 group-hover:bg-blue-50 rounded-2xl flex items-center justify-center text-lg shadow-sm border border-slate-100 transition-colors">
-        {icon}
-      </div>
+      <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100">{icon}</div>
       <div className="flex-1 border-b border-slate-50 pb-2">
         <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{label}</div>
         <div className={`text-sm font-black tracking-tight ${color}`}>{value || '-'}</div>
-        {/* Tambahkan baris di bawah ini untuk Nomor BPJS */}
-        {subValue && subValue !== 'BPJS: -' && (
-          <div className="text-[10px] font-bold text-blue-500 mt-0.5">{subValue}</div>
-        )}
+      </div>
+    </div>
+  )
+
+  // Komponen Khusus BPJS (Label -> Nomor -> Nama)
+  const BpjsItem = ({ icon, label, no, nama }: any) => (
+    <div className="flex items-start gap-4">
+      <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100 mt-1">{icon}</div>
+      <div className="flex-1 border-b border-slate-50 pb-3">
+        <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">{label}</div>
+        <div className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1">{no || '-'}</div>
+        <div className="text-[11px] font-bold text-slate-400 uppercase">{nama || '-'}</div>
       </div>
     </div>
   )
@@ -1929,35 +1919,28 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
   )
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-2xl mx-auto space-y-6 pb-32 animate-in fade-in duration-500">
       
-       {/* 1. PERSONAL INFORMATION */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
+      {/* 1. PERSONAL INFORMATION */}
+      <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>Personal Information</SectionTitle>
         <div className="space-y-6">
           <InfoItem icon="👤" label="Nama" value={data.nama} />
-          <InfoItem icon="🆔" label="NRP" value={data.nrp} />
           <InfoItem icon="💼" label="Jabatan" value={data.jabatan} />
           <InfoItem icon="🏢" label="Departemen" value={data.departemen} />
           <InfoItem icon="📍" label="Site" value={data.site} />
           <InfoItem icon="📅" label="Tanggal Masuk" value={data.tgl_masuk} />
           <InfoItem icon="🎂" label="Tempat Lahir" value={data.tmpt_lahir} />
           <InfoItem icon="🗓️" label="Tanggal Lahir" value={data.tgl_lahir} />
+          <InfoItem icon="🏠" label="Alamat" value={data.alamat} /> {/* TEPAT DI BAWAH TGL LAHIR */}
           <InfoItem icon="💍" label="Status Pernikahan" value={data.status_pernikahan} />
-          
-          {/* PINDAH KE BAWAH SINI SESUAI REQUEST */}
           <InfoItem icon="📄" label="Kontrak PKWT" value={data.pkwt_periode} color="text-blue-600" />
-          <InfoItem 
-            icon="⚡" 
-            label="Status Karyawan" 
-            value={data.status_karyawan} 
-            color={data.status_karyawan === 'Aktif' ? 'text-emerald-600' : 'text-rose-600'} 
-          />
+          <InfoItem icon="⚡" label="Status Karyawan" value={data.status_karyawan} color="text-emerald-600" />
         </div>
       </section>
 
       {/* 2. CONTACT INFORMATION */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100">
+      <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>Contact Information</SectionTitle>
         <div className="space-y-6">
           <InfoItem icon="📧" label="Email" value={data.email} />
@@ -1965,16 +1948,10 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
         </div>
       </section>
 
-      {/* --- OTHER SECTION --- */}
-      <div className="pt-4 px-2">
-         <p className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-400">Other Information</p>
-      </div>
-
-      {/* OTHER 1: DATA KARYAWAN */}
+      {/* 3. VALIDITY & PERMITS (Data Karyawan Diubah) */}
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-        <SectionTitle>1. Data Karyawan</SectionTitle>
+        <SectionTitle>Validity & Permits</SectionTitle>
         <div className="space-y-6">
-          <InfoItem icon="🆔" label="NRP" value={data.nrp} />
           <InfoItem icon="🪪" label="Nomor SIMPOL" value={data.no_simpol} />
           <InfoItem icon="⏳" label="Exp SIMPOL" value={data.exp_simpol} color="text-amber-600" />
           <InfoItem icon="🎖️" label="Exp SIMPER" value={data.exp_simper} color="text-blue-600" />
@@ -1982,74 +1959,36 @@ function IdentityView({ data, isPending }: { data: any, isPending: boolean }) {
         </div>
       </section>
 
-          {/* OTHER 2: BPJS */}
+      {/* 4. BPJS SECTION (Urutan Baru) */}
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-        <SectionTitle>2. BPJS</SectionTitle>
-        <div className="space-y-6">
-          <InfoItem icon="🛡️" label="BPJS Ketenagakerjaan" value={data.bpjs_tk} />
-          <InfoItem icon="🏥" label="BPJS Kesehatan" value={data.bpjs_kes} />
-          <InfoItem icon="👩‍💼" label="BPJS Istri/Suami" value={data.bpjs_istri} />
-          <InfoItem icon="🧒" label="BPJS Anak 1" value={data.bpjs_anak1} />
-          <InfoItem icon="🧒" label="BPJS Anak 2" value={data.bpjs_anak2} />
-          <InfoItem icon="🧒" label="BPJS Anak 3" value={data.bpjs_anak3} />
+        <SectionTitle>BPJS Information</SectionTitle>
+        <div className="space-y-8">
+          <BpjsItem icon="🛡️" label="BPJS Ketenagakerjaan" no={data.bpjs_tk_no} nama={data.bpjs_tk_nama} />
+          <BpjsItem icon="🏥" label="BPJS Kesehatan" no={data.bpjs_kes_no} nama={data.bpjs_kes_nama} />
+          <BpjsItem icon="👩‍💼" label="BPJS Istri / Suami" no={data.bpjs_istri_no} nama={data.bpjs_istri_nama} />
+          <BpjsItem icon="🧒" label="BPJS Anak 1" no={data.bpjs_anak1_no} nama={data.bpjs_anak1_nama} />
+          <BpjsItem icon="🧒" label="BPJS Anak 2" no={data.bpjs_anak2_no} nama={data.bpjs_anak2_nama} />
+          <BpjsItem icon="🧒" label="BPJS Anak 3" no={data.bpjs_anak3_no} nama={data.bpjs_anak3_nama} />
         </div>
       </section>
 
-      {/* OTHER 3: KELUARGA & BPJS KELUARGA */}
+      {/* 5. DATA KELUARGA */}
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-        <SectionTitle>3. Data Keluarga & BPJS</SectionTitle>
+        <SectionTitle>Data Keluarga</SectionTitle>
         <div className="space-y-6">
           <InfoItem icon="💳" label="Nomor KK" value={data.no_kk} />
-          
-          {/* Istri dengan BPJS di bawahnya */}
-          <InfoItem 
-            icon="💍" 
-            label="Nama Istri / Suami" 
-            value={data.nama_istri} 
-            subValue={data.bpjs_istri !== '-' ? `BPJS: ${data.bpjs_istri}` : null} 
-          />
-
-          {/* Anak 1 dengan BPJS di bawahnya */}
-          <InfoItem 
-            icon="👶" 
-            label="Anak ke-1" 
-            value={data.nama_anak1} 
-            subValue={data.bpjs_anak1 !== '-' ? `BPJS: ${data.bpjs_anak1}` : null} 
-          />
-
-          {/* Anak 2 dengan BPJS di bawahnya */}
-          <InfoItem 
-            icon="👶" 
-            label="Anak ke-2" 
-            value={data.nama_anak2} 
-            subValue={data.bpjs_anak2 !== '-' ? `BPJS: ${data.bpjs_anak2}` : null} 
-          />
-
-          {/* Anak 3 dengan BPJS di bawahnya */}
-          <InfoItem 
-            icon="👶" 
-            label="Anak ke-3" 
-            value={data.nama_anak3} 
-            subValue={data.bpjs_anak3 !== '-' ? `BPJS: ${data.bpjs_anak3}` : null} 
-          />
+          <InfoItem icon="👤" label="Nama Suami" value={data.jabatan?.includes('ISTRI') ? data.nama_istri : data.nama} />
+          <InfoItem icon="💍" label="Nama Istri" value={data.nama_istri} />
+          <InfoItem icon="👶" label="Nama Anak ke-1" value={data.nama_anak1} />
+          <InfoItem icon="👶" label="Nama Anak ke-2" value={data.nama_anak2} />
         </div>
       </section>
 
       {/* ACTION BUTTON */}
       <div className="px-4">
-        <button 
-          onClick={() => setShowModal(true)}
-          disabled={isPending}
-          className={`w-full py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-lg transition-all active:scale-95 ${isPending ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-[#003D79] text-white'}`}
-        >
+        <button onClick={() => setShowModal(true)} disabled={isPending} className={`w-full py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-lg transition-all ${isPending ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-[#003D79] text-white'}`}>
           {isPending ? '⏳ Sedang Pending Direview' : '📝 Ajukan Perubahan Data'}
         </button>
-        <p className="text-[9px] text-center text-slate-400 mt-5 font-bold uppercase tracking-widest px-8 leading-relaxed">
-          {isPending 
-            ? "Jika pengajuan masih pending, artinya semua data di atas belum berubah. Jika sukses maka data sudah direvisi."
-            : "Klik untuk mengajukan perubahan jika data di atas tidak sesuai."
-          }
-        </p>
       </div>
 
       {/* MODAL PENGAJUAN (Sama seperti sebelumnya) */}
