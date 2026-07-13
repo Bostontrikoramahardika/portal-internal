@@ -247,7 +247,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       const superAdminStatus = data.user?.is_super_admin || false
       setIsSuperAdmin(superAdminStatus)
       setUserPermissions(data.permissions || [])
-      setIsSuperAdmin(data.user?.is_super_admin || false)
 
       const menuRes = await fetch('/api/menus')
       const menuData = await menuRes.json()
@@ -305,11 +304,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     // Tambahkan ini: Jika tab diklik tapi tidak ada isinya
     if (tabMenus.length === 0) {
       alert(`Menu ${tab.label} belum tersedia untuk akses Anda atau sedang dalam pemeliharaan.`)
-    }
-  }
-    if (tabMenus.length === 1) {
-      router.push(`/dashboard?menu=${tabMenus[0].menu_key}`)
-      setActiveTab(tab.key)
     }
   }
 
