@@ -102,7 +102,25 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => { loadData() }, [menuKey])
+  // 🔐 Menu yang punya View sendiri (tidak perlu fetch /api/data)
+  const STANDALONE_MENUS = [
+    'manage_permissions',
+    'kelola_site_master',
+    'setting_site',
+    'config_global',
+    'reset_password_admin',
+    'system_audit'
+  ]
+
+  const isStandalone = STANDALONE_MENUS.includes(menuKey)
+
+  useEffect(() => {
+    if (!isStandalone) {
+      loadData()
+    } else {
+      setLoading(false)
+    }
+  }, [menuKey])
 
   async function loadData() {
     setLoading(true); setError('')
@@ -116,16 +134,17 @@ function DashboardContent() {
   }
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#003D79]"></div></div>
-  if (error) return <div className="bg-red-50 border-2 border-red-100 text-red-700 p-6 rounded-3xl mx-4 mt-10 text-center font-bold">❌ {error}</div>
-  if (!data) return null
 
-  // RENDERER LOGIC (SATU DEFINISI)
-    // 🔐 Renderer khusus Super Admin (deteksi via menuKey, bukan type)
+  // 🔐 Renderer Standalone (tidak butuh data dari API)
   if (menuKey === 'manage_permissions') return <PermissionManagerView />
-  if (menuKey === 'system_audit') return <SystemAuditView />
+  if (menuKey === 'kelola_site_master' || menuKey === 'setting_site') return <SitesManagerView />
   if (menuKey === 'config_global') return <GlobalConfigView />
   if (menuKey === 'reset_password_admin') return <ResetPasswordAdminView />
-  if (menuKey === 'kelola_site_master' || menuKey === 'setting_site') return <SitesManagerView />
+  if (menuKey === 'system_audit') return <SystemAuditView />
+
+  // Non-standalone: cek error & data
+  if (error) return <div className="bg-red-50 border-2 border-red-100 text-red-700 p-6 rounded-3xl mx-4 mt-10 text-center font-bold">❌ {error}</div>
+  if (!data) return null
   if (data.type === 'identity_view') return <IdentityView data={data.data} />
   if (data.type === 'dashboard') return <DashboardView title={data.title} data={data} />
   if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} data={data} />
