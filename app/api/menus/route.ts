@@ -9,12 +9,21 @@ export async function GET(request: NextRequest) {
   const session = await getSession(token)
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
-  const { data: menus, error } = await supabase
+   // Jika Super Admin (Ricky), ambil SEMUA menu aktif tanpa filter role
+  const isSuperAdmin = session.user?.is_super_admin || false
+  
+  let query = supabase
     .from('menus')
     .select('*')
-    .in('role', session.roles)
     .eq('active', true)
     .order('sort_order')
+  
+  // Kalau bukan super admin, baru filter berdasarkan role
+  if (!isSuperAdmin) {
+    query = query.in('role', session.roles)
+  }
+  
+  const { data: menus, error } = await query
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
