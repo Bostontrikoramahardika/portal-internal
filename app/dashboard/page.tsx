@@ -1962,6 +1962,299 @@ function ChangePasswordView({ title }: any) {
   )
 }
 
+// ============ 🔐 PERMISSION MANAGER (RAHASIA RICKY - Sub-Tahap 2 Step B) ============
+function PermissionManagerView() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedEmp, setSelectedEmp] = useState<any>(null)
+  const [activePerms, setActivePerms] = useState<string[]>([])
+  const [loadingModal, setLoadingModal] = useState(false)
+  const [saving, setSaving] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  async function loadData() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/permission-manager')
+      const json = await res.json()
+      if (res.ok) setData(json)
+    } catch (err) {
+      console.error('Load error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function openEmployeeModal(emp: any) {
+    setSelectedEmp(emp)
+    setLoadingModal(true)
+    setActivePerms([])
+    try {
+      const res = await fetch(`/api/permission-manager?nrp=${emp.nrp}`)
+      const json = await res.json()
+      if (res.ok) setActivePerms(json.active_permissions || [])
+    } catch (err) {
+      console.error('Load perm error:', err)
+    } finally {
+      setLoadingModal(false)
+    }
+  }
+
+  async function togglePermission(permKey: string, isActive: boolean) {
+    if (!selectedEmp) return
+    setSaving(permKey)
+    try {
+      const method = isActive ? 'DELETE' : 'POST'
+      const res = await fetch('/api/permission-manager', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nrp: selectedEmp.nrp, perm_key: permKey })
+      })
+      const json = await res.json()
+      if (res.ok) {
+        // Update local state
+        if (isActive) {
+          setActivePerms(activePerms.filter(p => p !== permKey))
+        } else {
+          setActivePerms([...activePerms, permKey])
+        }
+        // Refresh main data untuk update permission_count
+        loadData()
+      } else {
+        alert('❌ ' + json.error)
+      }
+    } catch (err) {
+      alert('❌ Koneksi bermasalah')
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  if (loading) return (
+    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+      Memuat data karyawan & permissions...
+    </div>
+  )
+
+  if (!data) return <div className="p-10 text-center text-slate-400">Gagal memuat data</div>
+
+  const filteredEmps = (data.employees || []).filter((e: any) =>
+    e.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.nrp.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  // Group permissions by category untuk modal
+  const permsByCategory: Record<string, any[]> = {}
+  ;(data.master_permissions || []).forEach((p: any) => {
+    if (!permsByCategory[p.category]) permsByCategory[p.category] = []
+    permsByCategory[p.category].push(p)
+  })
+
+  const stats = {
+    total: data.employees.length,
+    with_perms: data.employees.filter((e: any) => e.permission_count > 0).length,
+    super_admin: data.employees.filter((e: any) => e.is_super_admin).length,
+    total_perms: data.total_permissions
+  }
+
+  return (
+    <div className="animate-in fade-in duration-500 pb-32">
+      {/* HEADER MEWAH */}
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="text-3xl">🔐</div>
+            <div>
+              <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Super Admin Only</p>
+              <h1 className="text-2xl font-black tracking-tight">Kelola Permission</h1>
+            </div>
+          </div>
+          <p className="text-blue-200/70 text-xs font-medium">
+            Atur hak akses granular untuk setiap karyawan (55 permissions dalam 11 kategori)
+          </p>
+        </div>
+      </div>
+
+      {/* STATS BAR */}
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        <div className="bg-white p-4 rounded-2xl border-2 border-slate-50 shadow-sm">
+          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Karyawan</p>
+          <p className="text-xl font-black text-slate-900">{stats.total}</p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border-2 border-blue-50 shadow-sm">
+          <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1">Punya Akses</p>
+          <p className="text-xl font-black text-blue-600">{stats.with_perms}</p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border-2 border-amber-50 shadow-sm">
+          <p className="text-[8px] font-black text-amber-400 uppercase tracking-widest mb-1">Super Admin</p>
+          <p className="text-xl font-black text-amber-600">{stats.super_admin}</p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl border-2 border-emerald-50 shadow-sm">
+          <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest mb-1">Total Perms</p>
+          <p className="text-xl font-black text-emerald-600">{stats.total_perms}</p>
+        </div>
+      </div>
+
+      {/* SEARCH BAR */}
+      <div className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm mb-6">
+        <input
+          type="text"
+          placeholder="🔍 Cari nama atau NRP karyawan..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
+        />
+      </div>
+
+      {/* LIST KARYAWAN */}
+      <div className="space-y-3">
+        {filteredEmps.map((emp: any) => (
+          <button
+            key={emp.nrp}
+            onClick={() => openEmployeeModal(emp)}
+            className={`w-full text-left bg-white p-5 rounded-[2rem] border-2 shadow-sm hover:shadow-lg transition-all active:scale-98 flex items-center gap-4 ${
+              emp.is_super_admin ? 'border-amber-200 bg-amber-50/30' : 'border-slate-50 hover:border-blue-200'
+            }`}
+          >
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-lg ${
+              emp.is_super_admin ? 'bg-amber-500' : 'bg-slate-900'
+            }`}>
+              {emp.nama[0]}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-black text-slate-900 text-sm truncate">{emp.nama}</h3>
+                {emp.is_super_admin && (
+                  <span className="bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+                    Super
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
+                {emp.nrp} • {emp.jabatan || '-'} • {emp.site || '-'}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className={`text-2xl font-black ${
+                emp.permission_count === 0 ? 'text-slate-300' :
+                emp.permission_count < 15 ? 'text-blue-600' :
+                emp.permission_count < 40 ? 'text-amber-600' : 'text-emerald-600'
+              }`}>
+                {emp.permission_count}
+              </p>
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">/ {stats.total_perms}</p>
+            </div>
+          </button>
+        ))}
+
+        {filteredEmps.length === 0 && (
+          <div className="p-20 text-center text-slate-300 font-bold italic bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
+            Karyawan tidak ditemukan
+          </div>
+        )}
+      </div>
+
+      {/* MODAL DETAIL PERMISSION */}
+      {selectedEmp && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setSelectedEmp(null)} />
+          <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-3xl lg:max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl ${
+                selectedEmp.is_super_admin ? 'bg-amber-500' : 'bg-white/10'
+              }`}>
+                {selectedEmp.nama[0]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-black text-lg tracking-tight truncate">{selectedEmp.nama}</h2>
+                <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest truncate">
+                  {selectedEmp.nrp} • {selectedEmp.jabatan}
+                </p>
+                <p className="text-amber-400 text-[10px] font-black uppercase tracking-widest mt-1">
+                  {activePerms.length} / {data.total_permissions} Permission Aktif
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedEmp(null)}
+                className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body - Permissions List */}
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+              {loadingModal ? (
+                <div className="p-20 text-center font-black text-slate-400 animate-pulse uppercase tracking-widest text-xs">
+                  Memuat permissions...
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(permsByCategory).map(([category, perms]) => (
+                    <div key={category}>
+                      <h3 className="text-[10px] font-black text-[#003D79] uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
+                        <span className="w-4 h-[2px] bg-[#003D79]"></span>
+                        {category}
+                        <span className="text-slate-400">
+                          ({perms.filter(p => activePerms.includes(p.perm_key)).length}/{perms.length})
+                        </span>
+                      </h3>
+                      <div className="space-y-2">
+                        {perms.map((perm: any) => {
+                          const isActive = activePerms.includes(perm.perm_key)
+                          const isSaving = saving === perm.perm_key
+                          return (
+                            <button
+                              key={perm.perm_key}
+                              onClick={() => togglePermission(perm.perm_key, isActive)}
+                              disabled={isSaving}
+                              className={`w-full text-left p-4 rounded-2xl border-2 transition-all active:scale-98 ${
+                                isActive 
+                                  ? 'bg-emerald-50 border-emerald-200' 
+                                  : 'bg-white border-slate-100 hover:border-slate-200'
+                              } ${isSaving ? 'opacity-50' : ''}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                  isActive ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-300'
+                                }`}>
+                                  {isSaving ? '⏳' : isActive ? '✓' : ''}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-0.5">
+                                    <p className="font-black text-xs text-slate-900 truncate">{perm.perm_label}</p>
+                                    {perm.is_super_only && (
+                                      <span className="bg-amber-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">
+                                        Super
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[10px] text-slate-500 font-medium leading-tight">{perm.perm_description}</p>
+                                </div>
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+
 // ============ 🛠️ UTILITY COMPONENTS (DEFINISI TUNGGAL) ============
 function Input({ label, onChange, ...props }: any) {
   return (
