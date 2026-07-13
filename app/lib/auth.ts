@@ -32,7 +32,7 @@ export async function loginByNrp(nrp: string) {
 
   const realNrp = employee.nrp
   const isSuperAdmin = Boolean(employee.is_super_admin)
-  const permissions = await getUserPermissions(employee.id, isSuperAdmin)
+  const permissions = await getUserPermissions(realNrp, isSuperAdmin)
 
   // 2. Ambil roles + scope_site
   const { data: roleRows } = await supabase
@@ -113,9 +113,7 @@ export async function getSession(token: string) {
   }
 
   const isSuperAdmin = Boolean(emp?.is_super_admin)
-  const permissions = emp
-    ? await getUserPermissions(emp.id, isSuperAdmin)
-    : []
+  const permissions = await getUserPermissions(data.nrp, isSuperAdmin)
 
   return {
     token: data.token,
@@ -138,34 +136,26 @@ export async function logout(token: string) {
 
 // ✅ TAMBAHKAN BLOK INI — letakkan tepat di atas function getPrimaryRole
 export async function getUserPermissions(
-  employeeId: number,
+  nrp: string,
   isSuperAdmin: boolean
 ): Promise<string[]> {
   // Kalau super admin, langsung ambil semua permission yang ada
   if (isSuperAdmin) {
     const { data } = await supabase
       .from('master_permissions')
-      .select('code')
-      .order('code', { ascending: true })
-    return (data || []).map((row: any) => row.code).filter(Boolean)
+      .select('perm_key')
+      .eq('active', true)
+      .order('sort_order', { ascending: true })
+    return (data || []).map((row: any) => row.perm_key).filter(Boolean)
   }
 
-  // Kalau bukan super admin, ambil hanya yang di-assign ke user ini
-  const { data: linkRows } = await supabase
-    .from('user_permissions')
-    .select('permission_id')
-    .eq('employee_id', employeeId)
-
-  if (!linkRows || linkRows.length === 0) return []
-
-  const ids = linkRows.map((r: any) => r.permission_id).filter(Boolean)
-
+  // Kalau bukan super admin, ambil dari user_permissions by NRP
   const { data: permRows } = await supabase
-    .from('master_permissions')
-    .select('code')
-    .in('id', ids)
+    .from('user_permissions')
+    .select('perm_key')
+    .eq('nrp', nrp)
 
-  return (permRows || []).map((row: any) => row.code).filter(Boolean).sort()
+  return (permRows || []).map((row: any) => row.perm_key).filter(Boolean).sort()
 }
 
 // ✅ SELESAI — baris di bawah ini adalah function getPrimaryRole yang sudah ada
