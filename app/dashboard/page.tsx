@@ -120,8 +120,9 @@ function DashboardContent() {
   if (!data) return null
 
   // RENDERER LOGIC (SATU DEFINISI)
-  // Renderer untuk Tab Rahasia Ricky
+    // 🔐 Renderer khusus Super Admin (deteksi via menuKey, bukan type)
   if (menuKey === 'manage_permissions') return <PermissionManagerView />
+  if (menuKey === 'kelola_site_master' || menuKey === 'setting_site') return <SitesManagerView />
   if (data.type === 'identity_view') return <IdentityView data={data.data} />
   if (data.type === 'dashboard') return <DashboardView title={data.title} data={data} />
   if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} data={data} />
@@ -1959,6 +1960,405 @@ function ChangePasswordView({ title }: any) {
         </form>
       </div>
     </div>
+  )
+}
+
+// ============ 🏢 SITES MANAGER (Master Site v2 - Card Mewah) ============
+function SitesManagerView() {
+  const [sites, setSites] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingSite, setEditingSite] = useState<any>(null)
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState<{ type: string, text: string } | null>(null)
+  const [formData, setFormData] = useState<any>({})
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  async function loadData() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/sites-manager')
+      const json = await res.json()
+      if (res.ok) setSites(json.sites || [])
+    } catch (err) {
+      console.error('Load error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function openEditModal(site: any) {
+    setEditingSite(site)
+    setFormData({
+      nama_site: site.nama_site || '',
+      kode_site: site.kode_site || '',
+      alamat: site.alamat || '',
+      siang_jam_masuk: (site.siang_jam_masuk || '').slice(0, 5),
+      siang_jam_pulang: (site.siang_jam_pulang || '').slice(0, 5),
+      siang_batas_telat: site.siang_batas_telat || 15,
+      malam_jam_masuk: (site.malam_jam_masuk || '').slice(0, 5),
+      malam_jam_pulang: (site.malam_jam_pulang || '').slice(0, 5),
+      malam_batas_telat: site.malam_batas_telat || 15,
+      latitude: site.latitude || '',
+      longitude: site.longitude || '',
+      radius_meter: site.radius_meter || 500,
+      minus_terlambat: site.minus_terlambat || 1,
+      minus_mangkir: site.minus_mangkir || 5,
+      minus_sp1: site.minus_sp1 || 15,
+      minus_sp2: site.minus_sp2 || 30,
+      minus_sp3: site.minus_sp3 || 50,
+      minus_cnc: site.minus_cnc || 5,
+      active: site.active,
+      is_active: site.is_active,
+      is_pusat: site.is_pusat
+    })
+    setMsg(null)
+  }
+
+  async function handleSave() {
+    if (!editingSite) return
+    setSaving(true)
+    setMsg(null)
+    try {
+      const res = await fetch('/api/sites-manager', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingSite.id, updates: formData })
+      })
+      const json = await res.json()
+      if (res.ok) {
+        setMsg({ type: 'ok', text: '✅ Berhasil disimpan!' })
+        loadData()
+        setTimeout(() => {
+          setEditingSite(null)
+          setMsg(null)
+        }, 1200)
+      } else {
+        setMsg({ type: 'err', text: '❌ ' + json.error })
+      }
+    } catch (err) {
+      setMsg({ type: 'err', text: '❌ Koneksi bermasalah' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) return (
+    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+      Memuat data site...
+    </div>
+  )
+
+  return (
+    <div className="animate-in fade-in duration-500 pb-32">
+      {/* HEADER MEWAH */}
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="text-3xl">🏢</div>
+            <div>
+              <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Master Data</p>
+              <h1 className="text-2xl font-black tracking-tight">Kelola Site</h1>
+            </div>
+          </div>
+          <p className="text-blue-200/70 text-xs font-medium">
+            Konfigurasi jam kerja, GPS, radius absensi, dan pengurangan KPI per site
+          </p>
+        </div>
+      </div>
+
+      {/* LIST SITE CARDS */}
+      <div className="space-y-4">
+        {sites.map((site: any) => (
+          <div key={site.id} className={`bg-white rounded-[2.5rem] border-2 shadow-lg overflow-hidden ${
+            site.is_active ? 'border-slate-100' : 'border-rose-100 opacity-70'
+          }`}>
+            {/* Card Header */}
+            <div className={`p-6 flex items-center justify-between ${
+              site.is_pusat ? 'bg-gradient-to-r from-amber-50 to-white' : 'bg-slate-50/50'
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${
+                  site.is_pusat ? 'bg-amber-500 text-white' : 'bg-[#003D79] text-white'
+                }`}>
+                  {site.is_pusat ? '⭐' : '🏢'}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-black text-slate-900 text-base">{site.nama_site}</h3>
+                    {site.is_pusat && (
+                      <span className="bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+                        Pusat
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Kode: {site.kode_site || '-'}
+                  </p>
+                </div>
+              </div>
+              <span className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                site.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+              }`}>
+                {site.is_active ? '● Aktif' : '○ Nonaktif'}
+              </span>
+            </div>
+
+            {/* Card Body - Info Grid */}
+            <div className="p-6 space-y-4">
+              {/* Row 1: Total Karyawan + PJO */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                  <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1">👥 Karyawan</p>
+                  <p className="text-2xl font-black text-blue-700">{site.total_karyawan}</p>
+                  <p className="text-[9px] font-bold text-blue-400 uppercase mt-0.5">orang aktif</p>
+                </div>
+                <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
+                  <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">🎖️ PJO Site</p>
+                  {site.pjo_list?.length > 0 ? (
+                    site.pjo_list.slice(0, 2).map((pjo: any, i: number) => (
+                      <p key={i} className="text-xs font-black text-amber-700 leading-tight truncate">
+                        {pjo.nama}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="text-xs font-black text-slate-400 italic">Belum ada PJO</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 2: Shift */}
+              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-black text-slate-500 uppercase tracking-widest">☀️ Shift Siang</span>
+                  <span className="font-black text-slate-900 font-mono">
+                    {(site.siang_jam_masuk || '').slice(0, 5)} — {(site.siang_jam_pulang || '').slice(0, 5)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-black text-slate-500 uppercase tracking-widest">🌙 Shift Malam</span>
+                  <span className="font-black text-slate-900 font-mono">
+                    {(site.malam_jam_masuk || '').slice(0, 5)} — {(site.malam_jam_pulang || '').slice(0, 5)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-100">
+                  <span className="font-black text-slate-500 uppercase tracking-widest">⚠️ Batas Telat</span>
+                  <span className="font-black text-rose-600">
+                    S: {site.siang_batas_telat}m · M: {site.malam_batas_telat}m
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 3: GPS + Radius */}
+              <div className="bg-emerald-50/30 p-4 rounded-2xl border border-emerald-100 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-black text-emerald-600 uppercase tracking-widest">📍 Radius GPS</span>
+                  <span className="font-black text-emerald-700 text-lg">{site.radius_meter}m</span>
+                </div>
+                <div className="flex justify-between items-center text-[10px]">
+                  <span className="font-black text-slate-400 uppercase tracking-widest">🗺️ Koordinat</span>
+                  <span className="font-black text-slate-600 font-mono truncate">
+                    {site.latitude ? `${Number(site.latitude).toFixed(4)}, ${Number(site.longitude).toFixed(4)}` : 'Belum diset'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Tombol EDIT */}
+              <button 
+                onClick={() => openEditModal(site)}
+                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-[#003D79] active:scale-95 transition-all"
+              >
+                ✏️ EDIT KONFIGURASI SITE
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {sites.length === 0 && (
+          <div className="p-20 text-center text-slate-300 font-bold italic bg-white rounded-[2rem] border-2 border-dashed">
+            Belum ada site terdaftar
+          </div>
+        )}
+      </div>
+
+      {/* MODAL EDIT SITE */}
+      {editingSite && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => !saving && setEditingSite(null)} />
+          <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-2xl lg:max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${
+                editingSite.is_pusat ? 'bg-amber-500' : 'bg-white/10'
+              }`}>
+                {editingSite.is_pusat ? '⭐' : '🏢'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-black text-lg tracking-tight truncate">{editingSite.nama_site}</h2>
+                <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest">Edit Konfigurasi Site</p>
+              </div>
+              <button 
+                onClick={() => !saving && setEditingSite(null)}
+                className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {msg && (
+              <div className={`px-6 py-3 border-b-2 ${msg.type === 'ok' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'}`}>
+                <p className="text-[11px] font-black uppercase tracking-widest">{msg.text}</p>
+              </div>
+            )}
+
+            {/* Modal Body - Form */}
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-6">
+              
+              {/* SECTION 1: Identitas Site */}
+              <div>
+                <h3 className="text-[10px] font-black text-[#003D79] uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
+                  <span className="w-4 h-[2px] bg-[#003D79]"></span>
+                  Identitas Site
+                </h3>
+                <div className="space-y-3">
+                  <FieldInput label="Nama Site" value={formData.nama_site} onChange={(v: string) => setFormData({...formData, nama_site: v})} />
+                  <FieldInput label="Kode Site" value={formData.kode_site} onChange={(v: string) => setFormData({...formData, kode_site: v})} />
+                  <FieldInput label="Alamat" value={formData.alamat} onChange={(v: string) => setFormData({...formData, alamat: v})} />
+                </div>
+              </div>
+
+              {/* SECTION 2: Jam Kerja */}
+              <div>
+                <h3 className="text-[10px] font-black text-[#003D79] uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
+                  <span className="w-4 h-[2px] bg-[#003D79]"></span>
+                  Jam Kerja Shift
+                </h3>
+                <div className="space-y-3">
+                  <div className="bg-white p-4 rounded-2xl border-2 border-amber-100">
+                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-3">☀️ Shift Siang</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <FieldInput label="Masuk" type="time" value={formData.siang_jam_masuk} onChange={(v: string) => setFormData({...formData, siang_jam_masuk: v})} />
+                      <FieldInput label="Pulang" type="time" value={formData.siang_jam_pulang} onChange={(v: string) => setFormData({...formData, siang_jam_pulang: v})} />
+                      <FieldInput label="Telat (menit)" type="number" value={formData.siang_batas_telat} onChange={(v: string) => setFormData({...formData, siang_batas_telat: parseInt(v) || 0})} />
+                    </div>
+                  </div>
+                  <div className="bg-white p-4 rounded-2xl border-2 border-indigo-100">
+                    <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3">🌙 Shift Malam</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <FieldInput label="Masuk" type="time" value={formData.malam_jam_masuk} onChange={(v: string) => setFormData({...formData, malam_jam_masuk: v})} />
+                      <FieldInput label="Pulang" type="time" value={formData.malam_jam_pulang} onChange={(v: string) => setFormData({...formData, malam_jam_pulang: v})} />
+                      <FieldInput label="Telat (menit)" type="number" value={formData.malam_batas_telat} onChange={(v: string) => setFormData({...formData, malam_batas_telat: parseInt(v) || 0})} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: GPS & Radius */}
+              <div>
+                <h3 className="text-[10px] font-black text-[#003D79] uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
+                  <span className="w-4 h-[2px] bg-[#003D79]"></span>
+                  Lokasi & Radius Absensi
+                </h3>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <FieldInput label="Latitude" value={formData.latitude} onChange={(v: string) => setFormData({...formData, latitude: v})} placeholder="-3.286843" />
+                    <FieldInput label="Longitude" value={formData.longitude} onChange={(v: string) => setFormData({...formData, longitude: v})} placeholder="122.257307" />
+                  </div>
+                  <FieldInput label="Radius Absensi (meter)" type="number" value={formData.radius_meter} onChange={(v: string) => setFormData({...formData, radius_meter: parseInt(v) || 0})} />
+                </div>
+              </div>
+
+              {/* SECTION 4: KPI Minus Poin */}
+              <div>
+                <h3 className="text-[10px] font-black text-[#003D79] uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
+                  <span className="w-4 h-[2px] bg-[#003D79]"></span>
+                  Pengurangan Poin KPI
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <FieldInput label="Terlambat" type="number" value={formData.minus_terlambat} onChange={(v: string) => setFormData({...formData, minus_terlambat: parseInt(v) || 0})} />
+                  <FieldInput label="Mangkir" type="number" value={formData.minus_mangkir} onChange={(v: string) => setFormData({...formData, minus_mangkir: parseInt(v) || 0})} />
+                  <FieldInput label="SP 1" type="number" value={formData.minus_sp1} onChange={(v: string) => setFormData({...formData, minus_sp1: parseInt(v) || 0})} />
+                  <FieldInput label="SP 2" type="number" value={formData.minus_sp2} onChange={(v: string) => setFormData({...formData, minus_sp2: parseInt(v) || 0})} />
+                  <FieldInput label="SP 3" type="number" value={formData.minus_sp3} onChange={(v: string) => setFormData({...formData, minus_sp3: parseInt(v) || 0})} />
+                  <FieldInput label="CNC" type="number" value={formData.minus_cnc} onChange={(v: string) => setFormData({...formData, minus_cnc: parseInt(v) || 0})} />
+                </div>
+              </div>
+
+              {/* SECTION 5: Status */}
+              <div>
+                <h3 className="text-[10px] font-black text-[#003D79] uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
+                  <span className="w-4 h-[2px] bg-[#003D79]"></span>
+                  Status Site
+                </h3>
+                <div className="space-y-2">
+                  <ToggleField label="Site Aktif" checked={formData.is_active} onChange={(v: boolean) => setFormData({...formData, is_active: v, active: v})} />
+                  <ToggleField label="Site Pusat (HO)" checked={formData.is_pusat} onChange={(v: boolean) => setFormData({...formData, is_pusat: v})} />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-white border-t-2 border-slate-100 flex gap-3">
+              <button 
+                onClick={() => !saving && setEditingSite(null)}
+                disabled={saving}
+                className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
+              >
+                {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN PERUBAHAN'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// Helper Input untuk Sites Manager
+function FieldInput({ label, value, onChange, type = 'text', placeholder = '' }: any) {
+  return (
+    <div>
+      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 tracking-widest">{label}</label>
+      <input 
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full p-3 border-2 border-slate-100 rounded-xl bg-white text-xs font-bold focus:border-[#003D79] outline-none transition-all"
+      />
+    </div>
+  )
+}
+
+// Helper Toggle untuk Sites Manager
+function ToggleField({ label, checked, onChange }: any) {
+  return (
+    <button 
+      onClick={() => onChange(!checked)}
+      className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${
+        checked ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-100'
+      }`}
+    >
+      <span className={`text-xs font-black uppercase tracking-widest ${checked ? 'text-emerald-700' : 'text-slate-500'}`}>
+        {label}
+      </span>
+      <div className={`w-12 h-6 rounded-full flex items-center transition-all ${
+        checked ? 'bg-emerald-500 justify-end' : 'bg-slate-200 justify-start'
+      } px-1`}>
+        <div className="w-4 h-4 bg-white rounded-full shadow"></div>
+      </div>
+    </button>
   )
 }
 
