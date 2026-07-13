@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
    // Jika Super Admin (Ricky), ambil SEMUA menu aktif tanpa filter role
-  const isSuperAdmin = session.user?.is_super_admin || false
+  const isSuperAdmin = session.is_super_admin || false
   
   let query = supabase
     .from('menus')
