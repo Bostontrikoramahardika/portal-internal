@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   const { data: emp } = await supabase
     .from('employees')
-    .select('nrp, nama, jabatan, departemen, site')
+    .select('nrp, nama, jabatan, departemen, site, is_super_admin')
     .eq('nrp', session.nrp)
     .single()
 
@@ -26,7 +26,12 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    user: emp,
-    roles: session.roles
+    user: {
+      ...emp,
+      is_super_admin: Boolean(emp?.is_super_admin)
+    },
+    roles: session.roles,
+    is_super_admin: Boolean(emp?.is_super_admin),
+    permissions: session.permissions || []
   })
 }

@@ -31,6 +31,8 @@ export async function loginByNrp(nrp: string) {
   }
 
   const realNrp = employee.nrp
+  const isSuperAdmin = Boolean(employee.is_super_admin)
+  const permissions = await getUserPermissions(employee.id, isSuperAdmin)
 
   // 2. Ambil roles + scope_site
   const { data: roleRows } = await supabase
@@ -74,7 +76,9 @@ export async function loginByNrp(nrp: string) {
     nama: employee.nama,
     roles,
     scope_site: scopeSite,
-    primaryRole: getPrimaryRole(roles)
+    primaryRole: getPrimaryRole(roles),
+    is_super_admin: isSuperAdmin,
+    permissions
   }
 }
 
@@ -88,9 +92,9 @@ export async function getSession(token: string) {
 
   if (error || !data) return null
 
-  const { data: emp } = await supabase
+    const { data: emp } = await supabase
     .from('employees')
-    .select('nama, site, jabatan, departemen')
+    .select('id, nama, site, jabatan, departemen, is_super_admin')
     .eq('nrp', data.nrp)
     .single()
 
@@ -108,6 +112,11 @@ export async function getSession(token: string) {
     scopeSite = roleData?.scope_site || null
   }
 
+  const isSuperAdmin = Boolean(emp?.is_super_admin)
+  const permissions = emp
+    ? await getUserPermissions(emp.id, isSuperAdmin)
+    : []
+
   return {
     token: data.token,
     nrp: data.nrp,
@@ -116,8 +125,10 @@ export async function getSession(token: string) {
     jabatan: emp?.jabatan || null,
     departemen: emp?.departemen || null,
     roles: data.roles,
-    scope_site: scopeSite,          // 🌟 v1.5.0
-    primaryRole: getPrimaryRole(data.roles)
+    scope_site: scopeSite,
+    primaryRole: getPrimaryRole(data.roles),
+    is_super_admin: isSuperAdmin,
+    permissions
   }
 }
 
@@ -125,6 +136,39 @@ export async function logout(token: string) {
   await supabase.from('sessions').delete().eq('token', token)
 }
 
+// ✅ TAMBAHKAN BLOK INI — letakkan tepat di atas function getPrimaryRole
+export async function getUserPermissions(
+  employeeId: number,
+  isSuperAdmin: boolean
+): Promise<string[]> {
+  // Kalau super admin, langsung ambil semua permission yang ada
+  if (isSuperAdmin) {
+    const { data } = await supabase
+      .from('master_permissions')
+      .select('code')
+      .order('code', { ascending: true })
+    return (data || []).map((row: any) => row.code).filter(Boolean)
+  }
+
+  // Kalau bukan super admin, ambil hanya yang di-assign ke user ini
+  const { data: linkRows } = await supabase
+    .from('user_permissions')
+    .select('permission_id')
+    .eq('employee_id', employeeId)
+
+  if (!linkRows || linkRows.length === 0) return []
+
+  const ids = linkRows.map((r: any) => r.permission_id).filter(Boolean)
+
+  const { data: permRows } = await supabase
+    .from('master_permissions')
+    .select('code')
+    .in('id', ids)
+
+  return (permRows || []).map((row: any) => row.code).filter(Boolean).sort()
+}
+
+// ✅ SELESAI — baris di bawah ini adalah function getPrimaryRole yang sudah ada
 function getPrimaryRole(roles: string[]): string {
   for (const r of ROLE_PRIORITY) {
     if (roles.includes(r)) return r
