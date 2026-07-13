@@ -188,6 +188,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userRoles, setUserRoles] = useState<string[]>([])
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false) // State baru
+  const [userPermissions, setUserPermissions] = useState<string[]>([]) // State baru
   const [menus, setMenus] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('absensi')
@@ -216,21 +218,38 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [activeMenu, menus])
 
-  async function checkAuth() {
+    async function checkAuth() {
     try {
       const res = await fetch('/api/auth/me')
       if (!res.ok) { router.push('/'); return }
       const data = await res.json()
+      
       setUser(data.user)
       const roles: string[] = Array.isArray(data.roles) ? data.roles : []
       setUserRoles(roles)
+      
+      // Ambil flag super admin & permissions dari API
+      const superAdminStatus = data.user?.is_super_admin || false
+      setIsSuperAdmin(superAdminStatus)
+      setUserPermissions(data.permissions || [])
 
       const menuRes = await fetch('/api/menus')
       const menuData = await menuRes.json()
       const menusArray = Array.isArray(menuData) ? menuData : (menuData.menus || menuData.data || [])
-      const filtered = menusArray.filter((m: MenuItem) => roles.includes(m.role) && m.active !== false)
+      
+      // PERBAIKAN FILTER: Jika Super Admin, loloskan semua menu yang active. 
+      // Jika bukan, tetap pakai filter role lama.
+      const filtered = menusArray.filter((m: MenuItem) => {
+        if (m.active === false) return false
+        if (superAdminStatus) return true 
+        return roles.includes(m.role)
+      })
+      
       setMenus(filtered)
-    } catch { router.push('/') }
+    } catch (err) { 
+      console.error("Auth Error:", err)
+      router.push('/') 
+    }
     finally { setLoading(false) }
   }
 
@@ -249,9 +268,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     router.push('/')
   }
 
-  function handleTabClick(tab: typeof TAB_CONFIG[0]) {
+    function handleTabClick(tab: typeof TAB_CONFIG[0]) {
     const tabMenus = menus.filter(m => tab.customMatch(m))
     tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    
     if (tab.key === 'profile' || tabMenus.length > 1) {
       setBottomSheetMenus(tabMenus)
       setBottomSheetTitle(tab.label)
@@ -259,6 +279,18 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       setBottomSheetOpen(true)
       return
     }
+    
+    if (tabMenus.length === 1) {
+      router.push(`/dashboard?menu=${tabMenus[0].menu_key}`)
+      setActiveTab(tab.key)
+      return
+    }
+
+    // Tambahkan ini: Jika tab diklik tapi tidak ada isinya
+    if (tabMenus.length === 0) {
+      alert(`Menu ${tab.label} belum tersedia untuk akses Anda atau sedang dalam pemeliharaan.`)
+    }
+  }
     if (tabMenus.length === 1) {
       router.push(`/dashboard?menu=${tabMenus[0].menu_key}`)
       setActiveTab(tab.key)
@@ -272,7 +304,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (loading || !user) return <div className="min-h-screen bg-slate-100 flex items-center justify-center animate-pulse text-slate-500">Memuat...</div>
 
-  const visibleTabs = TAB_CONFIG.filter(tab => tab.roles.some(r => userRoles.includes(r)))
+  const visibleTabs = TAB_CONFIG.filter(tab => {
+    if (isSuperAdmin) return true // Super Admin bisa lihat semua TAB
+    return tab.roles.some(r => userRoles.includes(r))
+  })
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] flex relative overflow-hidden">
