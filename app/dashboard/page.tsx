@@ -485,13 +485,66 @@ function FormLemburView({ title, onSuccess, data }: any) {
   )
 }
 
-// ============ 🤒 FORM SAKIT ============
+// ============ 🤒 FORM PENGAJUAN EVIDEN (SAKIT / IZIN POTONGAN / IZIN BERBAYAR) ============
 function FormSakitView({ title, onSuccess, data }: any) {
-  const [form, setForm] = useState({ tanggal: '', keterangan: '', foto_url: '', atasan_nrp: '' })
+  const [form, setForm] = useState({
+    kategori: 'SAKIT',
+    alasan_izin: '',
+    tanggal: '',
+    keterangan: '',
+    foto_url: '',
+    atasan_nrp: ''
+  })
   const [atasanList, setAtasanList] = useState([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const riwayat = data?.rows || []
+
+  const ALASAN_IZIN_BERBAYAR = [
+    'Pekerja menikah',
+    'Menikahkan anaknya',
+    'Mengkhitankan anaknya',
+    'Membaptiskan anaknya',
+    'Suami/istri, orang tua/mertua, anak, atau menantu meninggal dunia',
+    'Istri melahirkan atau keguguran kandungan',
+    'Anggota keluarga dalam satu rumah meninggal dunia',
+    'Mendapat musibah (kebakaran dan bencana alam)'
+  ]
+
+  const KATEGORI_CONFIG: any = {
+    SAKIT: {
+      label: 'Sakit',
+      icon: '🤒',
+      color: 'rose',
+      bgClass: 'bg-rose-500',
+      hoverClass: 'hover:bg-rose-600',
+      shadowClass: 'shadow-rose-200',
+      borderActive: 'border-rose-500 bg-rose-50',
+      desc: 'Butuh SKS / Surat Dokter'
+    },
+    IZIN_POTONGAN: {
+      label: 'Izin Potongan',
+      icon: '⚠️',
+      color: 'amber',
+      bgClass: 'bg-amber-500',
+      hoverClass: 'hover:bg-amber-600',
+      shadowClass: 'shadow-amber-200',
+      borderActive: 'border-amber-500 bg-amber-50',
+      desc: 'Izin dengan potongan gaji'
+    },
+    IZIN_BERBAYAR: {
+      label: 'Izin Berbayar',
+      icon: '✅',
+      color: 'emerald',
+      bgClass: 'bg-emerald-500',
+      hoverClass: 'hover:bg-emerald-600',
+      shadowClass: 'shadow-emerald-200',
+      borderActive: 'border-emerald-500 bg-emerald-50',
+      desc: 'Sesuai UU Ketenagakerjaan'
+    }
+  }
+
+  const currentConfig = KATEGORI_CONFIG[form.kategori]
 
   useEffect(() => {
     fetch('/api/attendance/atasan-list')
@@ -516,23 +569,32 @@ function FormSakitView({ title, onSuccess, data }: any) {
   async function handleSubmit(e: any) {
     e.preventDefault()
     if (!form.atasan_nrp) return alert("⚠️ Mohon pilih Atasan Approval terlebih dahulu!")
-    if (!form.foto_url) return alert("⚠️ Mohon upload foto bukti (SKS) terlebih dahulu!")
-    
+    if (!form.foto_url) return alert("⚠️ Mohon upload foto bukti terlebih dahulu!")
+    if (form.kategori === 'IZIN_BERBAYAR' && !form.alasan_izin) {
+      return alert("⚠️ Mohon pilih salah satu alasan Izin Berbayar!")
+    }
+
     setLoading(true)
     try {
+      const payload: any = {
+        kategori: form.kategori,
+        tanggal: form.tanggal,
+        keterangan: form.keterangan,
+        foto_url: form.foto_url,
+        atasan_nrp: form.atasan_nrp,
+        status_atasan: 'PENDING'
+      }
+      if (form.kategori === 'IZIN_BERBAYAR') {
+        payload.alasan_izin = form.alasan_izin
+      }
+
       const res = await fetch('/api/crud', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          table: 'attendance_evidences', 
-          values: { 
-            ...form, 
-            status_atasan: 'PENDING'
-          } 
-        })
+        body: JSON.stringify({ table: 'attendance_evidences', values: payload })
       })
       if (res.ok) {
         alert("✅ Pengajuan berhasil dikirim ke atasan!")
-        setForm({ tanggal: '', keterangan: '', foto_url: '', atasan_nrp: '' })
+        setForm({ kategori: 'SAKIT', alasan_izin: '', tanggal: '', keterangan: '', foto_url: '', atasan_nrp: '' })
         onSuccess()
       } else {
         const err = await res.json()
@@ -544,19 +606,85 @@ function FormSakitView({ title, onSuccess, data }: any) {
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="bg-white p-8 rounded-[2.5rem] border shadow-xl">
-        <h2 className="text-2xl font-black mb-2">🤒 {title}</h2>
-        <p className="text-xs text-slate-400 mb-8 font-medium">Laporkan ketidakhadiran karena sakit/izin dengan bukti dokumen.</p>
-        
+        <h2 className="text-2xl font-black mb-2">{currentConfig.icon} {title}</h2>
+        <p className="text-xs text-slate-400 mb-8 font-medium">Laporkan ketidakhadiran dengan bukti dokumen lengkap.</p>
+
         <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* 📌 KATEGORI PILIHAN (3 CARD) */}
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-3">
+              Pilih Kategori Pengajuan <span className="text-rose-500">*</span>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {Object.keys(KATEGORI_CONFIG).map((key) => {
+                const conf = KATEGORI_CONFIG[key]
+                const isActive = form.kategori === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setForm({ ...form, kategori: key, alasan_izin: '' })}
+                    className={`p-4 rounded-2xl border-2 transition-all text-center ${
+                      isActive
+                        ? `${conf.borderActive} ring-2 ring-offset-2 ring-${conf.color}-400`
+                        : 'bg-white border-slate-100 hover:border-slate-200'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">{conf.icon}</div>
+                    <div className={`text-[10px] font-black uppercase tracking-tight ${isActive ? `text-${conf.color}-700` : 'text-slate-500'}`}>
+                      {conf.label}
+                    </div>
+                    <div className="text-[8px] font-bold text-slate-400 mt-1 leading-tight">
+                      {conf.desc}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 📌 DROPDOWN ALASAN IZIN BERBAYAR (WAJIB PILIH 1) */}
+          {form.kategori === 'IZIN_BERBAYAR' && (
+            <div className="bg-emerald-50/50 border-2 border-emerald-100 p-4 rounded-2xl animate-in fade-in duration-300">
+              <label className="block text-sm font-bold text-emerald-800 mb-2">
+                ✅ Pilih Alasan Izin Berbayar <span className="text-rose-500">*</span>
+              </label>
+              <p className="text-[10px] font-bold text-emerald-600 mb-3 italic">
+                Wajib pilih salah satu sesuai UU Ketenagakerjaan
+              </p>
+              <select
+                required
+                value={form.alasan_izin}
+                onChange={e => setForm({ ...form, alasan_izin: e.target.value })}
+                className="w-full p-3.5 border-2 border-emerald-200 rounded-2xl bg-white text-sm font-bold focus:border-emerald-500 outline-none transition-all"
+              >
+                <option value="">-- Pilih Alasan --</option>
+                {ALASAN_IZIN_BERBAYAR.map((alasan, i) => (
+                  <option key={i} value={alasan}>
+                    {i + 1}. {alasan}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Info Kategori Terpilih */}
+          {form.kategori === 'IZIN_POTONGAN' && (
+            <div className="bg-amber-50 border-2 border-amber-100 p-4 rounded-2xl text-[11px] font-bold text-amber-700 leading-relaxed">
+              ⚠️ <strong>Perhatian:</strong> Izin Potongan akan mengurangi gaji Anda sesuai kebijakan perusahaan.
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input label="Tanggal Sakit/Izin" type="date" required value={form.tanggal} onChange={(v:any) => setForm({...form, tanggal: v})} />
-            
+            <Input label="Tanggal" type="date" required value={form.tanggal} onChange={(v: any) => setForm({ ...form, tanggal: v })} />
+
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">Pilih Atasan Approval (Satu Site)</label>
-              <select 
-                required 
-                value={form.atasan_nrp} 
-                onChange={e => setForm({...form, atasan_nrp: e.target.value})} 
+              <select
+                required
+                value={form.atasan_nrp}
+                onChange={e => setForm({ ...form, atasan_nrp: e.target.value })}
                 className="w-full p-3.5 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
               >
                 <option value="">-- Pilih Nama Atasan --</option>
@@ -571,26 +699,49 @@ function FormSakitView({ title, onSuccess, data }: any) {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Upload Bukti (SKS/Surat Izin)</label>
+            <label className="block text-sm font-bold text-slate-700 mb-2">
+              Upload Bukti Dokumen <span className="text-rose-500">*</span>
+            </label>
+            <p className="text-[10px] font-bold text-slate-400 mb-2 italic">
+              {form.kategori === 'SAKIT' && '📄 Upload: SKS / Surat Dokter'}
+              {form.kategori === 'IZIN_POTONGAN' && '📄 Upload: Surat Izin / Bukti Keperluan'}
+              {form.kategori === 'IZIN_BERBAYAR' && '📄 Upload: Undangan / Surat Kematian / Bukti Musibah'}
+            </p>
             <div className="p-6 border-4 border-dashed border-slate-50 rounded-3xl bg-slate-50/50 text-center hover:border-blue-200 transition-all cursor-pointer relative">
               <input type="file" accept="image/*" onChange={handleUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
               {uploading ? (
-                 <p className="text-blue-500 font-black text-xs animate-pulse">⏳ SEDANG MENGUNGGAH...</p>
+                <p className="text-blue-500 font-black text-xs animate-pulse">⏳ SEDANG MENGUNGGAH...</p>
               ) : form.foto_url ? (
-                 <div className="flex items-center justify-center gap-2">
-                    <span className="text-emerald-500 font-black text-xs">✅ DOKUMEN TERUPLOAD</span>
-                    <img src={form.foto_url} className="h-10 w-10 object-cover rounded-lg" />
-                 </div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-emerald-500 font-black text-xs">✅ DOKUMEN TERUPLOAD</span>
+                  <img src={form.foto_url} className="h-10 w-10 object-cover rounded-lg" />
+                </div>
               ) : (
                 <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Klik untuk pilih foto dokumen</p>
               )}
             </div>
           </div>
 
-          <Textarea label="Keterangan Tambahan" value={form.keterangan} onChange={(v:any) => setForm({...form, keterangan: v})} placeholder="Contoh: Sakit demam, butuh istirahat 3 hari sesuai SKS." />
+          <Textarea
+            label="Keterangan Tambahan"
+            value={form.keterangan}
+            onChange={(v: any) => setForm({ ...form, keterangan: v })}
+            placeholder={
+              form.kategori === 'SAKIT' ? "Contoh: Sakit demam, butuh istirahat 3 hari sesuai SKS." :
+              form.kategori === 'IZIN_POTONGAN' ? "Contoh: Ada keperluan mendesak keluarga." :
+              "Contoh: Detail acara / musibah yang dialami."
+            }
+          />
 
-          <button disabled={loading || uploading} className={`w-full py-5 rounded-3xl font-black text-white text-lg transition-all ${loading || uploading ? 'bg-slate-300' : 'bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-200'}`}>
-            {loading ? 'MENGIRIM...' : '🚀 KIRIM PENGAJUAN'}
+          <button
+            disabled={loading || uploading}
+            className={`w-full py-5 rounded-3xl font-black text-white text-lg transition-all ${
+              loading || uploading
+                ? 'bg-slate-300'
+                : `${currentConfig.bgClass} ${currentConfig.hoverClass} shadow-lg ${currentConfig.shadowClass}`
+            }`}
+          >
+            {loading ? 'MENGIRIM...' : `${currentConfig.icon} KIRIM PENGAJUAN`}
           </button>
         </form>
       </div>
@@ -604,27 +755,40 @@ function FormSakitView({ title, onSuccess, data }: any) {
             <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-black">
               <tr>
                 <th className="px-8 py-5">Tanggal</th>
+                <th className="px-8 py-5">Kategori</th>
                 <th className="px-8 py-5">Keterangan</th>
                 <th className="px-8 py-5">Dokumen</th>
                 <th className="px-8 py-5">Status Atasan</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {riwayat.map((r: any, i: number) => (
-                <tr key={i} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-8 py-5 font-bold text-slate-900">{new Date(r.tanggal).toLocaleDateString('id-ID')}</td>
-                  <td className="px-8 py-5 text-slate-600 italic">"{r.keterangan || '-'}"</td>
-                  <td className="px-8 py-5">
-                    {r.foto_url ? <a href={r.foto_url} target="_blank" className="text-blue-600 font-black text-[10px] hover:underline">👁️ LIHAT FOTO</a> : '-'}
-                  </td>
-                  <td className="px-8 py-5">
-                    <StatusBadge value={r.status_atasan || 'PENDING'} />
-                  </td>
-                </tr>
-              ))}
+              {riwayat.map((r: any, i: number) => {
+                const kat = r.kategori || 'SAKIT'
+                const conf = KATEGORI_CONFIG[kat] || KATEGORI_CONFIG.SAKIT
+                return (
+                  <tr key={i} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-8 py-5 font-bold text-slate-900">{new Date(r.tanggal).toLocaleDateString('id-ID')}</td>
+                    <td className="px-8 py-5">
+                      <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest bg-${conf.color}-50 text-${conf.color}-700 border border-${conf.color}-100`}>
+                        {conf.icon} {conf.label}
+                      </span>
+                      {r.alasan_izin && (
+                        <p className="text-[9px] text-slate-500 mt-1 italic">→ {r.alasan_izin}</p>
+                      )}
+                    </td>
+                    <td className="px-8 py-5 text-slate-600 italic">"{r.keterangan || '-'}"</td>
+                    <td className="px-8 py-5">
+                      {r.foto_url ? <a href={r.foto_url} target="_blank" className="text-blue-600 font-black text-[10px] hover:underline">👁️ LIHAT FOTO</a> : '-'}
+                    </td>
+                    <td className="px-8 py-5">
+                      <StatusBadge value={r.status_atasan || 'PENDING'} />
+                    </td>
+                  </tr>
+                )
+              })}
               {riwayat.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-8 py-10 text-center text-slate-300 font-bold italic">Belum ada riwayat bulan ini</td>
+                  <td colSpan={5} className="px-8 py-10 text-center text-slate-300 font-bold italic">Belum ada riwayat bulan ini</td>
                 </tr>
               )}
             </tbody>
