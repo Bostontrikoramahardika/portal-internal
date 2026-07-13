@@ -185,8 +185,9 @@ const TAB_CONFIG = [
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'manage_permissions' || 
-        m.menu_key === 'system_audit' ||
-        m.menu_key === 'config_global'
+m.menu_key === 'system_audit' ||
+m.menu_key === 'config_global' ||
+m.menu_key === 'reset_password_admin'
       )
     }
   },
