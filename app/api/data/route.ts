@@ -49,16 +49,20 @@ export async function GET(request: NextRequest) {
     if (!menusFound || menusFound.length === 0) return NextResponse.json({ error: 'Menu tidak ditemukan' }, { status: 404 })
 
     const rolesLower = (session.roles || []).map((r: string) => r.toLowerCase())
-    // Memastikan menu yang diambil sesuai dengan salah satu role yang dimiliki user
-const menuInfo = menusFound.find((m: any) => 
-  rolesLower.some(r => r === (m.role || '').toLowerCase())
-)
+    const isSuperAdmin = session.is_super_admin || false
+    
+    // Super Admin (Ricky) bypass, ambil menu pertama yang cocok
+    // Selain itu, cek role user harus cocok dengan role menu
+    const menuInfo = isSuperAdmin 
+      ? menusFound[0] 
+      : menusFound.find((m: any) => rolesLower.some(r => r === (m.role || '').toLowerCase()))
+    
     if (!menuInfo) return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
 
     const { target_table, access_mode, menu_label } = menuInfo
     
     // Flag Role v1.5.0
-    const isHrgaAll = rolesLower.some(r => ['hrga_oprek', 'hrga_pusat', 'hrga', 'admin'].includes(r))
+      const isHrgaAll = isSuperAdmin || rolesLower.some(r => ['hrga_oprek', 'hrga_pusat', 'hrga', 'admin'].includes(r))
     const isHrgaSite = rolesLower.includes('hrga_site') || rolesLower.includes('admin_site')
     const isAdminPlant = rolesLower.includes('admin_plant')
     const isSiteScoped = isHrgaSite || isAdminPlant
