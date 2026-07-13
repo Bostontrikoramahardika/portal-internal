@@ -332,33 +332,33 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       {/* MAIN CONTENT */}
       <main className="flex-1 min-w-0 lg:ml-64 pb-24 lg:pb-6">
         {/* HEADER MOBILE */}
-                 <div className="lg:hidden bg-white/70 backdrop-blur-xl border-b border-white/40 px-3 py-2 flex items-center justify-between sticky top-0 z-[60] shadow-[0_4px_20px_rgba(0,61,121,0.05)]">
-          {/* Kiri: Logo + Nama App + Versi */}
+                       <div className="lg:hidden bg-white/70 backdrop-blur-xl border-b border-white/40 px-3 py-1.5 flex items-center justify-between fixed top-0 left-0 right-0 z-[60] shadow-[0_4px_20px_rgba(0,61,121,0.05)]">
+          {/* Kiri: Logo + Nama App + Versi (Kompak) */}
           <div className="flex items-center gap-2 shrink-0">
-            <Image src="/btm-fix.png" alt="BTM" width={20} height={20} />
-            <div className="leading-none">
+            <Image src="/btm-fix.png" alt="BTM" width={18} height={18} />
+            <div className="leading-[1.1]">
               <h1 className="text-[10px] font-black uppercase text-[#003D79] tracking-tight">BTM Mobile</h1>
-              <p className="text-[7px] font-bold text-slate-400 mt-0.5">v1.6.2</p>
+              <p className="text-[7px] font-bold text-slate-400">v1.6.2</p>
             </div>
           </div>
 
-          {/* Kanan: Info Karyawan + Lonceng (Lonceng paling kanan) */}
+          {/* Kanan: Info Karyawan + Lonceng (Baris Rapat) */}
           <div className="flex items-center gap-2">
-            <div className="text-right leading-tight shrink-0 max-w-[140px]">
-              <div className="text-[9px] font-black text-[#003D79] uppercase truncate leading-tight">{user.nama}</div>
-              <div className="text-[7px] text-slate-500 font-bold mt-0.5">NRP: {user.nrp_login || user.nrp}</div>
-              <div className="text-[7px] text-blue-600 font-black mt-0.5">{user.site || '-'}</div>
+            <div className="text-right leading-[1.1] shrink-0 max-w-[140px]">
+              <div className="text-[9px] font-black text-[#003D79] uppercase truncate">{user.nama}</div>
+              <div className="text-[7px] text-slate-500 font-bold">NRP: {user.nrp_login || user.nrp}</div>
+              <div className="text-[7px] text-blue-600 font-black">{user.site || '-'}</div>
             </div>
             <button 
               type="button"
               onClick={() => setIsNotifOpen(true)} 
-              className="relative w-9 h-9 flex items-center justify-center active:scale-90 transition-all cursor-pointer bg-white/80 backdrop-blur-sm rounded-xl border border-white/50 shadow-sm z-[70] shrink-0"
+              className="relative flex items-center justify-center active:scale-90 transition-all cursor-pointer z-[70] shrink-0"
             >
-              <span className="text-base">🔔</span>
+              <span className="text-2xl">🔔</span>
               {notifCount > 0 && (
                 <>
-                  <span className="absolute -top-1 -right-1 animate-ping h-3.5 w-3.5 rounded-full bg-red-400 opacity-75"></span>
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-black h-4 w-4 flex items-center justify-center rounded-full border-2 border-white shadow-lg pointer-events-none">
+                  <span className="absolute -top-0.5 -right-0.5 animate-ping h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
+                  <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[7px] font-black h-3.5 w-3.5 flex items-center justify-center rounded-full border border-white shadow-lg pointer-events-none">
                     {notifCount}
                   </span>
                 </>
@@ -367,7 +367,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <div className="p-4 lg:p-6">{children}</div>
+                <div className="p-4 lg:p-6 pt-16 lg:pt-6">{children}</div>
       </main>
 
       {/* BOTTOM NAVIGATION MOBILE */}
