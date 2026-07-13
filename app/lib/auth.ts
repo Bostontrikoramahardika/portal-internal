@@ -139,16 +139,15 @@ export async function getUserPermissions(
   nrp: string,
   isSuperAdmin: boolean
 ): Promise<string[]> {
-  console.log('[getUserPermissions] Called with NRP:', nrp, 'SuperAdmin:', isSuperAdmin)
   
   // Kalau super admin, langsung ambil semua permission yang ada
   if (isSuperAdmin) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('master_permissions')
       .select('perm_key')
+      .eq('active', true)
       .order('sort_order', { ascending: true })
     
-    console.log('[getUserPermissions] SuperAdmin query result:', { count: data?.length, error })
     return (data || []).map((row: any) => row.perm_key).filter(Boolean)
   }
 
