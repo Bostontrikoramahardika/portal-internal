@@ -815,25 +815,25 @@ function AbsensiClockView({ title }: any) {
         </div>
       )}
 
-            <div className="bg-slate-950 text-white rounded-[1.5rem] md:rounded-[3rem] p-4 md:p-10 text-center shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] mb-4 md:mb-6 border border-white/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none"></div>
-        <div className="text-3xl md:text-7xl font-black mb-1 md:mb-2 tracking-tighter text-white font-mono">
+                  <div className="bg-slate-800/40 backdrop-blur-2xl text-white rounded-[1.5rem] md:rounded-[3rem] p-3 md:p-10 text-center shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] mb-4 md:mb-6 border border-slate-700/30 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-700/20 via-transparent to-slate-900/30 pointer-events-none"></div>
+        <div className="text-2xl md:text-6xl font-black mb-1 tracking-tighter text-white font-mono relative z-10">
           {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
         </div>
-        <div className="text-blue-400 font-black uppercase text-[8px] md:text-xs tracking-[0.25em] md:tracking-[0.4em] mb-4 md:mb-12">
+        <div className="text-blue-300 font-black uppercase text-[7px] md:text-xs tracking-[0.25em] md:tracking-[0.4em] mb-3 md:mb-10 relative z-10">
           {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
         <div className="flex justify-center gap-4 relative z-10">
           {!hasIn ? (
-            <button onClick={() => handleClock('in')} className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 md:px-12 py-3 md:py-6 rounded-[1.2rem] md:rounded-[2rem] font-black text-sm md:text-2xl shadow-2xl shadow-emerald-500/20 active:scale-90 transition-all">🟢 CLOCK IN</button>
+            <button onClick={() => handleClock('in')} className="bg-emerald-500/90 hover:bg-emerald-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-emerald-500/20 active:scale-90 transition-all">🟢 CLOCK IN</button>
           ) : !hasOut ? (
-            <button onClick={() => handleClock('out')} className="bg-rose-500 hover:bg-rose-600 text-white px-6 md:px-12 py-3 md:py-6 rounded-[1.2rem] md:rounded-[2rem] font-black text-sm md:text-2xl shadow-2xl shadow-rose-500/20 active:scale-90 transition-all">🔴 CLOCK OUT</button>
+            <button onClick={() => handleClock('out')} className="bg-rose-500/90 hover:bg-rose-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-rose-500/20 active:scale-90 transition-all">🔴 CLOCK OUT</button>
           ) : (
-            <div className="bg-white/5 px-5 md:px-10 py-3 md:py-6 rounded-[1.2rem] md:rounded-[2rem] border-2 border-white/10 font-black text-xs md:text-xl tracking-tight text-slate-400">✅ SHIFT SELESAI</div>
+            <div className="bg-white/10 backdrop-blur px-4 md:px-10 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] border border-white/10 font-black text-[10px] md:text-xl tracking-tight text-slate-200">✅ SHIFT SELESAI</div>
           )}
         </div>
-        <div className="mt-4 md:mt-10 text-[7px] md:text-[9px] text-white/30 flex items-center justify-center gap-2 md:gap-3 font-black tracking-widest">
-          <div className={`w-2 h-2 md:w-2.5 md:h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-rose-500'}`}></div>
+        <div className="mt-3 md:mt-10 text-[7px] md:text-[9px] text-white/40 flex items-center justify-center gap-2 md:gap-3 font-black tracking-widest relative z-10">
+          <div className={`w-1.5 h-1.5 md:w-2.5 md:h-2.5 rounded-full ${isOnline ? 'bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.6)]' : 'bg-rose-500'}`}></div>
           {isOnline ? 'CONNECTED' : 'OFFLINE'} • {gps ? `${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}` : 'WAITING GPS...'}
         </div>
       </div>
