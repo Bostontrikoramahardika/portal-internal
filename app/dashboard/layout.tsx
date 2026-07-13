@@ -169,9 +169,10 @@ const TAB_CONFIG = [
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'dashboard' ||
-        m.menu_key === 'data_saya' || // Menu tunggal untuk semua data personal
+        m.menu_key === 'data_saya' ||
         m.menu_key === 'kpi_saya' ||
-        m.menu_key === 'ubah_nrp_login'
+        m.menu_key === 'ubah_nrp_login' ||
+        m.menu_key === 'ganti_password'
       )
     }
   },

@@ -352,11 +352,12 @@ const menuInfo = menusFound.find((m: any) =>
     // ==========================================
     // 🎯 CASE C: DASHBOARD & SPECIAL
     // ==========================================
-    const specialModes: Record<string, string> = {
+        const specialModes: Record<string, string> = {
       'DASHBOARD': 'dashboard', 'FORM_CUTI': 'form_cuti', 'FORM_LEMBUR': 'form_lembur',
       'ROSTER_VIEW': 'roster_view', 'ROSTER_UPLOAD': 'roster_upload',
       'CHANGE_LOGIN': 'change_login', 'ABSENSI_CLOCK': 'absensi_clock',
-      'ROLE_MANAGER': 'role_manager', 'EXPORT_ABSENSI': 'export_absensi', 'IMPORT_EXCEL': 'import_excel'
+      'ROLE_MANAGER': 'role_manager', 'EXPORT_ABSENSI': 'export_absensi', 'IMPORT_EXCEL': 'import_excel',
+      'CHANGE_PASSWORD': 'change_password'
     }
 
          if (access_mode === 'DASHBOARD') {
