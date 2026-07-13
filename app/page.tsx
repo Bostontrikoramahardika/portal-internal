@@ -5,25 +5,26 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
 /**
- * BTM PORTAL v1.6.0 - LOGIN SCREEN (Luxury Mobile Edition)
+ * BTM PORTAL v1.6.2 - LOGIN SCREEN (with Password & Help Modal)
  * Style: 1Pama Mobile App
  */
 
 export default function LoginPage() {
   const [nrp, setNrp] = useState('')
+  const [password, setPassword] = useState('')
   const [site, setSite] = useState('')
   const [sites, setSites] = useState<string[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const router = useRouter()
 
-  // 🌐 Fetch daftar site dari database saat halaman dimuat
   useEffect(() => {
     fetch('/api/public/sites')
       .then(r => r.json())
       .then(d => {
         const siteList = (d.sites || []).map((s: any) => s.nama_site)
-        // Fallback ke hardcoded jika API gagal / kosong
         if (siteList.length > 0) {
           setSites(siteList)
         } else {
@@ -31,7 +32,6 @@ export default function LoginPage() {
         }
       })
       .catch(() => {
-        // Fallback jika error koneksi
         setSites(['PPA-MLP', 'HO', 'PPA-BIB', 'PPA-MCB'])
       })
   }, [])
@@ -39,6 +39,7 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     if (!site) { setError('Pilih Site Kerja'); return }
+    if (!password) { setError('Password wajib diisi'); return }
     setLoading(true)
     setError('')
 
@@ -46,18 +47,17 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nrp: nrp.trim(), site: site })
+        body: JSON.stringify({ nrp: nrp.trim(), password: password.trim(), site: site })
       })
       
       const data = await res.json()
       
       if (!res.ok) {
-        setError(data.error || 'NRP tidak terdaftar')
+        setError(data.error || 'Login gagal')
         setLoading(false)
         return
       }
       
-      // Redirect ke dashboard setelah session terbentuk
       router.push('/dashboard?menu=absensi_saya')
     } catch (err) {
       setError('Koneksi Gagal ke Server')
@@ -65,17 +65,11 @@ export default function LoginPage() {
     }
   }
 
-  // Animasi Loading Screen (Swivel Logo)
+  // Loading Screen
   if (loading) return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[999]">
       <div className="animate-swivel mb-6">
-        <Image 
-          src="/btm-fix.png" 
-          alt="Logo" 
-          width={180} 
-          height={180} 
-          priority 
-        />
+        <Image src="/btm-fix.png" alt="Logo" width={180} height={180} priority />
       </div>
       <p className="text-[#003D79] font-black text-xs tracking-[0.3em] animate-pulse uppercase">Authenticating...</p>
     </div>
@@ -84,7 +78,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 relative overflow-hidden bg-[#F8FAFC]">
       
-      {/* --- LAYER 1: PATTERN LOGO (Watermark Style) --- */}
+      {/* Background Pattern */}
       <div 
         className="fixed inset-0 pointer-events-none opacity-[0.01] z-0"
         style={{ 
@@ -94,29 +88,19 @@ export default function LoginPage() {
         }}
       />
       
-      {/* --- LAYER 2: BLUR BLOBS (Pama depth effect) --- */}
+      {/* Blur Blobs */}
       <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[120px] pointer-events-none z-[1]" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-[#003D79]/10 rounded-full blur-[120px] pointer-events-none z-[1]" />
       
-      {/* --- LAYER 3: CONTENT --- */}
       <div className="relative z-10 w-full max-w-[360px] flex flex-col items-center">
         
-        {/* Versi Info */}
         <div className="fixed top-8 right-8 text-slate-400 text-[10px] font-bold tracking-widest opacity-50">
-          V.1.6.0
+          V.1.6.2
         </div>
 
-        {/* Header Logo */}
         <div className="flex flex-col items-center mb-10 text-center">
           <div className="mb-6 drop-shadow-sm">
-            <Image 
-              src="/btm-fix.png" 
-              alt="Logo BTM" 
-              width={180} 
-              height={180} 
-              priority
-              className="object-contain" 
-            />
+            <Image src="/btm-fix.png" alt="Logo BTM" width={180} height={180} priority className="object-contain" />
           </div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight">BTM Mobile App</h1>
           <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.5em] mt-3 opacity-60">
@@ -124,7 +108,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Card Login Utama */}
+        {/* Card Login */}
         <div className="w-full bg-white/80 backdrop-blur-md rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,61,121,0.12)] p-9 border border-white/50">
           <h2 className="text-center font-bold text-[#003D79] text-[11px] mb-8 tracking-[0.3em] uppercase opacity-80">
             Secure Login
@@ -143,6 +127,26 @@ export default function LoginPage() {
                 className="w-full bg-transparent outline-none font-bold text-sm text-slate-700 placeholder:text-slate-400"
                 required
               />
+            </div>
+
+            {/* Password Input (dengan icon mata 👁️) */}
+            <div className="flex items-center bg-slate-100/50 border-2 border-transparent rounded-2xl px-5 py-4 focus-within:border-[#003D79] focus-within:bg-white transition-all group">
+              <span className="text-slate-400 group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">🔒</span>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-transparent outline-none font-bold text-sm text-slate-700 placeholder:text-slate-400"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-slate-400 hover:text-[#003D79] transition-colors ml-2 text-lg active:scale-90"
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
             </div>
 
             {/* Site Selection */}
@@ -175,25 +179,114 @@ export default function LoginPage() {
             </div>
           )}
           
+          {/* Tombol Bantuan Login */}
           <div className="text-center mt-8">
-            <button type="button" className="text-[#003D79] text-[10px] font-black tracking-widest uppercase border-b-2 border-blue-100 pb-1 hover:border-[#003D79] transition-all">
+            <button 
+              type="button" 
+              onClick={() => setShowHelp(true)}
+              className="text-[#003D79] text-[10px] font-black tracking-widest uppercase border-b-2 border-blue-100 pb-1 hover:border-[#003D79] transition-all"
+            >
               Bantuan Login
             </button>
           </div>
         </div>
 
-        {/* Footer Berkelas */}
         <div className="mt-12 text-center px-6">
           <p className="text-[9px] text-slate-400 leading-relaxed mb-6 font-medium">
             Sistem Informasi SDM Terpadu <br/>
             <span className="text-[#003D79] font-bold cursor-pointer">PT Boston Trikora Mahardika</span>
           </p>
-          <div className="flex items-center justify-center gap-4 opacity-30 grayscale">
-             {/* Placeholder jika ada logo partner/sertifikasi */}
-          </div>
         </div>
 
       </div>
+
+      {/* MODAL POPUP: BANTUAN LOGIN */}
+      {showHelp && (
+        <>
+          <div 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[998]" 
+            onClick={() => setShowHelp(false)} 
+          />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[999] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* Header Modal */}
+            <div className="p-6 bg-[#003D79] text-white flex justify-between items-center">
+              <div>
+                <h3 className="font-black text-base tracking-tight">📖 Cara Login</h3>
+                <p className="text-blue-200 text-[9px] font-bold uppercase tracking-[0.2em] mt-1">Panduan Singkat</p>
+              </div>
+              <button 
+                onClick={() => setShowHelp(false)} 
+                className="bg-white/10 hover:bg-white/20 h-9 w-9 flex items-center justify-center rounded-full transition-colors text-lg"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Isi Bantuan */}
+            <div className="p-6 space-y-4">
+              
+              <div className="flex gap-3">
+                <div className="w-7 h-7 bg-blue-100 text-[#003D79] rounded-full flex items-center justify-center font-black text-xs shrink-0">1</div>
+                <div>
+                  <p className="text-xs font-black text-slate-800">Masukkan NRP Login</p>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Contoh: 123456</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-7 h-7 bg-blue-100 text-[#003D79] rounded-full flex items-center justify-center font-black text-xs shrink-0">2</div>
+                <div>
+                  <p className="text-xs font-black text-slate-800">Masukkan Password</p>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Untuk pertama kali: <span className="text-[#003D79] font-black">Password = NRP Anda</span></p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-7 h-7 bg-blue-100 text-[#003D79] rounded-full flex items-center justify-center font-black text-xs shrink-0">3</div>
+                <div>
+                  <p className="text-xs font-black text-slate-800">Pilih SITE tempat Anda bekerja</p>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Contoh: PPA-MLP</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-7 h-7 bg-blue-100 text-[#003D79] rounded-full flex items-center justify-center font-black text-xs shrink-0">4</div>
+                <div>
+                  <p className="text-xs font-black text-slate-800">Klik tombol LOG IN</p>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-100 pt-4 mt-4">
+                <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                  <p className="text-[10px] font-black text-amber-700 uppercase tracking-wider mb-2">❓ Lupa Password?</p>
+                  <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
+                    Hubungi <span className="font-black">HRGA Site</span> untuk reset password Anda.
+                  </p>
+                </div>
+
+                <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 mt-3">
+                  <p className="text-[10px] font-black text-rose-700 uppercase tracking-wider">⚠️ Info Penting</p>
+                  <p className="text-[11px] text-rose-800 font-medium mt-1 leading-relaxed">
+                    NRP tidak bisa diubah oleh siapapun.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer Modal */}
+            <div className="p-4 bg-slate-50 border-t border-slate-100 text-center">
+              <button 
+                onClick={() => setShowHelp(false)}
+                className="w-full bg-[#003D79] text-white py-3 rounded-2xl font-black text-[11px] tracking-[0.2em] uppercase active:scale-95 transition-all"
+              >
+                Mengerti
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
