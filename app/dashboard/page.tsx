@@ -987,24 +987,7 @@ function AbsensiClockView({ title }: any) {
 
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-700">
-      {announcement && (
-        <div className={`mb-8 overflow-hidden rounded-[2rem] shadow-2xl border-2 ${announcement.is_urgent ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
-          <div className="flex flex-col md:flex-row items-stretch">
-            {announcement.image_url && (
-              <div className="md:w-1/3 w-full bg-white flex items-center justify-center p-4 border-b md:border-b-0 md:border-r border-slate-100">
-                <img src={announcement.image_url} alt="Info" className="max-w-full max-h-56 object-contain rounded-2xl shadow-sm" />
-              </div>
-            )}
-            <div className="p-8 flex-1 flex flex-col justify-center">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-2xl">{announcement.is_urgent ? '🚨' : '📢'}</span>
-                <h3 className={`font-black text-xl tracking-tight ${announcement.is_urgent ? 'text-red-900' : 'text-blue-900'}`}>{announcement.title}</h3>
-              </div>
-              <p className="text-slate-700 text-sm font-medium leading-relaxed">{announcement.content}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {announcement && <AnnouncementCard announcement={announcement} />}
 
                   <div className="bg-slate-800/40 backdrop-blur-2xl text-white rounded-[1.5rem] md:rounded-[3rem] p-3 md:p-10 text-center shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] mb-4 md:mb-6 border border-slate-700/30 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-700/20 via-transparent to-slate-900/30 pointer-events-none"></div>
@@ -1108,6 +1091,124 @@ function AbsensiClockView({ title }: any) {
     </div>
   )
 }
+
+// ============ 📢 ANNOUNCEMENT CARD (Auto-Slide + Swipe) ============
+function AnnouncementCard({ announcement }: any) {
+  // Gabungkan images (array) + image_url (single legacy) → jadi 1 array
+  const images: string[] = Array.isArray(announcement.images) && announcement.images.length > 0
+    ? announcement.images
+    : announcement.image_url
+      ? [announcement.image_url]
+      : []
+
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [touchStartX, setTouchStartX] = useState<number | null>(null)
+
+  // Auto-slide setiap 4 detik (kalau > 1 gambar)
+  useEffect(() => {
+    if (images.length <= 1) return
+    const interval = setInterval(() => {
+      setCurrentIdx(prev => (prev + 1) % images.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [images.length])
+
+  // Swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX)
+  }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return
+    const diff = touchStartX - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        // Swipe kiri = next
+        setCurrentIdx(prev => (prev + 1) % images.length)
+      } else {
+        // Swipe kanan = prev
+        setCurrentIdx(prev => (prev - 1 + images.length) % images.length)
+      }
+    }
+    setTouchStartX(null)
+  }
+
+  return (
+    <div className={`mb-8 overflow-hidden rounded-[2rem] shadow-2xl border-2 ${announcement.is_urgent ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
+      <div className="flex flex-col md:flex-row items-stretch">
+        {images.length > 0 && (
+          <div
+            className="md:w-1/3 w-full bg-white relative border-b md:border-b-0 md:border-r border-slate-100"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Slider container */}
+            <div className="relative overflow-hidden aspect-video md:aspect-square">
+              {images.map((url: string, i: number) => (
+                <img
+                  key={i}
+                  src={url}
+                  alt={`Slide ${i + 1}`}
+                  className={`absolute inset-0 w-full h-full object-contain p-4 transition-opacity duration-700 ${
+                    i === currentIdx ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Navigasi Prev/Next (hanya jika > 1 gambar) */}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCurrentIdx(prev => (prev - 1 + images.length) % images.length)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white w-8 h-8 rounded-full shadow-lg font-black text-slate-700 backdrop-blur"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={() => setCurrentIdx(prev => (prev + 1) % images.length)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white w-8 h-8 rounded-full shadow-lg font-black text-slate-700 backdrop-blur"
+                >
+                  ›
+                </button>
+
+                {/* Dot indicators */}
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/30 backdrop-blur px-2 py-1 rounded-full">
+                  {images.map((_: any, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentIdx(i)}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${
+                        i === currentIdx ? 'bg-white w-4' : 'bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* Counter */}
+                <div className="absolute top-2 right-2 bg-black/50 text-white text-[9px] font-black px-2 py-1 rounded-full backdrop-blur">
+                  {currentIdx + 1}/{images.length}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="p-8 flex-1 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-2xl">{announcement.is_urgent ? '🚨' : '📢'}</span>
+            <h3 className={`font-black text-xl tracking-tight ${announcement.is_urgent ? 'text-red-900' : 'text-blue-900'}`}>
+              {announcement.title}
+            </h3>
+          </div>
+          <p className="text-slate-700 text-sm font-medium leading-relaxed whitespace-pre-line">
+            {announcement.content}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 
 // ============ 📊 TABLE VIEW ============
 function TableView({ data, onReload }: any) {
@@ -2520,11 +2621,18 @@ function GlobalConfigView() {
   const [refreshing, setRefreshing] = useState(false)
 
   // State Broadcast
-  const [broadcastForm, setBroadcastForm] = useState({
+  const [broadcastForm, setBroadcastForm] = useState<{
+    judul: string
+    pesan: string
+    is_urgent: boolean
+    images: string[]
+  }>({
     judul: '',
     pesan: '',
-    is_urgent: false
+    is_urgent: false,
+    images: []
   })
+  const [uploadingImg, setUploadingImg] = useState(false)
   const [broadcastLoading, setBroadcastLoading] = useState(false)
   const [broadcastMsg, setBroadcastMsg] = useState<{
     type: string; text: string
@@ -2563,9 +2671,20 @@ function GlobalConfigView() {
 
   async function handleBroadcast(e: React.FormEvent) {
     e.preventDefault()
-    if (!broadcastForm.judul || !broadcastForm.pesan) return
+    console.log('🔍 [BROADCAST] Tombol KIRIM di-klik!')
+    console.log('🔍 [BROADCAST] Form data:', broadcastForm)
+    
+    // Minimal harus ada salah satu: judul, pesan, atau gambar
+    if (!broadcastForm.judul && !broadcastForm.pesan && broadcastForm.images.length === 0) {
+      console.log('❌ [BROADCAST] Semua kosong, batal kirim')
+      alert('⚠️ Minimal isi salah satu: Judul, Pesan, atau Gambar!')
+      return
+    }
+    
     setBroadcastLoading(true)
     setBroadcastMsg(null)
+    console.log('🔍 [BROADCAST] Loading state = TRUE, mulai kirim ke server...')
+    
     try {
       const res = await fetch('/api/system-config', {
         method: 'POST',
@@ -2575,17 +2694,28 @@ function GlobalConfigView() {
           payload: broadcastForm
         })
       })
+      
+      console.log('🔍 [BROADCAST] Response status:', res.status)
       const json = await res.json()
+      console.log('🔍 [BROADCAST] Response body:', json)
+      
       if (res.ok) {
-        setBroadcastMsg({ type: 'ok', text: json.message })
-        setBroadcastForm({ judul: '', pesan: '', is_urgent: false })
+        console.log('✅ [BROADCAST] SUKSES!')
+        setBroadcastMsg({ type: 'ok', text: json.message || '✅ Broadcast berhasil dikirim' })
+        alert('✅ Broadcast berhasil dikirim!')
+        setBroadcastForm({ judul: '', pesan: '', is_urgent: false, images: [] })
       } else {
-        setBroadcastMsg({ type: 'err', text: '❌ ' + json.error })
+        console.log('❌ [BROADCAST] ERROR dari server:', json.error)
+        setBroadcastMsg({ type: 'err', text: '❌ ' + (json.error || 'Unknown error') })
+        alert('❌ Gagal: ' + (json.error || 'Unknown error'))
       }
-    } catch {
-      setBroadcastMsg({ type: 'err', text: '❌ Koneksi bermasalah' })
+    } catch (err: any) {
+      console.error('❌ [BROADCAST] Exception:', err)
+      setBroadcastMsg({ type: 'err', text: '❌ Koneksi bermasalah: ' + err.message })
+      alert('❌ Koneksi bermasalah: ' + err.message)
     } finally {
       setBroadcastLoading(false)
+      console.log('🔍 [BROADCAST] Loading state = FALSE, selesai proses')
     }
   }
 
@@ -2765,14 +2895,13 @@ function GlobalConfigView() {
             </div>
           </button>
 
-          {/* Input Judul */}
+          {/* Input Judul (Opsional) */}
           <div>
             <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
-              Judul Notifikasi
+              Judul Notifikasi <span className="text-slate-300">(opsional)</span>
             </label>
             <input
               type="text"
-              required
               value={broadcastForm.judul}
               onChange={e =>
                 setBroadcastForm(f => ({ ...f, judul: e.target.value }))
@@ -2782,13 +2911,12 @@ function GlobalConfigView() {
             />
           </div>
 
-          {/* Input Pesan */}
+          {/* Input Pesan (Opsional) */}
           <div>
             <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
-              Isi Pesan
+              Isi Pesan <span className="text-slate-300">(opsional)</span>
             </label>
             <textarea
-              required
               value={broadcastForm.pesan}
               onChange={e =>
                 setBroadcastForm(f => ({ ...f, pesan: e.target.value }))
@@ -2797,6 +2925,101 @@ function GlobalConfigView() {
               rows={4}
               className="w-full p-4 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-[#003D79] focus:bg-white outline-none transition-all resize-none"
             />
+          </div>
+
+          {/* Upload Multi Gambar (Max 10) */}
+          <div>
+            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+              📷 Lampiran Gambar (Opsional, Max 10)
+              <span className="ml-2 text-blue-500">
+                {broadcastForm.images.length}/10
+              </span>
+            </label>
+
+            <div className="p-5 border-4 border-dashed border-slate-100 rounded-2xl bg-slate-50/50 text-center relative">
+              {broadcastForm.images.length < 10 && (
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files || [])
+                    if (files.length === 0) return
+
+                    const remaining = 10 - broadcastForm.images.length
+                    const toUpload = files.slice(0, remaining)
+
+                    setUploadingImg(true)
+                    try {
+                      for (const file of toUpload) {
+                        const fd = new FormData()
+                        fd.append('file', file)
+                        const res = await fetch('/api/announcements/upload', {
+                          method: 'POST',
+                          body: fd
+                        })
+                        const d = await res.json()
+                        if (res.ok && d.url) {
+                          setBroadcastForm(f => ({
+                            ...f,
+                            images: [...f.images, d.url]
+                          }))
+                        }
+                      }
+                    } finally {
+                      setUploadingImg(false)
+                      // Reset input agar bisa upload file yg sama lagi
+                      e.target.value = ''
+                    }
+                  }}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+              )}
+
+              {uploadingImg ? (
+                <p className="text-blue-500 font-black text-xs animate-pulse py-4">
+                  ⏳ MENGUNGGAH GAMBAR...
+                </p>
+              ) : broadcastForm.images.length === 0 ? (
+                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest py-4">
+                  Klik untuk pilih gambar (bisa multi-select)
+                </p>
+              ) : (
+                <p className="text-emerald-600 font-black text-[10px] uppercase tracking-widest py-2">
+                  ✅ {broadcastForm.images.length} gambar terupload
+                  {broadcastForm.images.length < 10 && ' • Klik lagi untuk tambah'}
+                </p>
+              )}
+            </div>
+
+            {/* Preview Thumbnails */}
+            {broadcastForm.images.length > 0 && (
+              <div className="grid grid-cols-5 gap-2 mt-3">
+                {broadcastForm.images.map((url, i) => (
+                  <div key={i} className="relative group aspect-square">
+                    <img
+                      src={url}
+                      className="w-full h-full object-cover rounded-xl border-2 border-slate-100"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setBroadcastForm(f => ({
+                          ...f,
+                          images: f.images.filter((_, idx) => idx !== i)
+                        }))
+                      }
+                      className="absolute -top-1 -right-1 bg-rose-500 text-white w-5 h-5 rounded-full text-[10px] font-black shadow-lg opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      ✕
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] font-black text-center py-0.5 rounded-b-xl">
+                      #{i + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <button

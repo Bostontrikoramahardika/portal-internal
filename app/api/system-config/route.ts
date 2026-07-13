@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
 
     // --- AKSI 1: BROADCAST NOTIFIKASI ---
     if (action === 'broadcast') {
-      const { judul, pesan, is_urgent } = payload
+      const { judul, pesan, is_urgent, images } = payload
       if (!judul || !pesan) {
         return NextResponse.json(
           { error: 'Judul dan pesan wajib diisi' },
@@ -123,13 +123,15 @@ export async function POST(req: NextRequest) {
         )
       }
 
+      const imageArray = Array.isArray(images) ? images : []
       const { error } = await supabase.from('announcements').insert({
         title: judul,
         content: pesan,
         is_urgent: is_urgent || false,
         created_by: session.nrp,
-        target_site: 'ALL',
-        is_active: true,
+        active: true,
+        image_url: imageArray.length > 0 ? imageArray[0] : null,
+        images: imageArray,
       })
 
       if (error) throw error

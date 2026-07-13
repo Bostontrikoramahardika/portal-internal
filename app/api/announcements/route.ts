@@ -2,20 +2,37 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/app/lib/supabase'
 import { getSession } from '@/app/lib/auth'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+
 export async function GET() {
-  const today = new Date().toISOString().split('T')[0]
+  try {
+    const today = new Date().toISOString().split('T')[0]
 
-  const { data, error } = await supabase
-    .from('announcements')
-    .select('*')
-    .eq('active', true)
-    .or(`expires_at.is.null,expires_at.gte.${today}`)
-    .order('created_at', { ascending: false })
-    .limit(1)
+    // Hanya ambil 1 pengumuman terakhir yang ACTIVE
+    const { data, error } = await supabase
+      .from('announcements')
+      .select('*')
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+      .limit(20) // Ambil agak banyak dulu untuk di-filter manual di bawah
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('Announcements error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
-  return NextResponse.json({ announcement: data?.[0] || null })
+    // Filter manual: expires_at harus null ATAU >= hari ini
+    const validData = (data || []).filter((a: any) => {
+      if (!a.expires_at) return true
+      return new Date(a.expires_at) >= new Date(today)
+    })
+
+    // Return item pertama yang valid
+    return NextResponse.json({ announcement: validData[0] || null })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {
