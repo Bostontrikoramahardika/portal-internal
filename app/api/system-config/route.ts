@@ -1,68 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getSession } from '@/app/lib/auth'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { supabase } from '@/app/lib/supabase'
 
 // ============================================================
 // GET: Ambil statistik live user online + config global
 // ============================================================
 export async function GET(req: NextRequest) {
-  const session = await getSession()
+  const token = req.cookies.get('session_token')?.value
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const session = await getSession(token)
   if (!session?.is_super_admin) {
     return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
   }
 
   try {
-    // 1. Hitung user online (session aktif dalam 15 menit terakhir)
-    const fifteenMinutesAgo = new Date(
-      Date.now() - 15 * 60 * 1000
-    ).toISOString()
+    // User dianggap ONLINE jika session belum expired
+    // DAN login dalam 8 jam terakhir
+    const now = new Date().toISOString()
+    const eightHoursAgo = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString()
 
+    // 1. Ambil semua session yang masih aktif
     const { data: activeSessions, error: sessionError } = await supabase
       .from('sessions')
-      .select('nrp, last_active, expires_at')
-      .gte('last_active', fifteenMinutesAgo)
+       .select('nrp, created_at, expires_at')
+      .gte('expires_at', now)
+      .gte('created_at', eightHoursAgo)
+      .not('nrp', 'is', null)
 
     if (sessionError) throw sessionError
 
-    // 2. Ambil detail karyawan yang online
-    const activeNrps = activeSessions?.map((s: any) => s.nrp) || []
+    // 2. Ambil detail karyawan yang online (unique NRP)
+    const uniqueNrps = Array.from(
+      new Set((activeSessions || []).map((s: any) => s.nrp).filter(Boolean))
+    )
 
     let onlineUsers: any[] = []
-    if (activeNrps.length > 0) {
+    if (uniqueNrps.length > 0) {
       const { data: empData } = await supabase
         .from('employees')
         .select('nrp, nama, jabatan, site')
-        .in('nrp', activeNrps)
+        .in('nrp', uniqueNrps)
 
-      // Gabungkan data session + karyawan
       onlineUsers = (empData || []).map((emp: any) => {
-        const sess = activeSessions?.find((s: any) => s.nrp === emp.nrp)
+        const sess = (activeSessions || [])
+          .filter((s: any) => s.nrp === emp.nrp)
+          .sort((a: any, b: any) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+          )[0]
         return {
           ...emp,
-          last_active: sess?.last_active || null
+          last_active: sess?.created_at || null
         }
+      })
+
+      onlineUsers.sort((a: any, b: any) => {
+        const timeA = a.last_active ? new Date(a.last_active).getTime() : 0
+        const timeB = b.last_active ? new Date(b.last_active).getTime() : 0
+        return timeB - timeA
       })
     }
 
-    // 3. Hitung total karyawan
+    // 3. Hitung total karyawan aktif
     const { count: totalKaryawan } = await supabase
       .from('employees')
       .select('*', { count: 'exact', head: true })
       .eq('status_karyawan', 'Aktif')
 
-    // 4. Hitung total session hari ini
+    // 4. Hitung total sesi login hari ini
     const todayStart = new Date()
     todayStart.setHours(0, 0, 0, 0)
 
     const { count: sessionHariIni } = await supabase
       .from('sessions')
       .select('*', { count: 'exact', head: true })
-      .gte('last_active', todayStart.toISOString())
+      .gte('created_at', todayStart.toISOString())
+      .not('nrp', 'is', null)
 
     return NextResponse.json({
       stats: {
@@ -85,7 +100,11 @@ export async function GET(req: NextRequest) {
 // POST: Eksekusi aksi (broadcast / force logout)
 // ============================================================
 export async function POST(req: NextRequest) {
-  const session = await getSession()
+  const token = req.cookies.get('session_token')?.value
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const session = await getSession(token)
   if (!session?.is_super_admin) {
     return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
   }
@@ -104,13 +123,12 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      // Simpan ke tabel announcements sebagai broadcast global
       const { error } = await supabase.from('announcements').insert({
         title: judul,
         content: pesan,
         is_urgent: is_urgent || false,
         created_by: session.nrp,
-        target_site: 'ALL', // Broadcast ke semua site
+        target_site: 'ALL',
         is_active: true,
       })
 
@@ -124,11 +142,11 @@ export async function POST(req: NextRequest) {
 
     // --- AKSI 2: FORCE LOGOUT SEMUA USER ---
     if (action === 'force_logout_all') {
-      // Hapus semua session kecuali milik Ricky (agar tidak ikut ter-logout)
-      const { error, count } = await supabase
+      const { error } = await supabase
         .from('sessions')
         .delete()
-        .neq('nrp', session.nrp) // Jangan hapus session Ricky
+        .neq('nrp', session.nrp)
+        .not('nrp', 'is', null)
 
       if (error) throw error
 

@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
+import { AuthProvider } from '@/app/lib/AuthContext'
 
 interface User {
   nrp: string
@@ -417,7 +418,11 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-                <div className="p-4 lg:p-6 pt-16 lg:pt-6">{children}</div>
+                <div className="p-4 lg:p-6 pt-16 lg:pt-6">
+  <AuthProvider user={{ ...user, is_super_admin: isSuperAdmin }} permissions={userPermissions}>
+    {children}
+  </AuthProvider>
+</div>
       </main>
 
       {/* BOTTOM NAVIGATION MOBILE */}
