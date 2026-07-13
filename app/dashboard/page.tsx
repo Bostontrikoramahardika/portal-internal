@@ -120,6 +120,8 @@ function DashboardContent() {
   if (!data) return null
 
   // RENDERER LOGIC (SATU DEFINISI)
+  // Renderer untuk Tab Rahasia Ricky
+  if (data.type === 'permission_manager') return <PermissionManagerView data={data} onReload={loadData} />
   if (data.type === 'identity_view') return <IdentityView data={data.data} />
   if (data.type === 'dashboard') return <DashboardView title={data.title} data={data} />
   if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} data={data} />

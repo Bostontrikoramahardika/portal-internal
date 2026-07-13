@@ -175,6 +175,21 @@ const TAB_CONFIG = [
       )
     }
   },
+
+    // TAB 9: SYSTEM CONFIG (RAHASIA - HANYA UNTUK RICKY)
+  {
+    key: 'system_config',
+    label: 'System',
+    icon: '⚙️',
+    roles: [], // Kosongkan karena kita pakai logic is_super_admin
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'manage_permissions' || 
+        m.menu_key === 'system_audit' ||
+        m.menu_key === 'config_global'
+      )
+    }
+  },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -232,6 +247,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       const superAdminStatus = data.user?.is_super_admin || false
       setIsSuperAdmin(superAdminStatus)
       setUserPermissions(data.permissions || [])
+      setIsSuperAdmin(data.user?.is_super_admin || false)
 
       const menuRes = await fetch('/api/menus')
       const menuData = await menuRes.json()
@@ -240,10 +256,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       // PERBAIKAN FILTER: Jika Super Admin, loloskan semua menu yang active. 
       // Jika bukan, tetap pakai filter role lama.
       const filtered = menusArray.filter((m: MenuItem) => {
-        if (m.active === false) return false
-        if (superAdminStatus) return true 
-        return roles.includes(m.role)
-      })
+  if (m.active === false) return false
+  if (data.user?.is_super_admin) return true // Bapak lolos filter role
+  return roles.includes(m.role)
+})
       
       setMenus(filtered)
     } catch (err) { 
@@ -304,10 +320,14 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (loading || !user) return <div className="min-h-screen bg-slate-100 flex items-center justify-center animate-pulse text-slate-500">Memuat...</div>
 
-  const visibleTabs = TAB_CONFIG.filter(tab => {
-    if (isSuperAdmin) return true // Super Admin bisa lihat semua TAB
-    return tab.roles.some(r => userRoles.includes(r))
-  })
+    const visibleTabs = TAB_CONFIG.filter(tab => {
+    // Jika tab adalah system_config, HANYA tampil jika isSuperAdmin true
+    if (tab.key === 'system_config') return isSuperAdmin;
+    
+    // Untuk tab lainnya, admin bypass atau cek role seperti biasa
+    if (isSuperAdmin) return true;
+    return tab.roles.some(r => userRoles.includes(r));
+  });
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] flex relative overflow-hidden">
