@@ -25,13 +25,73 @@ interface MenuItem {
   active?: boolean
 }
 
+// ═══════════════════════════════════════════════════
+// 🎯 ROLE GROUPING v2.0 (14 role baru + legacy)
+// ═══════════════════════════════════════════════════
+
+// Semua role yang bisa akses aplikasi (untuk tab basic)
+const ALL_ROLES = [
+  // Role baru
+  'super_admin', 'director_ops', 'business_dev', 'manager_ops',
+  'hr_ho', 'spv_she_ho', 'pjo_site', 'she_site', 'hr_site',
+  'gl_produksi', 'gl_plant', 'admin_site', 'admin_plant', 'employee',
+  // Legacy
+  'karyawan', 'atasan', 'pjo', 'admin', 'hrga',
+  'hrga_oprek', 'hrga_site', 'hrga_pusat'
+]
+
+// Role yang punya bawahan (untuk tab TIM)
+const TEAM_LEADER_ROLES = [
+  'super_admin', 'director_ops', 'manager_ops', 'business_dev',
+  'hr_ho', 'spv_she_ho', 'pjo_site', 'she_site', 'hr_site',
+  'gl_produksi', 'gl_plant', 'admin_site', 'admin_plant',
+  // Legacy
+  'atasan', 'pjo', 'admin', 'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat'
+]
+
+// Role yang bisa approve
+const APPROVER_ROLES = [
+  'super_admin', 'hr_ho', 'pjo_site', 'hr_site',
+  'gl_produksi', 'gl_plant',
+  // Legacy
+  'atasan', 'pjo', 'hrga', 'admin', 'admin_site', 'hrga_site', 'hrga_oprek'
+]
+
+// Role HO Executive (monitor only, view all)
+const HO_EXECUTIVE_ROLES = [
+  'director_ops', 'business_dev', 'manager_ops', 'spv_she_ho'
+]
+
+// Role yang bisa kelola master data
+const MASTER_DATA_ROLES = [
+  'super_admin', 'hr_ho', 'hr_site',
+  // Legacy
+  'hrga', 'admin', 'hrga_oprek', 'hrga_site', 'hrga_pusat'
+]
+
+// Role yang bisa import excel
+const IMPORT_ROLES = [
+  'super_admin', 'hr_ho', 'hr_site',
+  // Legacy
+  'hrga', 'admin', 'hrga_oprek', 'hrga_site', 'hrga_pusat'
+]
+
+// Role yang bisa lihat data expired
+const DATA_MONITOR_ROLES = [
+  'super_admin', 'director_ops', 'business_dev', 'manager_ops',
+  'hr_ho', 'spv_she_ho', 'pjo_site', 'she_site', 'hr_site',
+  'admin_site', 'admin_plant',
+  // Legacy
+  'atasan', 'pjo', 'admin', 'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat'
+]
+
 const TAB_CONFIG = [
   // TAB 1: ABSENSI
   {
     key: 'absensi',
     label: 'Absensi',
     icon: '⏰',
-    roles: ['karyawan', 'atasan', 'pjo', 'admin', 'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat', 'admin_site', 'admin_plant'],
+    roles: ALL_ROLES,
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'absensi_saya' ||
@@ -48,7 +108,7 @@ const TAB_CONFIG = [
     key: 'pengajuan',
     label: 'Pengajuan',
     icon: '📋',
-    roles: ['karyawan', 'atasan', 'pjo', 'admin', 'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat', 'admin_site', 'admin_plant'],
+    roles: ALL_ROLES,
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'form_cuti' ||
@@ -60,16 +120,16 @@ const TAB_CONFIG = [
     }
   },
 
-  // TAB 3: DATA (Update v1.6.0: Disederhanakan hanya untuk monitoring)
+  // TAB 3: DATA
   {
     key: 'data',
     label: 'Data',
     icon: '📁',
-    roles: ['atasan', 'pjo', 'admin', 'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat', 'admin_site', 'admin_plant'],
+    roles: DATA_MONITOR_ROLES,
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'monitoring_expired' ||
-        m.menu_key === 'roster_saya' // Roster tetap di sini karena bersifat jadwal operasional
+        m.menu_key === 'roster_saya'
       )
     }
   },
@@ -79,7 +139,7 @@ const TAB_CONFIG = [
     key: 'data_bawahan',
     label: 'Tim',
     icon: '👥',
-    roles: ['atasan', 'pjo', 'admin', 'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat', 'admin_site', 'admin_plant'],
+    roles: TEAM_LEADER_ROLES,
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'data_bawahan' ||
@@ -97,10 +157,10 @@ const TAB_CONFIG = [
     key: 'approval',
     label: 'Approval',
     icon: '✅',
-    roles: ['atasan', 'pjo', 'hrga', 'admin', 'admin_site', 'hrga_site', 'hrga_oprek'],
+    roles: APPROVER_ROLES,
     customMatch: (m: MenuItem) => {
       return (
-        m.menu_key === 'approval_center' ||    // ✨ BARU
+        m.menu_key === 'approval_center' ||
         m.menu_key === 'approval_pjo' ||
         m.menu_key === 'approval_atasan' ||
         m.menu_key === 'approval_cuti' ||
@@ -116,11 +176,12 @@ const TAB_CONFIG = [
     key: 'kelola_hrga',
     label: 'Kelola',
     icon: '🛠️',
-    roles: ['hrga', 'admin', 'hrga_oprek', 'hrga_site', 'hrga_pusat'],
+    roles: MASTER_DATA_ROLES,
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'kelola_karyawan' ||
         m.menu_key === 'kelola_roles' ||
+        m.menu_key === 'role_manager' ||
         m.menu_key === 'setting_site' ||
         m.menu_key === 'kelola_kpi' ||
         m.menu_key === 'kelola_apd' ||
@@ -133,7 +194,8 @@ const TAB_CONFIG = [
         m.menu_key === 'kelola_pengumuman' ||
         m.menu_key === 'kelola_bobot_kpi' ||
         m.menu_key === 'kelola_site_master' ||
-        m.menu_key === 'kelola_job_kategori'
+        m.menu_key === 'kelola_job_kategori' ||
+        m.menu_key === 'data_sakit'
       )
     }
   },
@@ -143,7 +205,7 @@ const TAB_CONFIG = [
     key: 'import_export',
     label: 'Import',
     icon: '📥',
-    roles: ['hrga', 'admin', 'hrga_oprek', 'hrga_site', 'hrga_pusat'],
+    roles: IMPORT_ROLES,
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'import_karyawan' ||
@@ -162,12 +224,12 @@ const TAB_CONFIG = [
     }
   },
 
-  // TAB 8: PROFILE (Pusat Identitas Karyawan)
+  // TAB 8: PROFILE
   {
     key: 'profile',
     label: 'Profile',
     icon: '👤',
-    roles: ['karyawan', 'atasan', 'pjo', 'admin', 'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat', 'admin_site', 'admin_plant'],
+    roles: ALL_ROLES,
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'dashboard' ||
@@ -178,18 +240,18 @@ const TAB_CONFIG = [
     }
   },
 
-    // TAB 9: SYSTEM CONFIG (RAHASIA - HANYA UNTUK RICKY)
+  // TAB 9: SYSTEM (Ricky only)
   {
     key: 'system_config',
     label: 'System',
     icon: '⚙️',
-    roles: [], // Kosongkan karena kita pakai logic is_super_admin
+    roles: [],
     customMatch: (m: MenuItem) => {
       return (
-        m.menu_key === 'manage_permissions' || 
-m.menu_key === 'system_audit' ||
-m.menu_key === 'config_global' ||
-m.menu_key === 'reset_password_admin'
+        m.menu_key === 'manage_permissions' ||
+        m.menu_key === 'system_audit' ||
+        m.menu_key === 'config_global' ||
+        m.menu_key === 'reset_password_admin'
       )
     }
   },

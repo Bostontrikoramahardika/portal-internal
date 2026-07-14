@@ -287,35 +287,82 @@ export async function GET(request: NextRequest) {
 
 
     // ==========================================
-    // 🎯 CASE B.2: PENILAIAN BAWAHAN
+    // 🎯 CASE B.2: PENILAIAN BAWAHAN (v2.0 - Support role baru)
     // ==========================================
     if (menuKey === 'penilaian_bawahan') {
-      const userJabatan = (session.jabatan || '').toUpperCase();
-      const userDept = (session.departemen || '').toUpperCase();
-
       let finalEmps: any[] = [];
 
-      if (isHrgaAll || isHrgaSite) {
-        let q = supabase.from('employees').select('nrp, nama, jabatan, site, departemen').eq('status_karyawan', 'Aktif');
-        if (isHrgaSite) q = q.eq('site', userSite);
-        const { data } = await q;
+      // Role baru: cek berdasarkan hierarchy
+      const isPJO = rolesLower.some((r: string) => ['pjo_site', 'pjo'].includes(r));
+      const isGL = rolesLower.some((r: string) => ['gl_produksi', 'gl_plant', 'atasan'].includes(r));
+      const isHRSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site'].includes(r));
+      const isHRHO = rolesLower.some((r: string) => ['hr_ho', 'hrga', 'hrga_pusat', 'admin'].includes(r));
+
+      // ─── PRIORITAS 1: Super Admin / HR HO → semua karyawan ───
+      if (isSuperAdmin || isHRHO) {
+        const { data } = await supabase
+          .from('employees')
+          .select('nrp, nama, jabatan, site, departemen')
+          .eq('status_karyawan', 'Aktif');
         finalEmps = data || [];
-      } 
-      else if (userJabatan.includes('GL') || userDept.includes('PLANT') || isAdminPlant) {
+      }
+      // ─── PRIORITAS 2: HR Site → semua di site sendiri ───
+      else if (isHRSite) {
         const { data } = await supabase
           .from('employees')
           .select('nrp, nama, jabatan, site, departemen')
           .eq('status_karyawan', 'Aktif')
-          .eq('site', userSite)
-          .or(`departemen.ilike.%plant%,jabatan.ilike.%mechanic%,jabatan.ilike.%mekanik%,jabatan.ilike.%welder%,jabatan.ilike.%helper%`);
+          .eq('site', userSite);
         finalEmps = data || [];
-      } 
-      else {
-        const fieldMatrix = rolesLower.includes('pjo') ? 'pjo_nrp' : 'atasan_nrp';
-        const { data: matrix } = await supabase.from('approval_matrix').select('employee_nrp').eq(fieldMatrix, session.nrp).eq('active', true);
+      }
+      // ─── PRIORITAS 3: PJO → semua bawahan via pjo_nrp ───
+      else if (isPJO) {
+        const { data: matrix } = await supabase
+          .from('approval_matrix')
+          .select('employee_nrp')
+          .eq('pjo_nrp', session.nrp)
+          .eq('active', true);
         const nrps = (matrix || []).map((m: any) => m.employee_nrp);
         if (nrps.length > 0) {
-          const { data } = await supabase.from('employees').select('nrp, nama, jabatan, site, departemen').in('nrp', nrps).eq('status_karyawan', 'Aktif');
+          const { data } = await supabase
+            .from('employees')
+            .select('nrp, nama, jabatan, site, departemen')
+            .in('nrp', nrps)
+            .eq('status_karyawan', 'Aktif');
+          finalEmps = data || [];
+        }
+      }
+      // ─── PRIORITAS 4: GL (Plant/Produksi) → bawahan via atasan_nrp ───
+      else if (isGL) {
+        const { data: matrix } = await supabase
+          .from('approval_matrix')
+          .select('employee_nrp')
+          .eq('atasan_nrp', session.nrp)
+          .eq('active', true);
+        const nrps = (matrix || []).map((m: any) => m.employee_nrp);
+        if (nrps.length > 0) {
+          const { data } = await supabase
+            .from('employees')
+            .select('nrp, nama, jabatan, site, departemen')
+            .in('nrp', nrps)
+            .eq('status_karyawan', 'Aktif');
+          finalEmps = data || [];
+        }
+      }
+      // ─── FALLBACK: Cek matrix apapun ───
+      else {
+        const { data: matrix } = await supabase
+          .from('approval_matrix')
+          .select('employee_nrp')
+          .or(`atasan_nrp.eq.${session.nrp},pjo_nrp.eq.${session.nrp}`)
+          .eq('active', true);
+        const nrps = (matrix || []).map((m: any) => m.employee_nrp);
+        if (nrps.length > 0) {
+          const { data } = await supabase
+            .from('employees')
+            .select('nrp, nama, jabatan, site, departemen')
+            .in('nrp', nrps)
+            .eq('status_karyawan', 'Aktif');
           finalEmps = data || [];
         }
       }

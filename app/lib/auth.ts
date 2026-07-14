@@ -4,14 +4,40 @@ import { supabase } from './supabase'
 import { v4 as uuidv4 } from 'uuid'
 
 // Priority role tertinggi ke terendah (untuk primaryRole)
+// v2.0 - Updated sesuai struktur organisasi BTM
 const ROLE_PRIORITY = [
-  'hrga_oprek',   // Super Admin
-  'hrga_pusat',   // HRGA Multi-Site
-  'hrga_site',    // HRGA Per Site
-  'hrga',         // Legacy
+  // ── Level 0: Super Admin ──
+  'super_admin',
+
+  // ── Level 1: HO Executive ──
+  'director_ops',
+  'business_dev',
+
+  // ── Level 2: HO Staff ──
+  'hr_ho',
+  'manager_ops',
+  'spv_she_ho',
+
+  // ── Level 3: Site Leader ──
+  'pjo_site',
+  'hr_site',
+  'she_site',
+
+  // ── Level 4: Team Leader ──
+  'gl_produksi',
+  'gl_plant',
+
+  // ── Level 5: Karyawan ──
+  'employee',
+
+  // ── Legacy (backward compat) ──
+  'hrga_oprek',
+  'hrga_pusat',
+  'hrga_site',
+  'hrga',
   'admin_site',
   'admin_plant',
-  'admin',        // Legacy
+  'admin',
   'pjo',
   'atasan',
   'karyawan'

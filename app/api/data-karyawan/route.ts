@@ -1,6 +1,8 @@
+// app/api/data-karyawan/route.ts (v2.0 - Fix TypeScript + Support role baru)
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getSession } from '../../lib/auth'
+import { getSession } from '@/app/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,14 +11,17 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Helper: cek role
-async function getUserRole(nrp: string): Promise<string[]> {
-  const { data } = await supabase
-    .from('roles')
-    .select('role')
-    .eq('nrp', nrp)
-    .eq('active', true)
-  return data?.map((r: any) => r.role) || []
+// Role yang bisa CRUD data karyawan (BPJS, MCU, SIMPER)
+const HR_ROLES = [
+  'super_admin', 'hr_ho', 'hr_site',
+  // Legacy
+  'hrga', 'hrga_oprek', 'hrga_pusat', 'hrga_site', 'admin'
+]
+
+// Helper: cek apakah user boleh CRUD
+function canManageData(session: any): boolean {
+  if (session?.is_super_admin) return true
+  return (session?.roles || []).some((r: string) => HR_ROLES.includes(r))
 }
 
 // Helper: enrich dengan nama karyawan
@@ -27,19 +32,22 @@ async function enrichNama(nrpList: string[]): Promise<Record<string, string>> {
     .select('nrp, nama')
     .in('nrp', nrpList)
   const map: Record<string, string> = {}
-  data?.forEach((e: any) => { map[e.nrp] = e.nama })
+  ;(data || []).forEach((e: any) => { map[e.nrp] = e.nama })
   return map
 }
 
 // ==================== GET ====================
 export async function GET(req: NextRequest) {
-  const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const token = req.cookies.get('session_token')?.value
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const session = await getSession(token)
+  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
-  const table = searchParams.get('table') // 'bpjs' | 'mcu' | 'simper'
-  const nrp = searchParams.get('nrp') // filter by NRP (optional)
-  const id = searchParams.get('id') // get by ID (optional)
+  const table = searchParams.get('table')
+  const nrp = searchParams.get('nrp')
+  const id = searchParams.get('id')
   const checkExpired = searchParams.get('check_expired') === 'true'
 
   if (!table || !['bpjs', 'mcu', 'simper'].includes(table)) {
@@ -47,7 +55,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    let query = supabase.from(table).select('*').order('created_at', { ascending: false })
+    let query: any = supabase.from(table).select('*').order('created_at', { ascending: false })
 
     if (id) query = query.eq('id', id).single()
     if (nrp) query = query.eq('nrp', nrp)
@@ -57,7 +65,7 @@ export async function GET(req: NextRequest) {
 
     // Enrich dengan nama karyawan
     if (data && Array.isArray(data) && data.length > 0) {
-      const nrps = [...new Set(data.map((d: any) => d.nrp).filter(Boolean))]
+      const nrps: string[] = [...new Set(data.map((d: any) => d.nrp).filter(Boolean) as string[])]
       const namaMap = await enrichNama(nrps)
       data.forEach((d: any) => { d._nama_karyawan = namaMap[d.nrp] || d.nama_karyawan || d.nrp })
     } else if (data && !Array.isArray(data)) {
@@ -87,11 +95,13 @@ export async function GET(req: NextRequest) {
 
 // ==================== POST ====================
 export async function POST(req: NextRequest) {
-  const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const token = req.cookies.get('session_token')?.value
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const roles = await getUserRole(session.nrp)
-  if (!roles.includes('hrga')) {
+  const session = await getSession(token)
+  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+
+  if (!canManageData(session)) {
     return NextResponse.json({ error: 'Hanya HRGA yang bisa menambah data' }, { status: 403 })
   }
 
@@ -103,7 +113,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Auto-fill nama_karyawan
     if (data.nrp && !data.nama_karyawan) {
       const namaMap = await enrichNama([data.nrp])
       data.nama_karyawan = namaMap[data.nrp] || null
@@ -124,11 +133,13 @@ export async function POST(req: NextRequest) {
 
 // ==================== PUT ====================
 export async function PUT(req: NextRequest) {
-  const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const token = req.cookies.get('session_token')?.value
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const roles = await getUserRole(session.nrp)
-  if (!roles.includes('hrga')) {
+  const session = await getSession(token)
+  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+
+  if (!canManageData(session)) {
     return NextResponse.json({ error: 'Hanya HRGA yang bisa edit data' }, { status: 403 })
   }
 
@@ -163,11 +174,13 @@ export async function PUT(req: NextRequest) {
 
 // ==================== DELETE ====================
 export async function DELETE(req: NextRequest) {
-  const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const token = req.cookies.get('session_token')?.value
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const roles = await getUserRole(session.nrp)
-  if (!roles.includes('hrga')) {
+  const session = await getSession(token)
+  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+
+  if (!canManageData(session)) {
     return NextResponse.json({ error: 'Hanya HRGA yang bisa hapus data' }, { status: 403 })
   }
 
