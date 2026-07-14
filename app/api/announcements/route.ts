@@ -59,3 +59,29 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ data, message: 'Pengumuman berhasil dibuat' })
 }
+
+export async function DELETE(req: NextRequest) {
+  const token = req.cookies.get('session_token')?.value
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const session = await getSession(token)
+  if (!session?.is_super_admin) {
+    return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
+  }
+
+  try {
+    const { id } = await req.json()
+    if (!id) return NextResponse.json({ error: 'ID wajib diisi' }, { status: 400 })
+
+    const { error } = await supabase
+      .from('announcements')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true, message: '✅ Pengumuman dihapus' })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}

@@ -2619,6 +2619,8 @@ function GlobalConfigView() {
   const [onlineUsers, setOnlineUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [announcements, setAnnouncements] = useState<any[]>([])
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // State Broadcast
   const [broadcastForm, setBroadcastForm] = useState<{
@@ -2655,11 +2657,18 @@ function GlobalConfigView() {
     if (!silent) setLoading(true)
     else setRefreshing(true)
     try {
-      const res = await fetch('/api/system-config')
-      const json = await res.json()
-      if (res.ok) {
-        setStats(json.stats)
-        setOnlineUsers(json.online_users || [])
+      const [configRes, announcementRes] = await Promise.all([
+        fetch('/api/system-config'),
+        fetch('/api/announcements/list')
+      ])
+      const configJson = await configRes.json()
+      if (configRes.ok) {
+        setStats(configJson.stats)
+        setOnlineUsers(configJson.online_users || [])
+      }
+      const annJson = await announcementRes.json()
+      if (announcementRes.ok) {
+        setAnnouncements(annJson.announcements || [])
       }
     } catch (err) {
       console.error('Load error:', err)
@@ -2748,6 +2757,29 @@ function GlobalConfigView() {
       setForceMsg({ type: 'err', text: '❌ Koneksi bermasalah' })
     } finally {
       setForceLoading(false)
+    }
+  }
+
+  async function handleDeleteAnnouncement(id: string, judul: string) {
+    if (!confirm(`🗑️ Hapus pengumuman "${judul || 'ini'}"?\n\nPengumuman akan langsung hilang dari semua HP karyawan.`)) return
+    setDeletingId(id)
+    try {
+      const res = await fetch('/api/system-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_announcement', payload: { id } })
+      })
+      const json = await res.json()
+      if (res.ok) {
+        alert('✅ Pengumuman berhasil dihapus!')
+        setAnnouncements(prev => prev.filter(a => a.id !== id))
+      } else {
+        alert('❌ Gagal: ' + json.error)
+      }
+    } catch {
+      alert('❌ Koneksi bermasalah')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -3039,6 +3071,87 @@ function GlobalConfigView() {
           </button>
         </form>
       </div>
+
+      {/* PANEL 2: LIST PENGUMUMAN AKTIF */}
+      <div className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-lg overflow-hidden">
+        <div className="p-6 bg-amber-50/50 border-b-2 border-amber-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-amber-500 rounded-2xl flex items-center justify-center text-xl">
+              📋
+            </div>
+            <div>
+              <h2 className="font-black text-slate-900 text-base tracking-tight">
+                Pengumuman Aktif
+              </h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                {announcements.length} pengumuman tampil di HP karyawan
+              </p>
+            </div>
+          </div>
+          <span className="bg-amber-100 text-amber-700 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
+            {announcements.length} Aktif
+          </span>
+        </div>
+
+        <div className="divide-y divide-slate-50">
+          {announcements.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="text-4xl mb-3 opacity-20">📭</div>
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                Belum ada pengumuman aktif
+              </p>
+            </div>
+          ) : (
+            announcements.map((ann: any) => (
+              <div key={ann.id} className="flex items-start gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
+                {/* Thumbnail gambar jika ada */}
+                {(ann.images?.length > 0 || ann.image_url) && (
+                  <img
+                    src={ann.images?.[0] || ann.image_url}
+                    className="w-14 h-14 object-cover rounded-2xl border-2 border-slate-100 flex-shrink-0"
+                  />
+                )}
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {ann.is_urgent && (
+                      <span className="bg-rose-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase">
+                        🚨 URGENT
+                      </span>
+                    )}
+                    <p className="font-black text-sm text-slate-900 truncate">
+                      {ann.title || '(Tanpa Judul)'}
+                    </p>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium truncate italic mb-1">
+                    {ann.content || '(Tanpa Pesan)'}
+                  </p>
+                  <div className="flex items-center gap-3 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                    <span>📅 {new Date(ann.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                    {ann.images?.length > 0 && (
+                      <span>🖼️ {ann.images.length} Foto</span>
+                    )}
+                  </div>
+                </div>
+                {/* Tombol Hapus */}
+                <button
+                  onClick={() => handleDeleteAnnouncement(ann.id, ann.title)}
+                  disabled={deletingId === ann.id}
+                  className={`flex-shrink-0 px-4 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
+                    deletingId === ann.id
+                      ? 'bg-slate-100 text-slate-300'
+                      : 'bg-rose-50 text-rose-600 border-2 border-rose-100 hover:bg-rose-600 hover:text-white hover:border-rose-600'
+                  }`}
+                >
+                  {deletingId === ann.id ? '⏳' : '🗑️ Hapus'}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* PANEL 3: USER ONLINE LIVE */}
 
       {/* PANEL 2: USER ONLINE LIVE */}
       <div className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-lg overflow-hidden">

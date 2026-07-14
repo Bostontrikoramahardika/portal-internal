@@ -115,15 +115,17 @@ export async function POST(req: NextRequest) {
 
     // --- AKSI 1: BROADCAST NOTIFIKASI ---
     if (action === 'broadcast') {
-      const { judul, pesan, is_urgent, images } = payload
-      if (!judul || !pesan) {
-        return NextResponse.json(
-          { error: 'Judul dan pesan wajib diisi' },
-          { status: 400 }
-        )
-      }
+  const { judul, pesan, is_urgent, images } = payload
 
-      const imageArray = Array.isArray(images) ? images : []
+  // Validasi: minimal salah satu harus ada
+  const imageArray = Array.isArray(images) ? images : []
+  if (!judul && !pesan && imageArray.length === 0) {
+    return NextResponse.json(
+      { error: 'Minimal isi salah satu: Judul, Pesan, atau Gambar' },
+      { status: 400 }
+    )
+  }
+
       const { error } = await supabase.from('announcements').insert({
         title: judul,
         content: pesan,
@@ -155,6 +157,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         message: `✅ Force logout berhasil. Semua user telah dikeluarkan dari sistem.`
+      })
+    }
+
+    // --- AKSI 3: HAPUS PENGUMUMAN ---
+    if (action === 'delete_announcement') {
+      const { id } = payload
+      if (!id) {
+        return NextResponse.json({ error: 'ID pengumuman wajib diisi' }, { status: 400 })
+      }
+
+      const { error } = await supabase
+        .from('announcements')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      return NextResponse.json({
+        success: true,
+        message: '✅ Pengumuman berhasil dihapus'
       })
     }
 
