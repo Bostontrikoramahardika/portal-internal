@@ -21,8 +21,10 @@ export async function GET(request: NextRequest) {
 
     const nrp = session.nrp
     const roles = (session.roles || []).map((r: string) => r.toLowerCase())
-    const isPJO = roles.includes('pjo')
-    const isAtasanRole = roles.includes('atasan')
+    const isPJO = roles.some((r: string) => ['pjo_site', 'pjo'].includes(r))
+    const isAtasanRole = roles.some((r: string) =>
+      ['gl_produksi', 'gl_plant', 'hr_site', 'atasan'].includes(r)
+    )
     const isSuperAdmin = session.is_super_admin || false
 
     // Cek apakah user PERNAH dipilih sebagai atasan / PJO oleh siapapun

@@ -9,67 +9,98 @@ export async function GET(request: NextRequest) {
   const session = await getSession(token)
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
-  // Ambil karyawan info (untuk tahu site-nya)
   const { data: emp } = await supabase
     .from('employees')
-    .select('site')
+    .select('site, departemen, jabatan')
     .eq('nrp', session.nrp)
     .single()
 
-  // Ambil semua karyawan yang punya role atasan
-  const { data: roleData } = await supabase
-    .from('roles')
-    .select('nrp')
-    .in('role', ['atasan', 'pjo', 'admin_site', 'admin_plant'])
-    .eq('active', true)
+  const userSite = emp?.site || ''
+  const userDept = (emp?.departemen || '').toLowerCase()
+  const userJabatan = (emp?.jabatan || '').toLowerCase()
 
-  const relevantNrps = (roleData || []).map(r => r.nrp)
+  // Deteksi direct-to-PJO
+  const isDirectPJO =
+    userJabatan.includes('she') ||
+    userJabatan.includes('hrga') ||
+    userJabatan.includes('hr ') ||
+    userJabatan.includes('admin') ||
+    userJabatan.includes('gl ') ||
+    userJabatan.includes('supervisor') ||
+    userJabatan.includes('manager')
 
-  // 2. Ambil karyawan yang:
-  //    - Satu site dengan user
-  //    - Status Aktif
-  //    - (Punya role di atas OR punya jabatan Leader: GL, Supervisor, Foreman, Manager)
-  let atasanList: any[] = []
-  
-  const { data: employees, error: empError } = await supabase
-    .from('employees')
-    .select('nrp, nama, jabatan, departemen, site, no_hp')
-    .eq('site', emp?.site || '') // Filter Site Wajib
-    .eq('status_karyawan', 'Aktif')
-    .or(`nrp.in.(${relevantNrps.join(',')}),jabatan.ilike.%GL%,jabatan.ilike.%Supervisor%,jabatan.ilike.%Foreman%,jabatan.ilike.%Manager%`)
-    .order('nama')
+  // Helper: cari PJO di site yang sama
+  async function getPjoSite() {
+    const { data: pjoRoles } = await supabase
+      .from('roles')
+      .select('nrp')
+      .eq('role', 'pjo_site')
+      .eq('active', true)
 
-  if (!empError && employees) {
-    // Filter tambahan untuk memastikan tidak ada duplikat dan bukan dirinya sendiri
-    atasanList = employees.filter(e => e.nrp !== session.nrp)
-  }
+    const pjoNrps = (pjoRoles || []).map((r: any) => r.nrp)
+    if (pjoNrps.length === 0) return { nrp: null, nama: 'Belum ada PJO di Site ini' }
 
-  // 3. Logika PJO (Tetap dipertahankan namun difilter by site lebih ketat)
-  const { data: pjoRoles } = await supabase
-    .from('roles')
-    .select('nrp')
-    .eq('role', 'pjo')
-    .eq('active', true)
-
-  const pjoNrps = (pjoRoles || []).map(r => r.nrp)
-
-  let pjoNama = 'Belum ada PJO di Site ini'
-  if (pjoNrps.length > 0) {
     const { data: sitePjo } = await supabase
       .from('employees')
-      .select('nrp, nama, jabatan, site')
+      .select('nrp, nama, jabatan')
       .in('nrp', pjoNrps)
-      .eq('site', emp?.site || '') // Harus satu site
+      .eq('site', userSite)
       .eq('status_karyawan', 'Aktif')
-      .single()
+      .maybeSingle()
 
-    if (sitePjo) {
-      pjoNama = `${sitePjo.nama} (${sitePjo.jabatan}${sitePjo.site ? ' - ' + sitePjo.site : ''})`
+    return {
+      nrp: sitePjo?.nrp || null,
+      nama: sitePjo ? `${sitePjo.nama} (${sitePjo.jabatan})` : 'Belum ada PJO di Site ini'
     }
   }
 
+  if (isDirectPJO) {
+    const pjo = await getPjoSite()
+    return NextResponse.json({
+      atasan_list: [],
+      pjo_nama: pjo.nama,
+      pjo_nrp: pjo.nrp,
+      is_direct_pjo: true
+    })
+  }
+
+  // Tentukan role atasan
+  let targetRole = 'gl_produksi'
+  if (userDept === 'plant') {
+    targetRole = 'gl_plant'
+  } else if (userDept === 'operator') {
+    targetRole = 'gl_produksi'
+  } else {
+    targetRole = 'hr_site'
+  }
+
+  const { data: roleData } = await supabase
+    .from('roles')
+    .select('nrp')
+    .eq('role', targetRole)
+    .eq('active', true)
+
+  const relevantNrps = (roleData || []).map((r: any) => r.nrp)
+
+  let atasanList: any[] = []
+  if (relevantNrps.length > 0) {
+    const { data: employees } = await supabase
+      .from('employees')
+      .select('nrp, nama, jabatan, departemen, site')
+      .eq('site', userSite)
+      .eq('status_karyawan', 'Aktif')
+      .in('nrp', relevantNrps)
+      .order('nama')
+
+    atasanList = (employees || []).filter((e: any) => e.nrp !== session.nrp)
+  }
+
+  const pjo = await getPjoSite()
+
   return NextResponse.json({
     atasan_list: atasanList,
-    pjo_nama: pjoNama
+    pjo_nama: pjo.nama,
+    pjo_nrp: pjo.nrp,
+    is_direct_pjo: false
   })
 }

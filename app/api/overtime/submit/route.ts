@@ -17,14 +17,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Semua field wajib diisi (termasuk atasan)' }, { status: 400 })
     }
 
-    const { data: atasanCheck } = await supabase
+     const { data: empInfo } = await supabase
       .from('employees')
-      .select('nrp, nama')
-      .eq('nrp', atasan_nrp)
+      .select('site, departemen, jabatan')
+      .eq('nrp', session.nrp)
       .single()
 
-    if (!atasanCheck) {
-      return NextResponse.json({ error: 'Atasan yang dipilih tidak ditemukan' }, { status: 400 })
+    const userJabatan = (empInfo?.jabatan || '').toLowerCase()
+    const isDirectPJO =
+      userJabatan.includes('she') ||
+      userJabatan.includes('hrga') ||
+      userJabatan.includes('hr ') ||
+      userJabatan.includes('admin') ||
+      userJabatan.includes('gl ') ||
+      userJabatan.includes('supervisor') ||
+      userJabatan.includes('manager')
+
+    let atasanCheck: any = null
+    if (!isDirectPJO) {
+      if (!atasan_nrp) {
+        return NextResponse.json({ error: 'Atasan wajib dipilih' }, { status: 400 })
+      }
+      const { data: ac } = await supabase
+        .from('employees')
+        .select('nrp, nama')
+        .eq('nrp', atasan_nrp)
+        .single()
+      if (!ac) {
+        return NextResponse.json({ error: 'Atasan yang dipilih tidak ditemukan' }, { status: 400 })
+      }
+      atasanCheck = ac
     }
 
     // Hitung total jam
@@ -70,7 +92,6 @@ export async function POST(request: NextRequest) {
     const samePjo = allPjo.find((p: any) => p.site === karyawan?.site)
     const chosenPjo = samePjo || allPjo[0]
 
-    // Insert
     const { data: newOvertime, error: insertError } = await supabase
       .from('overtime_requests')
       .insert({
@@ -81,11 +102,11 @@ export async function POST(request: NextRequest) {
         total_jam: totalJam,
         alasan,
         jenis_lembur: jenis_lembur || 'BIASA',
-        atasan_nrp,
+        atasan_nrp: isDirectPJO ? chosenPjo.nrp : atasan_nrp,
         pjo_nrp: chosenPjo.nrp,
-        status_atasan: 'PENDING',
-        status_pjo: 'WAITING',
-        status_final: 'MENUNGGU_ATASAN'
+        status_atasan: isDirectPJO ? 'APPROVED' : 'PENDING',
+        status_pjo: isDirectPJO ? 'PENDING' : 'WAITING',
+        status_final: isDirectPJO ? 'MENUNGGU_PJO' : 'MENUNGGU_ATASAN'
       })
       .select()
       .single()
@@ -96,7 +117,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `✅ Pengajuan lembur ${totalJam} jam berhasil dibuat. Menunggu approval atasan (${atasanCheck.nama}), lalu final ke PJO (${chosenPjo.nama}).`,
+      message: isDirectPJO
+        ? `✅ Pengajuan lembur ${totalJam} jam berhasil dibuat. Langsung menunggu approval PJO (${chosenPjo.nama}).`
+        : `✅ Pengajuan lembur ${totalJam} jam berhasil dibuat. Menunggu approval atasan (${atasanCheck?.nama}), lalu final ke PJO (${chosenPjo.nama}).`,
       data: newOvertime
     })
 

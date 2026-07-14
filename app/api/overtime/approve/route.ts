@@ -32,8 +32,13 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date().toISOString()
-    const isAtasan = session.roles.includes('atasan') || session.roles.includes('hrga')
-    const isPjo = session.roles.includes('pjo') || session.roles.includes('hrga')
+    const rolesLower = (session.roles || []).map((r: string) => r.toLowerCase())
+    const isAtasan = rolesLower.some((r: string) =>
+      ['gl_produksi', 'gl_plant', 'hr_site', 'atasan', 'hrga'].includes(r)
+    )
+    const isPjo = rolesLower.some((r: string) =>
+      ['pjo_site', 'pjo', 'hrga'].includes(r)
+    )
 
     // TAHAP ATASAN
     if (
