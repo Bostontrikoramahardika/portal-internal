@@ -1226,12 +1226,10 @@ function TableView({ data, onReload }: any) {
   // 1. Ambil pemetaan permission untuk tabel ini
   const tablePerms = getTablePermissions(table)
 
-  // 2. Kunci Schema: Jika has_schema diset false di tablePermissions.ts, maka paksa false.
-  // Jika tidak ada di mapping, default true.
-    // 🔒 Paksa false untuk tabel virtual (fail-safe)
+  // 🔒 Kunci Schema: Paksa false untuk tabel virtual (fail-safe)
   const VIRTUAL_TABLES = ['monitoring_expired']
   const isVirtualTable = VIRTUAL_TABLES.includes(table) || access_mode === 'VIEW_ONLY'
-  const hasSchema = isVirtualTable ? false : (tablePerms ? (tablePerms.has_schema !== false) : true) ? (tablePerms.has_schema !== false) : true
+  const hasSchema = isVirtualTable ? false : (tablePerms?.has_schema !== false)
 
   // 3. Logic Tombol Tambah: Harus punya schema DAN (punya permission ATAU super admin)
   const canCreate = hasSchema && (

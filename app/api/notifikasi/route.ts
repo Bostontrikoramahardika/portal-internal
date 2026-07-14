@@ -1,5 +1,5 @@
 // app/api/notifikasi/route.ts
-// v2.0 - Notif detail per jenis + site + status kritis
+// v2.1 - Fix TypeScript warnings (parameter any type)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
     const nrp = session.nrp
     const roles = (session.roles || []).map((r: string) => r.toLowerCase())
     const isSuperAdmin = session.is_super_admin || false
-    const isHrga = isSuperAdmin || roles.some(r => ['admin', 'hrga', 'hrga_site', 'hrga_pusat'].includes(r))
-    const isApprover = isSuperAdmin || roles.some(r => ['atasan', 'pjo', 'hrga_site', 'admin_site'].includes(r))
+    const isHrga = isSuperAdmin || roles.some((r: string) => ['admin', 'hrga', 'hrga_site', 'hrga_pusat'].includes(r))
+    const isApprover = isSuperAdmin || roles.some((r: string) => ['atasan', 'pjo', 'hrga_site', 'admin_site'].includes(r))
 
     // ═══════════════════════════════════════════════
     // 1. HITUNG EXPIRED (per jenis + site + kritis)
@@ -53,9 +53,9 @@ export async function GET(req: NextRequest) {
 
     // Ambil semua NRP unik untuk lookup site
     const allNrps = new Set<string>()
-    ;(resMcu.data || []).forEach(r => r.nrp && allNrps.add(String(r.nrp)))
-    ;(resSimper.data || []).forEach(r => r.nrp && allNrps.add(String(r.nrp)))
-    ;(resPkwt.data || []).forEach(r => r.nrp && allNrps.add(String(r.nrp)))
+    ;(resMcu.data || []).forEach((r: any) => r.nrp && allNrps.add(String(r.nrp)))
+    ;(resSimper.data || []).forEach((r: any) => r.nrp && allNrps.add(String(r.nrp)))
+    ;(resPkwt.data || []).forEach((r: any) => r.nrp && allNrps.add(String(r.nrp)))
 
     const empSiteMap = new Map<string, string>()
     if (allNrps.size > 0) {
@@ -63,14 +63,14 @@ export async function GET(req: NextRequest) {
         .from('employees')
         .select('nrp, site')
         .in('nrp', Array.from(allNrps))
-      ;(emps || []).forEach(e => empSiteMap.set(String(e.nrp), e.site || '-'))
+      ;(emps || []).forEach((e: any) => empSiteMap.set(String(e.nrp), e.site || '-'))
     }
 
     // Fungsi helper: group by site + hitung kritis
     function buildBreakdown(rows: any[], jenis: string, tanggalField: string, icon: string, useEmpSite = true) {
       const siteMap = new Map<string, { count: number, critical: number }>()
       
-      ;(rows || []).forEach(r => {
+      ;(rows || []).forEach((r: any) => {
         const site = useEmpSite 
           ? (empSiteMap.get(String(r.nrp)) || '-')
           : (r.site || '-')
@@ -126,11 +126,11 @@ export async function GET(req: NextRequest) {
 
       // Kumpulkan semua NRP karyawan pengaju untuk lookup site
       const approvalNrps = new Set<string>()
-      ;(cutiAt.data || []).forEach(r => r.nrp && approvalNrps.add(String(r.nrp)))
-      ;(lemburAt.data || []).forEach(r => r.nrp && approvalNrps.add(String(r.nrp)))
-      ;(sakitAt.data || []).forEach(r => r.nrp && approvalNrps.add(String(r.nrp)))
-      ;(cutiPjo.data || []).forEach(r => r.nrp && approvalNrps.add(String(r.nrp)))
-      ;(lemburPjo.data || []).forEach(r => r.nrp && approvalNrps.add(String(r.nrp)))
+      ;(cutiAt.data || []).forEach((r: any) => r.nrp && approvalNrps.add(String(r.nrp)))
+      ;(lemburAt.data || []).forEach((r: any) => r.nrp && approvalNrps.add(String(r.nrp)))
+      ;(sakitAt.data || []).forEach((r: any) => r.nrp && approvalNrps.add(String(r.nrp)))
+      ;(cutiPjo.data || []).forEach((r: any) => r.nrp && approvalNrps.add(String(r.nrp)))
+      ;(lemburPjo.data || []).forEach((r: any) => r.nrp && approvalNrps.add(String(r.nrp)))
 
       const apprSiteMap = new Map<string, string>()
       if (approvalNrps.size > 0) {
@@ -138,13 +138,13 @@ export async function GET(req: NextRequest) {
           .from('employees')
           .select('nrp, site')
           .in('nrp', Array.from(approvalNrps))
-        ;(emps || []).forEach(e => apprSiteMap.set(String(e.nrp), e.site || '-'))
+        ;(emps || []).forEach((e: any) => apprSiteMap.set(String(e.nrp), e.site || '-'))
       }
 
       // Helper: group approval by site
       function groupApprovalBySite(rows: any[], jenis: string, icon: string, tahap: string) {
         const siteMap = new Map<string, number>()
-        ;(rows || []).forEach(r => {
+        ;(rows || []).forEach((r: any) => {
           const site = apprSiteMap.get(String(r.nrp)) || '-'
           siteMap.set(site, (siteMap.get(site) || 0) + 1)
         })
@@ -154,9 +154,9 @@ export async function GET(req: NextRequest) {
       }
 
       // Kategorisasi sakit
-      const sakitOnly = (sakitAt.data || []).filter(r => (r.kategori || 'SAKIT') === 'SAKIT')
-      const izinPot = (sakitAt.data || []).filter(r => r.kategori === 'IZIN_POTONGAN')
-      const izinBay = (sakitAt.data || []).filter(r => r.kategori === 'IZIN_BERBAYAR')
+      const sakitOnly = (sakitAt.data || []).filter((r: any) => (r.kategori || 'SAKIT') === 'SAKIT')
+      const izinPot = (sakitAt.data || []).filter((r: any) => r.kategori === 'IZIN_POTONGAN')
+      const izinBay = (sakitAt.data || []).filter((r: any) => r.kategori === 'IZIN_BERBAYAR')
 
       approvalBreakdown.push(
         ...groupApprovalBySite(cutiAt.data || [], 'CUTI', '🌴', 'ATASAN'),
