@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
 
     const { target_table, access_mode, menu_label } = menuInfo
     
-    const isHrgaAll = isSuperAdmin || rolesLower.some((r: string) => ['hrga_oprek', 'hrga_pusat', 'hrga', 'admin'].includes(r))
-    const isHrgaSite = rolesLower.includes('hrga_site') || rolesLower.includes('admin_site')
+  const isHrgaAll = isSuperAdmin || rolesLower.some((r: string) => ['hr_ho', 'hrga_oprek', 'hrga_pusat', 'hrga', 'admin'].includes(r))
+const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admin_site'].includes(r))
     const isAdminPlant = rolesLower.includes('admin_plant')
     const isSiteScoped = isHrgaSite || isAdminPlant
     const userSite = session.scope_site || session.site || '_'
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       const { data: siteConfig } = await supabase
         .from('sites_config')
         .select('siang_jam_masuk, malam_jam_masuk')
-        .eq('site_name', session.site)
+        .eq('nama_site', session.site)
         .single()
 
       const finalRows = (rosters || []).map((r: any) => {
