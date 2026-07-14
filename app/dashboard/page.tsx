@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/app/lib/AuthContext'
+import { getTablePermissions } from '@/app/lib/tablePermissions'
 
 /**
  * 📊 HELPER: Salam Dinamis
@@ -110,7 +111,8 @@ function DashboardContent() {
     'setting_site',
     'config_global',
     'reset_password_admin',
-    'system_audit'
+    'system_audit',
+    'approval_center'
   ]
 
   const isStandalone = STANDALONE_MENUS.includes(menuKey)
@@ -142,6 +144,7 @@ function DashboardContent() {
   if (menuKey === 'config_global') return <GlobalConfigView />
   if (menuKey === 'reset_password_admin') return <ResetPasswordAdminView />
   if (menuKey === 'system_audit') return <SystemAuditView />
+  if (menuKey === 'approval_center') return <ApprovalCenterView />
 
   // Non-standalone: cek error & data
   if (error) return <div className="bg-red-50 border-2 border-red-100 text-red-700 p-6 rounded-3xl mx-4 mt-10 text-center font-bold">❌ {error}</div>
@@ -1210,40 +1213,77 @@ function AnnouncementCard({ announcement }: any) {
 }
 
 
-// ============ 📊 TABLE VIEW ============
+// ============ 📊 TABLE VIEW (v2.1 - Strict Permission & Schema Lock) ============
 function TableView({ data, onReload }: any) {
   const { title, rows = [], columns = [], table, access_mode } = data
   const [formModal, setFormModal] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const isApproval = access_mode?.includes('APPROVAL')
 
+  // 🔐 Hook Auth
+  const { can, isSuperAdmin } = useAuth()
+
+  // 1. Ambil pemetaan permission untuk tabel ini
+  const tablePerms = getTablePermissions(table)
+
+  // 2. Kunci Schema: Jika has_schema diset false di tablePermissions.ts, maka paksa false.
+  // Jika tidak ada di mapping, default true.
+    // 🔒 Paksa false untuk tabel virtual (fail-safe)
+  const VIRTUAL_TABLES = ['monitoring_expired']
+  const isVirtualTable = VIRTUAL_TABLES.includes(table) || access_mode === 'VIEW_ONLY'
+  const hasSchema = isVirtualTable ? false : (tablePerms ? (tablePerms.has_schema !== false) : true) ? (tablePerms.has_schema !== false) : true
+
+  // 3. Logic Tombol Tambah: Harus punya schema DAN (punya permission ATAU super admin)
+  const canCreate = hasSchema && (
+    tablePerms?.create ? can(tablePerms.create) : (access_mode === 'CRUD' || isSuperAdmin)
+  )
+
+  // 4. Logic Tombol Edit: Harus punya schema DAN (punya permission ATAU super admin)
+  const canEdit = hasSchema && (
+    tablePerms?.edit ? can(tablePerms.edit) : (access_mode === 'CRUD' || isSuperAdmin)
+  )
+
+  // 5. Logic Tombol Hapus: Jika VIEW_ONLY dipaksa mati, jika tidak cek permission
+  const canDelete = access_mode !== 'VIEW_ONLY' && (
+    tablePerms?.delete ? can(tablePerms.delete) : (access_mode === 'CRUD' || isSuperAdmin)
+  )
+
+  // 6. Logic Approval
+  const canApprove = (() => {
+    if (isSuperAdmin) return true
+    if (!isApproval) return false
+    if (table === 'leave_requests') return can('cuti_approve_atasan') || can('cuti_approve_pjo')
+    if (table === 'overtime_requests') return can('lembur_approve_atasan') || can('lembur_approve_pjo')
+    if (table === 'attendance_evidences') return can('sakit_approve')
+    return true
+  })()
+
+  // Filter pencarian
   const filteredRows = rows.filter((r: any) => {
     return Object.values(r).some(val => 
       String(val).toLowerCase().includes(searchTerm.toLowerCase())
     )
   })
 
+  // Handler Aksi (Approve & Delete)
   async function handleApprove(id: string, action: string) {
     const note = action === 'REJECTED' ? prompt("Alasan Penolakan:") : "OK"
     if (!note && action === 'REJECTED') return
-
-    let endpoint = 'crud'
-    if (table === 'leave_requests') endpoint = 'leave'
-    else if (table === 'overtime_requests') endpoint = 'overtime'
-    else if (table === 'attendance_evidences') endpoint = 'attendance'
-
+    let endpoint = (table === 'leave_requests') ? 'leave' : (table === 'overtime_requests' ? 'overtime' : 'attendance')
     const res = await fetch(`/api/${endpoint}/approve`, {
-      method: 'POST', 
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        [table === 'leave_requests' ? 'leave_id' : 'id']: id, 
-        action, 
-        catatan: note, 
-        status: action 
-      })
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [table === 'leave_requests' ? 'leave_id' : (table === 'overtime_requests' ? 'overtime_id' : 'id')]: id, action, catatan: note })
     })
-    if (res.ok) { alert("✅ Data Berhasil Diproses"); onReload() }
-    else { alert("❌ Gagal memproses data") }
+    if (res.ok) { alert("✅ Berhasil diproses"); onReload() }
+  }
+
+  async function handleDelete(id: string, label: string) {
+    if (!confirm(`⚠️ Hapus data "${label || id}"?`)) return
+    const res = await fetch('/api/crud', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table, id })
+    })
+    if (res.ok) { alert('✅ Terhapus'); onReload() }
   }
 
   return (
@@ -1251,20 +1291,17 @@ function TableView({ data, onReload }: any) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">{title}</h2>
-          <p className="text-sm text-slate-500 font-medium">Pengelolaan master data & verifikasi dokumen</p>
+          <p className="text-sm text-slate-500 font-medium">Monitoring & Pengelolaan Data</p>
         </div>
         
         <div className="flex w-full md:w-auto gap-3">
           <input 
-            type="text" 
-            placeholder="🔍 Cari Data..." 
-            value={searchTerm}
+            type="text" placeholder="🔍 Cari Data..." value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full md:w-64 p-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm focus:border-blue-500 outline-none font-bold text-xs"
           />
-          
-          {access_mode === 'CRUD' && (
-            <button onClick={() => setFormModal({ mode: 'create' })} className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black text-sm shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all whitespace-nowrap">
+          {canCreate && (
+            <button onClick={() => setFormModal({ mode: 'create' })} className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black text-sm shadow-xl hover:bg-blue-700 active:scale-95 transition-all">
               + TAMBAH
             </button>
           )}
@@ -1285,19 +1322,55 @@ function TableView({ data, onReload }: any) {
                 {columns.map((c: string) => <td key={c} className="px-8 py-5 whitespace-nowrap font-medium text-slate-700">{renderCell(c, r[c])}</td>)}
                 <td className="px-8 py-5 whitespace-nowrap">
                   <div className="flex justify-center gap-2">
-                    {r.foto_url && (
-                      <button 
-                        onClick={() => window.open(r.foto_url, '_blank')}
-                        className="bg-indigo-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-indigo-600 transition-colors shadow-sm"
-                      >
-                        LIHAT FOTO
-                      </button>
-                    )}
+                    {r.foto_url && <button onClick={() => window.open(r.foto_url, '_blank')} className="bg-indigo-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-indigo-600 shadow-sm">LIHAT FOTO</button>}
 
-                    {isApproval && r.status_atasan === 'PENDING' && (
+{/* 🎯 Tombol khusus MONITORING_EXPIRED */}
+{table === 'monitoring_expired' && r.jenis_dokumen && (
+  <>
+    <button 
+      onClick={() => setFormModal({ mode: 'update_expired', row: r })}
+      className="bg-blue-600 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-blue-700 shadow-sm"
+    >
+      📝 PERPANJANG
+    </button>
+    <button 
+      onClick={async () => {
+        const jenis = String(r.jenis_dokumen).replace(/[^\w\s]/g, '').trim().toUpperCase()
+        const nama = r._nama_karyawan || r.nrp
+        if (!confirm(`⚠️ Hapus dokumen ${jenis} milik ${nama}?\n\n${jenis === 'SIMPOL' ? 'Data SIMPOL akan dikosongkan (karyawan tetap aktif).' : 'Baris dokumen akan dihapus permanen.'}`)) return
+        
+        const res = await fetch('/api/monitoring-expired', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jenis_dokumen: jenis,
+            record_id: jenis === 'SIMPOL' ? r.nrp : r.id,
+            nama_karyawan: nama
+          })
+        })
+        const json = await res.json()
+        if (res.ok) {
+          alert(json.message || '✅ Berhasil dihapus')
+          window.dispatchEvent(new Event('refreshNotif'))
+          onReload()
+        } else {
+          alert('❌ ' + (json.error || 'Gagal hapus'))
+        }
+      }}
+      className="bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-rose-600 shadow-sm"
+    >
+      🗑️ HAPUS
+    </button>
+  </>
+)}
+
+{/* Tombol Edit/Hapus umum (bukan untuk monitoring_expired) */}
+{table !== 'monitoring_expired' && canEdit && !isApproval && <button onClick={() => setFormModal({ mode: 'edit', row: r })} className="bg-amber-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-amber-600 shadow-sm">EDIT</button>}
+{table !== 'monitoring_expired' && canDelete && !isApproval && <button onClick={() => handleDelete(r.id, r.nama || r._nama_karyawan || r.id)} className="bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-rose-600 shadow-sm">HAPUS</button>}
+                    {canApprove && r.status_atasan === 'PENDING' && (
                       <>
-                        <button onClick={() => handleApprove(r.id, 'APPROVED')} className="bg-emerald-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-emerald-600 transition-colors shadow-sm">APPROVE</button>
-                        <button onClick={() => handleApprove(r.id, 'REJECTED')} className="bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-rose-600 transition-colors shadow-sm">REJECT</button>
+                        <button onClick={() => handleApprove(r.id, 'APPROVED')} className="bg-emerald-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-emerald-600 shadow-sm">APPROVE</button>
+                        <button onClick={() => handleApprove(r.id, 'REJECTED')} className="bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-rose-600 shadow-sm">REJECT</button>
                       </>
                     )}
                   </div>
@@ -1308,7 +1381,17 @@ function TableView({ data, onReload }: any) {
         </table>
         {filteredRows.length === 0 && <div className="p-20 text-center text-slate-300 font-black uppercase tracking-widest italic">Data tidak ditemukan</div>}
       </div>
-      {formModal && <CrudModal table={table} mode={formModal.mode} row={formModal.row} onClose={() => setFormModal(null)} onSuccess={() => { setFormModal(null); onReload() }} />}
+
+      {formModal && formModal.mode !== 'update_expired' && <CrudModal table={table} mode={formModal.mode} row={formModal.row} onClose={() => setFormModal(null)} onSuccess={() => { setFormModal(null); onReload() }} />}
+      
+      {/* 🎯 Modal khusus untuk perpanjang dokumen expired */}
+      {formModal && formModal.mode === 'update_expired' && (
+        <UpdateExpiredModal 
+          row={formModal.row} 
+          onClose={() => setFormModal(null)} 
+          onSuccess={() => { setFormModal(null); onReload(); window.dispatchEvent(new Event('refreshNotif')) }} 
+        />
+      )}
     </div>
   )
 }
@@ -4133,6 +4216,477 @@ function SystemAuditView() {
   )
 }
 
+// ============ 📥 APPROVAL CENTER VIEW (v1.0 - Gabungan Cuti/Lembur/Sakit) ============
+function ApprovalCenterView() {
+  const [items, setItems] = useState<any[]>([])
+  const [stats, setStats] = useState<any>({ total: 0, cuti: 0, lembur: 0, sakit: 0, izin_potongan: 0, izin_berbayar: 0 })
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [tahap, setTahap] = useState<'ATASAN' | 'PJO'>('ATASAN')
+  const [showAtasanTab, setShowAtasanTab] = useState(true)
+  const [showPjoTab, setShowPjoTab] = useState(false)
+  const [filterJenis, setFilterJenis] = useState<'ALL' | 'CUTI' | 'LEMBUR' | 'SAKIT' | 'IZIN_POTONGAN' | 'IZIN_BERBAYAR'>('ALL')
+  const [processingId, setProcessingId] = useState<string | null>(null)
+  const [detailItem, setDetailItem] = useState<any>(null)
+
+  useEffect(() => {
+    loadData()
+  }, [tahap])
+
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true)
+    else setRefreshing(true)
+    try {
+      const res = await fetch(`/api/approval-center?tahap=${tahap}`)
+      const json = await res.json()
+      if (res.ok) {
+        setItems(json.items || [])
+        setStats(json.stats || { total: 0, cuti: 0, lembur: 0, sakit: 0, izin_potongan: 0, izin_berbayar: 0 })
+        setShowAtasanTab(json.show_atasan_tab !== false)   // default true
+        setShowPjoTab(json.show_pjo_tab === true)          // default false
+        
+        // Auto-switch tab kalau user cuma punya 1 role
+        if (json.show_atasan_tab === false && json.show_pjo_tab === true && tahap === 'ATASAN') {
+          setTahap('PJO')
+        }
+      }
+    } catch (err) {
+      console.error('Load approval error:', err)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  async function handleApprove(item: any, action: 'APPROVED' | 'REJECTED') {
+    let note = 'OK'
+    if (action === 'REJECTED') {
+      const promptText = prompt('Alasan penolakan:')
+      if (!promptText) return
+      note = promptText
+    }
+
+    // Tentukan endpoint & field ID berdasarkan jenis pengajuan
+    let endpoint = ''
+    let body: any = { action, catatan: note } // status: action dihapus karena API tidak butuh
+    
+    if (item.jenis === 'CUTI') {
+      endpoint = '/api/leave/approve'
+      body.leave_id = item.id     // ✅ Sesuai API Cuti
+    } 
+    else if (item.jenis === 'LEMBUR' || item.jenis === 'OVERTIME') {
+      endpoint = '/api/overtime/approve'
+      body.overtime_id = item.id  // ✅ Sesuai API Lembur (perbaikan)
+    } 
+    else if (item.jenis === 'SAKIT' || item.jenis === 'IZIN_POTONGAN' || item.jenis === 'IZIN_BERBAYAR') {
+      endpoint = '/api/attendance/approve'
+      body.id = item.id           // ✅ Sesuai API Sakit
+    }
+
+    setProcessingId(item.id)
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      if (res.ok) {
+        // Hilangkan item dari list tanpa reload
+        setItems(prev => prev.filter(i => i.id !== item.id))
+        
+        // ✨ Kasih sinyal ke lonceng untuk update angka
+        window.dispatchEvent(new Event('refreshNotif'));
+        
+        // Mapping jenis ke key stats
+        const statsKeyMap: any = {
+          'CUTI': 'cuti',
+          'LEMBUR': 'lembur',
+          'SAKIT': 'sakit',
+          'IZIN_POTONGAN': 'izin_potongan',
+          'IZIN_BERBAYAR': 'izin_berbayar'
+        }
+        const statsKey = statsKeyMap[item.jenis] || 'sakit'
+        
+        setStats((prev: any) => ({
+          ...prev,
+          total: Math.max(0, prev.total - 1),
+          [statsKey]: Math.max(0, (prev[statsKey] || 0) - 1)
+        }))
+        setDetailItem(null)
+      } else {
+        const json = await res.json()
+        alert('❌ Gagal: ' + (json.error || 'Unknown error'))
+      }
+    } catch (err: any) {
+      alert('❌ Koneksi bermasalah: ' + err.message)
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  const filteredItems = filterJenis === 'ALL' 
+    ? items 
+    : items.filter(i => i.jenis === filterJenis)
+
+  const COLOR_MAP: any = {
+    blue:    { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    ring: 'ring-blue-400' },
+    amber:   { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   ring: 'ring-amber-400' },
+    rose:    { bg: 'bg-rose-50',    text: 'text-rose-700',    border: 'border-rose-200',    ring: 'ring-rose-400' },
+    emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', ring: 'ring-emerald-400' }
+  }
+
+  const FILTER_CONFIG = [
+    { key: 'ALL',            label: 'Semua',         icon: '📊', count: stats.total },
+    { key: 'CUTI',           label: 'Cuti',          icon: '🌴', count: stats.cuti },
+    { key: 'LEMBUR',         label: 'Lembur',        icon: '⏱️', count: stats.lembur },
+    { key: 'SAKIT',          label: 'Sakit',         icon: '🤒', count: stats.sakit },
+    { key: 'IZIN_POTONGAN',  label: 'Izin Potongan', icon: '⚠️', count: stats.izin_potongan },
+    { key: 'IZIN_BERBAYAR',  label: 'Izin Bayar',    icon: '✅', count: stats.izin_berbayar }
+  ]
+
+  if (loading) return (
+    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+      Memuat pengajuan...
+    </div>
+  )
+
+  return (
+    <div className="animate-in fade-in duration-500 pb-32 space-y-6">
+
+      {/* HEADER */}
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">📥</div>
+              <div>
+                <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
+                  Approval Center
+                </p>
+                <h1 className="text-2xl font-black tracking-tight">
+                  {stats.total > 0 ? `${stats.total} Pengajuan Menunggu` : 'Semua Sudah Diproses'}
+                </h1>
+              </div>
+            </div>
+            <button
+              onClick={() => loadData(true)}
+              disabled={refreshing}
+              className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+            >
+              {refreshing ? '⏳' : '🔄'} Refresh
+            </button>
+          </div>
+          <p className="text-blue-200/70 text-xs font-medium">
+            Semua pengajuan cuti, lembur, dan sakit yang perlu Anda proses
+          </p>
+        </div>
+      </div>
+
+      {/* SWITCH TAHAP: ATASAN vs PJO (adaptif per role) */}
+      {(showAtasanTab && showPjoTab) ? (
+        // Dual role: tampilkan 2 tab
+        <div className="bg-white p-2 rounded-[2rem] border-2 border-slate-50 shadow-sm flex gap-1">
+          <button
+            onClick={() => setTahap('ATASAN')}
+            className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+              tahap === 'ATASAN'
+                ? 'bg-[#003D79] text-white shadow-lg'
+                : 'text-slate-400 hover:bg-slate-50'
+            }`}
+          >
+            👔 Sebagai Atasan
+          </button>
+          <button
+            onClick={() => setTahap('PJO')}
+            className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+              tahap === 'PJO'
+                ? 'bg-[#003D79] text-white shadow-lg'
+                : 'text-slate-400 hover:bg-slate-50'
+            }`}
+          >
+            🎖️ Sebagai PJO
+          </button>
+        </div>
+      ) : (
+        // Single role: tampilkan label saja (bukan tombol)
+        <div className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm text-center">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Approval sebagai</p>
+          <p className="text-lg font-black text-[#003D79]">
+            {showPjoTab ? '🎖️ PJO' : '👔 ATASAN'}
+          </p>
+        </div>
+      )}
+
+      {/* FILTER JENIS - PILL BUTTONS */}
+      <div className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm">
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+          Filter Jenis Pengajuan
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          {FILTER_CONFIG.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilterJenis(f.key as any)}
+              className={`p-3 rounded-2xl border-2 transition-all text-center ${
+                filterJenis === f.key
+                  ? 'bg-[#003D79] border-[#003D79] text-white shadow-lg'
+                  : 'bg-slate-50 border-slate-100 text-slate-600 hover:border-slate-200'
+              }`}
+            >
+              <div className="text-lg mb-1">{f.icon}</div>
+              <div className="text-[9px] font-black uppercase tracking-widest leading-tight">{f.label}</div>
+              <div className={`text-lg font-black mt-1 ${filterJenis === f.key ? 'text-white' : 'text-[#003D79]'}`}>
+                {f.count}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* LIST PENGAJUAN */}
+      <div className="space-y-3">
+        {filteredItems.length === 0 ? (
+          <div className="bg-white p-16 rounded-[2.5rem] border-2 border-dashed border-slate-200 text-center">
+            <div className="text-5xl mb-4 opacity-20">
+              {stats.total === 0 ? '🎉' : '📭'}
+            </div>
+            <h3 className="font-black text-slate-400 uppercase tracking-[0.2em] text-sm mb-2">
+              {stats.total === 0 ? 'Semua Beres!' : 'Filter Tidak Ada Hasil'}
+            </h3>
+            <p className="text-[10px] text-slate-300 font-bold italic">
+              {stats.total === 0 
+                ? 'Tidak ada pengajuan yang perlu diproses saat ini' 
+                : 'Coba pilih filter lain di atas'}
+            </p>
+          </div>
+        ) : (
+          filteredItems.map((item: any) => {
+            const color = COLOR_MAP[item.color] || COLOR_MAP.blue
+            const isProcessing = processingId === item.id
+            return (
+              <div 
+                key={item.id} 
+                className={`bg-white rounded-[2rem] border-2 shadow-sm p-5 transition-all ${
+                  isProcessing ? 'opacity-50' : 'hover:shadow-md'
+                } ${color.border}`}
+              >
+                {/* Header Item */}
+                <div className="flex items-start gap-3 mb-4">
+                  <div className={`w-12 h-12 ${color.bg} ${color.text} rounded-2xl flex items-center justify-center text-2xl flex-shrink-0`}>
+                    {item.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className={`${color.bg} ${color.text} text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest`}>
+                        {item.jenis}
+                      </span>
+                      <h3 className="font-black text-sm text-slate-900 truncate">{item.judul}</h3>
+                    </div>
+                    <p className="text-xs font-bold text-slate-700 truncate">👤 {item.karyawan_nama}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      {item.karyawan_jabatan} • {item.karyawan_site}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Detail Row */}
+                <div className="bg-slate-50/50 p-3 rounded-2xl space-y-2 mb-4">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="font-black text-slate-400 uppercase tracking-widest">📅 Tanggal</span>
+                    <span className="font-black text-slate-900">
+                      {new Date(item.tanggal_mulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {item.tanggal_selesai && item.tanggal_selesai !== item.tanggal_mulai && (
+                        <> — {new Date(item.tanggal_selesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</>
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="font-black text-slate-400 uppercase tracking-widest">⏰ Durasi</span>
+                    <span className="font-black text-slate-900">{item.durasi}</span>
+                  </div>
+                  {item.alasan_izin && (
+                    <div className="flex justify-between text-[11px]">
+                      <span className="font-black text-slate-400 uppercase tracking-widest">📝 Alasan Izin</span>
+                      <span className="font-black text-emerald-600 text-right max-w-[60%] truncate">{item.alasan_izin}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-slate-100 pt-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">💬 Alasan</p>
+                    <p className="text-[11px] font-medium text-slate-700 italic line-clamp-2">"{item.alasan}"</p>
+                  </div>
+                </div>
+
+                {/* Foto Bukti (khusus sakit) */}
+                {item.foto_url && (
+                  <button
+                    onClick={() => window.open(item.foto_url, '_blank')}
+                    className="w-full mb-3 bg-indigo-50 text-indigo-700 border-2 border-indigo-100 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-100 transition-all active:scale-95"
+                  >
+                    🖼️ Lihat Foto Bukti
+                  </button>
+                )}
+
+                {/* Tombol Aksi */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setDetailItem(item)}
+                    disabled={isProcessing}
+                    className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 disabled:opacity-50 active:scale-95 transition-all"
+                  >
+                    👁️ Detail
+                  </button>
+                  <button
+                    onClick={() => handleApprove(item, 'REJECTED')}
+                    disabled={isProcessing}
+                    className="flex-1 py-3 bg-rose-50 text-rose-600 border-2 border-rose-100 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-600 hover:text-white hover:border-rose-600 disabled:opacity-50 active:scale-95 transition-all"
+                  >
+                    ❌ Tolak
+                  </button>
+                  <button
+                    onClick={() => handleApprove(item, 'APPROVED')}
+                    disabled={isProcessing}
+                    className="flex-[2] py-3 bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 disabled:opacity-50 active:scale-95 transition-all shadow-lg shadow-emerald-200"
+                  >
+                    {isProcessing ? '⏳ PROSES...' : '✅ Setujui'}
+                  </button>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* MODAL DETAIL */}
+      {detailItem && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setDetailItem(null)} />
+          <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-md lg:h-[85vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
+            
+            <div className={`p-6 ${COLOR_MAP[detailItem.color]?.bg || 'bg-blue-50'} border-b-2 ${COLOR_MAP[detailItem.color]?.border || 'border-blue-100'} flex items-center gap-4`}>
+              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm">
+                {detailItem.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-[10px] font-black uppercase tracking-widest ${COLOR_MAP[detailItem.color]?.text}`}>
+                  {detailItem.jenis}
+                </p>
+                <h2 className="font-black text-base text-slate-900 truncate">{detailItem.judul}</h2>
+              </div>
+              <button
+                onClick={() => setDetailItem(null)}
+                className="w-10 h-10 bg-white hover:bg-slate-100 rounded-full flex items-center justify-center text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-4">
+              
+              {/* Karyawan Info */}
+              <div className="bg-white p-5 rounded-2xl border-2 border-slate-100">
+                <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-3">👤 Karyawan Pengaju</p>
+                <div className="space-y-2 text-xs">
+                  <DetailRowSimple label="Nama" value={detailItem.karyawan_nama} />
+                  <DetailRowSimple label="NRP" value={detailItem.karyawan_nrp} mono />
+                  <DetailRowSimple label="Jabatan" value={detailItem.karyawan_jabatan} />
+                  <DetailRowSimple label="Site" value={detailItem.karyawan_site} />
+                </div>
+              </div>
+
+              {/* Detail Pengajuan */}
+              <div className="bg-white p-5 rounded-2xl border-2 border-slate-100">
+                <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-3">📋 Detail Pengajuan</p>
+                <div className="space-y-2 text-xs">
+                  <DetailRowSimple 
+                    label="Tanggal Mulai" 
+                    value={new Date(detailItem.tanggal_mulai).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} 
+                  />
+                  {detailItem.tanggal_selesai && detailItem.tanggal_selesai !== detailItem.tanggal_mulai && (
+                    <DetailRowSimple 
+                      label="Tanggal Selesai" 
+                      value={new Date(detailItem.tanggal_selesai).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} 
+                    />
+                  )}
+                  <DetailRowSimple label="Durasi" value={detailItem.durasi} />
+                  {detailItem.alasan_izin && (
+                    <DetailRowSimple label="Alasan Izin" value={detailItem.alasan_izin} />
+                  )}
+                  <div className="border-t border-slate-100 pt-2 mt-2">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Alasan</p>
+                    <p className="text-xs font-medium text-slate-700 italic bg-slate-50 p-3 rounded-xl">
+                      "{detailItem.alasan || '-'}"
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Foto Bukti */}
+              {detailItem.foto_url && (
+                <div className="bg-white p-5 rounded-2xl border-2 border-slate-100">
+                  <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">🖼️ Foto Bukti</p>
+                  <img
+                    src={detailItem.foto_url}
+                    className="w-full rounded-2xl border-2 border-slate-100"
+                    alt="Foto bukti"
+                  />
+                  <a
+                    href={detailItem.foto_url}
+                    target="_blank"
+                    className="block text-center mt-3 text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
+                  >
+                    Buka Gambar Ukuran Penuh →
+                  </a>
+                </div>
+              )}
+
+              {/* Metadata */}
+              <div className="bg-white p-5 rounded-2xl border-2 border-slate-100">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">🕐 Metadata</p>
+                <div className="space-y-2 text-xs">
+                  <DetailRowSimple 
+                    label="Diajukan" 
+                    value={new Date(detailItem.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-white border-t-2 border-slate-100 flex gap-2">
+              <button
+                onClick={() => handleApprove(detailItem, 'REJECTED')}
+                disabled={processingId === detailItem.id}
+                className="flex-1 py-4 bg-rose-50 text-rose-600 border-2 border-rose-200 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 hover:text-white hover:border-rose-600 disabled:opacity-50 active:scale-95 transition-all"
+              >
+                ❌ Tolak
+              </button>
+              <button
+                onClick={() => handleApprove(detailItem, 'APPROVED')}
+                disabled={processingId === detailItem.id}
+                className="flex-[2] py-4 bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-600 disabled:opacity-50 active:scale-95 transition-all shadow-xl shadow-emerald-200"
+              >
+                {processingId === detailItem.id ? '⏳ PROSES...' : '✅ Setujui'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// Helper untuk detail row di modal Approval Center
+function DetailRowSimple({ label, value, mono = false }: any) {
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-slate-50 pb-2 last:border-0">
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex-shrink-0">{label}</p>
+      <div className={`text-xs font-bold text-slate-800 text-right max-w-[65%] ${mono ? 'font-mono' : ''}`}>
+        {value || '-'}
+      </div>
+    </div>
+  )
+}
+
 // Helper untuk detail row
 function DetailRow({ label, value, mono = false }: any) {
   return (
@@ -4615,6 +5169,140 @@ function formatColumnName(col: string) {
     latitude: 'LAT', longitude: 'LNG', radius_meter: 'Radius', nama_site: 'Site Name', active: 'Status', kode: 'ID SISTEM', persen: 'Persen (%)'
   }
   return special[col] || col.replace(/_/g, ' ').toUpperCase()
+}
+
+// ============ 📝 MODAL UPDATE DOKUMEN EXPIRED ============
+function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
+  const jenisRaw = String(row.jenis_dokumen || '').replace(/[^\w\s]/g, '').trim().toUpperCase()
+  const [tanggalBaru, setTanggalBaru] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState<{ type: string; text: string } | null>(null)
+
+  async function handleSave() {
+    if (!tanggalBaru) {
+      setMsg({ type: 'err', text: '❌ Tanggal wajib diisi' })
+      return
+    }
+    setSaving(true)
+    setMsg(null)
+    try {
+      const res = await fetch('/api/monitoring-expired', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jenis_dokumen: jenisRaw,
+          record_id: jenisRaw === 'SIMPOL' ? row.nrp : row.id,
+          tanggal_baru: tanggalBaru,
+          nama_karyawan: row._nama_karyawan || row.nrp
+        })
+      })
+      const json = await res.json()
+      if (res.ok) {
+        setMsg({ type: 'ok', text: json.message || '✅ Berhasil diperpanjang' })
+        setTimeout(() => onSuccess(), 1000)
+      } else {
+        setMsg({ type: 'err', text: '❌ ' + (json.error || 'Gagal update') })
+      }
+    } catch (err: any) {
+      setMsg({ type: 'err', text: '❌ Koneksi bermasalah: ' + err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => !saving && onClose()} />
+      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 lg:inset-x-auto lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-md bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden">
+        
+        {/* Header */}
+        <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-2xl">
+              📝
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest">Perpanjang Dokumen</p>
+              <h2 className="font-black text-lg tracking-tight truncate">{row.jenis_dokumen}</h2>
+            </div>
+            <button
+              onClick={() => !saving && onClose()}
+              className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-lg font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Info Karyawan */}
+        <div className="p-6 bg-slate-50/50 border-b-2 border-slate-100">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Karyawan</p>
+          <p className="font-black text-slate-900 text-sm">{row._nama_karyawan || '-'}</p>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            NRP: {row.nrp} • Site: {row._site}
+          </p>
+        </div>
+
+        {/* Alert Message */}
+        {msg && (
+          <div className={`px-6 py-3 border-b-2 ${msg.type === 'ok' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'}`}>
+            <p className="text-[11px] font-black uppercase tracking-widest">{msg.text}</p>
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="p-6 space-y-4">
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+              Tanggal Expired Saat Ini
+            </p>
+            <div className="bg-rose-50 border-2 border-rose-100 p-3 rounded-2xl">
+              <p className="font-black text-rose-700 text-sm">
+                {row.tanggal_expired ? new Date(row.tanggal_expired).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+              🗓️ Tanggal Expired Baru
+            </label>
+            <input
+              type="date"
+              value={tanggalBaru}
+              onChange={e => setTanggalBaru(e.target.value)}
+              className="w-full p-4 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-[#003D79] focus:bg-white outline-none transition-all"
+            />
+            <p className="text-[10px] text-slate-400 font-bold mt-2">
+              💡 Pilih tanggal baru untuk memperpanjang masa berlaku dokumen ini
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 bg-white border-t-2 border-slate-100 flex gap-3">
+          <button
+            onClick={() => !saving && onClose()}
+            disabled={saving}
+            className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 disabled:opacity-50"
+          >
+            Batal
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !tanggalBaru}
+            className={`flex-[2] py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
+              saving || !tanggalBaru
+                ? 'bg-slate-200 text-slate-400'
+                : 'bg-[#003D79] text-white shadow-xl shadow-blue-200 hover:bg-blue-700'
+            }`}
+          >
+            {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN'}
+          </button>
+        </div>
+      </div>
+    </>
+  )
 }
 
 function renderCell(col: string, val: any) {

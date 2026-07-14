@@ -1,6 +1,11 @@
+// app/api/notifikasi/route.ts
+// v2.0 - Notif detail per jenis + site + status kritis
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,38 +14,183 @@ export async function GET(req: NextRequest) {
     const session = await getSession(token)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const now = new Date().toISOString().split('T')[0]
+    // Setup tanggal
+    const now = new Date()
     const nextMonth = new Date()
     nextMonth.setDate(nextMonth.getDate() + 30)
-    const dateLimit = nextMonth.toISOString().split('T')[0]
-
-    // 1. HITUNG DOKUMEN EXPIRED (Milik Sendiri)
-    const { data: mcu } = await supabase.from('mcu').select('id').eq('nrp', session.nrp).lte('tanggal_expired', dateLimit)
-    const { data: simper } = await supabase.from('simper').select('id').eq('nrp', session.nrp).lte('tanggal_expired', dateLimit)
-    const { data: pkwt } = await supabase.from('pkwt').select('id').eq('nrp', session.nrp).lte('tanggal_berakhir', dateLimit)
+    const sevenDays = new Date()
+    sevenDays.setDate(sevenDays.getDate() + 7)
     
-    const totalExpired = (mcu?.length || 0) + (simper?.length || 0) + (pkwt?.length || 0)
+    const dateLimit = nextMonth.toISOString().split('T')[0]
+    const criticalLimit = sevenDays.toISOString().split('T')[0]
 
-    // 2. HITUNG PENDING APPROVAL (Jika user adalah Atasan/PJO)
-    let totalPending = 0
+    // Identifikasi user
+    const nrp = session.nrp
     const roles = (session.roles || []).map((r: string) => r.toLowerCase())
-    const isApprover = roles.some(r => ['atasan', 'pjo', 'hrga_site', 'admin_site'].includes(r))
+    const isSuperAdmin = session.is_super_admin || false
+    const isHrga = isSuperAdmin || roles.some(r => ['admin', 'hrga', 'hrga_site', 'hrga_pusat'].includes(r))
+    const isApprover = isSuperAdmin || roles.some(r => ['atasan', 'pjo', 'hrga_site', 'admin_site'].includes(r))
 
-    if (isApprover) {
-      const [cuti, lembur, sakit] = await Promise.all([
-        supabase.from('leave_requests').select('id', { count: 'exact', head: true }).eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING'),
-        supabase.from('overtime_requests').select('id', { count: 'exact', head: true }).eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING'),
-        supabase.from('attendance_evidences').select('id', { count: 'exact', head: true }).eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
-      ])
-      totalPending = (cuti.count || 0) + (lembur.count || 0) + (sakit.count || 0)
+    // ═══════════════════════════════════════════════
+    // 1. HITUNG EXPIRED (per jenis + site + kritis)
+    // ═══════════════════════════════════════════════
+    let qMcu = supabase.from('mcu').select('nrp, tanggal_expired').lte('tanggal_expired', dateLimit)
+    let qSimper = supabase.from('simper').select('nrp, tanggal_expired').lte('tanggal_expired', dateLimit)
+    let qPkwt = supabase.from('pkwt').select('nrp, tanggal_berakhir').lte('tanggal_berakhir', dateLimit)
+    let qSimpol = supabase.from('employees').select('nrp, exp_simpol, site').lte('exp_simpol', dateLimit)
+
+    // Filter: kalau bukan HRGA, hanya lihat dokumen sendiri
+    if (!isHrga) {
+      qMcu = qMcu.eq('nrp', nrp)
+      qSimper = qSimper.eq('nrp', nrp)
+      qPkwt = qPkwt.eq('nrp', nrp)
+      qSimpol = qSimpol.eq('nrp', nrp)
     }
 
+    const [resMcu, resSimper, resPkwt, resSimpol] = await Promise.all([
+      qMcu, qSimper, qPkwt, qSimpol
+    ])
+
+    // Ambil semua NRP unik untuk lookup site
+    const allNrps = new Set<string>()
+    ;(resMcu.data || []).forEach(r => r.nrp && allNrps.add(String(r.nrp)))
+    ;(resSimper.data || []).forEach(r => r.nrp && allNrps.add(String(r.nrp)))
+    ;(resPkwt.data || []).forEach(r => r.nrp && allNrps.add(String(r.nrp)))
+
+    const empSiteMap = new Map<string, string>()
+    if (allNrps.size > 0) {
+      const { data: emps } = await supabase
+        .from('employees')
+        .select('nrp, site')
+        .in('nrp', Array.from(allNrps))
+      ;(emps || []).forEach(e => empSiteMap.set(String(e.nrp), e.site || '-'))
+    }
+
+    // Fungsi helper: group by site + hitung kritis
+    function buildBreakdown(rows: any[], jenis: string, tanggalField: string, icon: string, useEmpSite = true) {
+      const siteMap = new Map<string, { count: number, critical: number }>()
+      
+      ;(rows || []).forEach(r => {
+        const site = useEmpSite 
+          ? (empSiteMap.get(String(r.nrp)) || '-')
+          : (r.site || '-')
+        const tgl = r[tanggalField]
+        const isCritical = tgl && tgl <= criticalLimit
+        
+        if (!siteMap.has(site)) {
+          siteMap.set(site, { count: 0, critical: 0 })
+        }
+        const s = siteMap.get(site)!
+        s.count++
+        if (isCritical) s.critical++
+      })
+      
+      return Array.from(siteMap.entries()).map(([site, data]) => ({
+        jenis,
+        icon,
+        site,
+        count: data.count,
+        critical: data.critical
+      }))
+    }
+
+    const expiredBreakdown = [
+      ...buildBreakdown(resMcu.data || [], 'MCU', 'tanggal_expired', '🏥', true),
+      ...buildBreakdown(resSimper.data || [], 'SIMPER', 'tanggal_expired', '🚗', true),
+      ...buildBreakdown(resPkwt.data || [], 'PKWT', 'tanggal_berakhir', '📄', true),
+      ...buildBreakdown(resSimpol.data || [], 'SIMPOL', 'exp_simpol', '🎖️', false)
+    ]
+
+    const totalExpired = expiredBreakdown.reduce((sum, b) => sum + b.count, 0)
+    const totalExpiredCritical = expiredBreakdown.reduce((sum, b) => sum + b.critical, 0)
+
+    // ═══════════════════════════════════════════════
+    // 2. HITUNG APPROVAL (sinkron dgn approval-center)
+    // ═══════════════════════════════════════════════
+    const approvalBreakdown: any[] = []
+    let totalApproval = 0
+
+    if (isApprover) {
+      // Tahap ATASAN
+      const [cutiAt, lemburAt, sakitAt] = await Promise.all([
+        supabase.from('leave_requests').select('nrp').eq('atasan_nrp', nrp).eq('status_atasan', 'PENDING'),
+        supabase.from('overtime_requests').select('nrp').eq('atasan_nrp', nrp).eq('status_atasan', 'PENDING'),
+        supabase.from('attendance_evidences').select('nrp, kategori').eq('atasan_nrp', nrp).eq('status_atasan', 'PENDING')
+      ])
+
+      // Tahap PJO
+      const [cutiPjo, lemburPjo] = await Promise.all([
+        supabase.from('leave_requests').select('nrp').eq('pjo_nrp', nrp).eq('status_atasan', 'APPROVED').eq('status_pjo', 'PENDING'),
+        supabase.from('overtime_requests').select('nrp').eq('pjo_nrp', nrp).eq('status_atasan', 'APPROVED').eq('status_pjo', 'PENDING')
+      ])
+
+      // Kumpulkan semua NRP karyawan pengaju untuk lookup site
+      const approvalNrps = new Set<string>()
+      ;(cutiAt.data || []).forEach(r => r.nrp && approvalNrps.add(String(r.nrp)))
+      ;(lemburAt.data || []).forEach(r => r.nrp && approvalNrps.add(String(r.nrp)))
+      ;(sakitAt.data || []).forEach(r => r.nrp && approvalNrps.add(String(r.nrp)))
+      ;(cutiPjo.data || []).forEach(r => r.nrp && approvalNrps.add(String(r.nrp)))
+      ;(lemburPjo.data || []).forEach(r => r.nrp && approvalNrps.add(String(r.nrp)))
+
+      const apprSiteMap = new Map<string, string>()
+      if (approvalNrps.size > 0) {
+        const { data: emps } = await supabase
+          .from('employees')
+          .select('nrp, site')
+          .in('nrp', Array.from(approvalNrps))
+        ;(emps || []).forEach(e => apprSiteMap.set(String(e.nrp), e.site || '-'))
+      }
+
+      // Helper: group approval by site
+      function groupApprovalBySite(rows: any[], jenis: string, icon: string, tahap: string) {
+        const siteMap = new Map<string, number>()
+        ;(rows || []).forEach(r => {
+          const site = apprSiteMap.get(String(r.nrp)) || '-'
+          siteMap.set(site, (siteMap.get(site) || 0) + 1)
+        })
+        return Array.from(siteMap.entries()).map(([site, count]) => ({
+          jenis, icon, site, count, tahap
+        }))
+      }
+
+      // Kategorisasi sakit
+      const sakitOnly = (sakitAt.data || []).filter(r => (r.kategori || 'SAKIT') === 'SAKIT')
+      const izinPot = (sakitAt.data || []).filter(r => r.kategori === 'IZIN_POTONGAN')
+      const izinBay = (sakitAt.data || []).filter(r => r.kategori === 'IZIN_BERBAYAR')
+
+      approvalBreakdown.push(
+        ...groupApprovalBySite(cutiAt.data || [], 'CUTI', '🌴', 'ATASAN'),
+        ...groupApprovalBySite(lemburAt.data || [], 'LEMBUR', '⏱️', 'ATASAN'),
+        ...groupApprovalBySite(sakitOnly, 'SAKIT', '🤒', 'ATASAN'),
+        ...groupApprovalBySite(izinPot, 'IZIN_POTONGAN', '⚠️', 'ATASAN'),
+        ...groupApprovalBySite(izinBay, 'IZIN_BERBAYAR', '✅', 'ATASAN'),
+        ...groupApprovalBySite(cutiPjo.data || [], 'CUTI', '🌴', 'PJO'),
+        ...groupApprovalBySite(lemburPjo.data || [], 'LEMBUR', '⏱️', 'PJO')
+      )
+
+      totalApproval = approvalBreakdown.reduce((sum, b) => sum + b.count, 0)
+    }
+
+    // ═══════════════════════════════════════════════
+    // 3. RETURN
+    // ═══════════════════════════════════════════════
     return NextResponse.json({
-      total_expired: totalExpired,
-      total_pending: totalPending,
-      total_notifikasi: totalExpired + totalPending
+      total_notifikasi: totalApproval + totalExpired,
+      approval: {
+        total: totalApproval,
+        breakdown: approvalBreakdown
+      },
+      expired: {
+        total: totalExpired,
+        critical: totalExpiredCritical,
+        breakdown: expiredBreakdown
+      },
+      // Backward compatibility (biar layout.tsx lama tidak error)
+      total_pending: totalApproval,
+      total_expired: totalExpired
     })
   } catch (err: any) {
+    console.error('Notifikasi error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

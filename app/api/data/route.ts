@@ -551,6 +551,74 @@ export async function GET(request: NextRequest) {
     }
 
     // ==========================================
+    // 🎯 CASE: MONITORING EXPIRED (MCU, SIMPER, SIMPOL, PKWT)
+    // ==========================================
+    if (menuKey === 'monitoring_expired') {
+      const today = new Date();
+      const nextMonth = new Date();
+      nextMonth.setDate(nextMonth.getDate() + 30);
+      const limitDate = nextMonth.toISOString().split('T')[0];
+
+      // 1. Ambil data dasar karyawan
+      const { data: emps } = await supabase.from('employees').select('nrp, nama, site, jabatan, exp_simpol')
+      
+      // 2. Ambil data dari tabel pendukung
+      const [pkRes, smRes, mcRes] = await Promise.all([
+        supabase.from('pkwt').select('*'),
+        supabase.from('simper').select('*'),
+        supabase.from('mcu').select('*')
+      ])
+
+      const expiredRows: any[] = []
+
+      // Cek Simpol (di tabel employees)
+      ;(emps || []).forEach(e => {
+        if (e.exp_simpol && e.exp_simpol <= limitDate) {
+          expiredRows.push({ nrp: e.nrp, _nama_karyawan: e.nama, _site: e.site, jenis_dokumen: '🪪 SIMPOL', tanggal_expired: e.exp_simpol })
+        }
+      })
+
+      // Cek PKWT
+      ;(pkRes.data || []).forEach(p => {
+        const tgl = p.tanggal_berakhir || p.berlaku_sampai || p.tgl_akhir
+        if (tgl && tgl <= limitDate) {
+          const emp = emps?.find(e => e.nrp === p.nrp)
+          expiredRows.push({ nrp: p.nrp, _nama_karyawan: emp?.nama || p.nrp, _site: emp?.site || '-', jenis_dokumen: '📄 PKWT', tanggal_expired: tgl })
+        }
+      })
+
+      // Cek SIMPER
+      ;(smRes.data || []).forEach(s => {
+        const tgl = s.tanggal_expired || s.tgl_expired
+        if (tgl && tgl <= limitDate) {
+          const emp = emps?.find(e => e.nrp === s.nrp)
+          expiredRows.push({ nrp: s.nrp, _nama_karyawan: emp?.nama || s.nrp, _site: emp?.site || '-', jenis_dokumen: '🎖️ SIMPER', tanggal_expired: tgl })
+        }
+      })
+
+      // Cek MCU
+      ;(mcRes.data || []).forEach(m => {
+        const tgl = m.tanggal_expired || m.tgl_mcu_berikutnya
+        if (tgl && tgl <= limitDate) {
+          const emp = emps?.find(e => e.nrp === m.nrp)
+          expiredRows.push({ nrp: m.nrp, _nama_karyawan: emp?.nama || m.nrp, _site: emp?.site || '-', jenis_dokumen: '🏥 MCU', tanggal_expired: tgl })
+        }
+      })
+
+      // Sort: yang paling cepat mati di atas
+      expiredRows.sort((a, b) => new Date(a.tanggal_expired).getTime() - new Date(b.tanggal_expired).getTime())
+
+      return NextResponse.json({
+        type: 'table',
+        title: '⚠️ Monitoring Dokumen Expired',
+        rows: expiredRows,
+        columns: ['nrp', '_nama_karyawan', '_site', 'jenis_dokumen', 'tanggal_expired'],
+        table: 'monitoring_expired', 
+        access_mode: 'VIEW_ONLY' // ✨ Ganti ini dari 'READ' ke 'VIEW_ONLY'
+      })
+    }
+
+    // ==========================================
     // 🎯 CASE D: TABEL GENERIK (Termasuk Approval Bukti Sakit)
     // ==========================================
     if (!target_table) return NextResponse.json({ error: 'Tabel target tidak terdefinisi' }, { status: 400 })

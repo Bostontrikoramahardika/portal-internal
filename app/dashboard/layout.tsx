@@ -100,6 +100,7 @@ const TAB_CONFIG = [
     roles: ['atasan', 'pjo', 'hrga', 'admin', 'admin_site', 'hrga_site', 'hrga_oprek'],
     customMatch: (m: MenuItem) => {
       return (
+        m.menu_key === 'approval_center' ||    // ✨ BARU
         m.menu_key === 'approval_pjo' ||
         m.menu_key === 'approval_atasan' ||
         m.menu_key === 'approval_cuti' ||
@@ -214,6 +215,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [bottomSheetMenus, setBottomSheetMenus] = useState<MenuItem[]>([])
   const [bottomSheetTitle, setBottomSheetTitle] = useState('')
   const [notifCount, setNotifCount] = useState(0)
+const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdown: [] }, expired: { total: 0, critical: 0, breakdown: [] } })
   const [isNotifOpen, setIsNotifOpen] = useState(false)
 
   const router = useRouter()
@@ -223,6 +225,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   useEffect(() => { 
     checkAuth()
     fetchNotif()
+
+    // ✨ Dengerin sinyal dari halaman approval untuk update lonceng
+    window.addEventListener('refreshNotif', fetchNotif);
+    return () => window.removeEventListener('refreshNotif', fetchNotif);
   }, [])
 
   useEffect(() => {
@@ -276,6 +282,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json()
         setNotifCount(data.total_notifikasi || 0)
+        setNotifData({
+          approval: data.approval || { total: 0, breakdown: [] },
+          expired: data.expired || { total: 0, critical: 0, breakdown: [] }
+        })
       }
     } catch (err) { console.error("Notif Error:", err) }
   }
@@ -479,28 +489,114 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               </div>
               <button onClick={() => setIsNotifOpen(false)} className="bg-white/10 hover:bg-white/20 h-10 w-10 flex items-center justify-center rounded-full transition-colors">✕</button>
             </div>
-            <div className="p-6 max-h-[60vh] overflow-y-auto bg-slate-50/50 space-y-4">
+            <div className="p-6 max-h-[70vh] overflow-y-auto bg-slate-50/50 space-y-4">
               {notifCount === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-5xl mb-4 opacity-20">🏝️</div>
                   <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Semua Aman!</p>
+                  <p className="text-slate-300 text-[10px] font-bold mt-2">Tidak ada notifikasi menunggu</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <button onClick={() => { setIsNotifOpen(false); router.push('/dashboard?menu=approval_atasan') }} className="w-full text-left p-5 bg-white border border-slate-100 rounded-[2rem] flex gap-4 items-center shadow-sm hover:shadow-md transition-all active:scale-95">
-                    <div className="h-12 w-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl">📝</div>
-                    <div className="flex-1">
-                      <div className="font-black text-[#003D79] text-sm uppercase leading-none mb-1">Persetujuan</div>
-                      <p className="text-[11px] text-slate-500 font-bold leading-tight">Cek pengajuan yang butuh approval Anda.</p>
+
+                  {/* ═══════ KATEGORI 1: APPROVAL ═══════ */}
+                  {notifData.approval.total > 0 && (
+                    <div className="bg-white border-2 border-blue-100 rounded-[2rem] overflow-hidden shadow-sm">
+                      <div className="bg-blue-50 px-5 py-3 flex items-center justify-between border-b border-blue-100">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">📝</span>
+                          <span className="font-black text-[#003D79] text-xs uppercase tracking-widest">Persetujuan</span>
+                        </div>
+                        <span className="bg-blue-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+                          {notifData.approval.total}
+                        </span>
+                      </div>
+                      <div className="divide-y divide-slate-50">
+                        {notifData.approval.breakdown.map((item: any, i: number) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setIsNotifOpen(false)
+                              router.push(`/dashboard?menu=approval_center`)
+                            }}
+                            className="w-full px-5 py-3 flex items-center gap-3 hover:bg-blue-50/50 transition-all active:scale-95 text-left"
+                          >
+                            <div className="text-xl">{item.icon}</div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-black text-slate-900 text-xs">
+                                {item.count} {item.jenis.replace(/_/g, ' ')}
+                              </p>
+                              <p className="text-[10px] text-slate-500 font-bold">
+                                dari {item.site} • Tahap {item.tahap}
+                              </p>
+                            </div>
+                            <span className="text-slate-300 text-lg">›</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </button>
-                  <button onClick={() => { setIsNotifOpen(false); router.push('/dashboard?menu=monitoring_expired') }} className="w-full text-left p-5 bg-white border border-slate-100 rounded-[2rem] flex gap-4 items-center shadow-sm hover:shadow-md transition-all active:scale-95">
-                    <div className="h-12 w-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl">⚠️</div>
-                    <div className="flex-1">
-                      <div className="font-black text-amber-600 text-sm uppercase leading-none mb-1">Dokumen Expired</div>
-                      <p className="text-[11px] text-slate-500 font-bold leading-tight">Periksa masa berlaku MCU/SIMPER/PKWT.</p>
+                  )}
+
+                  {/* ═══════ KATEGORI 2: DOKUMEN EXPIRED ═══════ */}
+                  {notifData.expired.total > 0 && (
+                    <div className={`bg-white border-2 rounded-[2rem] overflow-hidden shadow-sm ${
+                      notifData.expired.critical > 0 ? 'border-rose-200' : 'border-amber-100'
+                    }`}>
+                      <div className={`px-5 py-3 flex items-center justify-between border-b ${
+                        notifData.expired.critical > 0 ? 'bg-rose-50 border-rose-100' : 'bg-amber-50 border-amber-100'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{notifData.expired.critical > 0 ? '🚨' : '⚠️'}</span>
+                          <span className={`font-black text-xs uppercase tracking-widest ${
+                            notifData.expired.critical > 0 ? 'text-rose-700' : 'text-amber-700'
+                          }`}>
+                            Dokumen Expired
+                          </span>
+                          {notifData.expired.critical > 0 && (
+                            <span className="bg-rose-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase animate-pulse">
+                              🔥 {notifData.expired.critical} Kritis
+                            </span>
+                          )}
+                        </div>
+                        <span className={`text-white text-[10px] font-black px-2.5 py-1 rounded-full ${
+                          notifData.expired.critical > 0 ? 'bg-rose-500' : 'bg-amber-500'
+                        }`}>
+                          {notifData.expired.total}
+                        </span>
+                      </div>
+                      <div className="divide-y divide-slate-50">
+                        {notifData.expired.breakdown.map((item: any, i: number) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setIsNotifOpen(false)
+                              router.push(`/dashboard?menu=monitoring_expired`)
+                            }}
+                            className="w-full px-5 py-3 flex items-center gap-3 hover:bg-amber-50/50 transition-all active:scale-95 text-left"
+                          >
+                            <div className="text-xl">{item.icon}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <p className="font-black text-slate-900 text-xs">
+                                  {item.count} {item.jenis}
+                                </p>
+                                {item.critical > 0 && (
+                                  <span className="bg-rose-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase animate-pulse">
+                                    🔥 {item.critical}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-500 font-bold">
+                                Site: {item.site}
+                              </p>
+                            </div>
+                            <span className="text-slate-300 text-lg">›</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </button>
+                  )}
+
                 </div>
               )}
             </div>
