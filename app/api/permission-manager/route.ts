@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { logAudit, sessionToAuditActor } from '@/app/lib/auditLog'
 
 // ============================================
 // GET: Ambil daftar karyawan + master permissions
@@ -130,6 +131,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Ambil nama karyawan untuk log
+    const { data: empData } = await supabase
+      .from('employees')
+      .select('nama')
+      .eq('nrp', nrp)
+      .single()
+
+    // Catat audit log
+    await logAudit({
+      ...sessionToAuditActor(session),
+      action: 'grant_permission',
+      category: 'PERMISSION',
+      target_type: 'employee',
+      target_id: nrp,
+      target_label: empData?.nama || nrp,
+      detail: { perm_key },
+      req: request
+    })
+
     return NextResponse.json({ 
       message: `Permission ${perm_key} berhasil diberikan ke ${nrp}`,
       success: true 
@@ -171,6 +191,25 @@ export async function DELETE(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // Ambil nama karyawan untuk log
+    const { data: empData } = await supabase
+      .from('employees')
+      .select('nama')
+      .eq('nrp', nrp)
+      .single()
+
+    // Catat audit log
+    await logAudit({
+      ...sessionToAuditActor(session),
+      action: 'revoke_permission',
+      category: 'PERMISSION',
+      target_type: 'employee',
+      target_id: nrp,
+      target_label: empData?.nama || nrp,
+      detail: { perm_key },
+      req: request
+    })
 
     return NextResponse.json({ 
       message: `Permission ${perm_key} berhasil dicabut dari ${nrp}`,

@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { logAudit, sessionToAuditActor } from '@/app/lib/auditLog'
 
 // ============================================
 // GET: Ambil daftar site + total karyawan + PJO
@@ -114,12 +115,46 @@ export async function PUT(request: NextRequest) {
       'active', 'is_active', 'is_pusat'
     ]
 
+    // Kolom yang bertipe numeric di database
+    const numericFields = [
+      'siang_batas_telat', 'malam_batas_telat',
+      'latitude', 'longitude', 'radius_meter',
+      'minus_terlambat', 'minus_mangkir', 
+      'minus_sp1', 'minus_sp2', 'minus_sp3', 'minus_cnc'
+    ]
+    
+    // Kolom yang bertipe time
+    const timeFields = [
+      'siang_jam_masuk', 'siang_jam_pulang',
+      'malam_jam_masuk', 'malam_jam_pulang'
+    ]
+
     const safeUpdates: any = {}
     for (const key of allowedFields) {
       if (updates[key] !== undefined) {
-        safeUpdates[key] = updates[key]
+        let value = updates[key]
+        
+        // Konversi string kosong "" jadi null untuk numeric & time
+        if ((numericFields.includes(key) || timeFields.includes(key)) && 
+            (value === '' || value === null || value === undefined)) {
+          value = null
+        }
+        // Konversi string angka jadi number untuk numeric
+        else if (numericFields.includes(key) && typeof value === 'string' && value !== '') {
+          const num = parseFloat(value)
+          value = isNaN(num) ? null : num
+        }
+        
+        safeUpdates[key] = value
       }
     }
+
+    // Ambil nama site untuk log
+    const { data: siteBeforeUpdate } = await supabase
+      .from('sites_config')
+      .select('nama_site')
+      .eq('id', id)
+      .single()
 
     const { error } = await supabase
       .from('sites_config')
@@ -129,6 +164,18 @@ export async function PUT(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // Catat audit log
+    await logAudit({
+      ...sessionToAuditActor(session),
+      action: 'update_site',
+      category: 'SITE',
+      target_type: 'site',
+      target_id: id,
+      target_label: siteBeforeUpdate?.nama_site || 'Unknown',
+      detail: { updated_fields: Object.keys(safeUpdates) },
+      req: request
+    })
 
     return NextResponse.json({ 
       message: 'Konfigurasi site berhasil diupdate',
@@ -202,6 +249,18 @@ export async function DELETE(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // Catat audit log
+    await logAudit({
+      ...sessionToAuditActor(session),
+      action: 'delete_site',
+      category: 'SITE',
+      target_type: 'site',
+      target_id: id,
+      target_label: siteData.nama_site,
+      detail: { note: 'Hapus permanen', is_pusat: siteData.is_pusat },
+      req: request
+    })
 
     return NextResponse.json({ 
       success: true,

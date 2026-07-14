@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { logAudit, sessionToAuditActor } from '@/app/lib/auditLog'
 
 // ============================================================
 // GET: Ambil statistik live user online + config global
@@ -138,9 +139,25 @@ export async function POST(req: NextRequest) {
 
       if (error) throw error
 
+      // Catat audit log
+      await logAudit({
+        ...sessionToAuditActor(session),
+        action: 'broadcast',
+        category: 'ANNOUNCEMENT',
+        target_type: 'announcement',
+        target_label: judul || '(Tanpa Judul)',
+        detail: {
+          judul: judul || null,
+          pesan: pesan || null,
+          is_urgent: is_urgent || false,
+          jumlah_gambar: imageArray.length
+        },
+        req
+      })
+
       return NextResponse.json({
         success: true,
-        message: `✅ Broadcast "${judul}" berhasil dikirim ke semua user`
+        message: `✅ Broadcast berhasil dikirim ke semua user`
       })
     }
 
@@ -153,6 +170,17 @@ export async function POST(req: NextRequest) {
         .not('nrp', 'is', null)
 
       if (error) throw error
+
+      // Catat audit log
+      await logAudit({
+        ...sessionToAuditActor(session),
+        action: 'force_logout_all',
+        category: 'SYSTEM',
+        target_type: 'session',
+        target_label: 'Semua User (kecuali Super Admin)',
+        detail: { note: 'Force logout massal darurat' },
+        req
+      })
 
       return NextResponse.json({
         success: true,
@@ -167,12 +195,30 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'ID pengumuman wajib diisi' }, { status: 400 })
       }
 
+      // Ambil judul pengumuman dulu sebelum dihapus (untuk log)
+      const { data: annData } = await supabase
+        .from('announcements')
+        .select('title')
+        .eq('id', id)
+        .single()
+
       const { error } = await supabase
         .from('announcements')
         .delete()
         .eq('id', id)
 
       if (error) throw error
+
+      // Catat audit log
+      await logAudit({
+        ...sessionToAuditActor(session),
+        action: 'delete_announcement',
+        category: 'ANNOUNCEMENT',
+        target_type: 'announcement',
+        target_id: id,
+        target_label: annData?.title || '(Tanpa Judul)',
+        req
+      })
 
       return NextResponse.json({
         success: true,

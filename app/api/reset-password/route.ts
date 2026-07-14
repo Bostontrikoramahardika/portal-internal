@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { logAudit, sessionToAuditActor } from '@/app/lib/auditLog'
 
 export async function POST(req: NextRequest) {
   const token = req.cookies.get('session_token')?.value
@@ -56,6 +57,22 @@ export async function POST(req: NextRequest) {
       .from('sessions')
       .delete()
       .eq('nrp', nrp)
+
+    // Catat audit log
+    await logAudit({
+      ...sessionToAuditActor(session),
+      action: 'reset_password',
+      category: 'PASSWORD',
+      target_type: 'employee',
+      target_id: emp.nrp,
+      target_label: emp.nama,
+      detail: {
+        mode: mode,
+        site: emp.site,
+        reset_to: mode === 'reset_to_nrp' ? 'NRP (default)' : 'Custom password'
+      },
+      req
+    })
 
     return NextResponse.json({
       success: true,
