@@ -2257,6 +2257,7 @@ function SitesManagerView() {
   const [loading, setLoading] = useState(true)
   const [editingSite, setEditingSite] = useState<any>(null)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [msg, setMsg] = useState<{ type: string, text: string } | null>(null)
   const [formData, setFormData] = useState<any>({})
 
@@ -2303,6 +2304,48 @@ function SitesManagerView() {
       is_pusat: site.is_pusat
     })
     setMsg(null)
+  }
+
+    async function handleDelete() {
+    if (!editingSite) return
+
+    // Konfirmasi 2x karena ini permanen
+    const confirm1 = confirm(
+      `⚠️ HAPUS SITE PERMANEN\n\n` +
+      `Site: ${editingSite.nama_site}\n\n` +
+      `Tindakan ini TIDAK BISA dibatalkan!\n` +
+      `Lanjutkan?`
+    )
+    if (!confirm1) return
+
+    const confirm2 = confirm(
+      `🔴 KONFIRMASI TERAKHIR\n\n` +
+      `Yakin hapus site "${editingSite.nama_site}"?\n` +
+      `Ketik OK untuk konfirmasi.`
+    )
+    if (!confirm2) return
+
+    setDeleting(true)
+    setMsg(null)
+    try {
+      const res = await fetch('/api/sites-manager', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingSite.id })
+      })
+      const json = await res.json()
+      if (res.ok) {
+        alert(`✅ ${json.message}`)
+        setEditingSite(null)
+        loadData()
+      } else {
+        setMsg({ type: 'err', text: '❌ ' + json.error })
+      }
+    } catch {
+      setMsg({ type: 'err', text: '❌ Koneksi bermasalah' })
+    } finally {
+      setDeleting(false)
+    }
   }
 
   async function handleSave() {
@@ -2590,21 +2633,35 @@ function SitesManagerView() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-white border-t-2 border-slate-100 flex gap-3">
-              <button 
-                onClick={() => !saving && setEditingSite(null)}
-                disabled={saving}
-                className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 disabled:opacity-50"
-              >
-                Batal
-              </button>
-              <button 
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
-              >
-                {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN PERUBAHAN'}
-              </button>
+            <div className="p-4 bg-white border-t-2 border-slate-100 space-y-2">
+              {/* Tombol Hapus - hanya tampil jika bukan site pusat */}
+              {!editingSite?.is_pusat && (
+                <button
+                  onClick={handleDelete}
+                  disabled={saving || deleting}
+                  className="w-full py-3 bg-rose-50 text-rose-600 border-2 border-rose-200 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 hover:text-white hover:border-rose-600 disabled:opacity-50 active:scale-95 transition-all"
+                >
+                  {deleting ? '⏳ MENGHAPUS...' : '🗑️ HAPUS SITE INI PERMANEN'}
+                </button>
+              )}
+              
+              {/* Tombol Batal + Simpan */}
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => !(saving || deleting) && setEditingSite(null)}
+                  disabled={saving || deleting}
+                  className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={handleSave}
+                  disabled={saving || deleting}
+                  className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
+                >
+                  {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN PERUBAHAN'}
+                </button>
+              </div>
             </div>
           </div>
         </>

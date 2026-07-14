@@ -138,3 +138,76 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+// ============================================
+// DELETE: Hapus site permanen
+// ============================================
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get('session_token')?.value
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const session = await getSession(token)
+    if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+
+    // Hanya Super Admin yang boleh hapus site permanen
+    if (!session.is_super_admin) {
+      return NextResponse.json({ error: 'Hanya Super Admin yang boleh menghapus site' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const { id } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID site wajib diisi' }, { status: 400 })
+    }
+
+    // Cek dulu: apakah masih ada karyawan aktif di site ini?
+    const { data: siteData } = await supabase
+      .from('sites_config')
+      .select('nama_site, is_pusat')
+      .eq('id', id)
+      .single()
+
+    if (!siteData) {
+      return NextResponse.json({ error: 'Site tidak ditemukan' }, { status: 404 })
+    }
+
+    // Jangan izinkan hapus site PUSAT
+    if (siteData.is_pusat) {
+      return NextResponse.json({ 
+        error: 'Site Pusat (HO) tidak bisa dihapus' 
+      }, { status: 400 })
+    }
+
+    // Cek karyawan aktif di site ini
+    const { count: empCount } = await supabase
+      .from('employees')
+      .select('*', { count: 'exact', head: true })
+      .eq('site', siteData.nama_site)
+      .eq('status_karyawan', 'Aktif')
+
+    if (empCount && empCount > 0) {
+      return NextResponse.json({ 
+        error: `Tidak bisa dihapus! Masih ada ${empCount} karyawan aktif di site ${siteData.nama_site}. Pindahkan atau nonaktifkan karyawan terlebih dahulu.`
+      }, { status: 400 })
+    }
+
+    // Aman untuk dihapus
+    const { error } = await supabase
+      .from('sites_config')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ 
+      success: true,
+      message: `✅ Site "${siteData.nama_site}" berhasil dihapus permanen`
+    })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
