@@ -289,10 +289,29 @@ function IdentityView({ data }: { data: any }) {
   )
 }
 
-// ============ ✍️ FORM CUTI ============
+// ============ ✍️ FORM CUTI (v2 - Cuti Tahunan + Tiket Pesawat) ============
 function FormCutiView({ title, onSuccess, data }: any) {
-  const [form, setForm] = useState({ tanggal_mulai: '', tanggal_selesai: '', jenis_cuti: '', alasan: '', atasan_nrp: '' })
-  const [atasanList, setAtasanList] = useState([])
+  const eligibleTiket = !!data?.eligible_tiket_pesawat
+  const sisaCutiTahunan = Number(data?.sisa_cuti_tahunan ?? 0)
+  const tahunCuti = data?.tahun_cuti || new Date().getFullYear()
+
+  const [form, setForm] = useState<any>({
+    tanggal_mulai: '',
+    tanggal_selesai: '',
+    jenis_cuti: '',
+    alasan: '',
+    atasan_nrp: '',
+    jumlah_hari: '',
+    butuh_tiket: false,
+    tiket_berangkat_tanggal: '',
+    tiket_berangkat_tujuan: '',
+    tiket_kembali_tanggal: '',
+    tiket_kembali_tujuan: ''
+  })
+
+  const [atasanList, setAtasanList] = useState<any[]>([])
+  const [isDirectPJO, setIsDirectPJO] = useState(false)
+  const [pjoNama, setPjoNama] = useState('')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState({ type: '', text: '' })
   const riwayat = data?.riwayat || []
@@ -301,29 +320,131 @@ function FormCutiView({ title, onSuccess, data }: any) {
     const controller = new AbortController()
     fetch('/api/leave/atasan-list', { signal: controller.signal })
       .then(r => r.json())
-      .then(d => setAtasanList(d.atasan_list || []))
+      .then((d: any) => {
+        setAtasanList(d.atasan_list || [])
+        setIsDirectPJO(!!d.is_direct_pjo)
+        setPjoNama(d.pjo_nama || '')
+      })
       .catch(err => {
         if (err.name !== 'AbortError') console.log('Load atasan gagal:', err)
       })
     return () => controller.abort()
   }, [])
 
+  // Hitung hari kalender dari rentang tanggal
+  const hariKalender = (() => {
+    if (!form.tanggal_mulai || !form.tanggal_selesai) return 0
+    const s = new Date(`${form.tanggal_mulai}T00:00:00`)
+    const e = new Date(`${form.tanggal_selesai}T00:00:00`)
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) return 0
+    if (e < s) return 0
+    return Math.floor((e.getTime() - s.getTime()) / 86400000) + 1
+  })()
+
+  const isCutiTahunan = form.jenis_cuti === 'CUTI TAHUNAN'
+  const jumlahHariNum = Number(form.jumlah_hari || 0)
+
+  // Validasi realtime cuti tahunan
+  let warningCutiTahunan = ''
+  if (isCutiTahunan) {
+    if (jumlahHariNum <= 0) {
+      warningCutiTahunan = '⚠️ Jumlah hari cuti tahunan wajib > 0'
+    } else if (hariKalender > 0 && jumlahHariNum > hariKalender) {
+      warningCutiTahunan = `⚠️ Jumlah hari (${jumlahHariNum}) melebihi rentang tanggal (${hariKalender} hari)`
+    } else if (jumlahHariNum > sisaCutiTahunan) {
+      warningCutiTahunan = `⚠️ Sisa cuti tahunan Anda hanya ${sisaCutiTahunan} hari`
+    }
+  }
+
+  // Validasi tiket
+  let warningTiket = ''
+  if (form.butuh_tiket) {
+    if (
+      !form.tiket_berangkat_tanggal ||
+      !form.tiket_berangkat_tujuan ||
+      !form.tiket_kembali_tanggal ||
+      !form.tiket_kembali_tujuan
+    ) {
+      warningTiket = '⚠️ Semua field tiket wajib diisi'
+    } else if (
+      new Date(form.tiket_kembali_tanggal) < new Date(form.tiket_berangkat_tanggal)
+    ) {
+      warningTiket = '⚠️ Tanggal kembali tidak boleh lebih awal dari tanggal berangkat'
+    }
+  }
+
   async function handleSubmit(e: any) {
     e.preventDefault()
+
+    // Client-side guard
+    if (!form.jenis_cuti) {
+      setMsg({ type: 'err', text: 'Jenis cuti wajib dipilih' })
+      return
+    }
+
+    if (!isDirectPJO && !form.atasan_nrp) {
+      setMsg({ type: 'err', text: 'Atasan wajib dipilih' })
+      return
+    }
+
+    if (isCutiTahunan) {
+      if (warningCutiTahunan) {
+        setMsg({ type: 'err', text: warningCutiTahunan.replace('⚠️ ', '') })
+        return
+      }
+    }
+
+    if (form.butuh_tiket && warningTiket) {
+      setMsg({ type: 'err', text: warningTiket.replace('⚠️ ', '') })
+      return
+    }
+
     setLoading(true)
     try {
+      const payload: any = {
+        tanggal_mulai: form.tanggal_mulai,
+        tanggal_selesai: form.tanggal_selesai,
+        jenis_cuti: form.jenis_cuti,
+        alasan: form.alasan,
+        atasan_nrp: isDirectPJO ? '' : form.atasan_nrp,
+        butuh_tiket: !!form.butuh_tiket
+      }
+
+      if (isCutiTahunan) {
+        payload.jumlah_hari = jumlahHariNum
+      }
+
+      if (form.butuh_tiket) {
+        payload.tiket_berangkat_tanggal = form.tiket_berangkat_tanggal
+        payload.tiket_berangkat_tujuan = form.tiket_berangkat_tujuan
+        payload.tiket_kembali_tanggal = form.tiket_kembali_tanggal
+        payload.tiket_kembali_tujuan = form.tiket_kembali_tujuan
+      }
+
       const res = await fetch('/api/leave/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify(payload)
       })
       const resData = await res.json()
       if (res.ok) {
-        setMsg({ type: 'ok', text: '✅ Pengajuan cuti berhasil dikirim' })
-        setForm({ tanggal_mulai: '', tanggal_selesai: '', jenis_cuti: '', alasan: '', atasan_nrp: '' })
+        setMsg({ type: 'ok', text: resData.message || '✅ Pengajuan cuti berhasil dikirim' })
+        setForm({
+          tanggal_mulai: '',
+          tanggal_selesai: '',
+          jenis_cuti: '',
+          alasan: '',
+          atasan_nrp: '',
+          jumlah_hari: '',
+          butuh_tiket: false,
+          tiket_berangkat_tanggal: '',
+          tiket_berangkat_tujuan: '',
+          tiket_kembali_tanggal: '',
+          tiket_kembali_tujuan: ''
+        })
         onSuccess()
       } else {
-        setMsg({ type: 'err', text: resData.error })
+        setMsg({ type: 'err', text: resData.error || 'Gagal mengirim pengajuan' })
       }
     } catch (err: any) {
       setMsg({ type: 'err', text: err.message })
@@ -336,21 +457,166 @@ function FormCutiView({ title, onSuccess, data }: any) {
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="bg-white p-8 rounded-[2.5rem] border shadow-xl">
         <h2 className="text-2xl font-black mb-6">✍️ {title}</h2>
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          {msg.text && <div className={`p-4 rounded-2xl text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
+          {msg.text && (
+            <div className={`p-4 rounded-2xl text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {msg.text}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Mulai Cuti" type="date" required value={form.tanggal_mulai} onChange={(v:any) => setForm({...form, tanggal_mulai: v})} />
-            <Input label="Selesai Cuti" type="date" required value={form.tanggal_selesai} onChange={(v:any) => setForm({...form, tanggal_selesai: v})} />
+            <Input label="Mulai Cuti" type="date" required value={form.tanggal_mulai} onChange={(v: any) => setForm({ ...form, tanggal_mulai: v })} />
+            <Input label="Selesai Cuti" type="date" required value={form.tanggal_selesai} onChange={(v: any) => setForm({ ...form, tanggal_selesai: v })} />
           </div>
-          <Select label="Jenis Cuti" required value={form.jenis_cuti} onChange={(v:any) => setForm({...form, jenis_cuti: v})} options={['Tahunan', 'Sakit', 'Khusus', 'Melahirkan', 'Duka']} />
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Pilih Atasan (Approval 1)</label>
-            <select required value={form.atasan_nrp} onChange={e => setForm({...form, atasan_nrp: e.target.value})} className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:border-blue-500 outline-none">
-              <option value="">-- Pilih Nama Atasan --</option>
-              {atasanList.map((a: any) => <option key={a.nrp} value={a.nrp}>{a.nama} ({a.jabatan})</option>)}
-            </select>
-          </div>
-          <Textarea label="Alasan Cuti" required value={form.alasan} onChange={(v:any) => setForm({...form, alasan: v})} placeholder="Jelaskan alasan cuti..." />
+
+          {hariKalender > 0 && (
+            <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 border border-slate-100 rounded-xl p-3">
+              📅 Rentang tanggal: <span className="text-slate-800">{hariKalender} hari kalender</span>
+            </div>
+          )}
+
+          <Select
+            label="Jenis Cuti"
+            required
+            value={form.jenis_cuti}
+            onChange={(v: any) => setForm({ ...form, jenis_cuti: v, jumlah_hari: '' })}
+            options={['CUTI REGULER / ROSTER', 'CUTI TAHUNAN']}
+          />
+
+          {/* Blok Khusus Cuti Tahunan */}
+          {isCutiTahunan && (
+            <div className="bg-amber-50 border-2 border-amber-100 p-5 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest">🏖️ Cuti Tahunan {tahunCuti}</p>
+                <span className="bg-white border border-amber-200 text-amber-700 text-[10px] font-black px-3 py-1 rounded-full">
+                  Sisa: {sisaCutiTahunan} hari
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Jumlah Hari Diambil <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={sisaCutiTahunan || undefined}
+                  value={form.jumlah_hari}
+                  onChange={e => setForm({ ...form, jumlah_hari: e.target.value })}
+                  placeholder="Contoh: 3"
+                  className="w-full p-3.5 border-2 border-amber-200 rounded-2xl bg-white text-sm font-bold focus:border-amber-500 outline-none transition-all"
+                  required
+                />
+                <p className="text-[10px] text-slate-500 font-bold mt-2">
+                  Maksimal <b>{sisaCutiTahunan}</b> hari, dan tidak boleh melebihi rentang tanggal ({hariKalender} hari)
+                </p>
+              </div>
+
+              {warningCutiTahunan && (
+                <div className="bg-rose-50 border border-rose-100 text-rose-700 text-xs font-bold p-3 rounded-xl">
+                  {warningCutiTahunan}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Pilih Atasan (kalau bukan direct-to-PJO) */}
+          {!isDirectPJO ? (
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">
+                Pilih Atasan (Approval 1)
+              </label>
+              <select
+                required
+                value={form.atasan_nrp}
+                onChange={e => setForm({ ...form, atasan_nrp: e.target.value })}
+                className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:border-blue-500 outline-none"
+              >
+                <option value="">-- Pilih Nama Atasan --</option>
+                {atasanList.map((a: any) => (
+                  <option key={a.nrp} value={a.nrp}>
+                    {a.nama} ({a.jabatan})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="bg-blue-50 border-2 border-blue-100 p-4 rounded-2xl">
+              <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1">Approval langsung ke PJO</p>
+              <p className="text-sm font-bold text-slate-800">{pjoNama || '-'}</p>
+            </div>
+          )}
+
+          <Textarea label="Alasan Cuti" required value={form.alasan} onChange={(v: any) => setForm({ ...form, alasan: v })} placeholder="Jelaskan alasan cuti..." />
+
+          {/* Checkbox Tiket Pesawat (kalau eligible) */}
+          {eligibleTiket && (
+            <div className="border-2 border-indigo-100 rounded-2xl p-5 bg-indigo-50/40 space-y-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.butuh_tiket}
+                  onChange={e => setForm({ ...form, butuh_tiket: e.target.checked })}
+                  className="w-5 h-5"
+                />
+                <span className="text-sm font-black text-indigo-700 uppercase tracking-widest">✈️ Ajukan Tiket Pesawat</span>
+              </label>
+
+              {form.butuh_tiket && (
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">
+                    Pemesanan tiket dilakukan terpisah per trip (berangkat & kembali)
+                  </p>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="bg-white border border-indigo-100 rounded-2xl p-4 space-y-3">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">🛫 Trip Berangkat</p>
+                      <Input
+                        label="Tanggal Berangkat"
+                        type="date"
+                        required
+                        value={form.tiket_berangkat_tanggal}
+                        onChange={(v: any) => setForm({ ...form, tiket_berangkat_tanggal: v })}
+                      />
+                      <Input
+                        label="Tujuan Berangkat"
+                        placeholder="Contoh: Makassar → Jakarta"
+                        required
+                        value={form.tiket_berangkat_tujuan}
+                        onChange={(v: any) => setForm({ ...form, tiket_berangkat_tujuan: v })}
+                      />
+                    </div>
+
+                    <div className="bg-white border border-indigo-100 rounded-2xl p-4 space-y-3">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">🛬 Trip Kembali</p>
+                      <Input
+                        label="Tanggal Kembali"
+                        type="date"
+                        required
+                        value={form.tiket_kembali_tanggal}
+                        onChange={(v: any) => setForm({ ...form, tiket_kembali_tanggal: v })}
+                      />
+                      <Input
+                        label="Tujuan Kembali"
+                        placeholder="Contoh: Jakarta → Makassar"
+                        required
+                        value={form.tiket_kembali_tujuan}
+                        onChange={(v: any) => setForm({ ...form, tiket_kembali_tujuan: v })}
+                      />
+                    </div>
+                  </div>
+
+                  {warningTiket && (
+                    <div className="bg-rose-50 border border-rose-100 text-rose-700 text-xs font-bold p-3 rounded-xl">
+                      {warningTiket}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <button disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all">
             {loading ? 'MENGIRIM...' : '🚀 KIRIM PENGAJUAN'}
           </button>
@@ -368,6 +634,8 @@ function FormCutiView({ title, onSuccess, data }: any) {
               <tr>
                 <th className="px-6 py-4">Tanggal</th>
                 <th className="px-6 py-4">Jenis</th>
+                <th className="px-6 py-4">Hari</th>
+                <th className="px-6 py-4">Tiket</th>
                 <th className="px-6 py-4">Alasan</th>
                 <th className="px-6 py-4 text-center">Status Atasan</th>
                 <th className="px-6 py-4 text-center">Status PJO</th>
@@ -375,11 +643,17 @@ function FormCutiView({ title, onSuccess, data }: any) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {riwayat.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-16 text-center text-slate-300 font-bold italic">Belum ada pengajuan bulan ini.</td></tr>
+                <tr><td colSpan={7} className="px-6 py-16 text-center text-slate-300 font-bold italic">Belum ada pengajuan bulan ini.</td></tr>
               ) : riwayat.map((r: any, i: number) => (
                 <tr key={i}>
                   <td className="px-6 py-4 text-xs font-bold">{new Date(r.tanggal_mulai).toLocaleDateString('id-ID')} - {new Date(r.tanggal_selesai).toLocaleDateString('id-ID')}</td>
                   <td className="px-6 py-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-[9px] font-bold">{r.jenis_cuti}</span></td>
+                  <td className="px-6 py-4 text-xs font-black text-slate-700">{r.jumlah_hari || '-'}</td>
+                  <td className="px-6 py-4">
+                    {r.butuh_tiket
+                      ? <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-[9px] font-black">✈️ YA</span>
+                      : <span className="text-slate-300 text-[9px] font-bold italic">tidak</span>}
+                  </td>
                   <td className="px-6 py-4 italic text-slate-500 text-xs truncate max-w-[200px]">"{r.alasan}"</td>
                   <td className="px-6 py-4 text-center"><StatusBadge value={r.status_atasan} /></td>
                   <td className="px-6 py-4 text-center"><StatusBadge value={r.status_pjo || 'PENDING'} /></td>

@@ -484,12 +484,46 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
         .lte(dateField, lastDay)
         .order(dateField, { ascending: false })
 
+      // Enrich khusus FORM_CUTI: eligible tiket & sisa cuti tahunan
+      let eligibleTiket = false
+      let sisaCutiTahunan = 0
+      let tahunCuti = currentYear
+
+      if (access_mode === 'FORM_CUTI') {
+        const { data: empRow } = await supabase
+          .from('employees')
+          .select('eligible_tiket_pesawat')
+          .eq('nrp', session.nrp)
+          .maybeSingle()
+
+        eligibleTiket = !!empRow?.eligible_tiket_pesawat
+
+        const { data: balanceRow } = await supabase
+          .from('annual_leave_balances')
+          .select('hak_awal, terpakai, penyesuaian')
+          .eq('nrp', session.nrp)
+          .eq('tahun', tahunCuti)
+          .maybeSingle()
+
+        sisaCutiTahunan = Math.max(
+          0,
+          balanceRow
+            ? Number(balanceRow.hak_awal || 12) +
+                Number(balanceRow.penyesuaian || 0) -
+                Number(balanceRow.terpakai || 0)
+            : 12
+        )
+      }
+
       return NextResponse.json({ 
         type: access_mode === 'FORM_CUTI' ? 'form_cuti' : 'form_lembur',
         title: menu_label, 
         table: target_table,
         riwayat: riwayat || [],
-        periode: new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase()
+        periode: new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase(),
+        eligible_tiket_pesawat: eligibleTiket,
+        sisa_cuti_tahunan: sisaCutiTahunan,
+        tahun_cuti: tahunCuti
       })
     }
     
