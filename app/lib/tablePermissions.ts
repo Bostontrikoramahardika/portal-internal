@@ -1,6 +1,4 @@
 // app/lib/tablePermissions.ts
-// Mapping table_name → permission keys untuk CRUD & Import
-// Digunakan oleh TableView & ImportExcel untuk gate button visibility
 
 export interface TablePermissionSet {
   create?: string
@@ -9,17 +7,15 @@ export interface TablePermissionSet {
   import?: string
   export?: string
   view_all?: string
-  has_schema?: boolean  // true = tabel punya schema di /api/schema (bisa Edit/Add via modal)
+  has_schema?: boolean 
 }
 
-/**
- * ⚠️ PENTING: has_schema harus TRUE untuk tabel yang sudah punya definisi di
- * app/api/schema/route.ts. Kalau false, tombol Edit/Add akan disembunyikan.
- * 
- * Tabel yang sudah punya schema saat ini:
- * - sp, kpi, kpi_settings, sites_config, job_categories
- */
 export const TABLE_PERMISSIONS: Record<string, TablePermissionSet> = {
+  // ═══════ VIRTUAL VIEW (HANYA LIHAT) ═══════
+  monitoring_expired: {
+    has_schema: false // 🔒 Sembunyikan Tambah & Edit
+  },
+
   // ═══════ KARYAWAN ═══════
   employees: {
     create: 'karyawan_create',
@@ -28,7 +24,7 @@ export const TABLE_PERMISSIONS: Record<string, TablePermissionSet> = {
     import: 'karyawan_import_excel',
     export: 'karyawan_export_excel',
     view_all: 'karyawan_view_all_sites',
-    has_schema: false  // ⚠️ Belum ada schema → tombol Edit/Add disembunyikan
+    has_schema: false 
   },
 
   // ═══════ ABSENSI ═══════
@@ -42,6 +38,16 @@ export const TABLE_PERMISSIONS: Record<string, TablePermissionSet> = {
   // ═══════ CUTI ═══════
   leave_requests: {
     create: 'cuti_submit_own',
+    view_all: 'cuti_view_all_sites',
+    has_schema: false
+  },
+
+  annual_leave_balances: {
+    view_all: 'cuti_view_all_sites',
+    has_schema: false
+  },
+
+  leave_tickets: {
     view_all: 'cuti_view_all_sites',
     has_schema: false
   },
@@ -66,97 +72,33 @@ export const TABLE_PERMISSIONS: Record<string, TablePermissionSet> = {
     edit: 'kpi_input_penilaian',
     delete: 'dokumen_edit',
     export: 'kpi_export',
-    has_schema: true   // ✅ Ada di /api/schema
-  },
-  apd_history: {
-    create: 'dokumen_edit',
-    edit: 'dokumen_edit',
-    delete: 'dokumen_edit',
-    import: 'dokumen_import_excel',
-    has_schema: false
-  },
-  pkwt: {
-    create: 'dokumen_edit',
-    edit: 'dokumen_edit',
-    delete: 'dokumen_edit',
-    import: 'dokumen_import_excel',
-    has_schema: false
+    has_schema: true 
   },
   sp: {
     create: 'dokumen_edit',
     edit: 'dokumen_edit',
     delete: 'dokumen_edit',
-    import: 'dokumen_import_excel',
-    has_schema: true   // ✅ Ada di /api/schema
+    has_schema: true 
   },
-  bpjs: {
-    create: 'dokumen_edit',
-    edit: 'dokumen_edit',
-    delete: 'dokumen_edit',
-    import: 'dokumen_import_excel',
-    has_schema: false
-  },
-  mcu: {
-    create: 'dokumen_edit',
-    edit: 'dokumen_edit',
-    delete: 'dokumen_edit',
-    import: 'dokumen_import_excel',
-    has_schema: false
-  },
-  simper: {
-    create: 'dokumen_edit',
-    edit: 'dokumen_edit',
-    delete: 'dokumen_edit',
-    import: 'dokumen_import_excel',
-    has_schema: false
-  },
-
-  // ═══════ MASTER DATA ═══════
   job_categories: {
     create: 'master_job_kategori',
     edit: 'master_job_kategori',
     delete: 'master_job_kategori',
-    has_schema: true   // ✅ Ada di /api/schema
+    has_schema: true 
   },
   kpi_settings: {
     create: 'master_bobot_kpi',
     edit: 'master_bobot_kpi',
     delete: 'master_bobot_kpi',
-    has_schema: true   // ✅ Ada di /api/schema
+    has_schema: true 
   },
   sites_config: {
     edit: 'master_site_setup',
     delete: 'master_site_setup',
-    has_schema: true   // ✅ Ada di /api/schema
-  },
-
-  // ═══════ ROSTER ═══════
-  roster: {
-    create: 'roster_upload',
-    import: 'roster_import_excel',
-    has_schema: false
-  },
-
-  // ═══════ PENGUMUMAN ═══════
-  announcements: {
-    create: 'pengumuman_create',
-    delete: 'pengumuman_delete',
-    has_schema: false
-  },
-
-  // ═══════ ROLES ═══════
-  roles: {
-    create: 'role_assign',
-    edit: 'role_assign',
-    delete: 'role_assign',
-    has_schema: false
+    has_schema: true 
   }
 }
 
-/**
- * Ambil permission set untuk tabel tertentu
- * @returns TablePermissionSet atau null kalau tabel tidak terdaftar
- */
 export function getTablePermissions(tableName: string): TablePermissionSet | null {
   return TABLE_PERMISSIONS[tableName] || null
 }

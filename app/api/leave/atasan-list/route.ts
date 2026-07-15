@@ -11,13 +11,31 @@ export async function GET(request: NextRequest) {
 
   const { data: emp } = await supabase
     .from('employees')
-    .select('site, departemen, jabatan')
+    .select('site, departemen, jabatan, eligible_tiket_pesawat')
     .eq('nrp', session.nrp)
     .single()
 
   const userSite = emp?.site || ''
   const userDept = (emp?.departemen || '').toLowerCase()
   const userJabatan = (emp?.jabatan || '').toLowerCase()
+
+    const currentYear = new Date().getFullYear()
+
+  const { data: balanceRow } = await supabase
+    .from('annual_leave_balances')
+    .select('hak_awal, terpakai, penyesuaian')
+    .eq('nrp', session.nrp)
+    .eq('tahun', currentYear)
+    .maybeSingle()
+
+  const sisaCutiTahunan = Math.max(
+    0,
+    balanceRow
+      ? Number(balanceRow.hak_awal || 12) +
+          Number(balanceRow.penyesuaian || 0) -
+          Number(balanceRow.terpakai || 0)
+      : 12
+  )
 
   // Deteksi direct-to-PJO
   const isDirectPJO =
@@ -60,7 +78,10 @@ export async function GET(request: NextRequest) {
       atasan_list: [],
       pjo_nama: pjo.nama,
       pjo_nrp: pjo.nrp,
-      is_direct_pjo: true
+      is_direct_pjo: true,
+      eligible_tiket_pesawat: !!emp?.eligible_tiket_pesawat,
+      sisa_cuti_tahunan: sisaCutiTahunan,
+      tahun_cuti: currentYear
     })
   }
 
@@ -101,6 +122,9 @@ export async function GET(request: NextRequest) {
     atasan_list: atasanList,
     pjo_nama: pjo.nama,
     pjo_nrp: pjo.nrp,
-    is_direct_pjo: false
+    is_direct_pjo: false,
+    eligible_tiket_pesawat: !!emp?.eligible_tiket_pesawat,
+    sisa_cuti_tahunan: sisaCutiTahunan,
+    tahun_cuti: currentYear
   })
 }
