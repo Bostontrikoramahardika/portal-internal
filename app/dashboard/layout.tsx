@@ -195,6 +195,7 @@ const TAB_CONFIG = [
         m.menu_key === 'kelola_bobot_kpi' ||
         m.menu_key === 'kelola_site_master' ||
         m.menu_key === 'kelola_job_kategori' ||
+        m.menu_key === 'kelola_hak_cuti' ||
         m.menu_key === 'data_sakit'
       )
     }
