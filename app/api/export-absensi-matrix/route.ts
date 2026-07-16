@@ -98,12 +98,13 @@ export async function GET(request: NextRequest) {
     // ══════════════════════════════════
     // 3. Ambil attendance
     // ══════════════════════════════════
-    const { data: attendance } = await supabase
-      .from('attendance')
-      .select('nrp, tanggal, shift, clock_in')
-      .in('nrp', validNrps)
-      .gte('tanggal', firstDay)
-      .lte('tanggal', lastDay)
+    // ✅ PATCH A — Perluas kolom attendance untuk Sheet Detail
+const { data: attendance } = await supabase
+  .from('attendance')
+  .select('nrp, tanggal, shift, clock_in, clock_out, lokasi_masuk, lokasi_keluar')
+  .in('nrp', validNrps)
+  .gte('tanggal', firstDay)
+  .lte('tanggal', lastDay)
 
     // ══════════════════════════════════
     // 4. Ambil leave_requests APPROVED
@@ -329,6 +330,204 @@ export async function GET(request: NextRequest) {
     const wsLegend = XLSX.utils.aoa_to_sheet(legendData)
     wsLegend['!cols'] = [{ wch: 8 }, { wch: 30 }]
     XLSX.utils.book_append_sheet(wb, wsLegend, 'Legenda')
+
+    // ══════════════════════════════════
+// 10.5. Sheet Detail Absensi (PATCH v2.6)
+// ══════════════════════════════════
+const detailHeader = [
+  'Tanggal', 'NRP', 'Nama', 'Jabatan', 'Departemen', 'Site', 'Shift',
+  'Clock In', 'Clock Out', 'Jam Kerja', 'Terlambat (Menit)',
+  'Status', 'Lokasi Clock In', 'Lokasi Clock Out', 'Keterangan'
+]
+
+const detailRows: any[][] = [detailHeader]
+
+// Helper: hitung jam kerja
+function hitungJamKerja(clockIn: string | null, clockOut: string | null): string {
+  if (!clockIn || !clockOut) return '-'
+  const diff = new Date(clockOut).getTime() - new Date(clockIn).getTime()
+  if (diff <= 0) return '-'
+  const totalMenit = Math.floor(diff / 60000)
+  const jam = Math.floor(totalMenit / 60)
+  const menit = totalMenit % 60
+  return `${jam}j ${menit}m`
+}
+
+// Helper: hitung terlambat
+function hitungTerlambat(clockIn: string | null, shift: string | null): number {
+  if (!clockIn) return 0
+  const shiftUpper = (shift || '').toUpperCase()
+
+  // Batas jam masuk per shift (bisa disesuaikan)
+  let batasJam = 7 // default DS = 07:00
+  if (shiftUpper.includes('MALAM') || shiftUpper === 'NS' || shiftUpper === 'M') {
+    batasJam = 19 // NS = 19:00
+  }
+
+  const ci = new Date(clockIn)
+  const batas = new Date(ci)
+  batas.setHours(batasJam, 0, 0, 0)
+
+  const diff = ci.getTime() - batas.getTime()
+  return diff > 0 ? Math.floor(diff / 60000) : 0
+}
+
+// Helper: format datetime ke readable
+function fmtDateTime(dt: string | null): string {
+  if (!dt) return '-'
+  try {
+    return new Date(dt).toLocaleString('id-ID', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    })
+  } catch { return '-' }
+}
+
+// Build detail rows — loop per NRP per tanggal yang ada attendance
+validNrps.forEach((nrp) => {
+  const emp = empMap.get(nrp)
+
+  for (let d = 1; d <= lastDayNum; d++) {
+    const dateStr = `${tahunP}-${bulanP}-${String(d).padStart(2, '0')}`
+    const key = `${nrp}|${dateStr}`
+    const att = attMap.get(key)
+    const kode = getKode(nrp, dateStr)
+
+    // Hanya tampilkan baris yang ada aktivitas
+    // (ada attendance, atau ada kode non-OFF dan non-empty)
+    const adaAktivitas = att || (kode !== 'OFF' && kode !== '')
+    if (!adaAktivitas) continue
+
+    const clockIn  = att?.clock_in  || null
+    const clockOut = att?.clock_out || null
+    const lokasiIn  = att?.lokasi_masuk  || '-'
+    const lokasiOut = att?.lokasi_keluar || '-'
+    const shift = att?.shift || '-'
+
+    const jamKerja   = hitungJamKerja(clockIn, clockOut)
+    const terlambat  = hitungTerlambat(clockIn, shift)
+
+    // Status label
+    const kodeInfo = KODE_INFO[kode] || { label: kode }
+    const statusLabel = kodeInfo.label || kode
+
+    // Keterangan: gabung evidence + leave info
+    const evidenceKat = evidenceMap.get(key) || ''
+    const leaveJenis  = leaveMap.get(key) || ''
+    const keterangan  = leaveJenis
+      ? `Cuti: ${leaveJenis}`
+      : evidenceKat
+        ? `Ket: ${evidenceKat}`
+        : att?.clock_in
+          ? 'Hadir'
+          : 'Tidak Hadir'
+
+    detailRows.push([
+      dateStr,                          // Tanggal
+      nrp,                              // NRP
+      emp?.nama || '-',                 // Nama
+      emp?.jabatan || '-',              // Jabatan
+      emp?.departemen || '-',           // Departemen
+      emp?.site || '-',                 // Site
+      shift,                            // Shift
+      fmtDateTime(clockIn),             // Clock In
+      fmtDateTime(clockOut),            // Clock Out
+      jamKerja,                         // Jam Kerja
+      terlambat > 0 ? terlambat : '-', // Terlambat (Menit)
+      statusLabel,                      // Status
+      lokasiIn,                         // Lokasi Clock In
+      lokasiOut,                        // Lokasi Clock Out
+      keterangan                        // Keterangan
+    ])
+  }
+})
+
+// Buat worksheet Detail
+const wsDetail = XLSX.utils.aoa_to_sheet(detailRows)
+
+// Column widths Sheet Detail
+wsDetail['!cols'] = [
+  { wch: 12 },  // Tanggal
+  { wch: 10 },  // NRP
+  { wch: 25 },  // Nama
+  { wch: 20 },  // Jabatan
+  { wch: 18 },  // Departemen
+  { wch: 12 },  // Site
+  { wch: 10 },  // Shift
+  { wch: 18 },  // Clock In
+  { wch: 18 },  // Clock Out
+  { wch: 10 },  // Jam Kerja
+  { wch: 18 },  // Terlambat
+  { wch: 22 },  // Status
+  { wch: 30 },  // Lokasi In
+  { wch: 30 },  // Lokasi Out
+  { wch: 25 },  // Keterangan
+]
+
+// Freeze header row
+wsDetail['!freeze'] = { xSplit: 0, ySplit: 1 }
+
+// Style header row Sheet Detail
+const detailRange = XLSX.utils.decode_range(wsDetail['!ref'] || 'A1')
+for (let C = 0; C <= detailRange.e.c; C++) {
+  const addr = XLSX.utils.encode_cell({ r: 0, c: C })
+  const cell = wsDetail[addr]
+  if (!cell) continue
+  cell.s = {
+    fill: { fgColor: { rgb: '1E3A5F' } },
+    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 },
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+    border: {
+      top:    { style: 'thin', color: { rgb: '000000' } },
+      bottom: { style: 'thin', color: { rgb: '000000' } },
+      left:   { style: 'thin', color: { rgb: '000000' } },
+      right:  { style: 'thin', color: { rgb: '000000' } }
+    }
+  }
+}
+
+// Style data rows — beri warna alternating + warna kolom Status
+for (let R = 1; R <= detailRange.e.r; R++) {
+  const isEven = R % 2 === 0
+  const rowBg = isEven ? 'F8FAFC' : 'FFFFFF'
+
+  for (let C = 0; C <= detailRange.e.c; C++) {
+    const addr = XLSX.utils.encode_cell({ r: R, c: C })
+    const cell = wsDetail[addr]
+    if (!cell) continue
+
+    // Kolom Status (index 11) — pakai warna kode
+    let fillRgb = rowBg
+    if (C === 11) {
+      // Cari kode berdasarkan label
+      const statusVal = String(cell.v || '')
+      const kodeEntry = Object.entries(KODE_INFO).find(
+        ([, v]: any) => v.label === statusVal
+      )
+      if (kodeEntry) {
+        fillRgb = (kodeEntry[1] as any).fill.replace('FF', '')
+      }
+    }
+
+    cell.s = {
+      fill: { fgColor: { rgb: fillRgb } },
+      font: { sz: 9 },
+      alignment: { 
+        horizontal: C <= 1 ? 'center' : 'left', 
+        vertical: 'center' 
+      },
+      border: {
+        top:    { style: 'thin', color: { rgb: 'E2E8F0' } },
+        bottom: { style: 'thin', color: { rgb: 'E2E8F0' } },
+        left:   { style: 'thin', color: { rgb: 'E2E8F0' } },
+        right:  { style: 'thin', color: { rgb: 'E2E8F0' } }
+      }
+    }
+  }
+}
+
+// Append Sheet Detail — urutan: Matrix, Detail, Legenda
+XLSX.utils.book_append_sheet(wb, wsDetail, 'Detail Absensi')
 
     // ══════════════════════════════════
     // 11. Return file
