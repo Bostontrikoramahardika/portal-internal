@@ -431,8 +431,28 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
         name, count, percent: totalKaryawan ? Math.round((count / totalKaryawan) * 100) : 0
       })).sort((a: any, b: any) => b.count - a.count).slice(0, 5);
 
-      const { data: siteEmpsForExp } = await supabase.from('employees').select('nrp').eq('site', userSite);
-      const nrpsForExp = (siteEmpsForExp || []).map((e: any) => String(e.nrp));
+      // 🌟 v2.4: Tentukan scope berdasarkan role
+      // - Super Admin / HRGA HO → semua site
+      // - HRGA Site / PJO / Admin → semua karyawan di site sendiri
+      // - Karyawan biasa → HANYA dirinya sendiri
+      let nrpsForExp: string[] = []
+
+      if (isHrgaAll) {
+        // HRGA HO / Super Admin → semua karyawan
+        const { data: allEmps } = await supabase.from('employees').select('nrp').eq('status_karyawan', 'Aktif')
+        nrpsForExp = (allEmps || []).map((e: any) => String(e.nrp))
+      } 
+      else if (isHrgaSite || isAdminPlant) {
+        // HRGA Site / Admin Plant → semua karyawan di site sendiri
+        const { data: siteEmpsForExp } = await supabase.from('employees').select('nrp').eq('site', userSite)
+        nrpsForExp = (siteEmpsForExp || []).map((e: any) => String(e.nrp))
+      } 
+      else {
+        // Karyawan biasa → hanya dirinya sendiri
+        const nrpStr = String(session.nrp).trim()
+        const nrpWithZero = nrpStr.startsWith('0') ? nrpStr : '0' + nrpStr
+        nrpsForExp = [nrpStr, nrpWithZero]
+      }
       
       let expCount = 0;
       if (nrpsForExp.length > 0) {
