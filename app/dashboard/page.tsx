@@ -4767,70 +4767,70 @@ function SystemAuditView() {
     <div className="animate-in fade-in duration-500 pb-32 space-y-6">
 
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-purple-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
-        <div className="relative z-10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="text-3xl">📋</div>
-              <div>
-                <p className="text-purple-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
-                  Super Admin Only
-                </p>
-                <h1 className="text-2xl font-black tracking-tight">Audit Log Sistem</h1>
-              </div>
-            </div>
-            <button
-              onClick={() => loadLogs(true)}
-              disabled={refreshing}
-              className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-            >
-              {refreshing ? '⏳' : '🔄'} Refresh
-            </button>
-          </div>
-          <p className="text-blue-200/70 text-xs font-medium">
-            Jejak digital semua aktivitas Super Admin — tidak bisa dihapus dari UI
+<div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+  <div className="absolute top-0 right-0 w-40 h-40 bg-purple-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+  <div className="relative z-10">
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
+        <div className="text-2xl lg:text-3xl shrink-0">📋</div>
+        <div className="min-w-0">
+          <p className="text-purple-400 font-black text-[9px] lg:text-[10px] uppercase tracking-[0.25em] lg:tracking-[0.3em] mb-0.5 lg:mb-1">
+            Super Admin Only
           </p>
+          <h1 className="text-base lg:text-2xl font-black tracking-tight truncate">Audit Log Sistem</h1>
         </div>
       </div>
+      <button
+        onClick={() => loadLogs(true)}
+        disabled={refreshing}
+        className="shrink-0 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 lg:px-4 lg:py-2 rounded-xl lg:rounded-2xl text-[9px] lg:text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+      >
+        {refreshing ? '⏳' : '🔄'} Refresh
+      </button>
+    </div>
+    <p className="text-blue-200/70 text-[11px] lg:text-xs font-medium mt-2 lg:mt-3">
+      Jejak digital aktivitas Super Admin • Tidak bisa dihapus
+    </p>
+  </div>
+</div>
 
       {/* STATS CARDS */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-50 shadow-sm">
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">📊 Total Log</p>
-          <p className="text-3xl font-black text-slate-900">{stats.total || 0}</p>
-        </div>
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-emerald-50 shadow-sm">
-          <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-2">✅ Sukses</p>
-          <p className="text-3xl font-black text-emerald-600">{stats.success || 0}</p>
-        </div>
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-rose-50 shadow-sm">
-          <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-2">❌ Gagal</p>
-          <p className="text-3xl font-black text-rose-600">{stats.failed || 0}</p>
-        </div>
-      </div>
+      <div className="grid grid-cols-3 gap-2 lg:gap-3">
+  <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm">
+    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 lg:mb-2 truncate">📊 Total Log</p>
+    <p className="text-xl lg:text-3xl font-black text-slate-900">{stats.total || 0}</p>
+  </div>
+  <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-emerald-50 shadow-sm">
+    <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1 lg:mb-2 truncate">✅ Sukses</p>
+    <p className="text-xl lg:text-3xl font-black text-emerald-600">{stats.success || 0}</p>
+  </div>
+  <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-rose-50 shadow-sm">
+    <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1 lg:mb-2 truncate">❌ Gagal</p>
+    <p className="text-xl lg:text-3xl font-black text-rose-600">{stats.failed || 0}</p>
+  </div>
+</div>
 
       {/* BREAKDOWN BY CATEGORY */}
       {Object.keys(stats.by_category || {}).length > 0 && (
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-50 shadow-sm">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">📊 Breakdown per Kategori</p>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(stats.by_category || {}).map(([cat, count]: any) => {
-              const conf = CATEGORY_CONFIG[cat] || { icon: '📌', bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' }
-              return (
-                <div key={cat} className={`${conf.bg} ${conf.text} ${conf.border} border px-3 py-2 rounded-xl flex items-center gap-2`}>
-                  <span className="text-sm">{conf.icon}</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest">{cat}</span>
-                  <span className="bg-white/60 px-2 py-0.5 rounded-full text-[10px] font-black">{count}</span>
-                </div>
-              )
-            })}
-          </div>
+        <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm">
+  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 lg:mb-3">📊 Breakdown per Kategori</p>
+  <div className="flex flex-wrap gap-1.5 lg:gap-2">
+    {Object.entries(stats.by_category || {}).map(([cat, count]: any) => {
+      const conf = CATEGORY_CONFIG[cat] || { icon: '📌', bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' }
+      return (
+        <div key={cat} className={`${conf.bg} ${conf.text} ${conf.border} border px-2 py-1 lg:px-3 lg:py-2 rounded-lg lg:rounded-xl flex items-center gap-1.5 lg:gap-2`}>
+          <span className="text-xs lg:text-sm">{conf.icon}</span>
+          <span className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest">{cat}</span>
+          <span className="bg-white/60 px-1.5 py-0.5 rounded-full text-[9px] lg:text-[10px] font-black">{count}</span>
         </div>
+      )
+    })}
+  </div>
+</div>
       )}
 
       {/* FILTER PANEL */}
-      <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-50 shadow-sm space-y-3">
+      <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm space-y-2 lg:space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">🔍 Filter Riwayat</p>
           <button
@@ -4893,27 +4893,27 @@ function SystemAuditView() {
 
         <button
           onClick={() => loadLogs()}
-          className="w-full py-3 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all shadow-lg"
+          className="w-full py-2.5 lg:py-3 bg-[#003D79] text-white rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all shadow-lg"
         >
           🔍 Terapkan Filter
         </button>
       </div>
 
       {/* LIST LOGS */}
-      <div className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-lg overflow-hidden">
-        <div className="p-5 bg-slate-50/50 border-b-2 border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center text-xl">
-              📜
-            </div>
-            <div>
-              <h2 className="font-black text-slate-900 text-base tracking-tight">Riwayat Aktivitas</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                Menampilkan {logs.length} log terbaru
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="bg-white rounded-2xl lg:rounded-[2.5rem] border-2 border-slate-50 shadow-lg overflow-hidden">
+  <div className="p-3 lg:p-5 bg-slate-50/50 border-b-2 border-slate-100 flex items-center justify-between">
+    <div className="flex items-center gap-2 lg:gap-3">
+      <div className="w-8 h-8 lg:w-10 lg:h-10 bg-slate-900 rounded-xl lg:rounded-2xl flex items-center justify-center text-base lg:text-xl">
+        📜
+      </div>
+      <div>
+        <h2 className="font-black text-slate-900 text-sm lg:text-base tracking-tight">Riwayat Aktivitas</h2>
+        <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          {logs.length} log terbaru
+        </p>
+      </div>
+    </div>
+  </div>
 
         <div className="divide-y divide-slate-50 max-h-[600px] overflow-y-auto">
           {logs.length === 0 ? (
@@ -4929,14 +4929,14 @@ function SystemAuditView() {
               const actionLabel = ACTION_LABELS[log.action] || log.action
               return (
                 <button
-                  key={log.id}
-                  onClick={() => setSelectedLog(log)}
-                  className="w-full flex items-start gap-3 px-5 py-4 hover:bg-slate-50/70 transition-colors text-left"
-                >
-                  {/* Icon Kategori */}
-                  <div className={`w-11 h-11 ${conf.bg} ${conf.text} rounded-2xl flex items-center justify-center text-lg flex-shrink-0`}>
-                    {conf.icon}
-                  </div>
+  key={log.id}
+  onClick={() => setSelectedLog(log)}
+  className="w-full flex items-start gap-2.5 lg:gap-3 px-3 lg:px-5 py-3 lg:py-4 hover:bg-slate-50/70 transition-colors text-left"
+>
+  {/* Icon Kategori */}
+  <div className={`w-9 h-9 lg:w-11 lg:h-11 ${conf.bg} ${conf.text} rounded-xl lg:rounded-2xl flex items-center justify-center text-base lg:text-lg flex-shrink-0`}>
+    {conf.icon}
+  </div>
 
                   {/* Konten */}
                   <div className="flex-1 min-w-0">
@@ -5231,7 +5231,7 @@ function ApprovalCenterView() {
   )
 
   return (
-    <div className="animate-in fade-in duration-500 pb-32 space-y-6">
+    <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-6">
 
       {/* HEADER */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
@@ -6726,13 +6726,19 @@ function ExportAbsensiMatrixView() {
   const [downloading, setDownloading] = useState(false)
   const [msg, setMsg] = useState({ type: '', text: '' })
 
-  useEffect(() => {
-    // Reuse endpoint monitoring yang sudah proven mengembalikan sites
-    fetch('/api/monitoring-roster-cr?periode=' + periode)
-      .then(r => r.json())
-      .then(d => setSites(d.sites || []))
-      .catch(() => {})
-  }, [periode])
+  // ✅ BARU — ambil dari /api/data?table=employees langsung
+useEffect(() => {
+  fetch('/api/data?table=employees&fields=site')
+    .then(r => r.json())
+    .then(d => {
+      const raw = (d.data || d || []) as any[]
+      const unique = Array.from(
+        new Set(raw.map((e: any) => e.site).filter(Boolean))
+      ).sort() as string[]
+      setSites(unique)
+    })
+    .catch(() => {})
+}, []) // ← tidak perlu re-fetch saat periode berubah
 
   const periodeOptions = (() => {
     const opts = []
