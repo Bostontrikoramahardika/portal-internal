@@ -10,9 +10,21 @@ import { logAudit } from '@/app/lib/auditLog'
 const ROLE_MANAGER_ROLES = [
   'super_admin',
   'hr_ho',
+  'hr_site',           // ✅ Tambah ini
   // Legacy (backward compat)
   'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat'
 ]
+
+function canManageRoles(session: any): boolean {
+  if (session?.is_super_admin) return true
+  
+  // ✅ Cek permission role_assign (lebih fleksibel)
+  const permissions = session?.permissions || []
+  if (permissions.includes('role_assign')) return true
+  
+  // 🔙 Fallback: cek role
+  return (session?.roles || []).some((r: string) => ROLE_MANAGER_ROLES.includes(r))
+}
 
 function canManageRoles(session: any): boolean {
   if (session?.is_super_admin) return true

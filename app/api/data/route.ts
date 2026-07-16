@@ -685,14 +685,26 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
     if (!target_table) return NextResponse.json({ error: 'Tabel target tidak terdefinisi' }, { status: 400 })
 
     // 🔐 Cek permission VIEW untuk tabel generik
-    // Skip jika SELF (melihat data sendiri = selalu boleh)
+    // Skip jika SELF (data sendiri) atau Super Admin
     if (access_mode !== 'SELF' && !isSuperAdmin) {
       const tablePerm = getTablePermissions(target_table)
       if (tablePerm?.view_all) {
-        const canView = hasPermission(session, tablePerm.view_all)
+        // 🌟 FIX: Cascade permission check
+        // HRGA Site cukup punya view_site / view_team, tidak wajib view_all_sites
+        const viewAllPerm = tablePerm.view_all  // ex: 'karyawan_view_all_sites'
+        const viewSitePerm = viewAllPerm.replace('_all_sites', '_site').replace('_all', '_site')
+        const viewTeamPerm = viewAllPerm.replace('_all_sites', '_team').replace('_all', '_team')
+        const viewOwnSitePerm = viewAllPerm.replace('_all_sites', '_own_site').replace('_all', '_own_site')
+
+        const canView = 
+          hasPermission(session, viewAllPerm) ||
+          hasPermission(session, viewSitePerm) ||
+          hasPermission(session, viewTeamPerm) ||
+          hasPermission(session, viewOwnSitePerm)
+
         if (!canView) {
           return NextResponse.json(
-            { error: `Akses ditolak. Butuh permission: ${tablePerm.view_all}` },
+            { error: `Akses ditolak. Butuh permission: ${viewAllPerm} / ${viewSitePerm}` },
             { status: 403 }
           )
         }
@@ -718,11 +730,21 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
         }
         else {
           let empQ = supabase.from('employees').select('nrp').eq('site', userSite)
+        else {
+          let empQ = supabase.from('employees').select('nrp, nama').eq('site', userSite)
           if (isAdminPlant) empQ = empQ.ilike('departemen', '%plant%')
           const { data: emps } = await empQ
-          const nrps = (emps || []).map((e: any) => e.nrp)
-          if (nrps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
-          query = query.in('nrp', nrps)
+          if (!emps || emps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
+
+          // 🌟 FIX: Handle tabel yg pakai nama_karyawan (BPJS, APD, dll)
+          if (NAME_BASED_TABLES.includes(target_table)) {
+            const names = emps.map((e: any) => e.nama).filter(Boolean)
+            if (names.length === 0) return NextResponse.json({ type: 'table', rows: [] })
+            query = query.in('nama_karyawan', names)
+          } else {
+            const nrps = emps.map((e: any) => e.nrp)
+            query = query.in('nrp', nrps)
+          }
         }
       } else {
         if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
