@@ -236,7 +236,6 @@ const TAB_CONFIG = [
     roles: ALL_ROLES,
     customMatch: (m: MenuItem) => {
       return (
-        m.menu_key === 'dashboard' ||
         m.menu_key === 'data_saya' ||
         m.menu_key === 'kpi_saya' ||
         m.menu_key === 'ganti_password'

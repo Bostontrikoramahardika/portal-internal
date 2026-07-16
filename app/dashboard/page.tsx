@@ -1410,12 +1410,22 @@ function AbsensiClockView({ title }: any) {
   const [loading, setLoading] = useState(true)
   const [announcement, setAnnouncement] = useState<any>(null)
   const [riwayat7Hari, setRiwayat7Hari] = useState<any[]>([])
+  const [dokumenExpired, setDokumenExpired] = useState<any[]>([])
 
   useEffect(() => {
     setIsOnline(navigator.onLine)
     const interval = setInterval(() => setCurrentTime(new Date()), 1000)
     loadStatus()
     fetch('/api/announcements').then(r => r.json()).then(d => setAnnouncement(d.announcement)).catch(() => {})
+    
+    // 🌟 Fetch dokumen expired milik user sendiri (dashboard endpoint sudah filter per user)
+    fetch('/api/data?menu=monitoring_expired')
+      .then(r => r.json())
+      .then(d => {
+        const rows = (d.rows || []).slice(0, 10) // max 10 item
+        setDokumenExpired(rows)
+      })
+      .catch(() => {})
     fetch('/api/data?menu=riwayat_absensi').then(r => r.json()).then(d => {
       const today = new Date()
       today.setHours(23, 59, 59, 999)
@@ -1472,6 +1482,64 @@ function AbsensiClockView({ title }: any) {
 
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-700">
+      
+      {/* 🌟 BANNER KECIL: Notifikasi Dokumen Expired */}
+      {dokumenExpired.length > 0 && (
+        <div className="mb-4 bg-white border-2 border-amber-100 rounded-[1.5rem] overflow-hidden shadow-sm">
+          <div className="bg-amber-50 px-4 py-2.5 flex items-center justify-between border-b border-amber-100">
+            <div className="flex items-center gap-2">
+              <span className="text-base">⚠️</span>
+              <span className="font-black text-amber-700 text-[10px] uppercase tracking-widest">
+                Dokumen Akan Expired
+              </span>
+            </div>
+            <span className="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+              {dokumenExpired.length}
+            </span>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {dokumenExpired.slice(0, 3).map((item: any, i: number) => {
+              const tglExp = new Date(item.tanggal_expired)
+              const today = new Date()
+              const diffDays = Math.ceil((tglExp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+              const isCritical = diffDays <= 7
+              
+              return (
+                <div key={i} className="px-4 py-2.5 flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${isCritical ? 'bg-rose-500 animate-pulse' : 'bg-amber-500'}`}></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-black text-slate-800 truncate">
+                      {item.jenis_dokumen || 'Dokumen'}
+                    </p>
+                    <p className="text-[9px] font-bold text-slate-500">
+                      {diffDays > 0 
+                        ? `${diffDays} hari lagi (${tglExp.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })})`
+                        : diffDays === 0
+                        ? `Expired HARI INI!`
+                        : `Sudah expired ${Math.abs(diffDays)} hari lalu`
+                      }
+                    </p>
+                  </div>
+                  {isCritical && (
+                    <span className="bg-rose-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase">
+                      Kritis
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+            {dokumenExpired.length > 3 && (
+              <a 
+                href="/dashboard?menu=monitoring_expired" 
+                className="block px-4 py-2 text-center text-[9px] font-black text-amber-600 hover:bg-amber-50 uppercase tracking-widest transition-colors"
+              >
+                +{dokumenExpired.length - 3} lainnya • Lihat Semua →
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+      
       {announcement && <AnnouncementCard announcement={announcement} />}
 
                   <div className="bg-slate-800/40 backdrop-blur-2xl text-white rounded-[1.5rem] md:rounded-[3rem] p-3 md:p-10 text-center shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] mb-4 md:mb-6 border border-slate-700/30 relative overflow-hidden">
