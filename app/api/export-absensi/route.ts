@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const session = await getSession(token)
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
-  // ✅ v2.6: Expanded role check (konsisten dengan export-absensi-matrix)
+// ✅ PATCH v2.6 — Expand role whitelist
 const canExport = 
   session.is_super_admin ||
   (session.roles || []).some((r: string) => 
