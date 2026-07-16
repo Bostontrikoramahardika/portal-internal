@@ -26,11 +26,6 @@ function canManageRoles(session: any): boolean {
   return (session?.roles || []).some((r: string) => ROLE_MANAGER_ROLES.includes(r))
 }
 
-function canManageRoles(session: any): boolean {
-  if (session?.is_super_admin) return true
-  return (session?.roles || []).some((r: string) => ROLE_MANAGER_ROLES.includes(r))
-}
-
 // ═══════════════════════════════════════════════
 // GET - Ambil semua karyawan + role-nya
 // ═══════════════════════════════════════════════
