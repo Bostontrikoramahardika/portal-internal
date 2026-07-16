@@ -3,6 +3,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { hasPermission } from '@/app/lib/permissions'
+import { getTablePermissions } from '@/app/lib/tablePermissions'
 
 const ALLOWED_TABLES = [
   'employees', 'kpi', 'apd', 'pkwt', 'sp', 'roster', 
@@ -27,6 +29,39 @@ async function checkAccess(req: NextRequest) {
   return await getSession(token)
 }
 
+// 🔐 Helper: cek permission spesifik per operasi CRUD
+function checkTablePermission(
+  session: any,
+  table: string,
+  operation: 'create' | 'edit' | 'delete'
+): { allowed: boolean; reason?: string } {
+  
+  // Super admin bypass semua
+  if (session.is_super_admin) return { allowed: true }
+
+  const tablePerm = getTablePermissions(table)
+  
+  // Tabel tidak ada di TABLE_PERMISSIONS → izinkan (tabel internal/legacy)
+  if (!tablePerm) return { allowed: true }
+
+  const requiredPerm = tablePerm[operation]
+
+  // Tabel tidak punya requirement untuk operasi ini → izinkan
+  if (!requiredPerm) return { allowed: true }
+
+  // Cek apakah user punya permission key yang dibutuhkan
+  const allowed = hasPermission(session, requiredPerm)
+  
+  if (!allowed) {
+    return { 
+      allowed: false, 
+      reason: `Akses ditolak. Butuh permission: ${requiredPerm}` 
+    }
+  }
+
+  return { allowed: true }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await checkAccess(req)
@@ -35,6 +70,12 @@ export async function POST(req: NextRequest) {
     const { table, values } = await req.json()
     if (!ALLOWED_TABLES.includes(table)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 400 })
+    }
+
+    // 🔐 Cek permission CREATE
+    const permCheck = checkTablePermission(session, table, 'create')
+    if (!permCheck.allowed) {
+      return NextResponse.json({ error: permCheck.reason }, { status: 403 })
     }
 
     const dataToSave = cleanData({ ...values })
@@ -72,6 +113,12 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 400 })
     }
 
+    // 🔐 Cek permission EDIT
+    const permCheck = checkTablePermission(session, table, 'edit')
+    if (!permCheck.allowed) {
+      return NextResponse.json({ error: permCheck.reason }, { status: 403 })
+    }
+
     const dataToUpdate = cleanData({ ...values })
     
     // Gunakan update berdasarkan ID (integer) atau Kode (string) jika ID tidak ada
@@ -107,6 +154,12 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 400 })
     }
 
+    // 🔐 Cek permission DELETE
+    const permCheck = checkTablePermission(session, table, 'delete')
+    if (!permCheck.allowed) {
+      return NextResponse.json({ error: permCheck.reason }, { status: 403 })
+    }
+
     const { error } = await supabase.from(table).delete().eq('id', id)
     if (error) throw error
 
@@ -123,6 +176,12 @@ export async function PATCH(req: NextRequest) {
       
       const { table, ids, action } = await req.json()
       if (action === 'bulk_delete' && ALLOWED_TABLES.includes(table)) {
+        // 🔐 Cek permission DELETE untuk bulk
+        const permCheck = checkTablePermission(session, table, 'delete')
+        if (!permCheck.allowed) {
+          return NextResponse.json({ error: permCheck.reason }, { status: 403 })
+        }
+
         const { error } = await supabase.from(table).delete().in('id', ids)
         if (error) throw error
         return NextResponse.json({ message: 'Bulk Deleted' })

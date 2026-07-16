@@ -3,6 +3,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { hasPermission } from '@/app/lib/permissions'
+import { getTablePermissions } from '@/app/lib/tablePermissions'
 
 const NAME_BASED_TABLES = ['bpjs', 'apd_history', 'attendance_evidences']
 const HIDDEN_COLUMNS = ['created_at', 'updated_at', 'id', 'nrp', 'atasan_nrp', 'pjo_nrp', 'employee_nrp', 'uploaded_by']
@@ -661,6 +663,22 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
     // 🎯 CASE D: TABEL GENERIK
     // ==========================================
     if (!target_table) return NextResponse.json({ error: 'Tabel target tidak terdefinisi' }, { status: 400 })
+
+    // 🔐 Cek permission VIEW untuk tabel generik
+    // Skip jika SELF (melihat data sendiri = selalu boleh)
+    if (access_mode !== 'SELF' && !isSuperAdmin) {
+      const tablePerm = getTablePermissions(target_table)
+      if (tablePerm?.view_all) {
+        const canView = hasPermission(session, tablePerm.view_all)
+        if (!canView) {
+          return NextResponse.json(
+            { error: `Akses ditolak. Butuh permission: ${tablePerm.view_all}` },
+            { status: 403 }
+          )
+        }
+      }
+    }
+
     let query = supabase.from(target_table).select('*')
 
     if (access_mode === 'SELF') {
