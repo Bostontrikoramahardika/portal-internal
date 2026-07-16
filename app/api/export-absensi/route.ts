@@ -10,11 +10,17 @@ export async function GET(request: NextRequest) {
   const session = await getSession(token)
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
-  // Cek hak akses
-  const canExport = session.roles.includes('hrga') || session.roles.includes('admin')
-  if (!canExport) {
-    return NextResponse.json({ error: 'Hanya HRGA/Admin yang bisa export' }, { status: 403 })
-  }
+  // ✅ v2.6: Expanded role check (konsisten dengan export-absensi-matrix)
+const canExport = 
+  session.is_super_admin ||
+  (session.roles || []).some((r: string) => 
+    ['hr_ho', 'hr_site', 'hrga', 'hrga_pusat', 'hrga_site', 
+     'admin', 'admin_site', 'pjo_site'].includes(r.toLowerCase())
+  )
+
+if (!canExport) {
+  return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
+}
 
   const { searchParams } = new URL(request.url)
   const tanggalMulai = searchParams.get('tanggal_mulai') || ''
