@@ -4,6 +4,7 @@ import { supabase } from '@/app/lib/supabase'
 
 const JENIS_CUTI_REGULER = 'CUTI REGULER / ROSTER'
 const JENIS_CUTI_TAHUNAN = 'CUTI TAHUNAN'
+const JENIS_CUTI_KOMPENSASI = 'CUTI KOMPENSASI'
 const STATUS_TIKET_DEFAULT = 'MENUNGGU_PEMESANAN'
 
 function normalizeJenisCuti(value: string): string {
@@ -11,6 +12,7 @@ function normalizeJenisCuti(value: string): string {
 
   if (!raw) return ''
   if (raw.includes('TAHUN')) return JENIS_CUTI_TAHUNAN
+  if (raw.includes('KOMPENSASI')) return JENIS_CUTI_KOMPENSASI
   if (raw.includes('ROSTER') || raw.includes('REGULER')) return JENIS_CUTI_REGULER
 
   // fallback aman agar form lama tidak langsung jebol
@@ -33,43 +35,119 @@ export async function POST(request: NextRequest) {
     try {
     const body = await request.json()
     const {
-      tanggal_mulai,
-      tanggal_selesai,
-      jenis_cuti,
-      alasan,
-      atasan_nrp,
-      jumlah_hari,
-      butuh_tiket,
-      tiket_berangkat_tanggal,
-      tiket_berangkat_tujuan,
-      tiket_kembali_tanggal,
-      tiket_kembali_tujuan
+     tanggal_mulai,
+     tanggal_selesai,
+     jenis_cuti,
+     alasan,
+     atasan_nrp,
+     jumlah_hari,
+     butuh_tiket,
+     tiket_berangkat_tanggal,
+     tiket_berangkat_tujuan,
+     tiket_kembali_tanggal,
+     tiket_kembali_tujuan,
+  // Cuti Kompensasi
+     kompensasi_mulai,
+    kompensasi_selesai,
+    reguler_mulai,
+    reguler_selesai,
+    roster_cr_tanggal
     } = body
 
-    if (!tanggal_mulai || !tanggal_selesai || !jenis_cuti || !alasan) {
-      return NextResponse.json({ error: 'Semua field wajib diisi' }, { status: 400 })
-    }
+    if (!jenis_cuti || !alasan) {
+  return NextResponse.json({ error: 'Semua field wajib diisi' }, { status: 400 })
+}
+
+// Untuk kompensasi, tanggal_mulai/selesai dihitung dari 2 blok
+// Untuk jenis lain, tanggal_mulai/selesai wajib ada
+const normalizedJenisCutiEarly = normalizeJenisCuti(jenis_cuti)
+const isKompensasi = normalizedJenisCutiEarly === JENIS_CUTI_KOMPENSASI
+
+if (!isKompensasi && (!tanggal_mulai || !tanggal_selesai)) {
+  return NextResponse.json({ error: 'Tanggal mulai dan selesai wajib diisi' }, { status: 400 })
+}
+
+if (isKompensasi) {
+  if (!kompensasi_mulai || !kompensasi_selesai || !reguler_mulai || !reguler_selesai) {
+    return NextResponse.json({
+      error: 'Cuti Kompensasi wajib mengisi blok kompensasi dan blok reguler'
+    }, { status: 400 })
+  }
+}
 
     const normalizedJenisCuti = normalizeJenisCuti(jenis_cuti)
-    if (!normalizedJenisCuti) {
-      return NextResponse.json({ error: 'Jenis cuti tidak valid' }, { status: 400 })
-    }
+if (!normalizedJenisCuti) {
+  return NextResponse.json({ error: 'Jenis cuti tidak valid' }, { status: 400 })
+}
 
-    const start = new Date(`${tanggal_mulai}T00:00:00`)
-    const end = new Date(`${tanggal_selesai}T00:00:00`)
+// ── Hitung tanggal efektif & validasi per jenis ──────────────────────────
+let effectiveMulai: string
+let effectiveSelesai: string
+let hariKalender: number
 
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return NextResponse.json({ error: 'Format tanggal tidak valid' }, { status: 400 })
-    }
+if (isKompensasi) {
+  // Validasi format tanggal blok kompensasi
+  const kStart = new Date(`${kompensasi_mulai}T00:00:00`)
+  const kEnd   = new Date(`${kompensasi_selesai}T00:00:00`)
+  const rStart = new Date(`${reguler_mulai}T00:00:00`)
+  const rEnd   = new Date(`${reguler_selesai}T00:00:00`)
 
-    if (end < start) {
-      return NextResponse.json({ error: 'Tanggal selesai harus >= tanggal mulai' }, { status: 400 })
-    }
+  if ([kStart, kEnd, rStart, rEnd].some(d => isNaN(d.getTime()))) {
+    return NextResponse.json({ error: 'Format tanggal blok kompensasi/reguler tidak valid' }, { status: 400 })
+  }
 
-    const hariKalender = hitungHariKalender(tanggal_mulai, tanggal_selesai)
-    if (hariKalender <= 0) {
-      return NextResponse.json({ error: 'Rentang tanggal tidak valid' }, { status: 400 })
-    }
+  // Masing-masing blok harus urut
+  if (kEnd < kStart) {
+    return NextResponse.json({ error: 'Tanggal selesai kompensasi harus >= tanggal mulai kompensasi' }, { status: 400 })
+  }
+  if (rEnd < rStart) {
+    return NextResponse.json({ error: 'Tanggal selesai reguler harus >= tanggal mulai reguler' }, { status: 400 })
+  }
+
+  // Validasi berurutan tanpa jeda (blok A selesai → blok B mulai besoknya)
+  // Tentukan mana yang lebih dulu
+  const blok1End   = kStart <= rStart ? kEnd   : rEnd
+  const blok2Start = kStart <= rStart ? rStart : kStart
+
+  const selisihHari = Math.floor(
+    (blok2Start.getTime() - blok1End.getTime()) / 86400000
+  )
+
+  if (selisihHari !== 1) {
+    return NextResponse.json({
+      error: `Blok kompensasi dan reguler harus berurutan tanpa jeda. Selisih antar blok: ${selisihHari} hari (harus tepat 1 hari)`
+    }, { status: 400 })
+  }
+
+  // Tanggal efektif = gabungan dua blok (paling awal → paling akhir)
+  const allDates = [kStart, kEnd, rStart, rEnd]
+  const minDate  = new Date(Math.min(...allDates.map(d => d.getTime())))
+  const maxDate  = new Date(Math.max(...allDates.map(d => d.getTime())))
+
+  effectiveMulai   = minDate.toISOString().split('T')[0]
+  effectiveSelesai = maxDate.toISOString().split('T')[0]
+  hariKalender     = hitungHariKalender(effectiveMulai, effectiveSelesai)
+
+} else {
+  // Jenis cuti biasa (reguler / tahunan)
+  const start = new Date(`${tanggal_mulai}T00:00:00`)
+  const end   = new Date(`${tanggal_selesai}T00:00:00`)
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return NextResponse.json({ error: 'Format tanggal tidak valid' }, { status: 400 })
+  }
+  if (end < start) {
+    return NextResponse.json({ error: 'Tanggal selesai harus >= tanggal mulai' }, { status: 400 })
+  }
+
+  effectiveMulai   = tanggal_mulai
+  effectiveSelesai = tanggal_selesai
+  hariKalender     = hitungHariKalender(tanggal_mulai, tanggal_selesai)
+}
+
+if (hariKalender <= 0) {
+  return NextResponse.json({ error: 'Rentang tanggal tidak valid' }, { status: 400 })
+}
 
     const { data: empInfo } = await supabase
       .from('employees')
@@ -122,7 +200,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const tahunCuti = start.getFullYear()
+    // Gunakan effectiveMulai/Selesai untuk sisa proses
+const start = new Date(`${effectiveMulai}T00:00:00`)
+const end   = new Date(`${effectiveSelesai}T00:00:00`)
+const tahunCuti = start.getFullYear()
 
     const { data: balanceRow } = await supabase
       .from('annual_leave_balances')
@@ -231,24 +312,30 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: newLeave, error: insertError } = await supabase
-      .from('leave_requests')
-      .insert({
-        nrp: session.nrp,
-        tanggal_mulai,
-        tanggal_selesai,
-        jumlah_hari: finalJumlahHari,
-        jenis_cuti: normalizedJenisCuti,
-        alasan,
-        atasan_nrp: isDirectPJO ? chosenPjo.nrp : atasan_nrp,
-        pjo_nrp: chosenPjo.nrp,
-        status_atasan: isDirectPJO ? 'APPROVED' : 'PENDING',
-        status_pjo: isDirectPJO ? 'PENDING' : 'WAITING',
-        status_final: isDirectPJO ? 'MENUNGGU_PJO' : 'MENUNGGU_ATASAN',
-        butuh_tiket: wantsTicket,
-        sisa_cuti_tahunan_snapshot: normalizedJenisCuti === JENIS_CUTI_TAHUNAN ? sisaCutiTahunan : null
-      })
-      .select()
-      .single()
+  .from('leave_requests')
+  .insert({
+    nrp: session.nrp,
+    tanggal_mulai: effectiveMulai,
+    tanggal_selesai: effectiveSelesai,
+    jumlah_hari: finalJumlahHari,
+    jenis_cuti: normalizedJenisCuti,
+    alasan,
+    atasan_nrp: isDirectPJO ? chosenPjo.nrp : atasan_nrp,
+    pjo_nrp: chosenPjo.nrp,
+    status_atasan: isDirectPJO ? 'APPROVED' : 'PENDING',
+    status_pjo: isDirectPJO ? 'PENDING' : 'WAITING',
+    status_final: isDirectPJO ? 'MENUNGGU_PJO' : 'MENUNGGU_ATASAN',
+    butuh_tiket: wantsTicket,
+    sisa_cuti_tahunan_snapshot: normalizedJenisCuti === JENIS_CUTI_TAHUNAN ? sisaCutiTahunan : null,
+    // Kolom khusus cuti kompensasi
+    kompensasi_mulai: isKompensasi ? kompensasi_mulai : null,
+    kompensasi_selesai: isKompensasi ? kompensasi_selesai : null,
+    reguler_mulai: isKompensasi ? reguler_mulai : null,
+    reguler_selesai: isKompensasi ? reguler_selesai : null,
+    roster_cr_tanggal: isKompensasi ? (roster_cr_tanggal || null) : null
+  })
+  .select()
+  .single()
 
     if (insertError) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
