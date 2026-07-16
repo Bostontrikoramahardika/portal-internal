@@ -96,6 +96,82 @@ export const TABLE_PERMISSIONS: Record<string, TablePermissionSet> = {
     edit: 'master_site_setup',
     delete: 'master_site_setup',
     has_schema: true 
+  },
+
+  // ═══════ ROSTER ═══════
+  rosters: {
+    create: 'roster_edit',
+    edit: 'roster_edit',
+    delete: 'roster_edit',
+    import: 'roster_import_excel',
+    view_all: 'roster_view_site',
+    has_schema: false
+  },
+
+  // ═══════ DOKUMEN KARYAWAN ═══════
+  pkwt: {
+    create: 'dokumen_edit',
+    edit: 'dokumen_edit',
+    delete: 'dokumen_edit',
+    import: 'dokumen_import_excel',
+    export: 'dokumen_export_excel',
+    view_all: 'dokumen_view_all',
+    has_schema: true
+  },
+
+  bpjs: {
+    create: 'dokumen_edit',
+    edit: 'dokumen_edit',
+    delete: 'dokumen_edit',
+    import: 'dokumen_import_excel',
+    view_all: 'dokumen_view_all',
+    has_schema: true
+  },
+
+  mcu: {
+    create: 'dokumen_edit',
+    edit: 'dokumen_edit',
+    delete: 'dokumen_edit',
+    import: 'dokumen_import_excel',
+    view_all: 'dokumen_view_all',
+    has_schema: true
+  },
+
+  simper: {
+    create: 'dokumen_edit',
+    edit: 'dokumen_edit',
+    delete: 'dokumen_edit',
+    import: 'dokumen_import_excel',
+    view_all: 'dokumen_view_all',
+    has_schema: true
+  },
+
+  apd: {
+    create: 'dokumen_edit',
+    edit: 'dokumen_edit',
+    delete: 'dokumen_edit',
+    view_all: 'dokumen_view_all',
+    has_schema: true
+  },
+
+  apd_history: {
+    view_all: 'dokumen_view_all',
+    has_schema: false
+  },
+
+  // ═══════ PENGUMUMAN ═══════
+  announcements: {
+    create: 'pengumuman_create',
+    delete: 'pengumuman_delete',
+    has_schema: true
+  },
+
+  // ═══════ KEAMANAN ═══════
+  roles: {
+    create: 'role_assign',
+    edit: 'role_assign',
+    delete: 'role_assign',
+    has_schema: false
   }
 }
 
