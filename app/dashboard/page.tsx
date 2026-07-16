@@ -114,7 +114,10 @@ function DashboardContent() {
     'system_audit',
     'approval_center',
     'kelola_hak_cuti',
-    'role_manager'   // ⭐ Tambah ini
+    'monitoring_cuti_tiket',
+    'monitoring_roster_cr',
+    'export_absensi_matrix',
+    'role_manager'
   ]
 
   const isStandalone = STANDALONE_MENUS.includes(menuKey)
@@ -148,7 +151,10 @@ function DashboardContent() {
   if (menuKey === 'system_audit') return <SystemAuditView />
   if (menuKey === 'approval_center') return <ApprovalCenterView />
   if (menuKey === 'role_manager') return <RoleManagerView title="Kelola Role Karyawan" />
-if (menuKey === 'kelola_hak_cuti') return <KelolaHakCutiView />
+  if (menuKey === 'kelola_hak_cuti') return <KelolaHakCutiView />
+  if (menuKey === 'monitoring_cuti_tiket') return <MonitoringCutiTiketView />
+  if (menuKey === 'monitoring_roster_cr') return <MonitoringRosterCRView />
+  if (menuKey === 'export_absensi_matrix') return <ExportAbsensiMatrixView />
 
   // Non-standalone: cek error & data
   if (error) return <div className="bg-red-50 border-2 border-red-100 text-red-700 p-6 rounded-3xl mx-4 mt-10 text-center font-bold">❌ {error}</div>
@@ -297,25 +303,33 @@ function FormCutiView({ title, onSuccess, data }: any) {
   const sisaCutiTahunan = Number(data?.sisa_cuti_tahunan ?? 0)
   const tahunCuti = data?.tahun_cuti || new Date().getFullYear()
 
-  const [form, setForm] = useState<any>({
-    tanggal_mulai: '',
-    tanggal_selesai: '',
-    jenis_cuti: '',
-    alasan: '',
-    atasan_nrp: '',
-    jumlah_hari: '',
-    butuh_tiket: false,
-    tiket_berangkat_tanggal: '',
-    tiket_berangkat_tujuan: '',
-    tiket_kembali_tanggal: '',
-    tiket_kembali_tujuan: ''
-  })
+const [form, setForm] = useState<any>({
+  tanggal_mulai: '',
+  tanggal_selesai: '',
+  jenis_cuti: '',
+  alasan: '',
+  atasan_nrp: '',
+  jumlah_hari: '',
+  butuh_tiket: false,
+  tiket_berangkat_tanggal: '',
+  tiket_berangkat_tujuan: '',
+  tiket_kembali_tanggal: '',
+  tiket_kembali_tujuan: '',
+  // Cuti Kompensasi
+  kompensasi_mulai: '',
+  kompensasi_selesai: '',
+  reguler_mulai: '',
+  reguler_selesai: '',
+  roster_cr_tanggal: ''
+})
 
   const [atasanList, setAtasanList] = useState<any[]>([])
   const [isDirectPJO, setIsDirectPJO] = useState(false)
   const [pjoNama, setPjoNama] = useState('')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState({ type: '', text: '' })
+  const [crList, setCrList] = useState<any[]>([])
+  const [loadingCR, setLoadingCR] = useState(false)
   const riwayat = data?.riwayat || []
 
   useEffect(() => {
@@ -333,8 +347,37 @@ function FormCutiView({ title, onSuccess, data }: any) {
     return () => controller.abort()
   }, [])
 
+  // Fetch daftar CR milik user saat jenis cuti = KOMPENSASI
+  useEffect(() => {
+    if (form.jenis_cuti !== 'CUTI KOMPENSASI') return
+    setLoadingCR(true)
+    fetch('/api/leave/cr-list')
+      .then(r => r.json())
+      .then((d: any) => setCrList(d.cr_dates || []))
+      .catch(err => console.log('Load CR gagal:', err))
+      .finally(() => setLoadingCR(false))
+  }, [form.jenis_cuti])
+
+  const isCutiTahunan    = form.jenis_cuti === 'CUTI TAHUNAN'
+  const isCutiKompensasi = form.jenis_cuti === 'CUTI KOMPENSASI'
+  const jumlahHariNum    = Number(form.jumlah_hari || 0)
+
   // Hitung hari kalender dari rentang tanggal
   const hariKalender = (() => {
+    if (isCutiKompensasi) {
+      // Hitung total gabungan 2 blok
+      if (!form.kompensasi_mulai || !form.kompensasi_selesai || !form.reguler_mulai || !form.reguler_selesai) return 0
+      const allD = [
+        new Date(`${form.kompensasi_mulai}T00:00:00`),
+        new Date(`${form.kompensasi_selesai}T00:00:00`),
+        new Date(`${form.reguler_mulai}T00:00:00`),
+        new Date(`${form.reguler_selesai}T00:00:00`)
+      ]
+      if (allD.some(d => isNaN(d.getTime()))) return 0
+      const min = Math.min(...allD.map(d => d.getTime()))
+      const max = Math.max(...allD.map(d => d.getTime()))
+      return Math.floor((max - min) / 86400000) + 1
+    }
     if (!form.tanggal_mulai || !form.tanggal_selesai) return 0
     const s = new Date(`${form.tanggal_mulai}T00:00:00`)
     const e = new Date(`${form.tanggal_selesai}T00:00:00`)
@@ -342,9 +385,6 @@ function FormCutiView({ title, onSuccess, data }: any) {
     if (e < s) return 0
     return Math.floor((e.getTime() - s.getTime()) / 86400000) + 1
   })()
-
-  const isCutiTahunan = form.jenis_cuti === 'CUTI TAHUNAN'
-  const jumlahHariNum = Number(form.jumlah_hari || 0)
 
   // Validasi realtime cuti tahunan
   let warningCutiTahunan = ''
@@ -357,6 +397,31 @@ function FormCutiView({ title, onSuccess, data }: any) {
       warningCutiTahunan = `⚠️ Sisa cuti tahunan Anda hanya ${sisaCutiTahunan} hari`
     }
   }
+
+  // Validasi realtime cuti kompensasi
+let warningKompensasi = ''
+if (isCutiKompensasi) {
+  const kS = form.kompensasi_mulai ? new Date(`${form.kompensasi_mulai}T00:00:00`) : null
+  const kE = form.kompensasi_selesai ? new Date(`${form.kompensasi_selesai}T00:00:00`) : null
+  const rS = form.reguler_mulai ? new Date(`${form.reguler_mulai}T00:00:00`) : null
+  const rE = form.reguler_selesai ? new Date(`${form.reguler_selesai}T00:00:00`) : null
+
+  if (!kS || !kE || !rS || !rE) {
+    warningKompensasi = '⚠️ Semua tanggal blok kompensasi dan reguler wajib diisi'
+  } else if (kE < kS) {
+    warningKompensasi = '⚠️ Tanggal selesai kompensasi harus >= mulai kompensasi'
+  } else if (rE < rS) {
+    warningKompensasi = '⚠️ Tanggal selesai reguler harus >= mulai reguler'
+  } else {
+    // Cek berurutan tanpa jeda
+    const blok1End   = kS <= rS ? kE : rE
+    const blok2Start = kS <= rS ? rS : kS
+    const selisih    = Math.floor((blok2Start.getTime() - blok1End.getTime()) / 86400000)
+    if (selisih !== 1) {
+      warningKompensasi = `⚠️ Dua blok harus berurutan tanpa jeda (selisih antar blok: ${selisih} hari, harus tepat 1 hari)`
+    }
+  }
+}
 
   // Validasi tiket
   let warningTiket = ''
@@ -396,6 +461,11 @@ function FormCutiView({ title, onSuccess, data }: any) {
       }
     }
 
+    if (isCutiKompensasi && warningKompensasi) {
+  setMsg({ type: 'err', text: warningKompensasi.replace('⚠️ ', '') })
+  return
+}
+
     if (form.butuh_tiket && warningTiket) {
       setMsg({ type: 'err', text: warningTiket.replace('⚠️ ', '') })
       return
@@ -403,14 +473,23 @@ function FormCutiView({ title, onSuccess, data }: any) {
 
     setLoading(true)
     try {
-      const payload: any = {
-        tanggal_mulai: form.tanggal_mulai,
-        tanggal_selesai: form.tanggal_selesai,
-        jenis_cuti: form.jenis_cuti,
-        alasan: form.alasan,
-        atasan_nrp: isDirectPJO ? '' : form.atasan_nrp,
-        butuh_tiket: !!form.butuh_tiket
-      }
+const payload: any = {
+  jenis_cuti: form.jenis_cuti,
+  alasan: form.alasan,
+  atasan_nrp: isDirectPJO ? '' : form.atasan_nrp,
+  butuh_tiket: !!form.butuh_tiket
+}
+
+if (isCutiKompensasi) {
+  payload.kompensasi_mulai   = form.kompensasi_mulai
+  payload.kompensasi_selesai = form.kompensasi_selesai
+  payload.reguler_mulai      = form.reguler_mulai
+  payload.reguler_selesai    = form.reguler_selesai
+  payload.roster_cr_tanggal  = form.roster_cr_tanggal || null
+} else {
+  payload.tanggal_mulai  = form.tanggal_mulai
+  payload.tanggal_selesai = form.tanggal_selesai
+}
 
       if (isCutiTahunan) {
         payload.jumlah_hari = jumlahHariNum
@@ -431,19 +510,24 @@ function FormCutiView({ title, onSuccess, data }: any) {
       const resData = await res.json()
       if (res.ok) {
         setMsg({ type: 'ok', text: resData.message || '✅ Pengajuan cuti berhasil dikirim' })
-        setForm({
-          tanggal_mulai: '',
-          tanggal_selesai: '',
-          jenis_cuti: '',
-          alasan: '',
-          atasan_nrp: '',
-          jumlah_hari: '',
-          butuh_tiket: false,
-          tiket_berangkat_tanggal: '',
-          tiket_berangkat_tujuan: '',
-          tiket_kembali_tanggal: '',
-          tiket_kembali_tujuan: ''
-        })
+setForm({
+  tanggal_mulai: '',
+  tanggal_selesai: '',
+  jenis_cuti: '',
+  alasan: '',
+  atasan_nrp: '',
+  jumlah_hari: '',
+  butuh_tiket: false,
+  tiket_berangkat_tanggal: '',
+  tiket_berangkat_tujuan: '',
+  tiket_kembali_tanggal: '',
+  tiket_kembali_tujuan: '',
+  kompensasi_mulai: '',
+  kompensasi_selesai: '',
+  reguler_mulai: '',
+  reguler_selesai: '',
+  roster_cr_tanggal: ''
+})
         onSuccess()
       } else {
         setMsg({ type: 'err', text: resData.error || 'Gagal mengirim pengajuan' })
@@ -467,24 +551,37 @@ function FormCutiView({ title, onSuccess, data }: any) {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Mulai Cuti" type="date" required value={form.tanggal_mulai} onChange={(v: any) => setForm({ ...form, tanggal_mulai: v })} />
-            <Input label="Selesai Cuti" type="date" required value={form.tanggal_selesai} onChange={(v: any) => setForm({ ...form, tanggal_selesai: v })} />
-          </div>
+          {!isCutiKompensasi && (
+  <div className="grid grid-cols-2 gap-4">
+    <Input label="Mulai Cuti" type="date" required value={form.tanggal_mulai} onChange={(v: any) => setForm({ ...form, tanggal_mulai: v })} />
+    <Input label="Selesai Cuti" type="date" required value={form.tanggal_selesai} onChange={(v: any) => setForm({ ...form, tanggal_selesai: v })} />
+  </div>
+)}
 
           {hariKalender > 0 && (
-            <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 border border-slate-100 rounded-xl p-3">
-              📅 Rentang tanggal: <span className="text-slate-800">{hariKalender} hari kalender</span>
-            </div>
-          )}
+  <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 border border-slate-100 rounded-xl p-3">
+    📅 Total rentang cuti: <span className="text-slate-800">{hariKalender} hari kalender</span>
+  </div>
+)}
 
           <Select
-            label="Jenis Cuti"
-            required
-            value={form.jenis_cuti}
-            onChange={(v: any) => setForm({ ...form, jenis_cuti: v, jumlah_hari: '' })}
-            options={['CUTI REGULER / ROSTER', 'CUTI TAHUNAN']}
-          />
+  label="Jenis Cuti"
+  required
+  value={form.jenis_cuti}
+  onChange={(v: any) => setForm({
+    ...form,
+    jenis_cuti: v,
+    jumlah_hari: '',
+    // Reset field tanggal saat ganti jenis
+    tanggal_mulai: '',
+    tanggal_selesai: '',
+    kompensasi_mulai: '',
+    kompensasi_selesai: '',
+    reguler_mulai: '',
+    reguler_selesai: ''
+  })}
+  options={['CUTI REGULER / ROSTER', 'CUTI TAHUNAN', 'CUTI KOMPENSASI']}
+/>
 
           {/* Blok Khusus Cuti Tahunan */}
           {isCutiTahunan && (
@@ -522,6 +619,110 @@ function FormCutiView({ title, onSuccess, data }: any) {
               )}
             </div>
           )}
+
+{/* Blok Khusus Cuti Kompensasi */}
+{isCutiKompensasi && (
+  <div className="bg-emerald-50 border-2 border-emerald-100 p-5 rounded-2xl space-y-4">
+    <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">
+      🔄 Cuti Kompensasi — Wajib 2 Blok Berurutan Tanpa Jeda
+    </p>
+    <p className="text-[10px] text-slate-500 font-bold">
+      Isi blok kompensasi dan blok reguler. Keduanya harus saling menyambung (tidak boleh ada hari kosong di antara keduanya).
+    </p>
+
+    {/* Pilih tanggal CR dari roster */}
+    <div className="bg-white border border-emerald-200 rounded-2xl p-4 space-y-2">
+      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+        📅 Pilih Tanggal CR yang Diklaim
+      </p>
+      {loadingCR ? (
+        <p className="text-[10px] text-slate-400 font-bold animate-pulse">Memuat daftar CR...</p>
+      ) : crList.length === 0 ? (
+        <p className="text-[10px] text-rose-500 font-bold">
+          ⚠️ Tidak ada roster CR ditemukan untuk akun Anda
+        </p>
+      ) : (
+        <select
+          value={form.roster_cr_tanggal}
+          onChange={e => setForm({ ...form, roster_cr_tanggal: e.target.value })}
+          className="w-full p-3 border-2 border-emerald-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-emerald-500 outline-none"
+        >
+          <option value="">-- Pilih Tanggal CR --</option>
+          {crList.map((cr: any) => (
+            <option
+              key={cr.tanggal}
+              value={cr.tanggal}
+              disabled={cr.sudah_diklaim}
+            >
+              {new Date(`${cr.tanggal}T00:00:00`).toLocaleDateString('id-ID', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+              })}
+              {cr.sudah_diklaim ? ' — ✅ Sudah Diklaim' : ''}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
+
+    {/* Blok Kompensasi */}
+    <div className="bg-white border border-emerald-100 rounded-2xl p-4 space-y-3">
+      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">🟢 Blok Kompensasi</p>
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="Mulai Kompensasi"
+          type="date"
+          required
+          value={form.kompensasi_mulai}
+          onChange={(v: any) => setForm({ ...form, kompensasi_mulai: v })}
+        />
+        <Input
+          label="Selesai Kompensasi"
+          type="date"
+          required
+          value={form.kompensasi_selesai}
+          onChange={(v: any) => setForm({ ...form, kompensasi_selesai: v })}
+        />
+      </div>
+    </div>
+
+    {/* Blok Reguler */}
+    <div className="bg-white border border-emerald-100 rounded-2xl p-4 space-y-3">
+      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">🔵 Blok Reguler / Roster</p>
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="Mulai Reguler"
+          type="date"
+          required
+          value={form.reguler_mulai}
+          onChange={(v: any) => setForm({ ...form, reguler_mulai: v })}
+        />
+        <Input
+          label="Selesai Reguler"
+          type="date"
+          required
+          value={form.reguler_selesai}
+          onChange={(v: any) => setForm({ ...form, reguler_selesai: v })}
+        />
+      </div>
+    </div>
+
+    {/* Info urutan otomatis */}
+    {form.kompensasi_mulai && form.reguler_mulai && (
+      <div className="bg-white border border-emerald-100 rounded-xl p-3 text-[10px] font-bold text-emerald-700">
+        {new Date(`${form.kompensasi_mulai}T00:00:00`) <= new Date(`${form.reguler_mulai}T00:00:00`)
+          ? '📋 Urutan: Kompensasi dulu → lalu Reguler'
+          : '📋 Urutan: Reguler dulu → lalu Kompensasi'}
+      </div>
+    )}
+
+    {/* Warning kompensasi */}
+    {warningKompensasi && (
+      <div className="bg-rose-50 border border-rose-100 text-rose-700 text-xs font-bold p-3 rounded-xl">
+        {warningKompensasi}
+      </div>
+    )}
+  </div>
+)}
 
           {/* Pilih Atasan (kalau bukan direct-to-PJO) */}
           {!isDirectPJO ? (
@@ -675,6 +876,8 @@ function FormLemburView({ title, onSuccess, data }: any) {
   const [atasanList, setAtasanList] = useState([])
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState({ type: '', text: '' })
+  const [crList, setCrList] = useState<any[]>([])
+  const [loadingCR, setLoadingCR] = useState(false)
   const riwayat = data?.riwayat || []
 
   useEffect(() => {
@@ -687,6 +890,7 @@ function FormLemburView({ title, onSuccess, data }: any) {
       })
     return () => controller.abort()
   }, [])
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -6174,6 +6378,811 @@ function KelolaHakCutiView() {
                 className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
               >
                 {saving === editingBalance.nrp ? '⏳ MENYIMPAN...' : '💾 SIMPAN'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ============ 📊 MONITORING ROSTER CR ============
+function MonitoringRosterCRView() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [periode, setPeriode] = useState(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  })
+  const [filterSite, setFilterSite] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+
+  useEffect(() => {
+    loadData()
+  }, [periode, filterSite])
+
+  async function loadData() {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        periode,
+        ...(filterSite && { site: filterSite }),
+      })
+      const res = await fetch(`/api/monitoring-roster-cr?${params.toString()}`)
+      const json = await res.json()
+      if (res.ok) setData(json)
+    } catch (err) {
+      console.error('Load error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const STATUS_CONFIG: any = {
+    DISETUJUI:    { badge: '✅ SUDAH AJUKAN', color: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+    MENUNGGU:     { badge: '🕐 MENUNGGU',     color: 'bg-blue-50 text-blue-700 border border-blue-200' },
+    BELUM_AJUKAN: { badge: '⚠️ BELUM AJUKAN', color: 'bg-amber-50 text-amber-700 border border-amber-200' },
+    DITOLAK:      { badge: '❌ DITOLAK',      color: 'bg-rose-50 text-rose-700 border border-rose-200' },
+  }
+
+  const stats = data?.stats || {}
+
+  // Filter status client-side
+  const rows = (data?.data || []).filter((r: any) => {
+    if (filterStatus && r.status !== filterStatus) return false
+    return true
+  })
+
+  // Generate pilihan periode (12 bulan terakhir + 6 bulan ke depan)
+  const periodeOptions = (() => {
+    const opts = []
+    const now = new Date()
+    for (let i = 6; i >= -6; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+      opts.push({ val, label })
+    }
+    return opts
+  })()
+
+  function formatDate(d: string) {
+    if (!d) return '—'
+    return new Date(`${d}T00:00:00`).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    })
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden">
+        <div className="bg-[#003D79] p-6 text-white">
+          <h2 className="text-xl font-black uppercase tracking-tight">📊 Monitoring Cuti Kompensasi (CR)</h2>
+          <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest mt-1">
+            Rekap per karyawan yang punya jadwal CR di periode ini
+          </p>
+        </div>
+
+        {/* STATS PER KARYAWAN */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 p-6 border-b">
+          {[
+            { label: 'Total Karyawan', value: stats.total_karyawan || 0, color: 'text-slate-800',   bg: 'bg-slate-50',   emoji: '👥' },
+            { label: 'Sudah Ajukan',   value: stats.sudah_ajukan || 0,   color: 'text-emerald-700', bg: 'bg-emerald-50', emoji: '✅' },
+            { label: 'Menunggu',       value: stats.menunggu || 0,       color: 'text-blue-700',    bg: 'bg-blue-50',    emoji: '🕐' },
+            { label: 'Belum Ajukan',   value: stats.belum_ajukan || 0,   color: 'text-amber-700',   bg: 'bg-amber-50',   emoji: '⚠️' },
+            { label: 'Ditolak',        value: stats.ditolak || 0,        color: 'text-rose-700',    bg: 'bg-rose-50',    emoji: '❌' },
+          ].map((s, i) => (
+            <div key={i} className={`${s.bg} rounded-2xl p-4 text-center`}>
+              <div className="text-lg mb-1">{s.emoji}</div>
+              <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
+              <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* FILTER */}
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+              Periode
+            </label>
+            <select
+              value={periode}
+              onChange={e => setPeriode(e.target.value)}
+              className="w-full p-3 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none"
+            >
+              {periodeOptions.map(o => (
+                <option key={o.val} value={o.val}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+              Site
+            </label>
+            <select
+              value={filterSite}
+              onChange={e => setFilterSite(e.target.value)}
+              className="w-full p-3 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none"
+            >
+              <option value="">Semua Site</option>
+              {(data?.sites || []).map((s: string) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+              Status
+            </label>
+            <select
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              className="w-full p-3 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none"
+            >
+              <option value="">Semua Status</option>
+              <option value="BELUM_AJUKAN">⚠️ Belum Ajukan</option>
+              <option value="MENUNGGU">🕐 Menunggu</option>
+              <option value="DISETUJUI">✅ Sudah Ajukan</option>
+              <option value="DITOLAK">❌ Ditolak</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* TABEL */}
+      <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden">
+        <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
+          <h3 className="font-black text-slate-800">
+            👥 Daftar Karyawan CR — <span className="text-blue-600">{periode}</span>
+          </h3>
+          <span className="text-[10px] bg-slate-200 text-slate-600 px-3 py-1.5 rounded-full font-black">
+            {rows.length} KARYAWAN
+          </span>
+        </div>
+
+        {loading ? (
+          <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+            Memuat data...
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="p-20 text-center">
+            <div className="text-5xl mb-4 opacity-20">📭</div>
+            <p className="text-slate-400 text-xs font-black uppercase tracking-widest">
+              Tidak ada karyawan dengan roster CR pada periode ini
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {rows.map((r: any, i: number) => {
+              const s = STATUS_CONFIG[r.status] || STATUS_CONFIG.BELUM_AJUKAN
+              return (
+                <div key={i} className="p-5 hover:bg-slate-50 transition-colors">
+                  {/* Header baris */}
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-black text-slate-800 text-sm">{r.nama}</div>
+                      <div className="text-[10px] text-slate-400 font-bold">
+                        {r.nrp} • {r.jabatan}
+                      </div>
+                      <div className="text-[10px] text-blue-600 font-black mt-0.5">
+                        🏢 {r.site}
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-black px-3 py-1.5 rounded-full shrink-0 ${s.color}`}>
+                      {s.badge}
+                    </span>
+                  </div>
+
+                  {/* Info CR */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 text-[10px]">
+                    <div className="bg-slate-50 rounded-xl p-3">
+                      <div className="text-slate-400 font-black uppercase tracking-widest mb-1">
+                        📅 Jadwal CR
+                      </div>
+                      <div className="font-black text-slate-700">
+                        {r.total_hari_cr} hari
+                      </div>
+                      <div className="text-slate-500 font-bold mt-0.5">
+                        {formatDate(r.tanggal_cr_pertama)} — {formatDate(r.tanggal_cr_terakhir)}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-xl p-3">
+                      <div className="text-slate-400 font-black uppercase tracking-widest mb-1">
+                        📝 Tanggal Ajukan
+                      </div>
+                      <div className="font-black text-slate-700">
+                        {r.tanggal_ajukan
+                          ? new Date(r.tanggal_ajukan).toLocaleDateString('id-ID', {
+                              day: 'numeric', month: 'short', year: 'numeric',
+                              hour: '2-digit', minute: '2-digit'
+                            })
+                          : <span className="text-slate-300 italic">Belum ada pengajuan</span>
+                        }
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-xl p-3">
+                      <div className="text-slate-400 font-black uppercase tracking-widest mb-1">
+                        🏖️ Periode Cuti Diajukan
+                      </div>
+                      <div className="font-black text-slate-700">
+                        {r.tanggal_cuti_mulai && r.tanggal_cuti_selesai
+                          ? `${formatDate(r.tanggal_cuti_mulai)} — ${formatDate(r.tanggal_cuti_selesai)}`
+                          : <span className="text-slate-300 italic">—</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Catatan approval (kalau ada) */}
+                  {(r.catatan_atasan || r.catatan_pjo) && (
+                    <div className="mt-3 space-y-2">
+                      {r.catatan_atasan && (
+                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-[10px]">
+                          <span className="font-black text-blue-700">💬 Catatan Atasan: </span>
+                          <span className="text-slate-700 italic">"{r.catatan_atasan}"</span>
+                        </div>
+                      )}
+                      {r.catatan_pjo && (
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-2.5 text-[10px]">
+                          <span className="font-black text-indigo-700">💬 Catatan PJO: </span>
+                          <span className="text-slate-700 italic">"{r.catatan_pjo}"</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============ 📊 EXPORT REKAP ABSENSI MATRIX ============
+function ExportAbsensiMatrixView() {
+  const [periode, setPeriode] = useState(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  })
+  const [site, setSite] = useState('')
+  const [sites, setSites] = useState<string[]>([])
+  const [downloading, setDownloading] = useState(false)
+  const [msg, setMsg] = useState({ type: '', text: '' })
+
+  useEffect(() => {
+    // Reuse endpoint monitoring yang sudah proven mengembalikan sites
+    fetch('/api/monitoring-roster-cr?periode=' + periode)
+      .then(r => r.json())
+      .then(d => setSites(d.sites || []))
+      .catch(() => {})
+  }, [periode])
+
+  const periodeOptions = (() => {
+    const opts = []
+    const now = new Date()
+    for (let i = 6; i >= -6; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+      opts.push({ val, label })
+    }
+    return opts
+  })()
+
+  async function handleDownload() {
+    setDownloading(true)
+    setMsg({ type: '', text: '' })
+    try {
+      const params = new URLSearchParams({ periode, ...(site && { site }) })
+      const res = await fetch(`/api/export-absensi-matrix?${params.toString()}`)
+      if (!res.ok) {
+        const err = await res.json()
+        setMsg({ type: 'err', text: err.error || 'Gagal export' })
+        return
+      }
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Rekap_Absensi_${site || 'AllSite'}_${periode}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      setMsg({ type: 'ok', text: '✅ File berhasil didownload!' })
+    } catch (err: any) {
+      setMsg({ type: 'err', text: err.message })
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const KODE_LIST = [
+    { k: 'DS',  n: 'Day Shift',      c: 'bg-sky-100 text-sky-800' },
+    { k: 'NS',  n: 'Night Shift',    c: 'bg-violet-100 text-violet-800' },
+    { k: 'OFF', n: 'Off / Libur',    c: 'bg-slate-200 text-slate-700' },
+    { k: 'CR',  n: 'Cuti Roster',    c: 'bg-amber-100 text-amber-800' },
+    { k: 'CT',  n: 'Cuti Tahunan',   c: 'bg-orange-100 text-orange-800' },
+    { k: 'SCK', n: 'Shift Cuti Kompensasi', c: 'bg-emerald-100 text-emerald-800' },
+    { k: 'MCK', n: 'Malam Cuti Kompensasi', c: 'bg-emerald-200 text-emerald-900' },
+    { k: 'TR',  n: 'Training',       c: 'bg-blue-100 text-blue-800' },
+    { k: 'ID',  n: 'Induksi',        c: 'bg-indigo-100 text-indigo-800' },
+    { k: 'S',   n: 'Sakit',          c: 'bg-pink-100 text-pink-800' },
+    { k: 'I',   n: 'Izin Potongan',  c: 'bg-red-100 text-red-800' },
+    { k: 'IR',  n: 'Izin Resmi',     c: 'bg-rose-100 text-rose-800' },
+    { k: 'A',   n: 'Alfa',           c: 'bg-red-300 text-red-900' },
+  ]
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden">
+        <div className="bg-[#003D79] p-6 text-white">
+          <h2 className="text-xl font-black uppercase tracking-tight">📊 Export Rekap Absensi Bulanan</h2>
+          <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest mt-1">
+            Format matrix (grid) — 1 baris per karyawan
+          </p>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {msg.text && (
+            <div className={`p-4 rounded-2xl text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {msg.text}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                Periode
+              </label>
+              <select
+                value={periode}
+                onChange={e => setPeriode(e.target.value)}
+                className="w-full p-3 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none"
+              >
+                {periodeOptions.map(o => (
+                  <option key={o.val} value={o.val}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                Site (kosongkan = semua)
+              </label>
+              <select
+                value={site}
+                onChange={e => setSite(e.target.value)}
+                className="w-full p-3 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none"
+              >
+                <option value="">Semua Site</option>
+                {sites.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {downloading ? '⏳ MENYIAPKAN FILE...' : '📥 DOWNLOAD EXCEL'}
+          </button>
+        </div>
+      </div>
+
+      {/* LEGENDA */}
+      <div className="bg-white rounded-[2.5rem] border shadow-xl p-6">
+        <h3 className="font-black text-slate-800 mb-4">📋 Legenda Kode Absensi</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+          {KODE_LIST.map(k => (
+            <div key={k.k} className="flex items-center gap-3">
+              <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg w-12 text-center ${k.c}`}>
+                {k.k}
+              </span>
+              <span className="text-xs font-bold text-slate-600">{k.n}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============ 📊 MONITORING CUTI & TIKET ============
+function MonitoringCutiTiketView() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [subTab, setSubTab] = useState<'CUTI' | 'TIKET'>('CUTI')
+  const [bulan, setBulan] = useState(String(new Date().getMonth() + 1).padStart(2, '0'))
+  const [tahun, setTahun] = useState(String(new Date().getFullYear()))
+  const [filterSite, setFilterSite] = useState('')
+  const [filterStatusTiket, setFilterStatusTiket] = useState('')
+  const [filterJenisCuti, setFilterJenisCuti] = useState('')
+  const [editingTiket, setEditingTiket] = useState<any>(null)
+  const [tiketForm, setTiketForm] = useState({ status: '', catatan: '' })
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    loadData()
+  }, [bulan, tahun, filterSite, filterStatusTiket, filterJenisCuti])
+
+  async function loadData() {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        bulan, tahun,
+        ...(filterSite && { site: filterSite }),
+        ...(filterStatusTiket && { status_tiket: filterStatusTiket }),
+        ...(filterJenisCuti && { jenis_cuti: filterJenisCuti })
+      })
+      const res = await fetch(`/api/monitoring-cuti?${params.toString()}`)
+      const json = await res.json()
+      if (res.ok) setData(json)
+    } catch (err) {
+      console.error('Load error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function openEditTiket(tiket: any) {
+    setEditingTiket(tiket)
+    setTiketForm({ status: tiket.status, catatan: tiket.catatan || '' })
+  }
+
+  async function saveTiketStatus() {
+    if (!editingTiket) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/monitoring-cuti', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticket_id: editingTiket.id,
+          status: tiketForm.status,
+          catatan: tiketForm.catatan
+        })
+      })
+      const json = await res.json()
+      if (res.ok) {
+        alert('✅ ' + json.message)
+        setEditingTiket(null)
+        loadData()
+      } else {
+        alert('❌ ' + json.error)
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const STATUS_TIKET_CONFIG: any = {
+    MENUNGGU_PEMESANAN: { icon: '⏳', label: 'Menunggu', color: 'amber' },
+    SUDAH_DIPESAN:       { icon: '📞', label: 'Dipesan',  color: 'blue' },
+    E_TICKET_TERKIRIM:   { icon: '📧', label: 'Terkirim', color: 'indigo' },
+    SELESAI:             { icon: '✅', label: 'Selesai',  color: 'emerald' },
+    DIBATALKAN:          { icon: '❌', label: 'Batal',    color: 'rose' }
+  }
+
+  const COLOR_MAP: any = {
+    amber:   'bg-amber-50 text-amber-700 border-amber-200',
+    blue:    'bg-blue-50 text-blue-700 border-blue-200',
+    indigo:  'bg-indigo-50 text-indigo-700 border-indigo-200',
+    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    rose:    'bg-rose-50 text-rose-700 border-rose-200'
+  }
+
+  if (loading) return (
+    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+      Memuat monitoring...
+    </div>
+  )
+
+  const stats = data?.stats || {}
+
+  return (
+    <div className="animate-in fade-in duration-500 pb-32 space-y-6">
+      {/* HEADER */}
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="text-3xl">📊</div>
+            <div>
+              <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Data Monitoring</p>
+              <h1 className="text-2xl font-black tracking-tight">Cuti & Tiket Pesawat</h1>
+            </div>
+          </div>
+          <p className="text-blue-200/70 text-xs font-medium">Periode {data?.periode || '-'}</p>
+        </div>
+      </div>
+
+      {/* STATS */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-white p-5 rounded-[2rem] border-2 border-blue-100 shadow-sm">
+          <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1">🌴 Total Cuti</p>
+          <p className="text-2xl font-black text-blue-700">{stats.total_cuti || 0}</p>
+          <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">bulan ini</p>
+        </div>
+        <div className="bg-white p-5 rounded-[2rem] border-2 border-amber-100 shadow-sm">
+          <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest mb-1">🏖️ Cuti Tahunan</p>
+          <p className="text-2xl font-black text-amber-700">{stats.cuti_tahunan || 0}</p>
+        </div>
+        <div className="bg-white p-5 rounded-[2rem] border-2 border-indigo-100 shadow-sm">
+          <p className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mb-1">✈️ Butuh Tiket</p>
+          <p className="text-2xl font-black text-indigo-700">{stats.butuh_tiket || 0}</p>
+          <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">{stats.total_tiket || 0} trip</p>
+        </div>
+        <div className="bg-white p-5 rounded-[2rem] border-2 border-rose-100 shadow-sm">
+          <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1">⏳ Menunggu</p>
+          <p className="text-2xl font-black text-rose-700">{stats.tiket_menunggu || 0}</p>
+          <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">tiket belum dipesan</p>
+        </div>
+      </div>
+
+      {/* SUB-TAB SWITCHER */}
+      <div className="bg-white p-2 rounded-[2rem] border-2 border-slate-50 shadow-sm flex gap-1">
+        <button
+          onClick={() => setSubTab('CUTI')}
+          className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+            subTab === 'CUTI' ? 'bg-[#003D79] text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'
+          }`}
+        >
+          🌴 Cuti ({stats.total_cuti || 0})
+        </button>
+        <button
+          onClick={() => setSubTab('TIKET')}
+          className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+            subTab === 'TIKET' ? 'bg-[#003D79] text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'
+          }`}
+        >
+          ✈️ Tiket ({stats.total_tiket || 0})
+        </button>
+      </div>
+
+      {/* FILTER */}
+      <div className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm grid grid-cols-2 lg:grid-cols-5 gap-2">
+        <select value={bulan} onChange={e => setBulan(e.target.value)}
+          className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]">
+          {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => (
+            <option key={m} value={m}>Bulan {m}</option>
+          ))}
+        </select>
+        <select value={tahun} onChange={e => setTahun(e.target.value)}
+          className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]">
+          {[0, -1, 1].map(o => {
+            const y = new Date().getFullYear() + o
+            return <option key={y} value={String(y)}>{y}</option>
+          })}
+        </select>
+        <select value={filterSite} onChange={e => setFilterSite(e.target.value)}
+          className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]">
+          <option value="">Semua Site</option>
+          {(data?.sites || []).map((s: string) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        {subTab === 'CUTI' ? (
+          <select value={filterJenisCuti} onChange={e => setFilterJenisCuti(e.target.value)}
+            className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79] col-span-2">
+            <option value="">Semua Jenis</option>
+            <option value="CUTI REGULER / ROSTER">Reguler</option>
+            <option value="CUTI TAHUNAN">Tahunan</option>
+          </select>
+        ) : (
+          <select value={filterStatusTiket} onChange={e => setFilterStatusTiket(e.target.value)}
+            className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79] col-span-2">
+            <option value="">Semua Status</option>
+            {Object.keys(STATUS_TIKET_CONFIG).map(s => (
+              <option key={s} value={s}>{STATUS_TIKET_CONFIG[s].icon} {STATUS_TIKET_CONFIG[s].label}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* LIST */}
+      {subTab === 'CUTI' ? (
+        <div className="space-y-3">
+          {(data?.cuti || []).length === 0 ? (
+            <div className="p-16 text-center bg-white rounded-[2rem] border-2 border-dashed border-slate-200">
+              <p className="text-slate-300 font-bold italic">Belum ada cuti bulan ini</p>
+            </div>
+          ) : (data?.cuti || []).map((c: any) => (
+            <div key={c.id} className="bg-white p-5 rounded-[2rem] border-2 border-slate-50 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="w-11 h-11 bg-blue-100 rounded-2xl flex items-center justify-center font-black text-blue-700">
+                  {(c.nama || '?')[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <p className="font-black text-sm text-slate-900 truncate">{c.nama}</p>
+                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${
+                      c.jenis_cuti?.includes('TAHUNAN')
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>{c.jenis_cuti}</span>
+                    {c.butuh_tiket && (
+                      <span className="bg-indigo-100 text-indigo-700 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+                        ✈️ TIKET
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                    {c.nrp} • {c.jabatan} • {c.site}
+                  </p>
+
+                  <div className="bg-slate-50/50 p-3 rounded-xl space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="font-black text-slate-400 uppercase tracking-widest">📅 Tanggal</span>
+                      <span className="font-black text-slate-900">
+                        {new Date(c.tanggal_mulai).toLocaleDateString('id-ID')} — {new Date(c.tanggal_selesai).toLocaleDateString('id-ID')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="font-black text-slate-400 uppercase tracking-widest">⏱️ Durasi</span>
+                      <span className="font-black text-slate-900">{c.jumlah_hari} hari</span>
+                    </div>
+                    <div className="flex justify-between text-[11px] items-center">
+                      <span className="font-black text-slate-400 uppercase tracking-widest">Status</span>
+                      <div className="flex gap-1">
+                        <StatusBadge value={c.status_atasan} />
+                        <StatusBadge value={c.status_pjo || '-'} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] italic text-slate-500 mt-2 truncate">"{c.alasan}"</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {(data?.tiket || []).length === 0 ? (
+            <div className="p-16 text-center bg-white rounded-[2rem] border-2 border-dashed border-slate-200">
+              <p className="text-slate-300 font-bold italic">Belum ada tiket bulan ini</p>
+            </div>
+          ) : (data?.tiket || []).map((t: any) => {
+            const conf = STATUS_TIKET_CONFIG[t.status] || STATUS_TIKET_CONFIG.MENUNGGU_PEMESANAN
+            const colorClass = COLOR_MAP[conf.color]
+            return (
+              <div key={t.id} className="bg-white p-5 rounded-[2rem] border-2 border-slate-50 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl ${
+                    t.trip_type === 'BERANGKAT' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                  }`}>
+                    {t.trip_type === 'BERANGKAT' ? '🛫' : '🛬'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <p className="font-black text-sm text-slate-900 truncate">{t.nama}</p>
+                      <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${
+                        t.trip_type === 'BERANGKAT' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                      }`}>{t.trip_type}</span>
+                      <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border ${colorClass}`}>
+                        {conf.icon} {conf.label}
+                      </span>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                      {t.nrp} • {t.jabatan} • {t.site}
+                    </p>
+
+                    <div className="bg-slate-50/50 p-3 rounded-xl space-y-1">
+                      <div className="flex justify-between text-[11px]">
+                        <span className="font-black text-slate-400 uppercase tracking-widest">📅 Tanggal</span>
+                        <span className="font-black text-slate-900">
+                          {new Date(t.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-[11px]">
+                        <span className="font-black text-slate-400 uppercase tracking-widest">📍 Tujuan</span>
+                        <span className="font-black text-slate-900">{t.tujuan}</span>
+                      </div>
+                      {t.dipesan_oleh && (
+                        <div className="flex justify-between text-[11px]">
+                          <span className="font-black text-slate-400 uppercase tracking-widest">Dipesan Oleh</span>
+                          <span className="font-black text-slate-900">{t.dipesan_oleh}</span>
+                        </div>
+                      )}
+                      {t.catatan && (
+                        <p className="text-[10px] italic text-slate-500 pt-1 border-t border-slate-100">"{t.catatan}"</p>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => openEditTiket(t)}
+                      className="mt-3 w-full py-3 bg-[#003D79] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-blue-700 active:scale-95 transition-all"
+                    >
+                      ✏️ UPDATE STATUS TIKET
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* MODAL EDIT TIKET */}
+      {editingTiket && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setEditingTiket(null)} />
+          <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-full lg:max-w-md lg:max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
+            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center text-2xl">
+                  ✈️
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-indigo-200 text-[10px] font-bold uppercase tracking-widest">Update Status Tiket</p>
+                  <h2 className="font-black text-lg tracking-tight truncate">{editingTiket.nama}</h2>
+                  <p className="text-[10px] text-indigo-100 font-bold">
+                    {editingTiket.trip_type} • {editingTiket.tujuan}
+                  </p>
+                </div>
+                <button onClick={() => setEditingTiket(null)} className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-lg font-bold">✕</button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Status Baru</label>
+                <div className="space-y-2">
+                  {Object.entries(STATUS_TIKET_CONFIG).map(([key, conf]: any) => (
+                    <button
+                      key={key}
+                      onClick={() => setTiketForm({ ...tiketForm, status: key })}
+                      className={`w-full p-3 rounded-2xl border-2 text-left transition-all ${
+                        tiketForm.status === key
+                          ? `${COLOR_MAP[conf.color]} ring-2 ring-offset-2 ring-blue-400`
+                          : 'bg-white border-slate-100 hover:border-slate-200'
+                      }`}
+                    >
+                      <p className="text-sm font-black">{conf.icon} {conf.label}</p>
+                      <p className="text-[9px] font-bold text-slate-400 mt-0.5">{key}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Catatan (Opsional)</label>
+                <textarea
+                  value={tiketForm.catatan}
+                  onChange={e => setTiketForm({ ...tiketForm, catatan: e.target.value })}
+                  placeholder="Contoh: kode booking, no e-ticket, dll..."
+                  rows={3}
+                  className="w-full p-4 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-[#003D79] focus:bg-white outline-none transition-all resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 bg-white border-t-2 border-slate-100 flex gap-3">
+              <button
+                onClick={() => setEditingTiket(null)}
+                className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200"
+              >
+                Batal
+              </button>
+              <button
+                onClick={saveTiketStatus}
+                disabled={saving || !tiketForm.status}
+                className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
+              >
+                {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN'}
               </button>
             </div>
           </div>

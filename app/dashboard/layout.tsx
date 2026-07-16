@@ -129,6 +129,8 @@ const TAB_CONFIG = [
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'monitoring_expired' ||
+        m.menu_key === 'monitoring_cuti_tiket' ||
+        m.menu_key === 'monitoring_roster_cr' ||
         m.menu_key === 'roster_saya'
       )
     }
@@ -220,6 +222,7 @@ const TAB_CONFIG = [
         m.menu_key === 'import_mcu' ||
         m.menu_key === 'import_simper' ||
         m.menu_key === 'export_absensi' ||
+        m.menu_key === 'export_absensi_matrix' ||
         m.menu_key === 'audit_log'
       )
     }
