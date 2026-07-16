@@ -729,8 +729,6 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
           query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
         }
         else {
-          let empQ = supabase.from('employees').select('nrp').eq('site', userSite)
-        else {
           let empQ = supabase.from('employees').select('nrp, nama').eq('site', userSite)
           if (isAdminPlant) empQ = empQ.ilike('departemen', '%plant%')
           const { data: emps } = await empQ
