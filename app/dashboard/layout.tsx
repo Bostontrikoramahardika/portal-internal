@@ -96,9 +96,9 @@ const TAB_CONFIG = [
       return (
         m.menu_key === 'absensi_saya' ||
         m.menu_key === 'riwayat_absensi' ||
-        m.menu_key === 'export_absensi' ||
         m.menu_key === 'kelola_absensi' ||
-        m.menu_key === 'import_roster'
+        m.menu_key === 'import_roster' ||
+        m.menu_key === 'export_absensi_matrix'
       )
     }
   },
@@ -120,7 +120,7 @@ const TAB_CONFIG = [
     }
   },
 
-  // TAB 3: DATA
+  // TAB 3: DATA / MONITORING
   {
     key: 'data',
     label: 'Data',
@@ -130,8 +130,7 @@ const TAB_CONFIG = [
       return (
         m.menu_key === 'monitoring_expired' ||
         m.menu_key === 'monitoring_cuti_tiket' ||
-        m.menu_key === 'monitoring_roster_cr' ||
-        m.menu_key === 'roster_saya'
+        m.menu_key === 'monitoring_roster_cr'
       )
     }
   },
@@ -163,11 +162,6 @@ const TAB_CONFIG = [
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'approval_center' ||
-        m.menu_key === 'approval_pjo' ||
-        m.menu_key === 'approval_atasan' ||
-        m.menu_key === 'approval_cuti' ||
-        m.menu_key === 'approval_lembur' ||
-        m.menu_key === 'approval_sakit' ||
         m.menu_key === 'riwayat_approval'
       )
     }
@@ -184,7 +178,6 @@ const TAB_CONFIG = [
         m.menu_key === 'kelola_karyawan' ||
         m.menu_key === 'kelola_roles' ||
         m.menu_key === 'role_manager' ||
-        m.menu_key === 'setting_site' ||
         m.menu_key === 'kelola_kpi' ||
         m.menu_key === 'kelola_apd' ||
         m.menu_key === 'kelola_pkwt' ||
@@ -203,7 +196,7 @@ const TAB_CONFIG = [
     }
   },
 
-  // TAB 7: IMPORT
+  // TAB 7: IMPORT (EXCEL)
   {
     key: 'import_export',
     label: 'Import',
@@ -216,14 +209,9 @@ const TAB_CONFIG = [
         m.menu_key === 'import_pkwt' ||
         m.menu_key === 'import_kpi' ||
         m.menu_key === 'import_sp' ||
-        m.menu_key === 'import_roles' ||
-        m.menu_key === 'import_matrix' ||
         m.menu_key === 'import_bpjs' ||
         m.menu_key === 'import_mcu' ||
-        m.menu_key === 'import_simper' ||
-        m.menu_key === 'export_absensi' ||
-        m.menu_key === 'export_absensi_matrix' ||
-        m.menu_key === 'audit_log'
+        m.menu_key === 'import_simper'
       )
     }
   },
@@ -243,7 +231,7 @@ const TAB_CONFIG = [
     }
   },
 
-  // TAB 9: SYSTEM (Ricky only)
+  // TAB 9: SYSTEM (Super Admin only)
   {
     key: 'system_config',
     label: 'System',

@@ -32,7 +32,7 @@ function DashboardView({ title, data }: any) {
           <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
           <div className="relative z-10">
             <p className="text-blue-200/70 font-bold text-[10px] uppercase tracking-[0.3em] mb-2">{getGreeting()}</p>
-            <h2 className="text-2xl font-black text-white tracking-tight">{data.user_name || stats.user_name || 'Rekan BTM'} 👋</h2>
+            <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-white tracking-tight">{data.user_name || stats.user_name || 'Rekan BTM'} 👋</h2>
             <p className="text-blue-200/50 text-[10px] font-medium mt-1 uppercase tracking-widest italic">{stats.periode}</p>
           </div>
         </div>
@@ -51,7 +51,7 @@ function DashboardView({ title, data }: any) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-6">
             <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
               <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock In</p>
               <p className="text-xl font-black text-slate-900">{stats.clock_in_time || '--:--'}</p>
@@ -64,22 +64,22 @@ function DashboardView({ title, data }: any) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-8">
         <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Anggota</p>
-            <p className="text-2xl font-black text-slate-900">{stats.total}</p>
+            <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-slate-900">{stats.total}</p>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
             <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Hadir (Site)</p>
-            <p className="text-2xl font-black text-blue-600">{stats.hadir}</p>
+            <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-blue-600">{stats.hadir}</p>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
             <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">KPI Selesai</p>
-            <p className="text-2xl font-black text-emerald-600">{stats.done}</p>
+            <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-emerald-600">{stats.done}</p>
         </div>
         <div className="bg-rose-50 p-6 rounded-[2rem] border-2 border-rose-100 shadow-xl">
             <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest mb-1">Dok. Expired</p>
-            <p className="text-2xl font-black text-rose-600">{stats.expired}</p>
+            <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-rose-600">{stats.expired}</p>
         </div>
       </div>
     </div>
@@ -186,7 +186,7 @@ function DashboardContent() {
 // ============ 👤 MY IDENTITY VIEW v1.6.1 (Luxury Final) ============
 function IdentityView({ data }: { data: any }) {
   const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
-    <div className="flex items-center gap-4 group">
+    <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 group">
       <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100">{icon}</div>
       <div className="flex-1 border-b border-slate-50 pb-2">
         <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{label}</div>
@@ -196,7 +196,7 @@ function IdentityView({ data }: { data: any }) {
   )
 
   const BpjsItem = ({ icon, label, no, nama }: any) => (
-    <div className="flex items-start gap-4">
+    <div className="flex items-start gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
       <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100 mt-1">{icon}</div>
       <div className="flex-1 border-b border-slate-50 pb-3">
         <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">{label}</div>
@@ -213,10 +213,10 @@ function IdentityView({ data }: { data: any }) {
   )
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-32 animate-in fade-in duration-500">
+    <div className="max-w-2xl mx-auto space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6 pb-32 animate-in fade-in duration-500">
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>Personal Information</SectionTitle>
-        <div className="space-y-6">
+        <div className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
           <InfoItem icon="👤" label="Nama" value={data.nama} />
           <InfoItem icon="💼" label="Jabatan" value={data.jabatan} />
           <InfoItem icon="🏢" label="Departemen" value={data.departemen} />
@@ -233,7 +233,7 @@ function IdentityView({ data }: { data: any }) {
 
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>Contact Information</SectionTitle>
-        <div className="space-y-6">
+        <div className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
           <InfoItem icon="📧" label="Email" value={data.email} />
           <InfoItem icon="📞" label="Nomor HP" value={data.no_hp} />
           <InfoItem icon="🚨" label="Nomor Darurat" value={data.no_darurat} color="text-rose-600" />
@@ -242,7 +242,7 @@ function IdentityView({ data }: { data: any }) {
 
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>Validity & Permits</SectionTitle>
-        <div className="space-y-6">
+        <div className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
           <InfoItem icon="🪪" label="Nomor SIMPOL" value={data.no_simpol} />
           <InfoItem icon="⏳" label="Exp SIMPOL" value={data.exp_simpol} color="text-amber-600" />
           <InfoItem icon="🎖️" label="Exp SIMPER" value={data.exp_simper} color="text-blue-600" />
@@ -264,7 +264,7 @@ function IdentityView({ data }: { data: any }) {
 
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>Data Keluarga</SectionTitle>
-        <div className="space-y-6">
+        <div className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
           <InfoItem icon="💳" label="Nomor KK" value={data.no_kk} />
           <InfoItem icon="💍" label="Nama Istri" value={data.nama_istri} />
           <InfoItem icon="👶" label="Nama Anak ke-1" value={data.nama_anak1} />
@@ -275,9 +275,9 @@ function IdentityView({ data }: { data: any }) {
       {data.punishments && data.punishments.length > 0 && (
         <section className="bg-rose-50 rounded-[2.5rem] p-8 shadow-sm border border-rose-100">
           <SectionTitle>Historical Punishment</SectionTitle>
-          <div className="space-y-6">
+          <div className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
             {data.punishments.map((sp: any, idx: number) => (
-              <div key={idx} className="flex items-start gap-4 bg-white p-4 rounded-3xl border border-rose-200">
+              <div key={idx} className="flex items-start gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 bg-white p-4 rounded-3xl border border-rose-200">
                 <div className="text-2xl mt-1">⚠️</div>
                 <div>
                   <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">{sp.jenis_sp}</div>
@@ -541,10 +541,10 @@ setForm({
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <div className="bg-white p-8 rounded-[2.5rem] border shadow-xl">
-        <h2 className="text-2xl font-black mb-6">✍️ {title}</h2>
+      <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border shadow-xl">
+        <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black mb-6">✍️ {title}</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
           {msg.text && (
             <div className={`p-4 rounded-2xl text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
               {msg.text}
@@ -552,7 +552,7 @@ setForm({
           )}
 
           {!isCutiKompensasi && (
-  <div className="grid grid-cols-2 gap-4">
+  <div className="grid grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
     <Input label="Mulai Cuti" type="date" required value={form.tanggal_mulai} onChange={(v: any) => setForm({ ...form, tanggal_mulai: v })} />
     <Input label="Selesai Cuti" type="date" required value={form.tanggal_selesai} onChange={(v: any) => setForm({ ...form, tanggal_selesai: v })} />
   </div>
@@ -772,7 +772,7 @@ setForm({
                     Pemesanan tiket dilakukan terpisah per trip (berangkat & kembali)
                   </p>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
                     <div className="bg-white border border-indigo-100 rounded-2xl p-4 space-y-3">
                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">🛫 Trip Berangkat</p>
                       <Input
@@ -820,7 +820,7 @@ setForm({
             </div>
           )}
 
-          <button disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all">
+          <button disabled={loading} className="w-full bg-blue-600 text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all">
             {loading ? 'MENGIRIM...' : '🚀 KIRIM PENGAJUAN'}
           </button>
         </form>
@@ -912,12 +912,12 @@ function FormLemburView({ title, onSuccess, data }: any) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <div className="bg-white p-8 rounded-[2.5rem] border shadow-xl">
-        <h2 className="text-2xl font-black mb-6">⏱️ {title}</h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border shadow-xl">
+        <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black mb-6">⏱️ {title}</h2>
+        <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
           {msg.text && <div className={`p-4 rounded-2xl text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
           <Input label="Tanggal Lembur" type="date" required value={form.tanggal} onChange={(v:any) => setForm({...form, tanggal: v})} />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
             <Input label="Jam Mulai" type="time" required value={form.jam_mulai} onChange={(v:any) => setForm({...form, jam_mulai: v})} />
             <Input label="Jam Selesai" type="time" required value={form.jam_selesai} onChange={(v:any) => setForm({...form, jam_selesai: v})} />
           </div>
@@ -929,7 +929,7 @@ function FormLemburView({ title, onSuccess, data }: any) {
             </select>
           </div>
           <Textarea label="Pekerjaan / Alasan Lembur" required value={form.alasan} onChange={(v:any) => setForm({...form, alasan: v})} />
-          <button disabled={loading} className="w-full bg-amber-500 text-white py-4 rounded-2xl font-black hover:bg-amber-600 shadow-lg shadow-amber-200 active:scale-95 transition-all">
+          <button disabled={loading} className="w-full bg-amber-500 text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-amber-600 shadow-lg shadow-amber-200 active:scale-95 transition-all">
             {loading ? 'MENGIRIM...' : '🚀 KIRIM LEMBUR'}
           </button>
         </form>
@@ -1091,11 +1091,11 @@ function FormSakitView({ title, onSuccess, data }: any) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <div className="bg-white p-8 rounded-[2.5rem] border shadow-xl">
-        <h2 className="text-2xl font-black mb-2">{currentConfig.icon} {title}</h2>
+      <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border shadow-xl">
+        <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black mb-2">{currentConfig.icon} {title}</h2>
         <p className="text-xs text-slate-400 mb-8 font-medium">Laporkan ketidakhadiran dengan bukti dokumen lengkap.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
 
           {/* 📌 KATEGORI PILIHAN (3 CARD) */}
           <div>
@@ -1298,9 +1298,9 @@ function APDHistoryView({ data, onReload }: any) {
 
   return (
     <div className="pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-8">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{data.title}</h2>
+          <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 tracking-tight">{data.title}</h2>
           <p className="text-sm text-slate-500 font-medium">Monitoring & pengajuan mandiri perlengkapan APD</p>
         </div>
         <button onClick={() => setShowAdd(true)} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-xl hover:bg-slate-800 active:scale-95 transition-all">+ AJUKAN APD BARU</button>
@@ -1360,15 +1360,15 @@ function PKWTSayaView({ title, data, onSuccess }: any) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="bg-white p-8 rounded-[2.5rem] border shadow-xl h-fit">
+      <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border shadow-xl h-fit">
         <h2 className="text-xl font-black mb-6">✍️ Perbarui Data Kontrak</h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
           <Input label="Tanggal Mulai Kontrak" type="date" required value={form.mulai_kontrak} onChange={(v:any) => setForm({...form, mulai_kontrak: v})} />
           <div>
             <label className="block text-sm font-black text-slate-700 mb-3 uppercase tracking-tighter">Opsi Durasi Perpanjangan</label>
             <div className="grid grid-cols-3 gap-3">
               {[30, 90, 180].map(d => (
-                <button key={d} type="button" onClick={() => handleDuration(d)} className="bg-slate-50 hover:bg-blue-600 hover:text-white py-4 rounded-2xl font-black text-slate-700 transition-all border-2 border-transparent hover:border-blue-200 text-sm shadow-sm">+{d} Hari</button>
+                <button key={d} type="button" onClick={() => handleDuration(d)} className="bg-slate-50 hover:bg-blue-600 hover:text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-slate-700 transition-all border-2 border-transparent hover:border-blue-200 text-sm shadow-sm">+{d} Hari</button>
               ))}
             </div>
           </div>
@@ -1378,7 +1378,7 @@ function PKWTSayaView({ title, data, onSuccess }: any) {
           </button>
         </form>
       </div>
-      <div className="bg-white p-8 rounded-[2.5rem] border shadow-xl">
+      <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border shadow-xl">
         <h2 className="text-xl font-black mb-6 tracking-tight">📜 Histori Kontrak Kerja</h2>
         <div className="space-y-4">
           {data.rows?.length === 0 ? (
@@ -1550,7 +1550,7 @@ function AbsensiClockView({ title }: any) {
         <div className="text-blue-300 font-black uppercase text-[7px] md:text-xs tracking-[0.25em] md:tracking-[0.4em] mb-3 md:mb-10 relative z-10">
           {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
-        <div className="flex justify-center gap-4 relative z-10">
+        <div className="flex justify-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 relative z-10">
           {!hasIn ? (
             <button onClick={() => handleClock('in')} className="bg-emerald-500/90 hover:bg-emerald-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-emerald-500/20 active:scale-90 transition-all">🟢 CLOCK IN</button>
           ) : !hasOut ? (
@@ -1568,11 +1568,11 @@ function AbsensiClockView({ title }: any) {
             <div className="grid grid-cols-2 gap-3 md:gap-6">
         <div className="bg-white p-3 md:p-8 rounded-[1.2rem] md:rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-emerald-100 transition-all">
           <div className="text-[8px] md:text-[10px] text-slate-400 font-black mb-1 md:mb-2 uppercase tracking-widest">Record Masuk</div>
-          <div className="text-lg md:text-3xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{hasIn ? new Date(hasIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
+          <div className="text-lg md:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{hasIn ? new Date(hasIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
         </div>
         <div className="bg-white p-3 md:p-8 rounded-[1.2rem] md:rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-rose-100 transition-all">
           <div className="text-[8px] md:text-[10px] text-slate-400 font-black mb-1 md:mb-2 uppercase tracking-widest">Record Pulang</div>
-          <div className="text-lg md:text-3xl font-black text-slate-900 group-hover:text-rose-600 transition-colors">{hasOut ? new Date(hasOut).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
+          <div className="text-lg md:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 group-hover:text-rose-600 transition-colors">{hasOut ? new Date(hasOut).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
         </div>
       </div>
 
@@ -1624,7 +1624,7 @@ function AbsensiClockView({ title }: any) {
               });
               
               return (
-                <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
+                <div key={i} className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
                   <div className={`w-2.5 h-2.5 rounded-full ${statusColor.dot} shadow-sm flex-shrink-0`}></div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-black text-slate-900 tracking-tight mb-0.5 capitalize">{tglFormatted}</p>
@@ -1836,9 +1836,9 @@ function TableView({ data, onReload }: any) {
 
   return (
     <div className="animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-8">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{title}</h2>
+          <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 tracking-tight">{title}</h2>
           <p className="text-sm text-slate-500 font-medium">Monitoring & Pengelolaan Data</p>
         </div>
         
@@ -2077,7 +2077,7 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
               )}
             </div>
           ))}
-          <div className="flex gap-4 pt-8 sticky bottom-0 bg-white">
+          <div className="flex gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 pt-8 sticky bottom-0 bg-white">
             <button type="button" onClick={onClose} className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">BATAL</button>
             <button type="submit" disabled={saving} className="flex-1 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all">
               {saving ? 'PROSES SIMPAN...' : '💾 SIMPAN DATA'}
@@ -2239,14 +2239,14 @@ function RoleManagerView({ title }: any) {
   return (
     <div className="animate-in fade-in duration-500 pb-32">
       {/* HEADER MEWAH */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">👥</div>
             <div>
               <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">HR / Super Admin</p>
-              <h1 className="text-2xl font-black tracking-tight">Kelola Role Karyawan</h1>
+              <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Kelola Role Karyawan</h1>
             </div>
           </div>
           <p className="text-blue-200/70 text-xs font-medium">
@@ -2282,7 +2282,7 @@ function RoleManagerView({ title }: any) {
           placeholder="🔍 Cari nama atau NRP karyawan..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
+          className="w-full p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
         />
         
         <div className="grid grid-cols-3 gap-2">
@@ -2349,7 +2349,7 @@ function RoleManagerView({ title }: any) {
 
       {/* BATCH ACTION PANEL */}
       {batchMode && selectedNrps.size > 0 && (
-        <div className="bg-gradient-to-r from-emerald-50 to-blue-50 p-5 rounded-[2rem] border-2 border-emerald-200 shadow-lg mb-6">
+        <div className="bg-gradient-to-r from-emerald-50 to-blue-50 p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-emerald-200 shadow-lg mb-6">
           <p className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.3em] mb-3">
             ⚡ Batch Assign — {selectedNrps.size} karyawan terpilih
           </p>
@@ -2428,13 +2428,13 @@ function RoleManagerView({ title }: any) {
             return (
               <div 
                 key={e.nrp} 
-                className={`bg-white p-5 rounded-[2rem] border-2 shadow-sm hover:shadow-md transition-all ${
+                className={`bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 shadow-sm hover:shadow-md transition-all ${
                   batchMode && isSelected 
                     ? 'border-emerald-400 bg-emerald-50/30' 
                     : e.has_role ? 'border-slate-50' : 'border-amber-100 bg-amber-50/20'
                 }`}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
                   {batchMode && (
                     <input
                       type="checkbox"
@@ -2521,13 +2521,13 @@ function ImportExcel({ title, table }: any) {
 
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
-      <h2 className="text-3xl font-black mb-8 text-slate-900 tracking-tight">📥 {title}</h2>
+      <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📥 {title}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+        <div className="bg-slate-900 text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
           <div className="relative z-10">
             <h3 className="text-xl font-black mb-6 flex items-center gap-2">📄 Download Template</h3>
             <div className="space-y-3">
-                <button onClick={() => window.open(`/api/template-excel?table=${table}&mode=export`, '_blank')} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg active:scale-95">📥 Download Master Data</button>
+                <button onClick={() => window.open(`/api/template-excel?table=${table}&mode=export`, '_blank')} className="w-full bg-emerald-600 text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg active:scale-95">📥 Download Master Data</button>
                 <button onClick={() => window.open(`/api/template-excel?table=${table}&mode=empty`, '_blank')} className="w-full bg-white/10 text-white py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-white/20 transition-all border border-white/10">📄 Template Kosong</button>
             </div>
           </div>
@@ -2535,7 +2535,7 @@ function ImportExcel({ title, table }: any) {
         <div className="bg-white rounded-[2.5rem] border-4 border-slate-50 p-8 shadow-xl">
           <h3 className="text-xl font-black text-slate-900 mb-6">📤 Upload Berkas Excel</h3>
           {msg.text && <div className={`p-4 rounded-2xl mb-6 text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
-          <form onSubmit={handleImport} className="space-y-6">
+          <form onSubmit={handleImport} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
             <div className="p-6 border-4 border-dashed border-slate-100 rounded-[2rem] text-center hover:border-blue-200 transition-all bg-slate-50/30">
                 <input type="file" accept=".xlsx,.xls" onChange={e => setFile(e.target.files?.[0] || null)} className="w-full text-xs cursor-pointer font-bold" />
                 <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-4">Pastikan file sesuai format template BTM.</p>
@@ -2571,11 +2571,11 @@ function ChangeLoginView({ title }: any) {
 
   return (
     <div className="max-w-lg mx-auto">
-      <h2 className="text-2xl font-black mb-6">🔑 {title}</h2>
-      <div className="bg-white p-8 rounded-[2.5rem] border-2 border-slate-50 shadow-2xl">
+      <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black mb-6">🔑 {title}</h2>
+      <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border-2 border-slate-50 shadow-2xl">
         {msg.text && <div className={`p-4 rounded-2xl mb-6 text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
         <div className="bg-amber-50 p-5 rounded-2xl mb-6 text-[10px] text-amber-800 font-bold uppercase tracking-widest leading-relaxed">⚠️ PERINGATAN: Gunakan NRP yang terdaftar. Anda akan otomatis logout setelah proses berhasil.</div>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
           <Input label="Masukkan NRP Login Baru" required value={newNrp} onChange={setNewNrp} placeholder="Contoh: 123456" />
           <button disabled={loading} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-black text-lg tracking-tight active:scale-95 transition-all shadow-xl">
             {loading ? 'MEMPROSES...' : 'GANTI NRP LOGIN'}
@@ -2604,7 +2604,7 @@ function ExportAbsensiView({ title }: any) {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-3xl font-black mb-8 text-slate-900 tracking-tight">📥 {title}</h2>
+      <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📥 {title}</h2>
       <div className="bg-white p-10 rounded-[3rem] border shadow-2xl space-y-8">
         <div className="flex justify-between items-center border-b pb-6 border-slate-50">
             <span className="text-sm font-black text-slate-800 uppercase tracking-widest">Filter Laporan</span>
@@ -2633,7 +2633,7 @@ function RosterView({ title }: any) {
   if (loading) return <div className="text-center py-20 font-black text-slate-300 animate-pulse tracking-widest">MEMUAT DOKUMEN ROSTER...</div>
   return (
     <div className="animate-in fade-in duration-500">
-      <h2 className="text-3xl font-black mb-8 text-slate-900 tracking-tight">📅 {title}</h2>
+      <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📅 {title}</h2>
       {files.length === 0 ? <div className="bg-white p-24 rounded-[3rem] border-2 border-dashed border-slate-100 text-center text-slate-300 font-bold italic">Belum Ada Berkas Roster Terlampir.</div> : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {files.map(f => (
@@ -2673,10 +2673,10 @@ function RosterUpload({ title }: any) {
 
   return (
     <div className="max-w-2xl mx-auto animate-in fade-in duration-500">
-      <h2 className="text-3xl font-black mb-8 text-slate-900 tracking-tight">📅 {title}</h2>
+      <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📅 {title}</h2>
       <div className="bg-white p-10 rounded-[3rem] border-4 border-slate-50 shadow-2xl">
         {msg.text && <div className={`p-4 rounded-2xl mb-8 text-sm font-black ${msg.type === 'ok' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>{msg.text}</div>}
-        <form onSubmit={handleUpload} className="space-y-6">
+        <form onSubmit={handleUpload} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
           <Input label="Periode Roster" required value={form.periode} onChange={(v:any) => setForm({...form, periode: v})} placeholder="CONTOH: JANUARI 2024" />
           <Input label="Nama Site" value={form.site} onChange={(v:any) => setForm({...form, site: v})} placeholder="Lokasi Site Kerja" />
           <Input label="Catatan Tambahan" value={form.keterangan} onChange={(v:any) => setForm({...form, keterangan: v})} />
@@ -2695,63 +2695,223 @@ function RosterUpload({ title }: any) {
 
 // ============ 🗓️ RIWAYAT ABSENSI ============
 function RiwayatAbsensiCustom({ data }: any) {
-  const rows = [...(data.rows || [])].sort((a, b) => 
-    new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime()
+  const allRows = [...(data.rows || [])].sort((a: any, b: any) =>
+    new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
   )
+
+  const [search, setSearch] = useState('')
+  const [filterStatus, setFilterStatus] = useState('ALL')
+  const [filterBulan, setFilterBulan] = useState('ALL')
+
+  // Daftar bulan dari data
+  const bulanList = Array.from(new Set(
+    allRows.map((r: any) => r.tanggal?.slice(0, 7))
+  )).sort((a: any, b: any) => b.localeCompare(a)) as string[]
+
+  // Filter
+  const rows = allRows.filter((r: any) => {
+    const ket = String(r.keterangan || '').toUpperCase()
+    const actual = String(r.actual || '').toUpperCase()
+    const tanggal = String(r.tanggal || '')
+
+    const matchSearch = search === '' ||
+      tanggal.includes(search) ||
+      actual.includes(search.toUpperCase()) ||
+      ket.includes(search.toUpperCase())
+
+    const matchBulan = filterBulan === 'ALL' || tanggal.startsWith(filterBulan)
+
+    let matchStatus = true
+    if (filterStatus === 'HADIR') matchStatus = ket.includes('SUKSES') && !ket.includes('TERLAMBAT')
+    else if (filterStatus === 'TERLAMBAT') matchStatus = ket.includes('TERLAMBAT')
+    else if (filterStatus === 'MANGKIR') matchStatus = ket.includes('MANGKIR') || ket.includes('TIDAK ADA')
+    else if (filterStatus === 'SAKIT') matchStatus = actual === 'SAKIT'
+    else if (filterStatus === 'IZIN') matchStatus = ket.includes('IZIN') || ket.includes('CUTI')
+    else if (filterStatus === 'OFF') matchStatus = actual === 'OFF'
+
+    return matchSearch && matchBulan && matchStatus
+  })
+
+  // Summary stats
+  const stats = {
+    hadir: allRows.filter((r: any) => String(r.keterangan).toUpperCase().includes('SUKSES') && !String(r.keterangan).toUpperCase().includes('TERLAMBAT')).length,
+    terlambat: allRows.filter((r: any) => String(r.keterangan).toUpperCase().includes('TERLAMBAT')).length,
+    mangkir: allRows.filter((r: any) => String(r.keterangan).toUpperCase().includes('MANGKIR')).length,
+    off: allRows.filter((r: any) => String(r.actual).toUpperCase() === 'OFF').length,
+  }
+
+  const shiftMap: any = {
+    'S': { label: 'Siang', color: 'bg-amber-100 text-amber-700' },
+    'M': { label: 'Malam', color: 'bg-indigo-100 text-indigo-700' },
+    'OFF': { label: 'OFF', color: 'bg-slate-100 text-slate-500' },
+    'ID': { label: 'Induksi', color: 'bg-emerald-100 text-emerald-700' },
+    'CR': { label: 'Cuti Roster', color: 'bg-purple-100 text-purple-700' },
+    'P': { label: 'Pagi', color: 'bg-sky-100 text-sky-700' },
+    'L': { label: 'Lembur', color: 'bg-orange-100 text-orange-700' },
+  }
+
   return (
-    <div className="animate-in fade-in duration-500">
-      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{data.title}</h2>
-          <p className="text-sm text-slate-500 font-medium">Laporan sinkronisasi Roster Shift vs Data Absensi Lapangan</p>
+    <div className="space-y-3 lg:space-y-5 animate-in fade-in duration-500">
+
+      {/* HEADER */}
+      <div className="bg-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem]">
+        <h2 className="text-base lg:text-2xl font-black tracking-tight">{data.title}</h2>
+        <p className="text-blue-200 text-[10px] lg:text-xs font-bold mt-1">
+          Roster Shift vs Data Absensi Lapangan
+        </p>
+
+        {/* STAT CARDS */}
+        <div className="grid grid-cols-4 gap-2 mt-4">
+          {[
+            { label: 'Hadir', val: stats.hadir, color: 'bg-emerald-500/20 text-emerald-200' },
+            { label: 'Terlambat', val: stats.terlambat, color: 'bg-amber-500/20 text-amber-200' },
+            { label: 'Mangkir', val: stats.mangkir, color: 'bg-rose-500/20 text-rose-200' },
+            { label: 'OFF', val: stats.off, color: 'bg-slate-500/20 text-slate-300' },
+          ].map(s => (
+            <div key={s.label} className={`${s.color} rounded-xl p-2 lg:p-3 text-center`}>
+              <p className="text-xl lg:text-3xl font-black">{s.val}</p>
+              <p className="text-[8px] lg:text-[10px] font-black uppercase tracking-wider">{s.label}</p>
+            </div>
+          ))}
         </div>
-        <button className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-[10px] tracking-widest uppercase shadow-xl hover:bg-slate-800 transition-all">📥 Export Laporan</button>
       </div>
-      <div className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-2xl overflow-hidden overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-slate-950 border-b border-slate-800 text-white uppercase text-[9px] font-black tracking-[0.2em]">
-            <tr>
-              <th className="px-8 py-5">Tanggal</th>
-              <th className="px-8 py-5">Shift Roster</th>
-              <th className="px-8 py-5">Actual Attendance</th>
-              <th className="px-8 py-5">Evident</th>
-              <th className="px-8 py-5">Status Kedisiplinan</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {rows.length === 0 ? (
-              <tr><td colSpan={5} className="px-8 py-20 text-center text-slate-300 font-black uppercase tracking-widest italic">Data Roster Periode Ini Belum Tersedia.</td></tr>
-            ) : rows.map((r: any, i: number) => (
-              <tr key={i} className="hover:bg-slate-50/50 transition-all">
-                <td className="px-8 py-5 font-black text-slate-900">{new Date(r.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</td>
-                <td className="px-8 py-5">
-                    {(() => {
-                      const shiftMap: any = {
-                        'S': { label: 'S (Siang)', color: 'bg-amber-100 text-amber-700' },
-                        'M': { label: 'M (Malam)', color: 'bg-indigo-100 text-indigo-700' },
-                        'OFF': { label: 'OFF', color: 'bg-slate-100 text-slate-500' },
-                        'ID': { label: 'ID (Induksi)', color: 'bg-emerald-100 text-emerald-700' },
-                        'CR': { label: 'CR (Cuti Roster)', color: 'bg-purple-100 text-purple-700' }
-                      };
-                      const shift = shiftMap[r.roster] || { label: r.roster || '-', color: 'bg-slate-100 text-slate-500' };
-                      return (
-                        <span className={`px-3 py-1.5 rounded-xl font-black text-[10px] tracking-widest ${shift.color}`}>
-                          {shift.label}
-                        </span>
-                      );
-                    })()}
-                </td>
-                <td className="px-8 py-5 font-black text-slate-700 tracking-tighter">{r.actual}</td>
-                <td className="px-8 py-5">
-                    {r.is_foto ? <a href={r.evident} target="_blank" className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-widest border border-blue-100">🖼️ Foto</a> : <span className="font-mono text-[10px] text-slate-400 font-bold">{r.evident}</span>}
-                </td>
-                <td className="px-8 py-5">
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${r.keterangan.includes('SUKSES') ? 'text-emerald-600' : r.keterangan.includes('TERLAMBAT') ? 'text-amber-600' : 'text-rose-500'}`}>{r.keterangan}</span>
-                </td>
-              </tr>
+
+      {/* SEARCH & FILTER */}
+      <div className="bg-white rounded-2xl p-3 lg:p-5 border border-slate-100 shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-2">
+
+          {/* Search */}
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+            <input
+              type="text"
+              placeholder="Cari tanggal, status..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-8 p-2.5 lg:p-3 rounded-xl lg:rounded-2xl border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 focus:border-[#003D79]"
+            />
+          </div>
+
+          {/* Filter Bulan */}
+          <select
+            value={filterBulan}
+            onChange={e => setFilterBulan(e.target.value)}
+            className="p-2.5 lg:p-3 rounded-xl lg:rounded-2xl border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 bg-white min-w-[130px]"
+          >
+            <option value="ALL">📅 Semua Bulan</option>
+            {bulanList.map(b => (
+              <option key={b} value={b}>
+                {new Date(b + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+              </option>
             ))}
-          </tbody>
-        </table>
+          </select>
+
+          {/* Filter Status */}
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}
+            className="p-2.5 lg:p-3 rounded-xl lg:rounded-2xl border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 bg-white min-w-[130px]"
+          >
+            <option value="ALL">🎛️ Semua Status</option>
+            <option value="HADIR">✅ Hadir</option>
+            <option value="TERLAMBAT">⚠️ Terlambat</option>
+            <option value="MANGKIR">❌ Mangkir</option>
+            <option value="SAKIT">🤒 Sakit</option>
+            <option value="IZIN">📋 Izin/Cuti</option>
+            <option value="OFF">💤 OFF</option>
+          </select>
+        </div>
+
+        {/* Info hasil filter */}
+        <p className="text-[10px] font-bold text-slate-400 mt-2">
+          Menampilkan <span className="text-[#003D79] font-black">{rows.length}</span> dari {allRows.length} record
+        </p>
+      </div>
+
+      {/* TABEL */}
+      <div className="bg-white rounded-2xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-[#003D79] text-white">
+              <tr>
+                <th className="px-4 py-3 font-black uppercase tracking-wider whitespace-nowrap">Tanggal</th>
+                <th className="px-4 py-3 font-black uppercase tracking-wider whitespace-nowrap">Shift</th>
+                <th className="px-4 py-3 font-black uppercase tracking-wider whitespace-nowrap">Actual</th>
+                <th className="px-4 py-3 font-black uppercase tracking-wider whitespace-nowrap">Jam Masuk / Pulang</th>
+                <th className="px-4 py-3 font-black uppercase tracking-wider whitespace-nowrap">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-16 text-center text-slate-300 font-black uppercase tracking-widest text-xs italic">
+                    Tidak ada data ditemukan
+                  </td>
+                </tr>
+              ) : rows.map((r: any, i: number) => {
+                const ket = String(r.keterangan || '').toUpperCase()
+                const isHadir = ket.includes('SUKSES') && !ket.includes('TERLAMBAT')
+                const isTerlambat = ket.includes('TERLAMBAT')
+                const isMangkir = ket.includes('MANGKIR') || ket.includes('TIDAK ADA')
+                const isSakit = String(r.actual).toUpperCase() === 'SAKIT'
+                const isOff = String(r.actual).toUpperCase() === 'OFF'
+
+                const statusConfig = isTerlambat
+                  ? { label: '⚠️ Terlambat', cls: 'bg-amber-50 text-amber-700 border-amber-200' }
+                  : isHadir
+                  ? { label: '✅ Hadir', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+                  : isMangkir
+                  ? { label: '❌ Mangkir', cls: 'bg-rose-50 text-rose-700 border-rose-200' }
+                  : isSakit
+                  ? { label: '🤒 Sakit', cls: 'bg-blue-50 text-blue-700 border-blue-200' }
+                  : isOff
+                  ? { label: '💤 OFF', cls: 'bg-slate-100 text-slate-500 border-slate-200' }
+                  : { label: r.keterangan || '-', cls: 'bg-purple-50 text-purple-700 border-purple-200' }
+
+                const shift = shiftMap[r.roster] || { label: r.roster || '-', color: 'bg-slate-100 text-slate-500' }
+
+                return (
+                  <tr key={i} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 font-black text-slate-800 whitespace-nowrap">
+                      {new Date(r.tanggal).toLocaleDateString('id-ID', {
+                        weekday: 'short', day: 'numeric', month: 'short'
+                      })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-lg font-black text-[10px] tracking-wide ${shift.color}`}>
+                        {shift.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-bold text-slate-700">{r.actual}</td>
+                    <td className="px-4 py-3">
+                      {r.is_foto
+                        ? <a href={r.evident} target="_blank" rel="noreferrer"
+                            className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-black text-[10px] border border-blue-100 hover:bg-blue-100 transition-colors">
+                            🖼️ Foto Bukti
+                          </a>
+                        : <span className="font-mono text-[11px] text-slate-500">{r.evident || '--:-- / --:--'}</span>
+                      }
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-lg font-black text-[10px] border ${statusConfig.cls}`}>
+                        {statusConfig.label}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer info */}
+        {rows.length > 0 && (
+          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50">
+            <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
+              Total {rows.length} Record • BTM Portal v2.6
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -2778,24 +2938,24 @@ function RiwayatApprovalView({ data, onReload }: any) {
   }
 
   return (
-    <div className="animate-in fade-in duration-500 space-y-6">
+    <div className="animate-in fade-in duration-500 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
       <div>
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-1">📜 {data.title}</h2>
+        <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 tracking-tight mb-1">📜 {data.title}</h2>
         <p className="text-sm text-slate-500 font-medium italic">Daftar pengajuan yang pernah Anda proses (Approve/Reject)</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
         <div className="bg-white p-5 rounded-2xl border-2 border-slate-50 shadow-lg">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Diproses</p>
-          <p className="text-3xl font-black text-slate-900">{statCounts.total}</p>
+          <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900">{statCounts.total}</p>
         </div>
         <div className="bg-emerald-50 p-5 rounded-2xl border-2 border-emerald-100 shadow-lg">
           <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">✅ Disetujui</p>
-          <p className="text-3xl font-black text-emerald-600">{statCounts.approved}</p>
+          <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-emerald-600">{statCounts.approved}</p>
         </div>
         <div className="bg-rose-50 p-5 rounded-2xl border-2 border-rose-100 shadow-lg">
           <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">❌ Ditolak</p>
-          <p className="text-3xl font-black text-rose-600">{statCounts.rejected}</p>
+          <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-rose-600">{statCounts.rejected}</p>
         </div>
       </div>
 
@@ -2891,7 +3051,7 @@ function KPISayaRaportView({ data }: any) {
           <div className="flex justify-between items-start mb-10">
             <div>
               <p className="text-amber-500 font-black text-[10px] tracking-[0.4em] uppercase mb-3">Performance & Discipline Evaluation</p>
-              <h1 className="text-4xl font-black tracking-tighter text-white">RAPORT KARYAWAN</h1>
+              <h1 className="text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-4xl font-black tracking-tighter text-white">RAPORT KARYAWAN</h1>
             </div>
             <div className="bg-white/5 px-6 py-4 rounded-[1.5rem] backdrop-blur-3xl border border-white/10 text-right">
               <span className="text-[9px] block opacity-40 uppercase font-black tracking-[0.2em] mb-1">Evaluation Period</span>
@@ -2899,11 +3059,11 @@ function KPISayaRaportView({ data }: any) {
             </div>
           </div>
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-amber-600 rounded-[1.5rem] flex items-center justify-center text-4xl font-black text-slate-950 shadow-2xl shadow-amber-500/20">
+            <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-amber-600 rounded-[1.5rem] flex items-center justify-center text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-4xl font-black text-slate-950 shadow-2xl shadow-amber-500/20">
               {raport._nama_karyawan?.[0]}
             </div>
             <div>
-              <h2 className="text-3xl font-black tracking-tight">{raport._nama_karyawan}</h2>
+              <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black tracking-tight">{raport._nama_karyawan}</h2>
               <p className="text-xs opacity-50 font-black tracking-[0.2em] uppercase mt-1">NRP: {raport.nrp} • {raport._jabatan || 'Internal Staff'}</p>
             </div>
           </div>
@@ -2914,12 +3074,12 @@ function KPISayaRaportView({ data }: any) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="text-center p-8 bg-slate-50/50 rounded-[2.5rem] border-2 border-slate-50">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Kedisiplinan (Sistem)</p>
-            <div className="text-5xl font-black text-slate-900">{raport.nilai_sistem} <span className="text-xs opacity-20 font-bold uppercase tracking-widest">/ 70</span></div>
+            <div className="text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-5xl font-black text-slate-900">{raport.nilai_sistem} <span className="text-xs opacity-20 font-bold uppercase tracking-widest">/ 70</span></div>
             <p className="text-[9px] text-slate-400 mt-4 italic font-black uppercase tracking-tighter">Automated Analysis</p>
           </div>
           <div className="text-center p-8 bg-blue-50/30 rounded-[2.5rem] border-2 border-blue-50">
             <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4">Performa (Atasan)</p>
-            <div className="text-5xl font-black text-blue-600">{raport.nilai_performa} <span className="text-xs opacity-20 font-bold uppercase tracking-widest">/ 30</span></div>
+            <div className="text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-5xl font-black text-blue-600">{raport.nilai_performa} <span className="text-xs opacity-20 font-bold uppercase tracking-widest">/ 30</span></div>
             <p className="text-[9px] text-blue-400 mt-4 italic font-black uppercase tracking-tighter">Human Review</p>
           </div>
           <div className="text-center p-8 bg-slate-900 rounded-[2.5rem] shadow-2xl text-white border-4 border-slate-800">
@@ -2967,7 +3127,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
     <div className="animate-in fade-in duration-500 pb-20">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{data.title}</h2>
+          <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 tracking-tight">{data.title}</h2>
           <p className="text-sm text-slate-500 font-medium">Monitoring performa tim periode <span className="text-blue-600 font-bold">{currentMonth}</span></p>
           
           <div className="flex flex-wrap gap-2 mt-4">
@@ -3017,7 +3177,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
                   {isDone ? '✅ Selesai' : '⏳ Perlu Dinilai'}
                 </div>
 
-                <div className="flex items-center gap-4 mb-6 mt-2">
+                <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-6 mt-2">
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl text-white shadow-lg ${isDone ? 'bg-emerald-600' : 'bg-slate-900 group-hover:bg-blue-600'}`}>
                     {emp.nama[0]}
                   </div>
@@ -3030,7 +3190,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
 
                 <button 
                   onClick={() => setSelectedEmp(emp)}
-                  className={`w-full py-4 rounded-2xl font-black text-[10px] tracking-[0.2em] uppercase transition-all shadow-xl active:scale-95 ${isDone ? 'bg-white text-emerald-600 border-2 border-emerald-500 hover:bg-emerald-500 hover:text-white' : 'bg-slate-950 text-white hover:bg-blue-600'}`}
+                  className={`w-full py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-[10px] tracking-[0.2em] uppercase transition-all shadow-xl active:scale-95 ${isDone ? 'bg-white text-emerald-600 border-2 border-emerald-500 hover:bg-emerald-500 hover:text-white' : 'bg-slate-950 text-white hover:bg-blue-600'}`}
                 >
                   {isDone ? '🔄 PERBARUI NILAI' : '⭐ INPUT RAPORT'}
                 </button>
@@ -3094,7 +3254,7 @@ function ChangePasswordView({ title }: any) {
     <div className="max-w-md mx-auto pb-32 animate-in fade-in duration-500">
       
       {/* Header Card */}
-      <div className="bg-gradient-to-br from-[#003D79] to-blue-800 text-white p-8 rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#003D79] to-blue-800 text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
         <div className="relative z-10">
           <div className="text-4xl mb-3">🔐</div>
@@ -3348,14 +3508,14 @@ function SitesManagerView() {
   return (
     <div className="animate-in fade-in duration-500 pb-32">
       {/* HEADER MEWAH */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🏢</div>
             <div>
               <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Master Data</p>
-              <h1 className="text-2xl font-black tracking-tight">Kelola Site</h1>
+              <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Kelola Site</h1>
             </div>
           </div>
           <p className="text-blue-200/70 text-xs font-medium">
@@ -3407,7 +3567,7 @@ function SitesManagerView() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
                   <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1">👥 Karyawan</p>
-                  <p className="text-2xl font-black text-blue-700">{site.total_karyawan}</p>
+                  <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-blue-700">{site.total_karyawan}</p>
                   <p className="text-[9px] font-bold text-blue-400 uppercase mt-0.5">orang aktif</p>
                 </div>
                 <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
@@ -3485,7 +3645,7 @@ function SitesManagerView() {
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-2xl lg:h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
             {/* Modal Header */}
-            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-4">
+            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${
                 editingSite.is_pusat ? 'bg-amber-500' : 'bg-white/10'
               }`}>
@@ -3510,7 +3670,7 @@ function SitesManagerView() {
             )}
 
             {/* Modal Body - Form */}
-            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-6">
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
               
               {/* SECTION 1: Identitas Site */}
               <div>
@@ -3810,10 +3970,10 @@ function GlobalConfigView() {
   )
 
   return (
-    <div className="animate-in fade-in duration-500 pb-32 space-y-6">
+    <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
 
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-rose-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center justify-between">
@@ -3823,7 +3983,7 @@ function GlobalConfigView() {
                 <p className="text-rose-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
                   Super Admin Only
                 </p>
-                <h1 className="text-2xl font-black tracking-tight">
+                <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">
                   Konfigurasi Global
                 </h1>
               </div>
@@ -3844,12 +4004,12 @@ function GlobalConfigView() {
 
       {/* STATS CARDS */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-emerald-100 shadow-sm relative overflow-hidden">
+        <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-emerald-100 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-full -mr-4 -mt-4" />
           <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-2">
             🟢 Online Kini
           </p>
-          <p className="text-3xl font-black text-emerald-600">
+          <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-emerald-600">
             {stats?.online_now ?? 0}
           </p>
           <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
@@ -3857,11 +4017,11 @@ function GlobalConfigView() {
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-blue-100 shadow-sm">
+        <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-blue-100 shadow-sm">
           <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-2">
             👥 Total Aktif
           </p>
-          <p className="text-3xl font-black text-blue-600">
+          <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-blue-600">
             {stats?.total_karyawan ?? 0}
           </p>
           <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
@@ -3869,11 +4029,11 @@ function GlobalConfigView() {
           </p>
         </div>
 
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-amber-100 shadow-sm">
+        <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-amber-100 shadow-sm">
           <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest mb-2">
             📊 Sesi Hari Ini
           </p>
-          <p className="text-3xl font-black text-amber-600">
+          <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-amber-600">
             {stats?.session_hari_ini ?? 0}
           </p>
           <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
@@ -4123,7 +4283,7 @@ function GlobalConfigView() {
             </div>
           ) : (
             announcements.map((ann: any) => (
-              <div key={ann.id} className="flex items-start gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
+              <div key={ann.id} className="flex items-start gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
                 {/* Thumbnail gambar jika ada */}
                 {(ann.images?.length > 0 || ann.image_url) && (
                   <img
@@ -4219,7 +4379,7 @@ function GlobalConfigView() {
               return (
                 <div
                   key={i}
-                  className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors"
+                  className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors"
                 >
                   <div className="w-10 h-10 bg-emerald-100 rounded-2xl flex items-center justify-center font-black text-emerald-700">
                     {u.nama?.[0] || '?'}
@@ -4412,17 +4572,17 @@ function ResetPasswordAdminView() {
   )
 
   return (
-    <div className="animate-in fade-in duration-500 pb-32 space-y-6">
+    <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
 
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🔧</div>
             <div>
               <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Super Admin Only</p>
-              <h1 className="text-2xl font-black tracking-tight">Reset Password Karyawan</h1>
+              <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Reset Password Karyawan</h1>
             </div>
           </div>
           <p className="text-blue-200/70 text-xs font-medium">
@@ -4433,13 +4593,13 @@ function ResetPasswordAdminView() {
 
       {/* STATS */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-50 shadow-sm">
+        <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm">
           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">👥 Total Karyawan</p>
-          <p className="text-2xl font-black text-slate-900">{employees.length}</p>
+          <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-slate-900">{employees.length}</p>
         </div>
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-amber-50 shadow-sm">
+        <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-amber-50 shadow-sm">
           <p className="text-[8px] font-black text-amber-400 uppercase tracking-widest mb-1">🔧 Direset Hari Ini</p>
-          <p className="text-2xl font-black text-amber-600">{recentResets.length}</p>
+          <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-amber-600">{recentResets.length}</p>
         </div>
       </div>
 
@@ -4450,7 +4610,7 @@ function ResetPasswordAdminView() {
           placeholder="🔍 Cari nama atau NRP karyawan..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
+          className="w-full p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
         />
       </div>
 
@@ -4491,7 +4651,7 @@ function ResetPasswordAdminView() {
           filtered.slice(0, 50).map((emp: any) => (
             <div
               key={emp.nrp}
-              className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm flex items-center gap-4 hover:border-amber-200 transition-all group"
+              className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 hover:border-amber-200 transition-all group"
             >
               <div className="w-11 h-11 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-slate-400 group-hover:bg-[#003D79] group-hover:text-white transition-all text-sm">
                 {(emp.nama || '?')[0]}
@@ -4526,7 +4686,7 @@ function ResetPasswordAdminView() {
 
             {/* Modal Header */}
             <div className="p-6 bg-gradient-to-br from-amber-500 to-amber-600 text-white">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
                 <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center font-black text-2xl">
                   {selectedEmp.nama[0]}
                 </div>
@@ -4642,7 +4802,7 @@ function ResetPasswordAdminView() {
               <button
                 onClick={handleReset}
                 disabled={processing || (mode === 'custom' && customPassword.length < 4)}
-                className={`flex-[2] py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
+                className={`flex-[2] py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
                   processing || (mode === 'custom' && customPassword.length < 4)
                     ? 'bg-slate-200 text-slate-400'
                     : 'bg-amber-500 text-white shadow-xl shadow-amber-200 hover:bg-amber-600'
@@ -4764,7 +4924,7 @@ function SystemAuditView() {
   )
 
   return (
-    <div className="animate-in fade-in duration-500 pb-32 space-y-6">
+    <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
 
       {/* HEADER */}
 <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
@@ -4777,7 +4937,7 @@ function SystemAuditView() {
           <p className="text-purple-400 font-black text-[9px] lg:text-[10px] uppercase tracking-[0.25em] lg:tracking-[0.3em] mb-0.5 lg:mb-1">
             Super Admin Only
           </p>
-          <h1 className="text-base lg:text-2xl font-black tracking-tight truncate">Audit Log Sistem</h1>
+          <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight truncate">Audit Log Sistem</h1>
         </div>
       </div>
       <button
@@ -4798,15 +4958,15 @@ function SystemAuditView() {
       <div className="grid grid-cols-3 gap-2 lg:gap-3">
   <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm">
     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 lg:mb-2 truncate">📊 Total Log</p>
-    <p className="text-xl lg:text-3xl font-black text-slate-900">{stats.total || 0}</p>
+    <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900">{stats.total || 0}</p>
   </div>
   <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-emerald-50 shadow-sm">
     <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1 lg:mb-2 truncate">✅ Sukses</p>
-    <p className="text-xl lg:text-3xl font-black text-emerald-600">{stats.success || 0}</p>
+    <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-emerald-600">{stats.success || 0}</p>
   </div>
   <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-rose-50 shadow-sm">
     <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1 lg:mb-2 truncate">❌ Gagal</p>
-    <p className="text-xl lg:text-3xl font-black text-rose-600">{stats.failed || 0}</p>
+    <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-rose-600">{stats.failed || 0}</p>
   </div>
 </div>
 
@@ -4847,7 +5007,7 @@ function SystemAuditView() {
           placeholder="🔍 Cari nama actor / target / NRP..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
+          className="w-full p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
         />
 
         {/* Filter Grid */}
@@ -4855,7 +5015,7 @@ function SystemAuditView() {
           <select
             value={filterCategory}
             onChange={e => setFilterCategory(e.target.value)}
-            className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]"
+            className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]"
           >
             <option value="">Semua Kategori</option>
             {Object.keys(CATEGORY_CONFIG).map(cat => (
@@ -4866,7 +5026,7 @@ function SystemAuditView() {
           <select
             value={filterAction}
             onChange={e => setFilterAction(e.target.value)}
-            className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]"
+            className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]"
           >
             <option value="">Semua Aksi</option>
             {Object.keys(ACTION_LABELS).map(act => (
@@ -4879,7 +5039,7 @@ function SystemAuditView() {
             value={filterStartDate}
             onChange={e => setFilterStartDate(e.target.value)}
             placeholder="Dari tanggal"
-            className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]"
+            className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]"
           />
 
           <input
@@ -4887,7 +5047,7 @@ function SystemAuditView() {
             value={filterEndDate}
             onChange={e => setFilterEndDate(e.target.value)}
             placeholder="Sampai tanggal"
-            className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]"
+            className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]"
           />
         </div>
 
@@ -4983,7 +5143,7 @@ function SystemAuditView() {
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-lg lg:h-[85vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
             {/* Modal Header */}
-            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-4">
+            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
               <div className={`w-14 h-14 ${CATEGORY_CONFIG[selectedLog.category]?.bg || 'bg-white/10'} rounded-2xl flex items-center justify-center text-2xl`}>
                 {CATEGORY_CONFIG[selectedLog.category]?.icon || '📌'}
               </div>
@@ -5231,10 +5391,10 @@ function ApprovalCenterView() {
   )
 
   return (
-    <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-6">
+    <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
 
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-3">
@@ -5244,7 +5404,7 @@ function ApprovalCenterView() {
                 <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
                   Approval Center
                 </p>
-                <h1 className="text-2xl font-black tracking-tight">
+                <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">
                   {stats.total > 0 ? `${stats.total} Pengajuan Menunggu` : 'Semua Sudah Diproses'}
                 </h1>
               </div>
@@ -5443,7 +5603,7 @@ function ApprovalCenterView() {
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setDetailItem(null)} />
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-md lg:h-[85vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
-            <div className={`p-6 ${COLOR_MAP[detailItem.color]?.bg || 'bg-blue-50'} border-b-2 ${COLOR_MAP[detailItem.color]?.border || 'border-blue-100'} flex items-center gap-4`}>
+            <div className={`p-6 ${COLOR_MAP[detailItem.color]?.bg || 'bg-blue-50'} border-b-2 ${COLOR_MAP[detailItem.color]?.border || 'border-blue-100'} flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4`}>
               <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm">
                 {detailItem.icon}
               </div>
@@ -5802,14 +5962,14 @@ function PermissionManagerView() {
   return (
     <div className="animate-in fade-in duration-500 pb-32">
       {/* HEADER MEWAH */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🔐</div>
             <div>
               <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Super Admin Only</p>
-              <h1 className="text-2xl font-black tracking-tight">Kelola Permission</h1>
+              <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Kelola Permission</h1>
             </div>
           </div>
           <p className="text-blue-200/70 text-xs font-medium">
@@ -5845,7 +6005,7 @@ function PermissionManagerView() {
           placeholder="🔍 Cari nama atau NRP karyawan..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
+          className="w-full p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
         />
       </div>
 
@@ -5855,7 +6015,7 @@ function PermissionManagerView() {
           <button
             key={emp.nrp}
             onClick={() => openEmployeeModal(emp)}
-            className={`w-full text-left bg-white p-5 rounded-[2rem] border-2 shadow-sm hover:shadow-lg transition-all active:scale-98 flex items-center gap-4 ${
+            className={`w-full text-left bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 shadow-sm hover:shadow-lg transition-all active:scale-98 flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 ${
               emp.is_super_admin ? 'border-amber-200 bg-amber-50/30' : 'border-slate-50 hover:border-blue-200'
             }`}
           >
@@ -5892,7 +6052,7 @@ function PermissionManagerView() {
               )}
             </div>
             <div className="text-right">
-              <p className={`text-2xl font-black ${
+              <p className={`text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black ${
                 emp.permission_count === 0 ? 'text-slate-300' :
                 emp.permission_count < 15 ? 'text-blue-600' :
                 emp.permission_count < 40 ? 'text-amber-600' : 'text-emerald-600'
@@ -5918,7 +6078,7 @@ function PermissionManagerView() {
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-3xl lg:max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
             {/* Modal Header */}
-            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-4">
+            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl ${
                 selectedEmp.is_super_admin ? 'bg-amber-500' : 'bg-white/10'
               }`}>
@@ -6008,7 +6168,7 @@ function PermissionManagerView() {
                   Memuat permissions...
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
                   {Object.entries(permsByCategory).map(([category, perms]) => (
                     <div key={category}>
                       <h3 className="text-[10px] font-black text-[#003D79] uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
@@ -6078,7 +6238,7 @@ function PermissionManagerView() {
               <button 
                 onClick={handleSaveChanges}
                 disabled={!hasChanges || saving}
-                className={`flex-[2] py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
+                className={`flex-[2] py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
                   hasChanges && !saving
                     ? 'bg-[#003D79] text-white shadow-xl shadow-blue-200 hover:bg-blue-700' 
                     : 'bg-slate-100 text-slate-300 cursor-not-allowed'
@@ -6220,9 +6380,9 @@ function KelolaHakCutiView() {
   )
 
   return (
-    <div className="animate-in fade-in duration-500 pb-32 space-y-6">
+    <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
@@ -6231,7 +6391,7 @@ function KelolaHakCutiView() {
               <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
                 {data?.is_view_only ? 'HR HO Read-Only' : 'HR Site / Super Admin'}
               </p>
-              <h1 className="text-2xl font-black tracking-tight">Hak Tiket & Saldo Cuti</h1>
+              <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Hak Tiket & Saldo Cuti</h1>
             </div>
           </div>
           <p className="text-blue-200/70 text-xs font-medium">
@@ -6247,12 +6407,12 @@ function KelolaHakCutiView() {
           placeholder="🔍 Cari nama / NRP..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
+          className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
         />
         <select
           value={filterSite}
           onChange={e => setFilterSite(e.target.value)}
-          className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-sm focus:border-[#003D79]"
+          className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-sm focus:border-[#003D79]"
         >
           <option value="">Semua Site</option>
           {(data?.sites || []).map((s: string) => (
@@ -6262,7 +6422,7 @@ function KelolaHakCutiView() {
         <select
           value={tahun}
           onChange={e => setTahun(Number(e.target.value))}
-          className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-sm focus:border-[#003D79]"
+          className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-sm focus:border-[#003D79]"
         >
           {[0, -1, -2].map(o => {
             const y = new Date().getFullYear() + o
@@ -6364,7 +6524,7 @@ function KelolaHakCutiView() {
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setEditingBalance(null)} />
           <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 lg:inset-x-auto lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-md bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden">
             <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
                 <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl">
                   🌴
                 </div>
@@ -6424,7 +6584,7 @@ function KelolaHakCutiView() {
 
               <div className="bg-blue-50 border-2 border-blue-100 p-4 rounded-2xl">
                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Preview Sisa</p>
-                <p className="text-2xl font-black text-blue-700">
+                <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-blue-700">
                   {Math.max(0, balanceForm.hak_awal + balanceForm.penyesuaian - balanceForm.terpakai)} hari
                 </p>
                 <p className="text-[10px] font-bold text-blue-400 mt-1">
@@ -6523,7 +6683,7 @@ function MonitoringRosterCRView() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
       {/* HEADER */}
       <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden">
         <div className="bg-[#003D79] p-6 text-white">
@@ -6544,14 +6704,14 @@ function MonitoringRosterCRView() {
           ].map((s, i) => (
             <div key={i} className={`${s.bg} rounded-2xl p-4 text-center`}>
               <div className="text-lg mb-1">{s.emoji}</div>
-              <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
+              <div className={`text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black ${s.color}`}>{s.value}</div>
               <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">{s.label}</div>
             </div>
           ))}
         </div>
 
         {/* FILTER */}
-        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
           <div>
             <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
               Periode
@@ -6797,7 +6957,7 @@ useEffect(() => {
   ]
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
       <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden">
         <div className="bg-[#003D79] p-6 text-white">
           <h2 className="text-xl font-black uppercase tracking-tight">📊 Export Rekap Absensi Bulanan</h2>
@@ -6813,7 +6973,7 @@ useEffect(() => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
                 Periode
@@ -6849,7 +7009,7 @@ useEffect(() => {
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50"
+            className="w-full bg-blue-600 text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50"
           >
             {downloading ? '⏳ MENYIAPKAN FILE...' : '📥 DOWNLOAD EXCEL'}
           </button>
@@ -6967,16 +7127,16 @@ function MonitoringCutiTiketView() {
   const stats = data?.stats || {}
 
   return (
-    <div className="animate-in fade-in duration-500 pb-32 space-y-6">
+    <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">📊</div>
             <div>
               <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Data Monitoring</p>
-              <h1 className="text-2xl font-black tracking-tight">Cuti & Tiket Pesawat</h1>
+              <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Cuti & Tiket Pesawat</h1>
             </div>
           </div>
           <p className="text-blue-200/70 text-xs font-medium">Periode {data?.periode || '-'}</p>
@@ -6985,23 +7145,23 @@ function MonitoringCutiTiketView() {
 
       {/* STATS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-blue-100 shadow-sm">
+        <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-blue-100 shadow-sm">
           <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1">🌴 Total Cuti</p>
-          <p className="text-2xl font-black text-blue-700">{stats.total_cuti || 0}</p>
+          <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-blue-700">{stats.total_cuti || 0}</p>
           <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">bulan ini</p>
         </div>
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-amber-100 shadow-sm">
+        <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-amber-100 shadow-sm">
           <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest mb-1">🏖️ Cuti Tahunan</p>
-          <p className="text-2xl font-black text-amber-700">{stats.cuti_tahunan || 0}</p>
+          <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-amber-700">{stats.cuti_tahunan || 0}</p>
         </div>
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-indigo-100 shadow-sm">
+        <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-indigo-100 shadow-sm">
           <p className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mb-1">✈️ Butuh Tiket</p>
-          <p className="text-2xl font-black text-indigo-700">{stats.butuh_tiket || 0}</p>
+          <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-indigo-700">{stats.butuh_tiket || 0}</p>
           <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">{stats.total_tiket || 0} trip</p>
         </div>
-        <div className="bg-white p-5 rounded-[2rem] border-2 border-rose-100 shadow-sm">
+        <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-rose-100 shadow-sm">
           <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1">⏳ Menunggu</p>
-          <p className="text-2xl font-black text-rose-700">{stats.tiket_menunggu || 0}</p>
+          <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-rose-700">{stats.tiket_menunggu || 0}</p>
           <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">tiket belum dipesan</p>
         </div>
       </div>
@@ -7029,20 +7189,20 @@ function MonitoringCutiTiketView() {
       {/* FILTER */}
       <div className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm grid grid-cols-2 lg:grid-cols-5 gap-2">
         <select value={bulan} onChange={e => setBulan(e.target.value)}
-          className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]">
+          className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]">
           {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => (
             <option key={m} value={m}>Bulan {m}</option>
           ))}
         </select>
         <select value={tahun} onChange={e => setTahun(e.target.value)}
-          className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]">
+          className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]">
           {[0, -1, 1].map(o => {
             const y = new Date().getFullYear() + o
             return <option key={y} value={String(y)}>{y}</option>
           })}
         </select>
         <select value={filterSite} onChange={e => setFilterSite(e.target.value)}
-          className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]">
+          className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-xs focus:border-[#003D79]">
           <option value="">Semua Site</option>
           {(data?.sites || []).map((s: string) => (
             <option key={s} value={s}>{s}</option>
@@ -7050,14 +7210,14 @@ function MonitoringCutiTiketView() {
         </select>
         {subTab === 'CUTI' ? (
           <select value={filterJenisCuti} onChange={e => setFilterJenisCuti(e.target.value)}
-            className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79] col-span-2">
+            className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-xs focus:border-[#003D79] col-span-2">
             <option value="">Semua Jenis</option>
             <option value="CUTI REGULER / ROSTER">Reguler</option>
             <option value="CUTI TAHUNAN">Tahunan</option>
           </select>
         ) : (
           <select value={filterStatusTiket} onChange={e => setFilterStatusTiket(e.target.value)}
-            className="p-3 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none font-bold text-xs focus:border-[#003D79] col-span-2">
+            className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-xs focus:border-[#003D79] col-span-2">
             <option value="">Semua Status</option>
             {Object.keys(STATUS_TIKET_CONFIG).map(s => (
               <option key={s} value={s}>{STATUS_TIKET_CONFIG[s].icon} {STATUS_TIKET_CONFIG[s].label}</option>
@@ -7074,7 +7234,7 @@ function MonitoringCutiTiketView() {
               <p className="text-slate-300 font-bold italic">Belum ada cuti bulan ini</p>
             </div>
           ) : (data?.cuti || []).map((c: any) => (
-            <div key={c.id} className="bg-white p-5 rounded-[2rem] border-2 border-slate-50 shadow-sm">
+            <div key={c.id} className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="w-11 h-11 bg-blue-100 rounded-2xl flex items-center justify-center font-black text-blue-700">
                   {(c.nama || '?')[0]}
@@ -7133,7 +7293,7 @@ function MonitoringCutiTiketView() {
             const conf = STATUS_TIKET_CONFIG[t.status] || STATUS_TIKET_CONFIG.MENUNGGU_PEMESANAN
             const colorClass = COLOR_MAP[conf.color]
             return (
-              <div key={t.id} className="bg-white p-5 rounded-[2rem] border-2 border-slate-50 shadow-sm">
+              <div key={t.id} className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm">
                 <div className="flex items-start gap-3">
                   <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl ${
                     t.trip_type === 'BERANGKAT' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
@@ -7196,7 +7356,7 @@ function MonitoringCutiTiketView() {
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setEditingTiket(null)} />
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-full lg:max-w-md lg:max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
                 <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center text-2xl">
                   ✈️
                 </div>
@@ -7361,7 +7521,7 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
         
         {/* Header */}
         <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
             <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-2xl">
               📝
             </div>
@@ -7435,7 +7595,7 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
           <button
             onClick={handleSave}
             disabled={saving || !tanggalBaru}
-            className={`flex-[2] py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
+            className={`flex-[2] py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
               saving || !tanggalBaru
                 ? 'bg-slate-200 text-slate-400'
                 : 'bg-[#003D79] text-white shadow-xl shadow-blue-200 hover:bg-blue-700'
