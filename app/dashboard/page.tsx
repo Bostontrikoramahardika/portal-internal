@@ -540,11 +540,11 @@ setForm({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border shadow-xl">
-        <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black mb-6">✍️ {title}</h2>
+    <div className="max-w-4xl mx-auto space-y-3 lg:space-y-6">
+      <div className="bg-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <h2 className="text-sm lg:text-xl font-black mb-3 lg:mb-5 tracking-tight">✍️ {title}</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-2.5 lg:space-y-4">
           {msg.text && (
             <div className={`p-4 rounded-2xl text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
               {msg.text}
@@ -552,7 +552,7 @@ setForm({
           )}
 
           {!isCutiKompensasi && (
-  <div className="grid grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+  <div className="grid grid-cols-2 gap-2 lg:gap-3">
     <Input label="Mulai Cuti" type="date" required value={form.tanggal_mulai} onChange={(v: any) => setForm({ ...form, tanggal_mulai: v })} />
     <Input label="Selesai Cuti" type="date" required value={form.tanggal_selesai} onChange={(v: any) => setForm({ ...form, tanggal_selesai: v })} />
   </div>
@@ -772,7 +772,7 @@ setForm({
                     Pemesanan tiket dilakukan terpisah per trip (berangkat & kembali)
                   </p>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-3">
                     <div className="bg-white border border-indigo-100 rounded-2xl p-4 space-y-3">
                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">🛫 Trip Berangkat</p>
                       <Input
@@ -826,40 +826,40 @@ setForm({
         </form>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden">
-        <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
-          <h3 className="font-black text-slate-800">📜 Riwayat Cuti Periode <span className="text-blue-600">{data?.periode || 'Bulan Ini'}</span></h3>
+      <div className="bg-white rounded-2xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-3 lg:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center gap-2">
+          <h3 className="font-black text-slate-800 text-xs lg:text-sm">📜 Riwayat Cuti Periode <span className="text-blue-600">{data?.periode || 'Bulan Ini'}</span></h3>
           <span className="text-[10px] bg-slate-200 text-slate-600 px-3 py-1.5 rounded-full font-black">{riwayat.length} DATA</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-black tracking-widest">
               <tr>
-                <th className="px-6 py-4">Tanggal</th>
-                <th className="px-6 py-4">Jenis</th>
-                <th className="px-6 py-4">Hari</th>
-                <th className="px-6 py-4">Tiket</th>
-                <th className="px-6 py-4">Alasan</th>
-                <th className="px-6 py-4 text-center">Status Atasan</th>
-                <th className="px-6 py-4 text-center">Status PJO</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Tanggal</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Jenis</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Hari</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Tiket</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Alasan</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3 text-center">Status Atasan</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3 text-center">Status PJO</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {riwayat.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-16 text-center text-slate-300 font-bold italic">Belum ada pengajuan bulan ini.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 lg:py-16 text-center text-slate-300 font-bold italic">Belum ada pengajuan bulan ini.</td></tr>
               ) : riwayat.map((r: any, i: number) => (
                 <tr key={i}>
-                  <td className="px-6 py-4 text-xs font-bold">{new Date(r.tanggal_mulai).toLocaleDateString('id-ID')} - {new Date(r.tanggal_selesai).toLocaleDateString('id-ID')}</td>
-                  <td className="px-6 py-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-[9px] font-bold">{r.jenis_cuti}</span></td>
-                  <td className="px-6 py-4 text-xs font-black text-slate-700">{r.jumlah_hari || '-'}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-xs font-bold">{new Date(r.tanggal_mulai).toLocaleDateString('id-ID')} - {new Date(r.tanggal_selesai).toLocaleDateString('id-ID')}</td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-[9px] font-bold">{r.jenis_cuti}</span></td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-xs font-black text-slate-700">{r.jumlah_hari || '-'}</td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3">
                     {r.butuh_tiket
                       ? <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-[9px] font-black">✈️ YA</span>
                       : <span className="text-slate-300 text-[9px] font-bold italic">tidak</span>}
                   </td>
-                  <td className="px-6 py-4 italic text-slate-500 text-xs truncate max-w-[200px]">"{r.alasan}"</td>
-                  <td className="px-6 py-4 text-center"><StatusBadge value={r.status_atasan} /></td>
-                  <td className="px-6 py-4 text-center"><StatusBadge value={r.status_pjo || 'PENDING'} /></td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 italic text-slate-500 text-xs truncate max-w-[200px]">"{r.alasan}"</td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-center"><StatusBadge value={r.status_atasan} /></td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-center"><StatusBadge value={r.status_pjo || 'PENDING'} /></td>
                 </tr>
               ))}
             </tbody>
