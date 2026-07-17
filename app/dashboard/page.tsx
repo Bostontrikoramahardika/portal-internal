@@ -914,10 +914,10 @@ function FormLemburView({ title, onSuccess, data }: any) {
     <div className="max-w-4xl mx-auto space-y-3 lg:space-y-6">
       <div className="bg-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border border-slate-100 shadow-sm">
         <h2 className="text-base lg:text-base lg:text-xl font-black mb-3 lg:mb-5 tracking-tight">⏱️ {title}</h2>
-        <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-2.5 lg:space-y-4">
           {msg.text && <div className={`p-4 rounded-2xl text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
           <Input label="Tanggal Lembur" type="date" required value={form.tanggal} onChange={(v:any) => setForm({...form, tanggal: v})} />
-          <div className="grid grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+          <div className="grid grid-cols-2 gap-2 lg:gap-3">
             <Input label="Jam Mulai" type="time" required value={form.jam_mulai} onChange={(v:any) => setForm({...form, jam_mulai: v})} />
             <Input label="Jam Selesai" type="time" required value={form.jam_selesai} onChange={(v:any) => setForm({...form, jam_selesai: v})} />
           </div>
@@ -935,32 +935,32 @@ function FormLemburView({ title, onSuccess, data }: any) {
         </form>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden">
-        <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
-          <h3 className="font-black text-slate-800">📜 Riwayat Lembur Periode <span className="text-amber-600">{data?.periode || 'Bulan Ini'}</span></h3>
+      <div className="bg-white rounded-2xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-3 lg:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center gap-2">
+          <h3 className="font-black text-slate-800 text-xs lg:text-sm">📜 Riwayat Lembur Periode <span className="text-amber-600">{data?.periode || 'Bulan Ini'}</span></h3>
           <span className="text-[10px] bg-slate-200 text-slate-600 px-3 py-1.5 rounded-full font-black">{riwayat.length} DATA</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-black tracking-widest">
               <tr>
-                <th className="px-6 py-4">Tanggal</th>
-                <th className="px-6 py-4">Jam</th>
-                <th className="px-6 py-4">Alasan</th>
-                <th className="px-6 py-4 text-center">Status Atasan</th>
-                <th className="px-6 py-4 text-center">Status PJO</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Tanggal</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Jam</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Alasan</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3 text-center">Status Atasan</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3 text-center">Status PJO</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {riwayat.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-16 text-center text-slate-300 font-bold italic">Belum ada lembur bulan ini.</td></tr>
+                <tr><td colSpan={5} className="px-4 py-10 lg:py-16 text-center text-slate-300 font-bold italic">Belum ada lembur bulan ini.</td></tr>
               ) : riwayat.map((r: any, i: number) => (
                 <tr key={i}>
-                  <td className="px-6 py-4 text-xs font-bold">{new Date(r.tanggal).toLocaleDateString('id-ID')}</td>
-                  <td className="px-6 py-4 font-mono text-xs">{r.jam_mulai} - {r.jam_selesai}</td>
-                  <td className="px-6 py-4 italic text-slate-500 text-xs truncate max-w-[200px]">"{r.alasan}"</td>
-                  <td className="px-6 py-4 text-center"><StatusBadge value={r.status_atasan} /></td>
-                  <td className="px-6 py-4 text-center"><StatusBadge value={r.status_pjo || 'PENDING'} /></td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-xs font-bold">{new Date(r.tanggal).toLocaleDateString('id-ID')}</td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 font-mono text-xs">{r.jam_mulai} - {r.jam_selesai}</td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 italic text-slate-500 text-xs truncate max-w-[200px]">"{r.alasan}"</td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-center"><StatusBadge value={r.status_atasan} /></td>
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-center"><StatusBadge value={r.status_pjo || 'PENDING'} /></td>
                 </tr>
               ))}
             </tbody>
@@ -1090,19 +1090,19 @@ function FormSakitView({ title, onSuccess, data }: any) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border shadow-xl">
-        <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black mb-2">{currentConfig.icon} {title}</h2>
-        <p className="text-xs text-slate-400 mb-8 font-medium">Laporkan ketidakhadiran dengan bukti dokumen lengkap.</p>
+    <div className="max-w-4xl mx-auto space-y-4 lg:space-y-6 animate-in fade-in duration-500">
+      <div className="bg-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border shadow-xl">
+        <h2 className="text-sm lg:text-2xl font-black mb-2">{currentConfig.icon} {title}</h2>
+        <p className="text-xs text-slate-400 mb-4 lg:mb-6 font-medium">Laporkan ketidakhadiran dengan bukti dokumen lengkap.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-5">
 
-          {/* 📌 KATEGORI PILIHAN (3 CARD) */}
+          {/* KATEGORI PILIHAN (3 CARD) */}
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-3">
+            <label className="block text-[11px] lg:text-sm font-bold text-slate-700 mb-2">
               Pilih Kategori Pengajuan <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 lg:gap-3">
               {Object.keys(KATEGORI_CONFIG).map((key) => {
                 const conf = KATEGORI_CONFIG[key]
                 const isActive = form.kategori === key
@@ -1111,17 +1111,17 @@ function FormSakitView({ title, onSuccess, data }: any) {
                     key={key}
                     type="button"
                     onClick={() => setForm({ ...form, kategori: key, alasan_izin: '' })}
-                    className={`p-4 rounded-2xl border-2 transition-all text-center ${
+                    className={`p-3 lg:p-4 rounded-xl lg:rounded-2xl border-2 transition-all text-center ${
                       isActive
                         ? `${conf.borderActive} ring-2 ring-offset-2 ring-${conf.color}-400`
                         : 'bg-white border-slate-100 hover:border-slate-200'
                     }`}
                   >
-                    <div className="text-2xl mb-1">{conf.icon}</div>
-                    <div className={`text-[10px] font-black uppercase tracking-tight ${isActive ? `text-${conf.color}-700` : 'text-slate-500'}`}>
+                    <div className="text-xl lg:text-2xl mb-1">{conf.icon}</div>
+                    <div className={`text-[9px] lg:text-[10px] font-black uppercase tracking-tight ${isActive ? `text-${conf.color}-700` : 'text-slate-500'}`}>
                       {conf.label}
                     </div>
-                    <div className="text-[8px] font-bold text-slate-400 mt-1 leading-tight">
+                    <div className="text-[8px] lg:text-[9px] font-bold text-slate-400 mt-1 leading-tight">
                       {conf.desc}
                     </div>
                   </button>
@@ -1130,20 +1130,20 @@ function FormSakitView({ title, onSuccess, data }: any) {
             </div>
           </div>
 
-          {/* 📌 DROPDOWN ALASAN IZIN BERBAYAR (WAJIB PILIH 1) */}
+          {/* DROPDOWN ALASAN IZIN BERBAYAR */}
           {form.kategori === 'IZIN_BERBAYAR' && (
-            <div className="bg-emerald-50/50 border-2 border-emerald-100 p-4 rounded-2xl animate-in fade-in duration-300">
-              <label className="block text-sm font-bold text-emerald-800 mb-2">
+            <div className="bg-emerald-50/50 border-2 border-emerald-100 p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] animate-in fade-in duration-300">
+              <label className="block text-[11px] lg:text-sm font-bold text-emerald-800 mb-2">
                 ✅ Pilih Alasan Izin Berbayar <span className="text-rose-500">*</span>
               </label>
-              <p className="text-[10px] font-bold text-emerald-600 mb-3 italic">
+              <p className="text-[9px] lg:text-[10px] font-bold text-emerald-600 mb-2 lg:mb-3 italic">
                 Wajib pilih salah satu sesuai UU Ketenagakerjaan
               </p>
               <select
                 required
                 value={form.alasan_izin}
                 onChange={e => setForm({ ...form, alasan_izin: e.target.value })}
-                className="w-full p-3.5 border-2 border-emerald-200 rounded-2xl bg-white text-sm font-bold focus:border-emerald-500 outline-none transition-all"
+                className="w-full py-2 lg:py-2.5 px-3 border-2 border-emerald-200 rounded-lg lg:rounded-2xl bg-white text-[11px] lg:text-sm font-bold focus:border-emerald-500 outline-none transition-all"
               >
                 <option value="">-- Pilih Alasan --</option>
                 {ALASAN_IZIN_BERBAYAR.map((alasan, i) => (
@@ -1155,23 +1155,24 @@ function FormSakitView({ title, onSuccess, data }: any) {
             </div>
           )}
 
-          {/* Info Kategori Terpilih */}
+          {/* INFO IZIN POTONGAN */}
           {form.kategori === 'IZIN_POTONGAN' && (
-            <div className="bg-amber-50 border-2 border-amber-100 p-4 rounded-2xl text-[11px] font-bold text-amber-700 leading-relaxed">
+            <div className="bg-amber-50 border-2 border-amber-100 p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] text-[11px] lg:text-sm font-bold text-amber-700 leading-relaxed">
               ⚠️ <strong>Perhatian:</strong> Izin Potongan akan mengurangi gaji Anda sesuai kebijakan perusahaan.
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* GRID TANGGAL + ATASAN */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-5">
             <Input label="Tanggal" type="date" required value={form.tanggal} onChange={(v: any) => setForm({ ...form, tanggal: v })} />
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Pilih Atasan Approval (Satu Site)</label>
+              <label className="block text-[11px] lg:text-sm font-bold text-slate-700 mb-2">Pilih Atasan Approval (Satu Site)</label>
               <select
                 required
                 value={form.atasan_nrp}
                 onChange={e => setForm({ ...form, atasan_nrp: e.target.value })}
-                className="w-full p-3.5 border-2 border-slate-50 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
+                className="w-full py-2 lg:py-2.5 px-3 border-2 border-slate-50 rounded-lg lg:rounded-2xl bg-slate-50 text-[11px] lg:text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
               >
                 <option value="">-- Pilih Nama Atasan --</option>
                 {atasanList.map((a: any) => (
@@ -1180,30 +1181,33 @@ function FormSakitView({ title, onSuccess, data }: any) {
                   </option>
                 ))}
               </select>
-              {atasanList.length === 0 && <p className="text-[10px] text-rose-500 mt-1 font-bold italic"> Tidak ada atasan tersedia di site Anda</p>}
+              {atasanList.length === 0 && (
+                <p className="text-[9px] lg:text-[10px] text-rose-500 mt-1 font-bold italic">Tidak ada atasan tersedia di site Anda</p>
+              )}
             </div>
           </div>
 
+          {/* UPLOAD BUKTI */}
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">
+            <label className="block text-[11px] lg:text-sm font-bold text-slate-700 mb-2">
               Upload Bukti Dokumen <span className="text-rose-500">*</span>
             </label>
-            <p className="text-[10px] font-bold text-slate-400 mb-2 italic">
+            <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 mb-2 italic">
               {form.kategori === 'SAKIT' && '📄 Upload: SKS / Surat Dokter'}
               {form.kategori === 'IZIN_POTONGAN' && '📄 Upload: Surat Izin / Bukti Keperluan'}
               {form.kategori === 'IZIN_BERBAYAR' && '📄 Upload: Undangan / Surat Kematian / Bukti Musibah'}
             </p>
-            <div className="p-6 border-4 border-dashed border-slate-50 rounded-3xl bg-slate-50/50 text-center hover:border-blue-200 transition-all cursor-pointer relative">
+            <div className="p-4 lg:p-6 border-2 lg:border-4 border-dashed border-slate-200 rounded-2xl lg:rounded-[2rem] bg-slate-50/50 text-center hover:border-blue-200 transition-all cursor-pointer relative">
               <input type="file" accept="image/*" onChange={handleUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
               {uploading ? (
-                <p className="text-blue-500 font-black text-xs animate-pulse">⏳ SEDANG MENGUNGGAH...</p>
+                <p className="text-blue-500 font-black text-[11px] lg:text-xs animate-pulse">⏳ SEDANG MENGUNGGAH...</p>
               ) : form.foto_url ? (
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-emerald-500 font-black text-xs">✅ DOKUMEN TERUPLOAD</span>
-                  <img src={form.foto_url} className="h-10 w-10 object-cover rounded-lg" />
+                <div className="flex items-center justify-center gap-2 lg:gap-3">
+                  <span className="text-emerald-500 font-black text-[11px] lg:text-xs">✅ DOKUMEN TERUPLOAD</span>
+                  <img src={form.foto_url} className="h-9 w-9 lg:h-10 lg:w-10 object-cover rounded-lg lg:rounded-xl" />
                 </div>
               ) : (
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Klik untuk pilih foto dokumen</p>
+                <p className="text-slate-400 font-bold text-[11px] lg:text-xs uppercase tracking-[0.15em]">Klik untuk pilih foto dokumen</p>
               )}
             </div>
           </div>
@@ -1219,9 +1223,10 @@ function FormSakitView({ title, onSuccess, data }: any) {
             }
           />
 
+          {/* TOMBOL SUBMIT */}
           <button
             disabled={loading || uploading}
-            className={`w-full py-5 rounded-3xl font-black text-white text-lg transition-all ${
+            className={`w-full py-2.5 lg:py-3 rounded-xl lg:rounded-2xl font-black text-white text-sm lg:text-base transition-all ${
               loading || uploading
                 ? 'bg-slate-300'
                 : `${currentConfig.bgClass} ${currentConfig.hoverClass} shadow-lg ${currentConfig.shadowClass}`
@@ -1232,19 +1237,20 @@ function FormSakitView({ title, onSuccess, data }: any) {
         </form>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border shadow-xl overflow-hidden">
-        <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
-          <h3 className="font-black text-slate-800">📜 Riwayat Pengajuan ({data?.periode || '-'})</h3>
+      {/* CARD RIWAYAT */}
+      <div className="bg-white rounded-2xl lg:rounded-[2rem] border shadow-xl overflow-hidden">
+        <div className="p-3 lg:p-5 border-b bg-slate-50 flex justify-between items-center">
+          <h3 className="font-black text-slate-800 text-sm lg:text-base">📜 Riwayat Pengajuan ({data?.periode || '-'})</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-black">
+          <table className="w-full text-[11px] lg:text-sm text-left">
+            <thead className="bg-slate-50 text-slate-400 uppercase text-[9px] lg:text-[10px] font-black">
               <tr>
-                <th className="px-8 py-5">Tanggal</th>
-                <th className="px-8 py-5">Kategori</th>
-                <th className="px-8 py-5">Keterangan</th>
-                <th className="px-8 py-5">Dokumen</th>
-                <th className="px-8 py-5">Status Atasan</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Tanggal</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Kategori</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Keterangan</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Dokumen</th>
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3">Status Atasan</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -1253,20 +1259,20 @@ function FormSakitView({ title, onSuccess, data }: any) {
                 const conf = KATEGORI_CONFIG[kat] || KATEGORI_CONFIG.SAKIT
                 return (
                   <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-8 py-5 font-bold text-slate-900">{new Date(r.tanggal).toLocaleDateString('id-ID')}</td>
-                    <td className="px-8 py-5">
-                      <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest bg-${conf.color}-50 text-${conf.color}-700 border border-${conf.color}-100`}>
+                    <td className="px-3 py-2.5 lg:px-5 lg:py-3 font-bold text-slate-900">{new Date(r.tanggal).toLocaleDateString('id-ID')}</td>
+                    <td className="px-3 py-2.5 lg:px-5 lg:py-3">
+                      <span className={`px-2 py-1 rounded-lg lg:rounded-xl text-[9px] lg:text-[10px] font-black uppercase tracking-widest bg-${conf.color}-50 text-${conf.color}-700 border border-${conf.color}-100`}>
                         {conf.icon} {conf.label}
                       </span>
                       {r.alasan_izin && (
-                        <p className="text-[9px] text-slate-500 mt-1 italic">→ {r.alasan_izin}</p>
+                        <p className="text-[9px] lg:text-[10px] text-slate-500 mt-1 italic">→ {r.alasan_izin}</p>
                       )}
                     </td>
-                    <td className="px-8 py-5 text-slate-600 italic">"{r.keterangan || '-'}"</td>
-                    <td className="px-8 py-5">
-                      {r.foto_url ? <a href={r.foto_url} target="_blank" className="text-blue-600 font-black text-[10px] hover:underline">👁️ LIHAT FOTO</a> : '-'}
+                    <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-slate-600 italic">"{r.keterangan || '-'}"</td>
+                    <td className="px-3 py-2.5 lg:px-5 lg:py-3">
+                      {r.foto_url ? <a href={r.foto_url} target="_blank" className="text-blue-600 font-black text-[9px] lg:text-[10px] hover:underline">👁️ LIHAT FOTO</a> : '-'}
                     </td>
-                    <td className="px-8 py-5">
+                    <td className="px-3 py-2.5 lg:px-5 lg:py-3">
                       <StatusBadge value={r.status_atasan || 'PENDING'} />
                     </td>
                   </tr>
@@ -1274,7 +1280,7 @@ function FormSakitView({ title, onSuccess, data }: any) {
               })}
               {riwayat.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-8 py-10 text-center text-slate-300 font-bold italic">Belum ada riwayat bulan ini</td>
+                  <td colSpan={5} className="px-3 py-6 lg:px-5 lg:py-8 text-center text-slate-300 text-[11px] lg:text-sm font-bold italic">Belum ada riwayat bulan ini</td>
                 </tr>
               )}
             </tbody>
