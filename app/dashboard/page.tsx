@@ -1763,11 +1763,13 @@ function AnnouncementCard({ announcement }: any) {
 }
 
 
-// ============ 📊 TABLE VIEW (v2.1 - Strict Permission & Schema Lock) ============
+// ============ 📊 TABLE VIEW (v2.6 Compact + Filter Site/Status Attendance) ============
 function TableView({ data, onReload }: any) {
   const { title, rows = [], columns = [], table, access_mode } = data
   const [formModal, setFormModal] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [filterSite, setFilterSite] = useState('ALL')
+  const [filterStatusAbsensi, setFilterStatusAbsensi] = useState('ALL')
   const isApproval = access_mode?.includes('APPROVAL')
 
   // 🔐 Hook Auth
@@ -1781,22 +1783,22 @@ function TableView({ data, onReload }: any) {
   const isVirtualTable = VIRTUAL_TABLES.includes(table) || access_mode === 'VIEW_ONLY'
   const hasSchema = isVirtualTable ? false : (tablePerms?.has_schema !== false)
 
-  // 3. Logic Tombol Tambah: Harus punya schema DAN (punya permission ATAU super admin)
+  // Tombol Tambah
   const canCreate = hasSchema && (
     tablePerms?.create ? can(tablePerms.create) : (access_mode === 'CRUD' || isSuperAdmin)
   )
 
-  // 4. Logic Tombol Edit: Harus punya schema DAN (punya permission ATAU super admin)
+  // Tombol Edit
   const canEdit = hasSchema && (
     tablePerms?.edit ? can(tablePerms.edit) : (access_mode === 'CRUD' || isSuperAdmin)
   )
 
-  // 5. Logic Tombol Hapus: Jika VIEW_ONLY dipaksa mati, jika tidak cek permission
+  // Tombol Hapus
   const canDelete = access_mode !== 'VIEW_ONLY' && (
     tablePerms?.delete ? can(tablePerms.delete) : (access_mode === 'CRUD' || isSuperAdmin)
   )
 
-  // 6. Logic Approval
+  // Approval
   const canApprove = (() => {
     if (isSuperAdmin) return true
     if (!isApproval) return false
@@ -1806,138 +1808,287 @@ function TableView({ data, onReload }: any) {
     return true
   })()
 
-  // Filter pencarian
+  // Filter pencarian umum
   const filteredRows = rows.filter((r: any) => {
-    return Object.values(r).some(val => 
+    return Object.values(r).some((val) =>
       String(val).toLowerCase().includes(searchTerm.toLowerCase())
     )
   })
 
-  // Handler Aksi (Approve & Delete)
+  // Filter site khusus attendance
+  const siteList =
+    table === 'attendance'
+      ? Array.from(new Set((rows || []).map((r: any) => r.site).filter(Boolean))).sort() as string[]
+      : []
+
+  // Filter final khusus attendance
+  const displayRows = (() => {
+    let result = filteredRows
+    if (table === 'attendance') {
+      if (filterSite !== 'ALL') {
+        result = result.filter((r: any) => String(r.site || '') === filterSite)
+      }
+      if (filterStatusAbsensi !== 'ALL') {
+        result = result.filter((r: any) =>
+          String(r.status || r.keterangan || '').toUpperCase().includes(filterStatusAbsensi)
+        )
+      }
+    }
+    return result
+  })()
+
+  // Handler Approve
   async function handleApprove(id: string, action: string) {
-    const note = action === 'REJECTED' ? prompt("Alasan Penolakan:") : "OK"
+    const note = action === 'REJECTED' ? prompt('Alasan Penolakan:') : 'OK'
     if (!note && action === 'REJECTED') return
-    let endpoint = (table === 'leave_requests') ? 'leave' : (table === 'overtime_requests' ? 'overtime' : 'attendance')
+    const endpoint =
+      table === 'leave_requests' ? 'leave' :
+      table === 'overtime_requests' ? 'overtime' : 'attendance'
+    const key =
+      table === 'leave_requests' ? 'leave_id' :
+      table === 'overtime_requests' ? 'overtime_id' : 'id'
     const res = await fetch(`/api/${endpoint}/approve`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ [table === 'leave_requests' ? 'leave_id' : (table === 'overtime_requests' ? 'overtime_id' : 'id')]: id, action, catatan: note })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [key]: id, action, catatan: note })
     })
-    if (res.ok) { alert("✅ Berhasil diproses"); onReload() }
+    if (res.ok) { alert('✅ Berhasil diproses'); onReload() }
   }
 
+  // Handler Delete
   async function handleDelete(id: string, label: string) {
     if (!confirm(`⚠️ Hapus data "${label || id}"?`)) return
     const res = await fetch('/api/crud', {
-      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ table, id })
     })
     if (res.ok) { alert('✅ Terhapus'); onReload() }
   }
 
   return (
-    <div className="animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-8">
-        <div>
-          <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 tracking-tight">{title}</h2>
-          <p className="text-sm text-slate-500 font-medium">Monitoring & Pengelolaan Data</p>
-        </div>
-        
-        <div className="flex w-full md:w-auto gap-3">
-          <input 
-            type="text" placeholder="🔍 Cari Data..." value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full md:w-64 p-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm focus:border-blue-500 outline-none font-bold text-xs"
-          />
+    <div className="space-y-2 lg:space-y-4 animate-in fade-in duration-500">
+
+      {/* HEADER */}
+      <div className="bg-[#003D79] text-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem]">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm lg:text-2xl font-black tracking-tight">{title}</h2>
+            <p className="text-blue-200 text-[9px] lg:text-xs font-bold mt-0.5">
+              Monitoring & Pengelolaan Data
+            </p>
+          </div>
           {canCreate && (
-            <button onClick={() => setFormModal({ mode: 'create' })} className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black text-sm shadow-xl hover:bg-blue-700 active:scale-95 transition-all">
-              + TAMBAH
+            <button
+              onClick={() => setFormModal({ mode: 'create' })}
+              className="bg-white text-[#003D79] px-3 py-2 lg:px-5 lg:py-2.5 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-xs shadow-lg hover:bg-blue-50 active:scale-95 transition-all whitespace-nowrap"
+            >
+              ➕ Tambah
             </button>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-2xl overflow-hidden overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="bg-slate-950 border-b border-slate-800">
-              {columns.map((c: string) => <th key={c} className="px-8 py-5 font-black text-white uppercase text-[10px] tracking-widest">{formatColumnName(c)}</th>)}
-              <th className="px-8 py-5 font-black text-white uppercase text-[10px] tracking-widest text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredRows.map((r: any, i: number) => (
-              <tr key={i} className="hover:bg-slate-50/80 transition-all">
-                {columns.map((c: string) => <td key={c} className="px-8 py-5 whitespace-nowrap font-medium text-slate-700">{renderCell(c, r[c])}</td>)}
-                <td className="px-8 py-5 whitespace-nowrap">
-                  <div className="flex justify-center gap-2">
-                    {r.foto_url && <button onClick={() => window.open(r.foto_url, '_blank')} className="bg-indigo-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-indigo-600 shadow-sm">LIHAT FOTO</button>}
+      {/* SEARCH & FILTER */}
+      <div className="bg-white rounded-xl lg:rounded-2xl p-2.5 lg:p-4 border border-slate-100 shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-1.5 lg:gap-2">
 
-{/* 🎯 Tombol khusus MONITORING_EXPIRED */}
-{table === 'monitoring_expired' && r.jenis_dokumen && (
-  <>
-    <button 
-      onClick={() => setFormModal({ mode: 'update_expired', row: r })}
-      className="bg-blue-600 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-blue-700 shadow-sm"
-    >
-      📝 PERPANJANG
-    </button>
-    <button 
-      onClick={async () => {
-        const jenis = String(r.jenis_dokumen).replace(/[^\w\s]/g, '').trim().toUpperCase()
-        const nama = r._nama_karyawan || r.nrp
-        if (!confirm(`⚠️ Hapus dokumen ${jenis} milik ${nama}?\n\n${jenis === 'SIMPOL' ? 'Data SIMPOL akan dikosongkan (karyawan tetap aktif).' : 'Baris dokumen akan dihapus permanen.'}`)) return
-        
-        const res = await fetch('/api/monitoring-expired', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jenis_dokumen: jenis,
-            record_id: jenis === 'SIMPOL' ? r.nrp : r.id,
-            nama_karyawan: nama
-          })
-        })
-        const json = await res.json()
-        if (res.ok) {
-          alert(json.message || '✅ Berhasil dihapus')
-          window.dispatchEvent(new Event('refreshNotif'))
-          onReload()
-        } else {
-          alert('❌ ' + (json.error || 'Gagal hapus'))
-        }
-      }}
-      className="bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-rose-600 shadow-sm"
-    >
-      🗑️ HAPUS
-    </button>
-  </>
-)}
+          {/* Search */}
+          <div className="relative flex-1">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+            <input
+              type="text"
+              placeholder="Cari data..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-7 lg:pl-8 py-2 lg:py-2.5 pr-3 rounded-lg lg:rounded-2xl border border-slate-200 text-[11px] lg:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 focus:border-[#003D79]"
+            />
+          </div>
 
-{/* Tombol Edit/Hapus umum (bukan untuk monitoring_expired) */}
-{table !== 'monitoring_expired' && canEdit && !isApproval && <button onClick={() => setFormModal({ mode: 'edit', row: r })} className="bg-amber-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-amber-600 shadow-sm">EDIT</button>}
-{table !== 'monitoring_expired' && canDelete && !isApproval && <button onClick={() => handleDelete(r.id, r.nama || r._nama_karyawan || r.id)} className="bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-rose-600 shadow-sm">HAPUS</button>}
-                    {canApprove && r.status_atasan === 'PENDING' && (
-                      <>
-                        <button onClick={() => handleApprove(r.id, 'APPROVED')} className="bg-emerald-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-emerald-600 shadow-sm">APPROVE</button>
-                        <button onClick={() => handleApprove(r.id, 'REJECTED')} className="bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-rose-600 shadow-sm">REJECT</button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filteredRows.length === 0 && <div className="p-20 text-center text-slate-300 font-black uppercase tracking-widest italic">Data tidak ditemukan</div>}
+          {/* Filter Site — khusus attendance */}
+          {table === 'attendance' && siteList.length > 0 && (
+            <select
+              value={filterSite}
+              onChange={e => setFilterSite(e.target.value)}
+              className="py-2 lg:py-2.5 px-2.5 lg:px-3 rounded-lg lg:rounded-2xl border border-slate-200 text-[11px] lg:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 bg-white min-w-[110px] lg:min-w-[130px]"
+            >
+              <option value="ALL">🏢 Semua Site</option>
+              {siteList.map((s: string) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          )}
+
+          {/* Filter Status — khusus attendance */}
+          {table === 'attendance' && (
+            <select
+              value={filterStatusAbsensi}
+              onChange={e => setFilterStatusAbsensi(e.target.value)}
+              className="py-2 lg:py-2.5 px-2.5 lg:px-3 rounded-lg lg:rounded-2xl border border-slate-200 text-[11px] lg:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 bg-white min-w-[115px] lg:min-w-[130px]"
+            >
+              <option value="ALL">🎛️ Semua Status</option>
+              <option value="TERLAMBAT">⚠️ Terlambat</option>
+              <option value="SUKSES">✅ Tepat Waktu</option>
+            </select>
+          )}
+        </div>
+
+        <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 mt-1.5">
+          Menampilkan <span className="text-[#003D79] font-black">{displayRows.length}</span> dari {rows.length} data
+        </p>
       </div>
 
-      {formModal && formModal.mode !== 'update_expired' && <CrudModal table={table} mode={formModal.mode} row={formModal.row} onClose={() => setFormModal(null)} onSuccess={() => { setFormModal(null); onReload() }} />}
-      
-      {/* 🎯 Modal khusus untuk perpanjang dokumen expired */}
+      {/* TABEL */}
+      <div className="bg-white rounded-xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-[11px] lg:text-xs">
+            <thead className="bg-[#003D79] text-white">
+              <tr>
+                {columns.map((c: string) => (
+                  <th key={c} className="px-3 py-2.5 lg:px-5 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">
+                    {formatColumnName(c)}
+                  </th>
+                ))}
+                <th className="px-3 py-2.5 lg:px-5 lg:py-3 font-black uppercase tracking-wider text-center whitespace-nowrap">
+                  Aksi
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {displayRows.length === 0 ? (
+                <tr>
+                  <td colSpan={columns.length + 1} className="px-4 py-10 lg:py-16 text-center text-slate-300 font-black uppercase tracking-widest text-xs italic">
+                    Data tidak ditemukan
+                  </td>
+                </tr>
+              ) : displayRows.map((r: any, i: number) => (
+                <tr key={i} className="hover:bg-slate-50/80 transition-all">
+                  {columns.map((c: string) => (
+                    <td key={c} className="px-3 py-2.5 lg:px-5 lg:py-3 whitespace-nowrap font-medium text-slate-700">
+                      {renderCell(c, r[c])}
+                    </td>
+                  ))}
+                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 whitespace-nowrap">
+                    <div className="flex justify-center gap-1.5 lg:gap-2">
+
+                      {r.foto_url && (
+                        <button
+                          onClick={() => window.open(r.foto_url, '_blank')}
+                          className="bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-indigo-600 shadow-sm"
+                        >
+                          📷 Foto
+                        </button>
+                      )}
+
+                      {/* Tombol khusus monitoring_expired */}
+                      {table === 'monitoring_expired' && r.jenis_dokumen && (
+                        <>
+                          <button
+                            onClick={() => setFormModal({ mode: 'update_expired', row: r })}
+                            className="bg-blue-600 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-blue-700 shadow-sm"
+                          >
+                            🔄 Perpanjang
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const jenis = r.jenis_dokumen
+                              const nama = r.nama_karyawan || r.nama
+                              if (!confirm(`⚠️ Hapus dokumen ${jenis} milik ${nama}?\n\n${jenis === 'SIMPOL' ? 'Data SIMPOL akan dikosongkan.' : 'Baris dokumen akan dihapus permanen.'}`)) return
+                              const res = await fetch('/api/monitoring-expired', {
+                                method: 'DELETE',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  jenis_dokumen: jenis,
+                                  record_id: jenis === 'SIMPOL' ? r.nrp : r.id,
+                                  nama_karyawan: nama
+                                })
+                              })
+                              const json = await res.json()
+                              if (res.ok) {
+                                alert(json.message || '✅ Berhasil dihapus')
+                                window.dispatchEvent(new Event('refreshNotif'))
+                                onReload()
+                              } else {
+                                alert('❌ Gagal: ' + (json.error || 'Unknown'))
+                              }
+                            }}
+                            className="bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-rose-600 shadow-sm"
+                          >
+                            🗑️ Hapus
+                          </button>
+                        </>
+                      )}
+
+                      {/* Tombol Edit & Hapus umum */}
+                      {table !== 'monitoring_expired' && canEdit && !isApproval && (
+                        <button
+                          onClick={() => setFormModal({ mode: 'edit', row: r })}
+                          className="bg-amber-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-amber-600 shadow-sm"
+                        >
+                          ✏️ Edit
+                        </button>
+                      )}
+                      {table !== 'monitoring_expired' && canDelete && !isApproval && (
+                        <button
+                          onClick={() => handleDelete(r.id, r.nama || r._nama_karyawan || r.id)}
+                          className="bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-rose-600 shadow-sm"
+                        >
+                          🗑️ Hapus
+                        </button>
+                      )}
+
+                      {/* Tombol Approve */}
+                      {canApprove && r.status_atasan === 'PENDING' && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(r.id, 'APPROVED')}
+                            className="bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-emerald-600 shadow-sm"
+                          >
+                            ✅ Approve
+                          </button>
+                          <button
+                            onClick={() => handleApprove(r.id, 'REJECTED')}
+                            className="bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-rose-600 shadow-sm"
+                          >
+                            ❌ Reject
+                          </button>
+                        </>
+                      )}
+
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {displayRows.length > 0 && (
+          <div className="px-3 py-2 lg:px-4 lg:py-2.5 border-t border-slate-100 bg-slate-50">
+            <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
+              {displayRows.length} Data • BTM Portal v2.6
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Modal CRUD */}
+      {formModal && formModal.mode !== 'update_expired' && (
+        <CrudModal
+          table={table}
+          mode={formModal.mode}
+          row={formModal.row}
+          onClose={() => setFormModal(null)}
+          onSuccess={() => { setFormModal(null); onReload() }}
+        />
+      )}
+
+      {/* Modal Update Expired */}
       {formModal && formModal.mode === 'update_expired' && (
-        <UpdateExpiredModal 
-          row={formModal.row} 
-          onClose={() => setFormModal(null)} 
-          onSuccess={() => { setFormModal(null); onReload(); window.dispatchEvent(new Event('refreshNotif')) }} 
+        <UpdateExpiredModal
+          row={formModal.row}
+          onClose={() => setFormModal(null)}
+          onSuccess={() => { setFormModal(null); onReload(); window.dispatchEvent(new Event('refreshNotif')) }}
         />
       )}
     </div>
