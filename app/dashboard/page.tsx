@@ -2821,7 +2821,7 @@ function RiwayatAbsensiCustom({ data }: any) {
                 <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Tanggal</th>
                 <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Shift</th>
                 <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Actual</th>
-                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Jam Masuk / Pulang</th>
+                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Jam C.in/C.out</th>
                 <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Status</th>
               </tr>
             </thead>
@@ -2902,7 +2902,7 @@ function RiwayatAbsensiCustom({ data }: any) {
         {rows.length > 0 && (
           <div className="px-3 py-2 lg:px-4 lg:py-3 border-t border-slate-100 bg-slate-50">
             <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
-              Total {rows.length} Record • BTM Portal v2.6
+              Total {rows.length} Record • BTM Mobile App v2.6
             </p>
           </div>
         )}
