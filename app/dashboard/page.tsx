@@ -2706,7 +2706,13 @@ function RiwayatAbsensiCustom({ data }: any) {
     const ket = String(r.keterangan || '').toUpperCase()
     const actual = String(r.actual || '').toUpperCase()
     const tanggal = String(r.tanggal || '')
-    const matchSearch = search === '' || tanggal.includes(search) || actual.includes(search.toUpperCase()) || ket.includes(search.toUpperCase())
+
+    const matchSearch =
+      search === '' ||
+      tanggal.includes(search) ||
+      actual.includes(search.toUpperCase()) ||
+      ket.includes(search.toUpperCase())
+
     let matchStatus = true
     if (filterStatus === 'HADIR') matchStatus = ket.includes('SUKSES') && !ket.includes('TERLAMBAT')
     else if (filterStatus === 'TERLAMBAT') matchStatus = ket.includes('TERLAMBAT')
@@ -2714,176 +2720,177 @@ function RiwayatAbsensiCustom({ data }: any) {
     else if (filterStatus === 'SAKIT') matchStatus = actual === 'SAKIT'
     else if (filterStatus === 'IZIN') matchStatus = ket.includes('IZIN') || ket.includes('CUTI')
     else if (filterStatus === 'OFF') matchStatus = actual === 'OFF'
+
     return matchSearch && matchStatus
   })
 
   const stats = {
-    hadir: allRows.filter((r: any) => String(r.keterangan).toUpperCase().includes('SUKSES') && !String(r.keterangan).toUpperCase().includes('TERLAMBAT')).length,
-    terlambat: allRows.filter((r: any) => String(r.keterangan).toUpperCase().includes('TERLAMBAT')).length,
-    mangkir: allRows.filter((r: any) => String(r.keterangan).toUpperCase().includes('MANGKIR')).length,
-    off: allRows.filter((r: any) => String(r.actual).toUpperCase() === 'OFF').length,
+    hadir: allRows.filter((r: any) =>
+      String(r.keterangan || '').toUpperCase().includes('SUKSES') &&
+      !String(r.keterangan || '').toUpperCase().includes('TERLAMBAT')
+    ).length,
+    terlambat: allRows.filter((r: any) =>
+      String(r.keterangan || '').toUpperCase().includes('TERLAMBAT')
+    ).length,
+    mangkir: allRows.filter((r: any) => {
+      const ket = String(r.keterangan || '').toUpperCase()
+      return ket.includes('MANGKIR') || ket.includes('TIDAK ADA')
+    }).length,
+    off: allRows.filter((r: any) =>
+      String(r.actual || '').toUpperCase() === 'OFF'
+    ).length,
   }
 
   const shiftMap: any = {
-    'S': { label: 'S', color: 'bg-amber-100 text-amber-700' },
-    'M': { label: 'M', color: 'bg-indigo-100 text-indigo-700' },
+    'S': { label: 'Siang', color: 'bg-amber-100 text-amber-700' },
+    'M': { label: 'Malam', color: 'bg-indigo-100 text-indigo-700' },
     'OFF': { label: 'OFF', color: 'bg-slate-100 text-slate-500' },
-    'ID': { label: 'ID', color: 'bg-emerald-100 text-emerald-700' },
-    'CR': { label: 'CR', color: 'bg-purple-100 text-purple-700' },
-    'P': { label: 'P', color: 'bg-sky-100 text-sky-700' },
-    'L': { label: 'L', color: 'bg-orange-100 text-orange-700' },
+    'ID': { label: 'Induksi', color: 'bg-emerald-100 text-emerald-700' },
+    'CR': { label: 'Cuti Roster', color: 'bg-purple-100 text-purple-700' },
+    'P': { label: 'Pagi', color: 'bg-sky-100 text-sky-700' },
+    'L': { label: 'Lembur', color: 'bg-orange-100 text-orange-700' },
   }
 
   return (
     <div className="space-y-2 lg:space-y-5 animate-in fade-in duration-500">
 
       {/* HEADER */}
-      <div className="bg-[#003D79] text-white p-3 lg:p-8 rounded-xl lg:rounded-[2.5rem]">
+      <div className="bg-[#003D79] text-white p-3 lg:p-8 rounded-2xl lg:rounded-[2.5rem]">
         <h2 className="text-sm lg:text-2xl font-black tracking-tight">{data.title}</h2>
-        <p className="text-blue-200 text-[9px] lg:text-xs font-bold">Roster vs Absensi • Bulan Berjalan</p>
-        <div className="grid grid-cols-4 gap-1.5 lg:gap-2 mt-2 lg:mt-4">
+        <p className="text-blue-200 text-[9px] lg:text-xs font-bold mt-0.5">
+          Roster Shift vs Data Absensi • Bulan Berjalan
+        </p>
+
+        <div className="grid grid-cols-4 gap-1.5 lg:gap-2 mt-2.5 lg:mt-4">
           {[
             { label: 'Hadir', val: stats.hadir, color: 'bg-emerald-500/20 text-emerald-200' },
             { label: 'Telat', val: stats.terlambat, color: 'bg-amber-500/20 text-amber-200' },
             { label: 'Mangkir', val: stats.mangkir, color: 'bg-rose-500/20 text-rose-200' },
             { label: 'OFF', val: stats.off, color: 'bg-slate-500/20 text-slate-300' },
-          ].map(s => (
+          ].map((s) => (
             <div key={s.label} className={`${s.color} rounded-lg lg:rounded-xl p-1.5 lg:p-3 text-center`}>
-              <p className="text-base lg:text-3xl font-black leading-none">{s.val}</p>
-              <p className="text-[7px] lg:text-[10px] font-black uppercase tracking-wide">{s.label}</p>
+              <p className="text-lg lg:text-3xl font-black leading-none">{s.val}</p>
+              <p className="text-[7px] lg:text-[10px] font-black uppercase tracking-wide mt-0.5">
+                {s.label}
+              </p>
             </div>
           ))}
         </div>
       </div>
 
       {/* SEARCH & FILTER */}
-      <div className="flex gap-1.5 lg:gap-2">
-        <div className="relative flex-1">
-          <span className="absolute left-2 lg:left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
-          <input
-            type="text"
-            placeholder="Cari..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full pl-7 lg:pl-9 py-2 lg:py-3 px-2 rounded-lg lg:rounded-2xl border border-slate-200 text-[11px] lg:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 focus:border-[#003D79]"
-          />
+      <div className="bg-white rounded-xl lg:rounded-2xl p-2.5 lg:p-5 border border-slate-100 shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-1.5 lg:gap-2">
+          <div className="relative flex-1">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+            <input
+              type="text"
+              placeholder="Cari tanggal, status..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-7 lg:pl-8 py-2 lg:py-3 pr-3 rounded-lg lg:rounded-2xl border border-slate-200 text-[11px] lg:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 focus:border-[#003D79]"
+            />
+          </div>
+
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}
+            className="py-2 lg:py-3 px-2.5 lg:px-3 rounded-lg lg:rounded-2xl border border-slate-200 text-[11px] lg:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 bg-white min-w-[115px] lg:min-w-[130px]"
+          >
+            <option value="ALL">🎛️ Semua</option>
+            <option value="HADIR">✅ Hadir</option>
+            <option value="TERLAMBAT">⚠️ Telat</option>
+            <option value="MANGKIR">❌ Mangkir</option>
+            <option value="SAKIT">🤒 Sakit</option>
+            <option value="IZIN">📋 Izin/Cuti</option>
+            <option value="OFF">💤 OFF</option>
+          </select>
         </div>
-        <select
-          value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value)}
-          className="py-2 lg:py-3 px-2 lg:px-3 rounded-lg lg:rounded-2xl border border-slate-200 text-[11px] lg:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 bg-white"
-        >
-          <option value="ALL">Semua</option>
-          <option value="HADIR">✅ Hadir</option>
-          <option value="TERLAMBAT">⚠️ Telat</option>
-          <option value="MANGKIR">❌ Mangkir</option>
-          <option value="SAKIT">🤒 Sakit</option>
-          <option value="IZIN">📋 Izin</option>
-          <option value="OFF">💤 OFF</option>
-        </select>
+
+        <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 mt-1.5 lg:mt-2">
+          Menampilkan <span className="text-[#003D79] font-black">{rows.length}</span> dari {allRows.length} record
+        </p>
       </div>
 
-      {/* MOBILE: CARD VIEW */}
-      <div className="lg:hidden space-y-1.5">
-        {rows.length === 0 ? (
-          <div className="py-10 text-center text-slate-300 font-black text-[10px] uppercase tracking-widest italic">Tidak ada data</div>
-        ) : rows.map((r: any, i: number) => {
-          const ket = String(r.keterangan || '').toUpperCase()
-          const isTerlambat = ket.includes('TERLAMBAT')
-          const isHadir = ket.includes('SUKSES') && !isTerlambat
-          const isMangkir = ket.includes('MANGKIR') || ket.includes('TIDAK ADA')
-          const isSakit = String(r.actual).toUpperCase() === 'SAKIT'
-          const isOff = String(r.actual).toUpperCase() === 'OFF'
-          const sc = isTerlambat ? { l: '⚠️', c: 'border-l-amber-400 bg-amber-50/30' }
-            : isHadir ? { l: '✅', c: 'border-l-emerald-400 bg-emerald-50/30' }
-            : isMangkir ? { l: '❌', c: 'border-l-rose-400 bg-rose-50/30' }
-            : isSakit ? { l: '🤒', c: 'border-l-blue-400 bg-blue-50/30' }
-            : isOff ? { l: '💤', c: 'border-l-slate-300 bg-slate-50/30' }
-            : { l: '📋', c: 'border-l-purple-400 bg-purple-50/30' }
-          const shift = shiftMap[r.roster] || { label: r.roster || '-', color: 'bg-slate-100 text-slate-500' }
-
-          return (
-            <div key={i} className={`border-l-[3px] ${sc.c} rounded-lg px-2.5 py-2 flex items-center gap-2`}>
-              {/* Tanggal */}
-              <div className="text-center min-w-[36px]">
-                <p className="text-xs font-black text-slate-800 leading-none">
-                  {new Date(r.tanggal).toLocaleDateString('id-ID', { day: 'numeric' })}
-                </p>
-                <p className="text-[8px] font-bold text-slate-400 uppercase">
-                  {new Date(r.tanggal).toLocaleDateString('id-ID', { weekday: 'short' })}
-                </p>
-              </div>
-              {/* Shift badge */}
-              <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${shift.color}`}>
-                {shift.label}
-              </span>
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-slate-700 truncate">{r.actual}</p>
-                <p className="text-[9px] text-slate-400 font-mono truncate">
-                  {r.is_foto ? '🖼️ Foto' : (r.evident || '--:--')}
-                </p>
-              </div>
-              {/* Status icon */}
-              <span className="text-sm shrink-0">{sc.l}</span>
-            </div>
-          )
-        })}
-        {rows.length > 0 && (
-          <p className="text-[9px] font-bold text-slate-300 text-center pt-1">
-            {rows.length}/{allRows.length} record
-          </p>
-        )}
-      </div>
-
-      {/* DESKTOP: TABLE VIEW */}
-      <div className="hidden lg:block bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+      {/* TABEL */}
+      <div className="bg-white rounded-xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
+          <table className="w-full text-[11px] lg:text-xs text-left">
             <thead className="bg-[#003D79] text-white">
               <tr>
-                <th className="px-4 py-3 font-black uppercase tracking-wider">Tanggal</th>
-                <th className="px-4 py-3 font-black uppercase tracking-wider">Shift</th>
-                <th className="px-4 py-3 font-black uppercase tracking-wider">Actual</th>
-                <th className="px-4 py-3 font-black uppercase tracking-wider">Jam Masuk / Pulang</th>
-                <th className="px-4 py-3 font-black uppercase tracking-wider">Status</th>
+                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Tanggal</th>
+                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Shift</th>
+                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Actual</th>
+                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Jam Masuk / Pulang</th>
+                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {rows.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-16 text-center text-slate-300 font-black uppercase text-xs italic">Tidak ada data</td></tr>
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 lg:py-16 text-center text-slate-300 font-black uppercase tracking-widest text-xs italic">
+                    Tidak ada data ditemukan
+                  </td>
+                </tr>
               ) : rows.map((r: any, i: number) => {
                 const ket = String(r.keterangan || '').toUpperCase()
+                const isHadir = ket.includes('SUKSES') && !ket.includes('TERLAMBAT')
                 const isTerlambat = ket.includes('TERLAMBAT')
-                const isHadir = ket.includes('SUKSES') && !isTerlambat
                 const isMangkir = ket.includes('MANGKIR') || ket.includes('TIDAK ADA')
-                const isSakit = String(r.actual).toUpperCase() === 'SAKIT'
-                const isOff = String(r.actual).toUpperCase() === 'OFF'
-                const statusConfig = isTerlambat ? { label: '⚠️ Terlambat', cls: 'bg-amber-50 text-amber-700 border-amber-200' }
-                  : isHadir ? { label: '✅ Hadir', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
-                  : isMangkir ? { label: '❌ Mangkir', cls: 'bg-rose-50 text-rose-700 border-rose-200' }
-                  : isSakit ? { label: '🤒 Sakit', cls: 'bg-blue-50 text-blue-700 border-blue-200' }
-                  : isOff ? { label: '💤 OFF', cls: 'bg-slate-100 text-slate-500 border-slate-200' }
+                const isSakit = String(r.actual || '').toUpperCase() === 'SAKIT'
+                const isOff = String(r.actual || '').toUpperCase() === 'OFF'
+
+                const statusConfig = isTerlambat
+                  ? { label: '⚠️ Terlambat', cls: 'bg-amber-50 text-amber-700 border-amber-200' }
+                  : isHadir
+                  ? { label: '✅ Hadir', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+                  : isMangkir
+                  ? { label: '❌ Mangkir', cls: 'bg-rose-50 text-rose-700 border-rose-200' }
+                  : isSakit
+                  ? { label: '🤒 Sakit', cls: 'bg-blue-50 text-blue-700 border-blue-200' }
+                  : isOff
+                  ? { label: '💤 OFF', cls: 'bg-slate-100 text-slate-500 border-slate-200' }
                   : { label: r.keterangan || '-', cls: 'bg-purple-50 text-purple-700 border-purple-200' }
+
                 const shift = shiftMap[r.roster] || { label: r.roster || '-', color: 'bg-slate-100 text-slate-500' }
 
                 return (
                   <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 font-black text-slate-800 whitespace-nowrap">
-                      {new Date(r.tanggal).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
+                    <td className="px-3 py-2.5 lg:px-4 lg:py-3 font-black text-slate-800 whitespace-nowrap">
+                      {new Date(r.tanggal).toLocaleDateString('id-ID', {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short'
+                      })}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-lg font-black text-[10px] ${shift.color}`}>{shift.label}</span>
+                    <td className="px-3 py-2.5 lg:px-4 lg:py-3">
+                      <span className={`px-2 py-1 rounded-lg font-black text-[9px] lg:text-[10px] tracking-wide ${shift.color}`}>
+                        {shift.label}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 font-bold text-slate-700">{r.actual}</td>
-                    <td className="px-4 py-3">
-                      {r.is_foto
-                        ? <a href={r.evident} target="_blank" rel="noreferrer" className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-black text-[10px] border border-blue-100 hover:bg-blue-100 transition-colors">🖼️ Foto</a>
-                        : <span className="font-mono text-[11px] text-slate-500">{r.evident || '--:--'}</span>
-                      }
+                    <td className="px-3 py-2.5 lg:px-4 lg:py-3 font-bold text-slate-700 whitespace-nowrap">
+                      {r.actual}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-lg font-black text-[10px] border ${statusConfig.cls}`}>{statusConfig.label}</span>
+                    <td className="px-3 py-2.5 lg:px-4 lg:py-3">
+                      {r.is_foto ? (
+                        <a
+                          href={r.evident}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-black text-[9px] lg:text-[10px] border border-blue-100 hover:bg-blue-100 transition-colors whitespace-nowrap"
+                        >
+                          🖼️ Foto Bukti
+                        </a>
+                      ) : (
+                        <span className="font-mono text-[10px] lg:text-[11px] text-slate-500 whitespace-nowrap">
+                          {r.evident || '--:-- / --:--'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 lg:px-4 lg:py-3">
+                      <span className={`px-2 py-1 rounded-lg font-black text-[9px] lg:text-[10px] border whitespace-nowrap ${statusConfig.cls}`}>
+                        {statusConfig.label}
+                      </span>
                     </td>
                   </tr>
                 )
@@ -2891,9 +2898,12 @@ function RiwayatAbsensiCustom({ data }: any) {
             </tbody>
           </table>
         </div>
+
         {rows.length > 0 && (
-          <div className="px-4 py-2 border-t border-slate-100 bg-slate-50">
-            <p className="text-[10px] font-bold text-slate-400 text-center">{rows.length} Record • BTM Portal v2.6</p>
+          <div className="px-3 py-2 lg:px-4 lg:py-3 border-t border-slate-100 bg-slate-50">
+            <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
+              Total {rows.length} Record • BTM Portal v2.6
+            </p>
           </div>
         )}
       </div>
