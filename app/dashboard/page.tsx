@@ -1784,14 +1784,13 @@ function TableView({ data, onReload }: any) {
   const hasSchema = isVirtualTable ? false : (tablePerms?.has_schema !== false)
 
   // Tombol Tambah
-  const canCreate = hasSchema && (
-    tablePerms?.create ? can(tablePerms.create) : (access_mode === 'CRUD' || isSuperAdmin)
-  )
+  const canCreate = isSuperAdmin || (hasSchema && (
+  tablePerms?.create ? can(tablePerms.create) : (access_mode === 'CRUD')
+))
 
-  // Tombol Edit
-  const canEdit = hasSchema && (
-    tablePerms?.edit ? can(tablePerms.edit) : (access_mode === 'CRUD' || isSuperAdmin)
-  )
+const canEdit = isSuperAdmin || (hasSchema && (
+  tablePerms?.edit ? can(tablePerms.edit) : (access_mode === 'CRUD')
+))
 
   // Tombol Hapus
   const canDelete = access_mode !== 'VIEW_ONLY' && (
@@ -5536,20 +5535,20 @@ function ApprovalCenterView() {
   )
 
   return (
-    <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
+    <div className="animate-in fade-in duration-500 pb-24 space-y-2 lg:space-y-4">
 
       {/* HEADER */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="text-3xl">📥</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 lg:gap-3">
+              <div className="text-xl lg:text-3xl">📥</div>
               <div>
-                <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
+                <p className="text-emerald-400 font-black text-[9px] lg:text-[10px] uppercase tracking-[0.25em] mb-0.5">
                   Approval Center
                 </p>
-                <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">
+                <h1 className="text-sm lg:text-xl font-black tracking-tight leading-tight">
                   {stats.total > 0 ? `${stats.total} Pengajuan Menunggu` : 'Semua Sudah Diproses'}
                 </h1>
               </div>
@@ -6527,7 +6526,7 @@ function KelolaHakCutiView() {
   return (
     <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
