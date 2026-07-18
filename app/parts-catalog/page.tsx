@@ -50,7 +50,6 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
   const [dragging, setDragging] = useState(false)
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 })
 
-  // Touch: pinch-to-zoom
   const touchState = useRef<{
     startDist: number
     startScale: number
@@ -65,15 +64,12 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
     mode: 'none',
   })
 
-  // reset saat gambar berubah
   useEffect(() => {
     setScale(1)
     setPos({ x: 0, y: 0 })
   }, [src])
 
-  function zoomIn() {
-    setScale(s => Math.min(s + 0.25, 5))
-  }
+  function zoomIn() { setScale(s => Math.min(s + 0.25, 5)) }
   function zoomOut() {
     setScale(s => {
       const next = Math.max(s - 0.25, 0.5)
@@ -86,7 +82,6 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
     setPos({ x: 0, y: 0 })
   }
 
-  // Mouse events
   function handleMouseDown(e: React.MouseEvent) {
     if (scale <= 1) return
     setDragging(true)
@@ -99,18 +94,14 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
       y: dragStart.current.posY + (e.clientY - dragStart.current.y),
     })
   }
-  function handleMouseUp() {
-    setDragging(false)
-  }
+  function handleMouseUp() { setDragging(false) }
 
-  // Wheel zoom
   function handleWheel(e: React.WheelEvent) {
     e.preventDefault()
     if (e.deltaY < 0) zoomIn()
     else zoomOut()
   }
 
-  // Touch events (pinch + pan)
   function getDist(t1: React.Touch, t2: React.Touch) {
     const dx = t1.clientX - t2.clientX
     const dy = t1.clientY - t2.clientY
@@ -155,38 +146,18 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
     }
   }
 
-  function handleTouchEnd() {
-    touchState.current.mode = 'none'
-  }
+  function handleTouchEnd() { touchState.current.mode = 'none' }
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-slate-200 select-none">
-      {/* Controls */}
       <div className="absolute top-2 right-2 z-10 flex gap-1 bg-white/90 backdrop-blur rounded-lg shadow p-1">
-        <button
-          onClick={zoomOut}
-          className="w-8 h-8 flex items-center justify-center text-lg font-bold hover:bg-slate-100 rounded"
-          title="Zoom Out"
-        >
-          −
-        </button>
-        <button
-          onClick={resetZoom}
-          className="px-2 h-8 flex items-center justify-center text-xs font-bold hover:bg-slate-100 rounded"
-          title="Reset"
-        >
+        <button onClick={zoomOut} className="w-8 h-8 flex items-center justify-center text-lg font-bold hover:bg-slate-100 rounded" title="Zoom Out">−</button>
+        <button onClick={resetZoom} className="px-2 h-8 flex items-center justify-center text-xs font-bold hover:bg-slate-100 rounded" title="Reset">
           {Math.round(scale * 100)}%
         </button>
-        <button
-          onClick={zoomIn}
-          className="w-8 h-8 flex items-center justify-center text-lg font-bold hover:bg-slate-100 rounded"
-          title="Zoom In"
-        >
-          +
-        </button>
+        <button onClick={zoomIn} className="w-8 h-8 flex items-center justify-center text-lg font-bold hover:bg-slate-100 rounded" title="Zoom In">+</button>
       </div>
 
-      {/* Image */}
       <div
         className="w-full h-full flex items-center justify-center"
         style={{ cursor: scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'default' }}
@@ -241,8 +212,16 @@ export default function PartsCatalogPage() {
 
   const [isSuperAdmin, setIsSuperAdmin] = useState(true)
 
-  // Mobile view mode: 'tree' | 'image' | 'parts'
   const [mobileView, setMobileView] = useState<'tree' | 'image' | 'parts'>('tree')
+
+  // 🛒 ORDER STATE
+  const [orderPart, setOrderPart] = useState<PartItem | null>(null)
+  const [orderQty, setOrderQty] = useState(1)
+  const [orderMachine, setOrderMachine] = useState('')
+  const [orderPrioritas, setOrderPrioritas] = useState<'Normal' | 'Urgent'>('Normal')
+  const [orderKeterangan, setOrderKeterangan] = useState('')
+  const [orderSubmitting, setOrderSubmitting] = useState(false)
+  const [orderMsg, setOrderMsg] = useState('')
 
   useEffect(() => { fetchUnits() }, [])
 
@@ -273,7 +252,7 @@ export default function PartsCatalogPage() {
       setItems(json.items)
     }
     setLoadingItems(false)
-    setMobileView('image') // auto switch ke image di HP
+    setMobileView('image')
   }
 
   async function doSearch() {
@@ -322,10 +301,7 @@ export default function PartsCatalogPage() {
     fd.append('replace', importReplace ? 'true' : 'false')
 
     try {
-      const res = await fetch('/api/parts-catalog/import-excel', {
-        method: 'POST',
-        body: fd,
-      })
+      const res = await fetch('/api/parts-catalog/import-excel', { method: 'POST', body: fd })
       const json = await res.json()
       setImportResult(json)
       if (json.success) await fetchUnits()
@@ -333,6 +309,67 @@ export default function PartsCatalogPage() {
       setImportResult({ error: e.message })
     } finally {
       setImporting(false)
+    }
+  }
+
+  // 🛒 ORDER FUNCTIONS
+  function openOrderModal(part: PartItem) {
+    setOrderPart(part)
+    setOrderQty(1)
+    setOrderMachine('')
+    setOrderPrioritas('Normal')
+    setOrderKeterangan('')
+    setOrderMsg('')
+  }
+
+  function closeOrderModal() {
+    if (orderSubmitting) return
+    setOrderPart(null)
+    setOrderMsg('')
+  }
+
+  async function submitOrder() {
+    if (!orderPart || !selectedUnit) return
+    if (!orderMachine.trim()) {
+      setOrderMsg('❌ Machine Unit wajib diisi')
+      return
+    }
+    if (orderQty < 1) {
+      setOrderMsg('❌ Qty minimal 1')
+      return
+    }
+    setOrderSubmitting(true)
+    setOrderMsg('')
+
+    try {
+      const res = await fetch('/api/part-orders/submit', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          part_number: orderPart.part_number,
+          part_name: orderPart.part_name,
+          assembly_name: selectedAssembly?.assembly_name || '',
+          unit_code: selectedUnit.unit_code,
+          machine_unit: orderMachine.trim(),
+          qty: orderQty,
+          keterangan: orderKeterangan.trim(),
+          prioritas: orderPrioritas,
+        }),
+      })
+      const json = await res.json()
+      if (json.ok) {
+        setOrderMsg('✅ Order berhasil dikirim!')
+        setTimeout(() => closeOrderModal(), 1500)
+      } else {
+        setOrderMsg(`❌ ${json.error || 'Gagal submit order'}`)
+      }
+    } catch (e: any) {
+      setOrderMsg(`❌ ${e.message}`)
+    } finally {
+      setOrderSubmitting(false)
     }
   }
 
@@ -358,6 +395,13 @@ export default function PartsCatalogPage() {
             🔍
           </button>
         </div>
+
+        <a
+          href="/part-orders"
+          className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs md:text-sm font-bold hover:bg-amber-600 whitespace-nowrap"
+        >
+          📋 Orders
+        </a>
 
         {isSuperAdmin && (
           <button
@@ -385,9 +429,7 @@ export default function PartsCatalogPage() {
           >
             {t.label}
             {t.badge > 0 && (
-              <span className="text-[9px] bg-slate-200 text-slate-700 px-1.5 rounded-full">
-                {t.badge}
-              </span>
+              <span className="text-[9px] bg-slate-200 text-slate-700 px-1.5 rounded-full">{t.badge}</span>
             )}
           </button>
         ))}
@@ -532,6 +574,7 @@ export default function PartsCatalogPage() {
                     <th className="px-2 py-2 text-left">Part Number</th>
                     <th className="px-2 py-2 text-left">Name</th>
                     <th className="px-2 py-2 text-center w-10">Qty</th>
+                    <th className="px-2 py-2 text-center w-14">Order</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -541,6 +584,16 @@ export default function PartsCatalogPage() {
                       <td className="px-2 py-1.5 font-mono font-bold text-[#003D79]">{it.part_number || '-'}</td>
                       <td className="px-2 py-1.5">{it.part_name || '-'}</td>
                       <td className="px-2 py-1.5 text-center">{it.qty ?? '-'}</td>
+                      <td className="px-2 py-1.5 text-center">
+                        <button
+                          onClick={() => openOrderModal(it)}
+                          disabled={!it.part_number}
+                          className="px-2 py-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded text-[10px] font-bold"
+                          title="Order Part"
+                        >
+                          🛒
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -628,6 +681,122 @@ export default function PartsCatalogPage() {
               >
                 {importing ? '⏳ Importing...' : '📥 Start Import'}
               </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 🛒 ORDER MODAL */}
+      {orderPart && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/60 z-50" onClick={closeOrderModal} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-2xl shadow-2xl z-50 overflow-hidden">
+            <div className="bg-amber-500 text-white px-5 py-3 flex justify-between items-center">
+              <h3 className="font-bold">🛒 Order Part</h3>
+              <button onClick={closeOrderModal} className="text-white/80 hover:text-white">✕</button>
+            </div>
+            <div className="p-5 space-y-3">
+              {/* Part Info */}
+              <div className="bg-slate-50 p-3 rounded-lg text-xs space-y-1">
+                <div className="flex gap-2">
+                  <span className="font-bold text-slate-500 w-20">Part No:</span>
+                  <span className="font-mono font-bold text-[#003D79]">{orderPart.part_number}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-bold text-slate-500 w-20">Name:</span>
+                  <span className="flex-1">{orderPart.part_name}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-bold text-slate-500 w-20">Unit:</span>
+                  <span>{selectedUnit?.unit_code}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-bold text-slate-500 w-20">Assembly:</span>
+                  <span className="flex-1 truncate">{selectedAssembly?.assembly_name}</span>
+                </div>
+              </div>
+
+              {/* Machine Unit */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Machine Unit * <span className="text-slate-400 font-normal">(unit yang rusak)</span>
+                </label>
+                <input
+                  type="text"
+                  value={orderMachine}
+                  onChange={e => setOrderMachine(e.target.value)}
+                  disabled={orderSubmitting}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-amber-500"
+                  placeholder="Contoh: PC200-7 Unit 03"
+                />
+              </div>
+
+              {/* Qty + Prioritas */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Qty *</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={orderQty}
+                    onChange={e => setOrderQty(parseInt(e.target.value) || 1)}
+                    disabled={orderSubmitting}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Prioritas</label>
+                  <select
+                    value={orderPrioritas}
+                    onChange={e => setOrderPrioritas(e.target.value as any)}
+                    disabled={orderSubmitting}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="Normal">Normal</option>
+                    <option value="Urgent">🔥 Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Keterangan */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Keterangan</label>
+                <textarea
+                  value={orderKeterangan}
+                  onChange={e => setOrderKeterangan(e.target.value)}
+                  disabled={orderSubmitting}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-amber-500 resize-none"
+                  placeholder="Contoh: bocor di sisi kiri, perlu ganti segera"
+                />
+              </div>
+
+              {/* Message */}
+              {orderMsg && (
+                <div className={`p-2 rounded-lg text-xs font-bold text-center ${
+                  orderMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                }`}>
+                  {orderMsg}
+                </div>
+              )}
+
+              {/* Buttons */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={closeOrderModal}
+                  disabled={orderSubmitting}
+                  className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold text-sm"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={submitOrder}
+                  disabled={orderSubmitting}
+                  className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-sm disabled:opacity-50"
+                >
+                  {orderSubmitting ? '⏳ Submitting...' : '🛒 Submit Order'}
+                </button>
+              </div>
             </div>
           </div>
         </>
