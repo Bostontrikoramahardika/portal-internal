@@ -4,22 +4,27 @@
 
 import { google } from 'googleapis';
 import { Readable } from 'stream';
-import path from 'path';
 
 const GDRIVE_FOLDER_ID = process.env.GDRIVE_FOLDER_ID!;
-const GDRIVE_CREDENTIALS_PATH = process.env.GDRIVE_CREDENTIALS_PATH || './gdrive-credentials.json';
+const GDRIVE_OAUTH_CLIENT_ID = process.env.GDRIVE_OAUTH_CLIENT_ID!;
+const GDRIVE_OAUTH_CLIENT_SECRET = process.env.GDRIVE_OAUTH_CLIENT_SECRET!;
+const GDRIVE_OAUTH_REFRESH_TOKEN = process.env.GDRIVE_OAUTH_REFRESH_TOKEN!;
 
-// ---------- AUTH ----------
-function getAuth() {
-  const keyFilePath = path.resolve(process.cwd(), GDRIVE_CREDENTIALS_PATH.replace('./', ''));
-  return new google.auth.GoogleAuth({
-    keyFile: keyFilePath,
-    scopes: ['https://www.googleapis.com/auth/drive'],
+// ---------- AUTH (OAuth Delegation - User Personal Account) ----------
+function getOAuth2Client() {
+  const oAuth2Client = new google.auth.OAuth2(
+    GDRIVE_OAUTH_CLIENT_ID,
+    GDRIVE_OAUTH_CLIENT_SECRET,
+    'https://developers.google.com/oauthplayground'
+  );
+  oAuth2Client.setCredentials({
+    refresh_token: GDRIVE_OAUTH_REFRESH_TOKEN,
   });
+  return oAuth2Client;
 }
 
 function getDriveClient() {
-  const auth = getAuth();
+  const auth = getOAuth2Client();
   return google.drive({ version: 'v3', auth });
 }
 
@@ -57,14 +62,9 @@ export async function uploadFile(
     fields: 'id, name, webViewLink, webContentLink, size, mimeType',
   });
 
-  // Buat file bisa diakses via link (Anyone with link can view)
-  await drive.permissions.create({
-    fileId: response.data.id!,
-    requestBody: {
-      role: 'reader',
-      type: 'anyone',
-    },
-  });
+  // File otomatis owned by user OAuth (absensimlp@gmail.com)
+  // Skip permission "anyone" — set manual di UI kalau perlu public link
+  // Untuk sharing internal, cukup via webViewLink (login required)
 
   return {
     fileId: response.data.id!,
