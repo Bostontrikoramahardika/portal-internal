@@ -5,8 +5,10 @@ import { supabaseAdmin } from '@/app/lib/supabase'
 
 export async function DELETE(request: NextRequest) {
   // Auth guard — hanya Super Admin
-  const authError = await requireSuperAdmin(request)
-  if (authError) return authError
+  const auth = await requireSuperAdmin(request)
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.message }, { status: auth.status })
+  }
 
   try {
     const { searchParams } = new URL(request.url)
@@ -19,7 +21,6 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Ambil data dari DB dulu (untuk dapat drive_file_id)
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from('parts_book')
       .select('id, drive_file_id, drive_file_name')
@@ -34,10 +35,8 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Hapus dari Google Drive
     await deleteFile(existing.drive_file_id)
 
-    // Soft delete di DB (set is_active = false)
     const { error: updateError } = await supabaseAdmin
       .from('parts_book')
       .update({ is_active: false })

@@ -4,8 +4,10 @@ import { supabaseAdmin } from '@/app/lib/supabase'
 
 export async function GET(request: NextRequest) {
   // Auth guard — semua user login bisa akses
-  const authError = await requireAuth(request)
-  if (authError) return authError
+  const auth = await requireAuth(request)
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.message }, { status: auth.status })
+  }
 
   try {
     const { searchParams } = new URL(request.url)
@@ -20,17 +22,14 @@ export async function GET(request: NextRequest) {
       .order('unit_name', { ascending: true })
       .order('created_at', { ascending: false })
 
-    // Filter by unit_name
     if (unit_name) {
       query = query.ilike('unit_name', `%${unit_name}%`)
     }
 
-    // Filter by doc_type
     if (doc_type) {
       query = query.eq('doc_type', doc_type)
     }
 
-    // Search by nama file atau unit
     if (search) {
       query = query.or(
         `unit_name.ilike.%${search}%,drive_file_name.ilike.%${search}%,notes.ilike.%${search}%`
