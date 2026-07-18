@@ -79,7 +79,6 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
   }
   function handleMouseUp() { setDragging(false) }
   function handleWheel(e: React.WheelEvent) {
-    e.preventDefault()
     if (e.deltaY < 0) zoomIn(); else zoomOut()
   }
 
@@ -149,6 +148,8 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
           src={src}
           alt={alt}
           draggable={false}
+          onLoad={() => console.log('✅ Image loaded:', src)}
+          onError={(e) => console.error('❌ Image failed:', src, e)}
           className="max-w-full max-h-full object-contain bg-white shadow transition-transform"
           style={{
             transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
@@ -403,6 +404,13 @@ export default function PartsCatalogPage() {
     <div className="min-h-[calc(100vh-100px)] bg-slate-50 flex flex-col">
       {/* ═══════ HEADER ═══════ */}
       <div className="bg-white border-b px-3 py-2 flex flex-wrap items-center gap-2 sticky top-0 z-30">
+        <a
+          href="/dashboard"
+          className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-bold text-slate-700"
+          title="Kembali ke Dashboard"
+        >
+          ←
+        </a>
         <h1 className="text-base md:text-lg font-black text-[#003D79] whitespace-nowrap">📚 Parts Catalog</h1>
 
         {/* Desktop search inline */}
@@ -476,7 +484,7 @@ export default function PartsCatalogPage() {
         )}
 
         {/* Image */}
-        <div className="bg-white border-b" style={{ height: '45vh', minHeight: '250px' }}>
+        <div className="bg-white border-b relative" style={{ height: '45vh', minHeight: '280px', maxHeight: '500px' }}>
           {!selectedAssembly ? (
             <div className="h-full flex items-center justify-center text-slate-400 text-sm p-4 text-center">
               Klik ☰ Browse untuk pilih assembly
