@@ -193,3 +193,51 @@ function getPrimaryRole(roles: string[]): string {
   }
   return 'karyawan'
 }
+
+// ===== v2.0 (Chat 5) — Helper untuk API Route Guard =====
+import type { NextRequest } from 'next/server'
+
+/**
+ * Ambil session dari request header "Authorization: Bearer <token>"
+ * atau dari cookie "session_token".
+ * Return null kalau tidak ada / tidak valid.
+ */
+export async function getSessionFromRequest(req: NextRequest) {
+  // 1. Coba dari header Authorization
+  const authHeader = req.headers.get('authorization') || ''
+  let token = authHeader.replace(/^Bearer\s+/i, '').trim()
+
+  // 2. Fallback: dari cookie
+  if (!token) {
+    token = req.cookies.get('session_token')?.value || ''
+  }
+
+  if (!token) return null
+  return await getSession(token)
+}
+
+/**
+ * Guard untuk API route yang khusus super admin.
+ * Return { ok: true, session } atau { ok: false, status, message }.
+ */
+export async function requireSuperAdmin(req: NextRequest) {
+  const session = await getSessionFromRequest(req)
+  if (!session) {
+    return { ok: false as const, status: 401, message: 'Not logged in' }
+  }
+  if (!session.is_super_admin) {
+    return { ok: false as const, status: 403, message: 'Forbidden - Super Admin only' }
+  }
+  return { ok: true as const, session }
+}
+
+/**
+ * Guard untuk API route yang butuh user login (role apapun).
+ */
+export async function requireAuth(req: NextRequest) {
+  const session = await getSessionFromRequest(req)
+  if (!session) {
+    return { ok: false as const, status: 401, message: 'Not logged in' }
+  }
+  return { ok: true as const, session }
+}

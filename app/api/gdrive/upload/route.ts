@@ -1,16 +1,26 @@
 // app/api/gdrive/upload/route.ts
-// Upload file ke Google Drive
+// Upload file ke Google Drive - SUPER ADMIN ONLY
 // POST /api/gdrive/upload
 // Body: FormData with "file" field
+// v2.0 - Chat 5 (added auth guard)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadFile } from '@/app/lib/gdrive';
+import { requireSuperAdmin } from '@/app/lib/auth';
 
-// Naikkan limit body untuk file besar (default 4MB di Next.js)
 export const runtime = 'nodejs';
-export const maxDuration = 60; // 60 detik timeout
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
+  // ===== AUTH GUARD =====
+  const auth = await requireSuperAdmin(req);
+  if (!auth.ok) {
+    return NextResponse.json(
+      { success: false, message: auth.message },
+      { status: auth.status }
+    );
+  }
+
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
@@ -24,7 +34,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validasi ukuran file (max 50MB)
     const MAX_SIZE = 50 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
@@ -33,11 +42,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Convert File → Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload ke Drive
     const fileName = customName || file.name;
     const result = await uploadFile(
       fileName,
@@ -50,6 +57,7 @@ export async function POST(req: NextRequest) {
       success: true,
       message: 'File uploaded successfully',
       data: result,
+      uploaded_by: auth.session.nrp,
     });
   } catch (err: any) {
     return NextResponse.json(
