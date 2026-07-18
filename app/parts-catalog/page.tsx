@@ -165,6 +165,20 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
 // ═══════════════════════════════════════════════
 // MAIN PAGE
 // ═══════════════════════════════════════════════
+// Helper: Extract Google Drive File ID dari web view link
+function extractDriveId(link: string | null): string | null {
+  if (!link) return null
+  const match = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+  return match ? match[1] : null
+}
+
+// Helper: Get image source (prioritas file_id, fallback ke extract dari link)
+function getImageSrc(asm: Assembly | null): string | null {
+  if (!asm) return null
+  const fileId = asm.image_drive_file_id || extractDriveId(asm.image_drive_web_view_link)
+  return fileId ? `/api/parts-catalog/image/${fileId}` : null
+}
+
 export default function PartsCatalogPage() {
   const [units, setUnits] = useState<Unit[]>([])
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
@@ -490,9 +504,9 @@ export default function PartsCatalogPage() {
             <div className="h-full flex items-center justify-center text-slate-400 text-sm p-4 text-center">
               Klik ☰ Browse untuk pilih assembly
             </div>
-          ) : selectedAssembly.image_drive_file_id ? (
+          ) : getImageSrc(selectedAssembly) ? (
             <ZoomableImage
-              src={`/api/parts-catalog/image/${selectedAssembly.image_drive_file_id}`}
+              src={getImageSrc(selectedAssembly)!}
               alt={selectedAssembly.assembly_name}
             />
           ) : (
@@ -572,9 +586,9 @@ export default function PartsCatalogPage() {
               <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">
                 Pilih assembly di panel kiri
               </div>
-            ) : selectedAssembly.image_drive_file_id ? (
+            ) : getImageSrc(selectedAssembly) ? (
               <ZoomableImage
-                src={`/api/parts-catalog/image/${selectedAssembly.image_drive_file_id}`}
+                src={getImageSrc(selectedAssembly)!}
                 alt={selectedAssembly.assembly_name}
               />
             ) : (
