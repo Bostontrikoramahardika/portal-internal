@@ -6,10 +6,10 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ fileId: string }> }
+  { params }: { params: { fileId: string } }
 ) {
   try {
-    const { fileId } = await params
+    const { fileId } = params
 
     if (!fileId) {
       return new NextResponse('fileId wajib', { status: 400 })
