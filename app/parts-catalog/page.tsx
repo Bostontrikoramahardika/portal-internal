@@ -433,9 +433,10 @@ export default function PartsCatalogPage() {
 
         <div className="flex-1 md:hidden"></div>
 
+        {/* Desktop only: Orders + Import */}
         <a
           href="/part-orders"
-          className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs md:text-sm font-bold hover:bg-amber-600 whitespace-nowrap"
+          className="hidden md:inline-flex px-3 py-1.5 bg-amber-500 text-white rounded-lg text-sm font-bold hover:bg-amber-600 whitespace-nowrap items-center"
         >
           📋 Orders
         </a>
@@ -443,7 +444,7 @@ export default function PartsCatalogPage() {
         {isSuperAdmin && (
           <button
             onClick={() => setShowImport(true)}
-            className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs md:text-sm font-bold hover:bg-emerald-700 whitespace-nowrap"
+            className="hidden md:inline-flex px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 whitespace-nowrap items-center"
           >
             📥 Import
           </button>
