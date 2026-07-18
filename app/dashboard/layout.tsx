@@ -464,6 +464,12 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
             <span className="text-lg">📚</span><span>Parts Catalog</span>
           </button>
           <button
+            onClick={() => { router.push('/part-orders'); setActiveTab('dokumen') }}
+            className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === 'dokumen' ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}
+          >
+            <span className="text-lg">📋</span><span>Part Orders</span>
+          </button>
+          <button
             onClick={() => { router.push('/parts-book'); setActiveTab('dokumen') }}
             className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === 'dokumen' ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}
           >
