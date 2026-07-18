@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   // Non-admin atau mode=my → hanya order sendiri
   if (!isAdmin || mode === 'my') {
-    query = query.eq('requester_name', session.nama || session.nrp)
+    query = query.eq('requester_nrp', session.nrp)
   }
 
   if (status) {
