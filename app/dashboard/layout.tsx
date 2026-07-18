@@ -360,9 +360,9 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
   }
 
     function handleTabClick(tab: typeof TAB_CONFIG[0]) {
-    // Handle tab Dokumen langsung redirect ke /parts-book
+    // Handle tab Dokumen langsung redirect ke /parts-catalog
     if (tab.key === 'dokumen') {
-      router.push('/parts-book')
+      router.push('/parts-catalog')
       setActiveTab('dokumen')
       return
     }
@@ -458,10 +458,10 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
             </div>
           ))}
           <button
-            onClick={() => { router.push('/parts-book'); setActiveTab('dokumen') }}
+            onClick={() => { router.push('/parts-catalog'); setActiveTab('dokumen') }}
             className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === 'dokumen' ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}
           >
-            <span className="text-lg">📚</span><span>Dokumen</span>
+            <span className="text-lg">📚</span><span>Parts Catalog</span>
           </button>
           <button
             onClick={() => { router.push('/parts-book'); setActiveTab('dokumen') }}
