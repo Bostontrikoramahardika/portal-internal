@@ -25,7 +25,7 @@ export async function GET(
       ? result.buffer 
       : Buffer.from(result.buffer)
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         'Content-Type': result.mimeType || 'image/jpeg',
