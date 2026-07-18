@@ -121,6 +121,35 @@ export async function getFileInfo(fileId: string): Promise<DriveFile | null> {
   }
 }
 
+// ---------- GET FILE BUFFER (untuk proxy image) ----------
+export async function getFileBuffer(fileId: string): Promise<{ buffer: Buffer; mimeType: string } | null> {
+  try {
+    const drive = getDriveClient();
+
+    // Ambil metadata dulu untuk tahu mimeType
+    const meta = await drive.files.get({
+      fileId,
+      fields: 'id, mimeType',
+    });
+
+    // Download file content
+    const response = await drive.files.get(
+      { fileId, alt: 'media' },
+      { responseType: 'arraybuffer' }
+    );
+
+    const buffer = Buffer.from(response.data as ArrayBuffer);
+    return {
+      buffer,
+      mimeType: meta.data.mimeType || 'application/octet-stream',
+    };
+  } catch (e) {
+    console.error('getFileBuffer error:', e);
+    return null;
+  }
+}
+
+
 // ---------- TEST CONNECTION ----------
 export async function testConnection(): Promise<{
   success: boolean;
