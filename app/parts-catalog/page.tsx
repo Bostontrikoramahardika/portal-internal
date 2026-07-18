@@ -49,24 +49,10 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
   const [pos, setPos] = useState({ x: 0, y: 0 })
   const [dragging, setDragging] = useState(false)
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 })
-
-  const touchState = useRef<{
-    startDist: number
-    startScale: number
-    startPos: { x: number; y: number }
-    startTouch: { x: number; y: number }
-    mode: 'none' | 'pan' | 'pinch'
-  }>({
-    startDist: 0,
-    startScale: 1,
-    startPos: { x: 0, y: 0 },
-    startTouch: { x: 0, y: 0 },
-    mode: 'none',
-  })
+  const touchState = useRef<any>({ mode: 'none' })
 
   useEffect(() => {
-    setScale(1)
-    setPos({ x: 0, y: 0 })
+    setScale(1); setPos({ x: 0, y: 0 })
   }, [src])
 
   function zoomIn() { setScale(s => Math.min(s + 0.25, 5)) }
@@ -77,10 +63,7 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
       return next
     })
   }
-  function resetZoom() {
-    setScale(1)
-    setPos({ x: 0, y: 0 })
-  }
+  function resetZoom() { setScale(1); setPos({ x: 0, y: 0 }) }
 
   function handleMouseDown(e: React.MouseEvent) {
     if (scale <= 1) return
@@ -95,11 +78,9 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
     })
   }
   function handleMouseUp() { setDragging(false) }
-
   function handleWheel(e: React.WheelEvent) {
     e.preventDefault()
-    if (e.deltaY < 0) zoomIn()
-    else zoomOut()
+    if (e.deltaY < 0) zoomIn(); else zoomOut()
   }
 
   function getDist(t1: React.Touch, t2: React.Touch) {
@@ -114,13 +95,10 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
         startDist: getDist(e.touches[0], e.touches[1]),
         startScale: scale,
         startPos: { ...pos },
-        startTouch: { x: 0, y: 0 },
         mode: 'pinch',
       }
     } else if (e.touches.length === 1 && scale > 1) {
       touchState.current = {
-        startDist: 0,
-        startScale: scale,
         startPos: { ...pos },
         startTouch: { x: e.touches[0].clientX, y: e.touches[0].clientY },
         mode: 'pan',
@@ -151,13 +129,10 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="relative w-full h-full overflow-hidden bg-slate-200 select-none">
       <div className="absolute top-2 right-2 z-10 flex gap-1 bg-white/90 backdrop-blur rounded-lg shadow p-1">
-        <button onClick={zoomOut} className="w-8 h-8 flex items-center justify-center text-lg font-bold hover:bg-slate-100 rounded" title="Zoom Out">−</button>
-        <button onClick={resetZoom} className="px-2 h-8 flex items-center justify-center text-xs font-bold hover:bg-slate-100 rounded" title="Reset">
-          {Math.round(scale * 100)}%
-        </button>
-        <button onClick={zoomIn} className="w-8 h-8 flex items-center justify-center text-lg font-bold hover:bg-slate-100 rounded" title="Zoom In">+</button>
+        <button onClick={zoomOut} className="w-8 h-8 flex items-center justify-center text-lg font-bold hover:bg-slate-100 rounded">−</button>
+        <button onClick={resetZoom} className="px-2 h-8 text-xs font-bold hover:bg-slate-100 rounded">{Math.round(scale * 100)}%</button>
+        <button onClick={zoomIn} className="w-8 h-8 flex items-center justify-center text-lg font-bold hover:bg-slate-100 rounded">+</button>
       </div>
-
       <div
         className="w-full h-full flex items-center justify-center"
         style={{ cursor: scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'default' }}
@@ -201,6 +176,7 @@ export default function PartsCatalogPage() {
   const [search, setSearch] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [showSearch, setShowSearch] = useState(false)
+  const [searching, setSearching] = useState(false)
 
   const [showImport, setShowImport] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -212,7 +188,9 @@ export default function PartsCatalogPage() {
 
   const [isSuperAdmin, setIsSuperAdmin] = useState(true)
 
-  const [mobileView, setMobileView] = useState<'tree' | 'image' | 'parts'>('tree')
+  // 📱 Mobile: browse drawer
+  const [browseOpen, setBrowseOpen] = useState(false)
+  const [expandedUnitId, setExpandedUnitId] = useState<string | null>(null)
 
   // 🛒 ORDER STATE
   const [orderPart, setOrderPart] = useState<PartItem | null>(null)
@@ -236,6 +214,7 @@ export default function PartsCatalogPage() {
     setSelectedAssembly(null)
     setItems([])
     setLoadingAsm(true)
+    setExpandedUnitId(u.id)
     const res = await fetch(`/api/parts-catalog/assemblies?unit_id=${u.id}`)
     const json = await res.json()
     if (json.success) setAssemblies(json.data)
@@ -252,22 +231,22 @@ export default function PartsCatalogPage() {
       setItems(json.items)
     }
     setLoadingItems(false)
-    setMobileView('image')
+    setBrowseOpen(false) // close drawer setelah pilih
   }
 
   async function doSearch() {
     if (!search.trim()) {
       setSearchResults([])
-      setShowSearch(false)
       return
     }
-    setShowSearch(true)
+    setSearching(true)
     const url = `/api/parts-catalog/search?q=${encodeURIComponent(search)}${
       selectedUnit ? `&unit_id=${selectedUnit.id}` : ''
     }`
     const res = await fetch(url)
     const json = await res.json()
     if (json.success) setSearchResults(json.data)
+    setSearching(false)
   }
 
   async function openFromSearch(r: SearchResult) {
@@ -283,7 +262,7 @@ export default function PartsCatalogPage() {
     }
     setShowSearch(false)
     setSearch('')
-    setMobileView('image')
+    setSearchResults([])
   }
 
   async function doImport() {
@@ -330,14 +309,8 @@ export default function PartsCatalogPage() {
 
   async function submitOrder() {
     if (!orderPart || !selectedUnit) return
-    if (!orderMachine.trim()) {
-      setOrderMsg('❌ Machine Unit wajib diisi')
-      return
-    }
-    if (orderQty < 1) {
-      setOrderMsg('❌ Qty minimal 1')
-      return
-    }
+    if (!orderMachine.trim()) { setOrderMsg('❌ Machine Unit wajib diisi'); return }
+    if (orderQty < 1) { setOrderMsg('❌ Qty minimal 1'); return }
     setOrderSubmitting(true)
     setOrderMsg('')
 
@@ -345,9 +318,7 @@ export default function PartsCatalogPage() {
       const res = await fetch('/api/part-orders/submit', {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           part_number: orderPart.part_number,
           part_name: orderPart.part_name,
@@ -373,28 +344,86 @@ export default function PartsCatalogPage() {
     }
   }
 
+  // Tree component (reusable untuk desktop panel & mobile drawer)
+  function TreeMenu() {
+    return (
+      <>
+        {units.length === 0 && (
+          <div className="p-4 text-sm text-slate-400 text-center">
+            Belum ada unit.<br />
+            {isSuperAdmin && 'Klik Import untuk mulai.'}
+          </div>
+        )}
+        {units.map(u => (
+          <div key={u.id}>
+            <button
+              onClick={() => selectUnit(u)}
+              className={`w-full text-left px-3 py-2.5 text-sm font-bold flex items-center gap-2 border-b ${
+                selectedUnit?.id === u.id ? 'bg-blue-50 text-[#003D79]' : 'hover:bg-slate-50'
+              }`}
+            >
+              <span>{expandedUnitId === u.id ? '▼' : '▶'}</span>
+              <span>📁</span>
+              <span className="flex-1 truncate">{u.unit_code}</span>
+              <span className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">
+                {selectedUnit?.id === u.id ? assemblies.length : ''}
+              </span>
+            </button>
+            {expandedUnitId === u.id && selectedUnit?.id === u.id && (
+              <div className="bg-slate-50 border-b">
+                {loadingAsm ? (
+                  <div className="p-3 text-xs text-slate-400">Loading...</div>
+                ) : assemblies.length === 0 ? (
+                  <div className="p-3 text-xs text-slate-400">Belum ada assembly</div>
+                ) : (
+                  assemblies.map(a => (
+                    <button
+                      key={a.id}
+                      onClick={() => selectAssembly(a)}
+                      className={`w-full text-left pl-10 pr-2 py-2 text-xs flex items-center gap-1 border-b border-slate-100 ${
+                        selectedAssembly?.id === a.id
+                          ? 'bg-amber-100 text-amber-900 font-bold'
+                          : 'text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>📄</span>
+                      <span className="flex-1 truncate">{a.assembly_name}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </>
+    )
+  }
+
   return (
     <div className="min-h-[calc(100vh-100px)] bg-slate-50 flex flex-col">
-      {/* HEADER */}
+      {/* ═══════ HEADER ═══════ */}
       <div className="bg-white border-b px-3 py-2 flex flex-wrap items-center gap-2 sticky top-0 z-30">
         <h1 className="text-base md:text-lg font-black text-[#003D79] whitespace-nowrap">📚 Parts Catalog</h1>
 
-        <div className="flex-1 flex items-center gap-2 min-w-[200px]">
+        {/* Desktop search inline */}
+        <div className="hidden md:flex flex-1 items-center gap-2 min-w-[200px]">
           <input
             type="text"
             placeholder="Search part number / name..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && doSearch()}
-            className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:border-blue-500"
+            onKeyDown={e => e.key === 'Enter' && (setShowSearch(true), doSearch())}
+            className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
           />
           <button
-            onClick={doSearch}
-            className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-xs md:text-sm font-bold hover:bg-blue-800"
+            onClick={() => { setShowSearch(true); doSearch() }}
+            className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-sm font-bold hover:bg-blue-800"
           >
             🔍
           </button>
         </div>
+
+        <div className="flex-1 md:hidden"></div>
 
         <a
           href="/part-orders"
@@ -413,125 +442,118 @@ export default function PartsCatalogPage() {
         )}
       </div>
 
-      {/* Mobile Tab Switcher */}
-      <div className="md:hidden bg-white border-b flex">
-        {[
-          { key: 'tree', label: '📁 Units', badge: units.length },
-          { key: 'image', label: '🖼️ Image', badge: 0 },
-          { key: 'parts', label: '📋 Parts', badge: items.length },
-        ].map(t => (
-          <button
-            key={t.key}
-            onClick={() => setMobileView(t.key as any)}
-            className={`flex-1 py-2 text-xs font-bold flex items-center justify-center gap-1 ${
-              mobileView === t.key ? 'text-[#003D79] border-b-2 border-[#003D79] bg-blue-50' : 'text-slate-500'
-            }`}
-          >
-            {t.label}
-            {t.badge > 0 && (
-              <span className="text-[9px] bg-slate-200 text-slate-700 px-1.5 rounded-full">{t.badge}</span>
-            )}
-          </button>
-        ))}
+      {/* ═══════ MOBILE TOP BAR ═══════ */}
+      <div className="md:hidden bg-[#003D79] px-2 py-2 flex gap-2 sticky top-[52px] z-20">
+        <button
+          onClick={() => setBrowseOpen(true)}
+          className="flex-1 bg-white text-[#003D79] px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
+        >
+          ☰ Browse
+        </button>
+        <button
+          onClick={() => setShowSearch(true)}
+          className="flex-1 bg-white/20 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
+        >
+          🔍 Cari
+        </button>
+        <a
+          href="/part-orders"
+          className="flex-1 bg-amber-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
+        >
+          🛒 Orders
+        </a>
       </div>
 
-      {/* SEARCH RESULT */}
-      {showSearch && (
-        <div className="bg-white border-b shadow px-3 py-2">
-          <div className="flex justify-between items-center mb-2">
-            <div className="text-xs font-bold text-slate-600">Hasil: {searchResults.length}</div>
-            <button
-              onClick={() => { setShowSearch(false); setSearch('') }}
-              className="text-xs text-slate-400 hover:text-slate-700"
-            >
-              ✕ Close
-            </button>
+      {/* ═══════ MOBILE CONTENT (scroll ke bawah) ═══════ */}
+      <div className="md:hidden flex-1 flex flex-col">
+        {/* Breadcrumb */}
+        {selectedAssembly && (
+          <div className="bg-white border-b px-3 py-2 text-xs">
+            <span className="text-slate-500">{selectedUnit?.unit_code}</span>
+            <span className="text-slate-400 mx-1">›</span>
+            <span className="font-bold text-amber-600">{selectedAssembly.assembly_name}</span>
           </div>
-          {searchResults.length === 0 ? (
-            <div className="text-sm text-slate-400 py-4 text-center">Tidak ditemukan</div>
+        )}
+
+        {/* Image */}
+        <div className="bg-white border-b" style={{ height: '45vh', minHeight: '250px' }}>
+          {!selectedAssembly ? (
+            <div className="h-full flex items-center justify-center text-slate-400 text-sm p-4 text-center">
+              Klik ☰ Browse untuk pilih assembly
+            </div>
+          ) : selectedAssembly.image_drive_file_id ? (
+            <ZoomableImage
+              src={`/api/parts-catalog/image/${selectedAssembly.image_drive_file_id}`}
+              alt={selectedAssembly.assembly_name}
+            />
           ) : (
-            <div className="max-h-64 overflow-y-auto divide-y">
-              {searchResults.map(r => (
-                <button
-                  key={r.id}
-                  onClick={() => openFromSearch(r)}
-                  className="w-full text-left px-3 py-2 hover:bg-blue-50 flex flex-col md:flex-row md:items-center gap-1 md:gap-3 text-xs md:text-sm"
-                >
-                  <span className="font-mono font-bold text-[#003D79] md:w-32">{r.part_number}</span>
-                  <span className="flex-1 truncate">{r.part_name}</span>
-                  <span className="text-[10px] md:text-xs text-slate-500">{r.parts_assemblies?.assembly_name}</span>
-                </button>
-              ))}
+            <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+              Tidak ada gambar
             </div>
           )}
         </div>
-      )}
 
-      {/* CONTENT */}
-      <div className="flex-1 md:grid md:grid-cols-12 gap-2 p-2 overflow-hidden">
+        {/* Parts info + list */}
+        {selectedAssembly && (
+          <>
+            <div className="bg-slate-100 px-3 py-2 border-b">
+              <div className="font-bold text-sm text-slate-800">{selectedAssembly.assembly_name}</div>
+              <div className="text-[11px] text-emerald-700 font-bold mt-0.5">
+                ✅ {items.length} part ditemukan
+              </div>
+            </div>
+
+            <div className="flex-1 bg-white">
+              {loadingItems ? (
+                <div className="p-4 text-sm text-slate-400 text-center">Loading...</div>
+              ) : items.length === 0 ? (
+                <div className="p-4 text-sm text-slate-400 text-center">Tidak ada parts</div>
+              ) : (
+                <div className="divide-y">
+                  {items.map(it => (
+                    <div key={it.id} className="p-3">
+                      <div className="flex items-start gap-2 mb-1">
+                        <span className="text-[10px] font-bold text-slate-400 mt-1">#{it.ref_no ?? '-'}</span>
+                        <div className="flex-1">
+                          <div className="font-mono font-bold text-[#003D79] text-sm">{it.part_number || '-'}</div>
+                          <div className="text-xs text-slate-700 mt-0.5">{it.part_name || '-'}</div>
+                          {it.qty && <div className="text-[10px] text-slate-500 mt-0.5">Qty: {it.qty}</div>}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => openOrderModal(it)}
+                        disabled={!it.part_number}
+                        className="w-full mt-2 py-2 bg-[#003D79] hover:bg-blue-800 disabled:bg-slate-300 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"
+                      >
+                        🛒 Order Part
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ═══════ DESKTOP: 3-PANEL LAYOUT ═══════ */}
+      <div className="hidden md:grid md:grid-cols-12 gap-2 p-2 flex-1 overflow-hidden">
         {/* LEFT PANEL - TREE */}
-        <div className={`md:col-span-3 bg-white border rounded-lg overflow-hidden flex-col ${mobileView === 'tree' ? 'flex' : 'hidden md:flex'} h-full`}>
+        <div className="md:col-span-3 bg-white border rounded-lg overflow-hidden flex flex-col h-full">
           <div className="bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 border-b">
             UNITS / ASSEMBLIES
           </div>
           <div className="flex-1 overflow-y-auto">
-            {units.length === 0 && (
-              <div className="p-4 text-sm text-slate-400 text-center">
-                Belum ada unit.<br />
-                {isSuperAdmin && 'Klik Import untuk mulai.'}
-              </div>
-            )}
-            {units.map(u => (
-              <div key={u.id}>
-                <button
-                  onClick={() => selectUnit(u)}
-                  className={`w-full text-left px-3 py-2 text-sm font-bold flex items-center gap-2 border-b ${
-                    selectedUnit?.id === u.id ? 'bg-blue-50 text-[#003D79]' : 'hover:bg-slate-50'
-                  }`}
-                >
-                  <span>📁</span>
-                  <span className="flex-1 truncate">{u.unit_code}</span>
-                </button>
-                {selectedUnit?.id === u.id && (
-                  <div className="bg-slate-50 border-b">
-                    {loadingAsm ? (
-                      <div className="p-3 text-xs text-slate-400">Loading...</div>
-                    ) : assemblies.length === 0 ? (
-                      <div className="p-3 text-xs text-slate-400">Belum ada assembly</div>
-                    ) : (
-                      assemblies.map(a => (
-                        <button
-                          key={a.id}
-                          onClick={() => selectAssembly(a)}
-                          className={`w-full text-left pl-8 pr-2 py-1.5 text-xs flex items-center gap-1 ${
-                            selectedAssembly?.id === a.id
-                              ? 'bg-amber-100 text-amber-900 font-bold'
-                              : 'text-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          <span>📄</span>
-                          <span className="flex-1 truncate">{a.assembly_name}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+            <TreeMenu />
           </div>
         </div>
 
         {/* MIDDLE PANEL - IMAGE */}
-        <div className={`md:col-span-5 bg-white border rounded-lg overflow-hidden flex-col ${mobileView === 'image' ? 'flex' : 'hidden md:flex'} h-full`}>
+        <div className="md:col-span-5 bg-white border rounded-lg overflow-hidden flex flex-col h-full">
           <div className="bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 border-b flex justify-between items-center gap-2">
             <span className="truncate flex-1">{selectedAssembly ? selectedAssembly.assembly_name : 'ASSEMBLY IMAGE'}</span>
             {selectedAssembly?.image_drive_web_view_link && (
-              <a
-                href={selectedAssembly.image_drive_web_view_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:underline whitespace-nowrap"
-              >
+              <a href={selectedAssembly.image_drive_web_view_link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline whitespace-nowrap">
                 🔍 Drive
               </a>
             )}
@@ -555,7 +577,7 @@ export default function PartsCatalogPage() {
         </div>
 
         {/* RIGHT PANEL - PARTS */}
-        <div className={`md:col-span-4 bg-white border rounded-lg overflow-hidden flex-col ${mobileView === 'parts' ? 'flex' : 'hidden md:flex'} h-full`}>
+        <div className="md:col-span-4 bg-white border rounded-lg overflow-hidden flex flex-col h-full">
           <div className="bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 border-b">
             PARTS LIST {items.length > 0 && `(${items.length})`}
           </div>
@@ -588,8 +610,7 @@ export default function PartsCatalogPage() {
                         <button
                           onClick={() => openOrderModal(it)}
                           disabled={!it.part_number}
-                          className="px-2 py-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded text-[10px] font-bold"
-                          title="Order Part"
+                          className="px-2 py-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white rounded text-[10px] font-bold"
                         >
                           🛒
                         </button>
@@ -603,7 +624,79 @@ export default function PartsCatalogPage() {
         </div>
       </div>
 
-      {/* IMPORT MODAL */}
+      {/* ═══════ MOBILE BROWSE DRAWER ═══════ */}
+      {browseOpen && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/60 z-50" onClick={() => setBrowseOpen(false)} />
+          <div className="fixed top-0 left-0 bottom-0 w-[85%] max-w-sm bg-white z-50 flex flex-col shadow-2xl">
+            <div className="bg-[#003D79] text-white px-4 py-3 flex justify-between items-center">
+              <h3 className="font-bold text-sm">📁 Pilih Unit / Assembly</h3>
+              <button onClick={() => setBrowseOpen(false)} className="text-white/80 hover:text-white text-lg">✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <TreeMenu />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ═══════ SEARCH MODAL ═══════ */}
+      {showSearch && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/60 z-50" onClick={() => setShowSearch(false)} />
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-xl bg-white rounded-2xl shadow-2xl z-50 overflow-hidden max-h-[85vh] flex flex-col">
+            <div className="bg-[#003D79] text-white px-4 py-3 flex justify-between items-center">
+              <h3 className="font-bold text-sm">🔍 Cari Part</h3>
+              <button onClick={() => setShowSearch(false)} className="text-white/80 hover:text-white text-lg">✕</button>
+            </div>
+            <div className="p-3 border-b flex gap-2">
+              <input
+                type="text"
+                placeholder="Part number / name..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && doSearch()}
+                autoFocus
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+              />
+              <button
+                onClick={doSearch}
+                className="px-4 py-2 bg-[#003D79] text-white rounded-lg text-sm font-bold hover:bg-blue-800"
+              >
+                Cari
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {searching ? (
+                <div className="p-6 text-center text-slate-400 text-sm">Mencari...</div>
+              ) : searchResults.length === 0 ? (
+                <div className="p-6 text-center text-slate-400 text-sm">
+                  {search ? 'Tidak ditemukan' : 'Ketik untuk mencari...'}
+                </div>
+              ) : (
+                <div className="divide-y">
+                  <div className="px-3 py-2 text-xs font-bold text-slate-500 bg-slate-50">
+                    {searchResults.length} hasil ditemukan
+                  </div>
+                  {searchResults.map(r => (
+                    <button
+                      key={r.id}
+                      onClick={() => openFromSearch(r)}
+                      className="w-full text-left px-3 py-2.5 hover:bg-blue-50 flex flex-col gap-0.5"
+                    >
+                      <div className="font-mono font-bold text-[#003D79] text-sm">{r.part_number}</div>
+                      <div className="text-xs text-slate-700">{r.part_name}</div>
+                      <div className="text-[10px] text-slate-500">{r.parts_assemblies?.assembly_name}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ═══════ IMPORT MODAL ═══════ */}
       {showImport && (
         <>
           <div className="fixed inset-0 bg-slate-900/60 z-50" onClick={() => !importing && setShowImport(false)} />
@@ -615,43 +708,18 @@ export default function PartsCatalogPage() {
             <div className="p-5 space-y-3">
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Unit Code *</label>
-                <input
-                  type="text"
-                  value={importUnitCode}
-                  onChange={e => setImportUnitCode(e.target.value)}
-                  disabled={importing}
-                  className="w-full px-3 py-2 border rounded-lg text-sm"
-                  placeholder="PC200-8"
-                />
+                <input type="text" value={importUnitCode} onChange={e => setImportUnitCode(e.target.value)} disabled={importing} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="PC200-8" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Unit Name (opsional)</label>
-                <input
-                  type="text"
-                  value={importUnitName}
-                  onChange={e => setImportUnitName(e.target.value)}
-                  disabled={importing}
-                  className="w-full px-3 py-2 border rounded-lg text-sm"
-                  placeholder="Excavator PC200-8"
-                />
+                <input type="text" value={importUnitName} onChange={e => setImportUnitName(e.target.value)} disabled={importing} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Excavator PC200-8" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">File Excel (.xlsx)</label>
-                <input
-                  type="file"
-                  accept=".xlsx"
-                  onChange={e => setImportFile(e.target.files?.[0] || null)}
-                  disabled={importing}
-                  className="w-full text-sm"
-                />
+                <input type="file" accept=".xlsx" onChange={e => setImportFile(e.target.files?.[0] || null)} disabled={importing} className="w-full text-sm" />
               </div>
               <label className="flex items-center gap-2 text-xs text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={importReplace}
-                  onChange={e => setImportReplace(e.target.checked)}
-                  disabled={importing}
-                />
+                <input type="checkbox" checked={importReplace} onChange={e => setImportReplace(e.target.checked)} disabled={importing} />
                 Replace existing assemblies
               </label>
 
@@ -674,11 +742,7 @@ export default function PartsCatalogPage() {
                 </div>
               )}
 
-              <button
-                onClick={doImport}
-                disabled={importing}
-                className="w-full py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 disabled:opacity-50"
-              >
+              <button onClick={doImport} disabled={importing} className="w-full py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 disabled:opacity-50">
                 {importing ? '⏳ Importing...' : '📥 Start Import'}
               </button>
             </div>
@@ -686,114 +750,58 @@ export default function PartsCatalogPage() {
         </>
       )}
 
-      {/* 🛒 ORDER MODAL */}
+      {/* ═══════ ORDER MODAL ═══════ */}
       {orderPart && (
         <>
           <div className="fixed inset-0 bg-slate-900/60 z-50" onClick={closeOrderModal} />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-2xl shadow-2xl z-50 overflow-hidden">
-            <div className="bg-amber-500 text-white px-5 py-3 flex justify-between items-center">
+            <div className="bg-[#003D79] text-white px-5 py-3 flex justify-between items-center">
               <h3 className="font-bold">🛒 Order Part</h3>
               <button onClick={closeOrderModal} className="text-white/80 hover:text-white">✕</button>
             </div>
             <div className="p-5 space-y-3">
-              {/* Part Info */}
               <div className="bg-slate-50 p-3 rounded-lg text-xs space-y-1">
-                <div className="flex gap-2">
-                  <span className="font-bold text-slate-500 w-20">Part No:</span>
-                  <span className="font-mono font-bold text-[#003D79]">{orderPart.part_number}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="font-bold text-slate-500 w-20">Name:</span>
-                  <span className="flex-1">{orderPart.part_name}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="font-bold text-slate-500 w-20">Unit:</span>
-                  <span>{selectedUnit?.unit_code}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="font-bold text-slate-500 w-20">Assembly:</span>
-                  <span className="flex-1 truncate">{selectedAssembly?.assembly_name}</span>
-                </div>
+                <div className="flex gap-2"><span className="font-bold text-slate-500 w-20">Part No:</span><span className="font-mono font-bold text-[#003D79]">{orderPart.part_number}</span></div>
+                <div className="flex gap-2"><span className="font-bold text-slate-500 w-20">Name:</span><span className="flex-1">{orderPart.part_name}</span></div>
+                <div className="flex gap-2"><span className="font-bold text-slate-500 w-20">Unit:</span><span>{selectedUnit?.unit_code}</span></div>
+                <div className="flex gap-2"><span className="font-bold text-slate-500 w-20">Assembly:</span><span className="flex-1 truncate">{selectedAssembly?.assembly_name}</span></div>
               </div>
 
-              {/* Machine Unit */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Machine Unit * <span className="text-slate-400 font-normal">(unit yang rusak)</span>
-                </label>
-                <input
-                  type="text"
-                  value={orderMachine}
-                  onChange={e => setOrderMachine(e.target.value)}
-                  disabled={orderSubmitting}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-amber-500"
-                  placeholder="Contoh: PC200-7 Unit 03"
-                />
+                <label className="text-xs font-bold text-slate-700 block mb-1">Machine Unit * <span className="text-slate-400 font-normal">(unit yang rusak)</span></label>
+                <input type="text" value={orderMachine} onChange={e => setOrderMachine(e.target.value)} disabled={orderSubmitting} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79]" placeholder="Contoh: PC200-7 Unit 03" />
               </div>
 
-              {/* Qty + Prioritas */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Qty *</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={orderQty}
-                    onChange={e => setOrderQty(parseInt(e.target.value) || 1)}
-                    disabled={orderSubmitting}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-amber-500"
-                  />
+                  <input type="number" min={1} value={orderQty} onChange={e => setOrderQty(parseInt(e.target.value) || 1)} disabled={orderSubmitting} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79]" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Prioritas</label>
-                  <select
-                    value={orderPrioritas}
-                    onChange={e => setOrderPrioritas(e.target.value as any)}
-                    disabled={orderSubmitting}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-amber-500"
-                  >
+                  <select value={orderPrioritas} onChange={e => setOrderPrioritas(e.target.value as any)} disabled={orderSubmitting} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79]">
                     <option value="Normal">Normal</option>
                     <option value="Urgent">🔥 Urgent</option>
                   </select>
                 </div>
               </div>
 
-              {/* Keterangan */}
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Keterangan</label>
-                <textarea
-                  value={orderKeterangan}
-                  onChange={e => setOrderKeterangan(e.target.value)}
-                  disabled={orderSubmitting}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-amber-500 resize-none"
-                  placeholder="Contoh: bocor di sisi kiri, perlu ganti segera"
-                />
+                <textarea value={orderKeterangan} onChange={e => setOrderKeterangan(e.target.value)} disabled={orderSubmitting} rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79] resize-none" placeholder="Contoh: bocor di sisi kiri, perlu ganti segera" />
               </div>
 
-              {/* Message */}
               {orderMsg && (
-                <div className={`p-2 rounded-lg text-xs font-bold text-center ${
-                  orderMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
-                }`}>
+                <div className={`p-2 rounded-lg text-xs font-bold text-center ${orderMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
                   {orderMsg}
                 </div>
               )}
 
-              {/* Buttons */}
               <div className="flex gap-2 pt-2">
-                <button
-                  onClick={closeOrderModal}
-                  disabled={orderSubmitting}
-                  className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold text-sm"
-                >
+                <button onClick={closeOrderModal} disabled={orderSubmitting} className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold text-sm">
                   Batal
                 </button>
-                <button
-                  onClick={submitOrder}
-                  disabled={orderSubmitting}
-                  className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-sm disabled:opacity-50"
-                >
+                <button onClick={submitOrder} disabled={orderSubmitting} className="flex-1 py-2 bg-[#003D79] hover:bg-blue-800 text-white rounded-lg font-bold text-sm disabled:opacity-50">
                   {orderSubmitting ? '⏳ Submitting...' : '🛒 Submit Order'}
                 </button>
               </div>
