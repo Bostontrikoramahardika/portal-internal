@@ -246,6 +246,17 @@ const TAB_CONFIG = [
       )
     }
   },
+
+  // TAB 10: DOKUMEN (Parts Book, semua user login)
+  {
+    key: 'dokumen',
+    label: 'Dokumen',
+    icon: '📚',
+    roles: ALL_ROLES,
+    customMatch: (m: MenuItem) => {
+      return m.menu_key === 'parts_book'
+    }
+  },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -349,6 +360,13 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
   }
 
     function handleTabClick(tab: typeof TAB_CONFIG[0]) {
+    // Handle tab Dokumen langsung redirect ke /parts-book
+    if (tab.key === 'dokumen') {
+      router.push('/parts-book')
+      setActiveTab('dokumen')
+      return
+    }
+
     const tabMenus = menus.filter(m => tab.customMatch(m))
     tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
     
@@ -439,6 +457,18 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
               )}
             </div>
           ))}
+          <button
+            onClick={() => { router.push('/parts-book'); setActiveTab('dokumen') }}
+            className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === 'dokumen' ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}
+          >
+            <span className="text-lg">📚</span><span>Dokumen</span>
+          </button>
+          <button
+            onClick={() => { router.push('/parts-book'); setActiveTab('dokumen') }}
+            className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === 'dokumen' ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}
+          >
+            <span className="text-lg">📚</span><span>Dokumen</span>
+          </button>
           <button onClick={handleLogout} className="w-full mt-6 bg-red-600/20 text-red-400 py-2.5 rounded-xl text-xs font-bold hover:bg-red-600/30 transition-colors">🚪 Keluar</button>
         </div>
       </aside>
