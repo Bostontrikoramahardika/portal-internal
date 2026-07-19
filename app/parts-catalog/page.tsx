@@ -176,7 +176,7 @@ function extractDriveId(link: string | null): string | null {
 function getImageSrc(asm: Assembly | null): string | null {
   if (!asm) return null
   const fileId = asm.image_drive_file_id || extractDriveId(asm.image_drive_web_view_link)
-  return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000` : null
+    return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000` : null
 }
 
 export default function PartsCatalogPage() {
