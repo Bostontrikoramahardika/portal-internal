@@ -172,11 +172,11 @@ function extractDriveId(link: string | null): string | null {
   return match ? match[1] : null
 }
 
-// Helper: Get image source (prioritas file_id, fallback ke extract dari link)
+// Helper: Get image source (Direct Google Drive thumbnail — bypass proxy)
 function getImageSrc(asm: Assembly | null): string | null {
   if (!asm) return null
   const fileId = asm.image_drive_file_id || extractDriveId(asm.image_drive_web_view_link)
-  return fileId ? `/api/parts-catalog/image/${fileId}` : null
+  return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000` : null
 }
 
 export default function PartsCatalogPage() {
