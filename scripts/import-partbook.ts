@@ -131,11 +131,23 @@ function findHeaderRow(ws: any) {
     for (let c = 1; c <= maxCol; c++) {
       texts.push(asText(row.getCell(c).text || row.getCell(c).value).toUpperCase())
     }
-    const idxItem = texts.findIndex(t => t && (t === 'ITEM' || t === 'NO' || t === 'NO.' || t === 'REF' || t === 'REF.' || t === 'REF NO'))
+    
+    // Lebih fleksibel: tambah INDEX, ITEM NO, dll
+    const idxItem = texts.findIndex(t => t && (
+      t === 'ITEM' || t === 'INDEX' || t === 'NO' || t === 'NO.' || 
+      t === 'REF' || t === 'REF.' || t === 'REF NO' || t === 'REF NO.' ||
+      t === 'ITEM NO' || t === 'ITEM NO.'
+    ))
     const idxPart = texts.findIndex(t => t && (t.includes('PART') && t.includes('NO')))
-    const idxDesc = texts.findIndex(t => t && (t === 'DESCRIPTION' || t === 'NAME' || t === 'DESC' || t.includes('DESCRIPTION') || t.includes('NAME')))
-    const idxQty  = texts.findIndex(t => t && (t === 'QTY' || t === "Q'TY" || t === 'QTY.' || t === 'QUANTITY' || t.includes('QTY') || t.includes("Q'TY")))
-    const idxSer  = texts.findIndex(t => t && t.includes('SERIAL'))
+    const idxDesc = texts.findIndex(t => t && (
+      t === 'DESCRIPTION' || t === 'NAME' || t === 'DESC' || 
+      t.includes('DESCRIPTION') || t.includes('NAME') || t.includes('REMARKS')
+    ))
+    const idxQty = texts.findIndex(t => t && (
+      t === 'QTY' || t === "Q'TY" || t === 'QTY.' || t === 'QUANTITY' || 
+      t.includes('QTY') || t.includes("Q'TY")
+    ))
+    const idxSer = texts.findIndex(t => t && t.includes('SERIAL'))
 
     if (idxItem !== -1 && idxPart !== -1 && idxDesc !== -1 && idxQty !== -1) {
       return {
@@ -159,9 +171,20 @@ function pickAssemblyName(ws: any, headerRow: number): string {
     const row = ws.getRow(r)
     for (let c = 1; c <= 8; c++) {
       const t = asText(row.getCell(c).text || row.getCell(c).value)
-      if (t && t.length > 5) {
+      if (t && t.length > 3) {
         const upper = t.toUpperCase()
-        if (!upper.includes('S/N') && !upper.includes('PART NO') && !upper.includes('PAGE') && !upper.includes('FIG') && !/^[0-9\-\s]+$/.test(t)) {
+        // Filter lebih ketat: skip yang jelas bukan nama assembly
+        if (
+          !upper.includes('S/N') && 
+          !upper.includes('PART NO') && 
+          !upper.includes('PAGE') && 
+          !upper.includes('FIG') && 
+          !upper.includes('REF :') &&
+          !upper.includes('REF:') &&
+          !upper.startsWith('PRINTED') &&
+          !/^[0-9\-\s.]+$/.test(t) &&
+          !/^PAGE\s/i.test(t)
+        ) {
           candidates.push(t)
         }
       }
@@ -208,7 +231,10 @@ function parseItems(ws: any, headerRow: number, cols: any) {
   const out: any[] = []
   const maxRow = ws.rowCount || headerRow + 200
   let emptyStreak = 0
-  const trashKeywords = ['PAGE', 'REF.', 'NO.', 'PRINTED', 'DATE', 'CONTINUED', 'S/N', 'REPLACED BY', 'REPLACEMENT']
+  
+  // Filter HANYA untuk baris yang jelas-jelas bukan data part
+  // JANGAN filter kata pendek seperti "NO." karena bisa masuk di part name
+  const trashKeywords = ['PRINTED', 'CONTINUED', 'REPLACED BY', 'REPLACEMENT', 'SEE PAGE', 'THIS PAGE']
 
   for (let r = headerRow + 1; r <= maxRow; r++) {
     const row = ws.getRow(r)
@@ -224,23 +250,52 @@ function parseItems(ws: any, headerRow: number, cols: any) {
     }
     emptyStreak = 0
 
-    const combinedText = `${refTxt} ${partNo} ${desc}`.toUpperCase()
-    if (trashKeywords.some(k => combinedText.includes(k))) continue
+    // Trash filter: cek HANYA desc (bukan refTxt atau partNo)
+    const descUpper = desc.toUpperCase()
+    if (trashKeywords.some(k => descUpper.includes(k))) continue
+    
+    // Skip kalau HANYA ada ref tanpa part number dan tanpa desc
     if (!partNo && !desc) continue
+    
+    // Skip kalau isinya cuma "PAGE xxx" atau "Ref :xxx"
+    if (/^PAGE\s*[:.]?\s*\d/i.test(desc)) continue
+    if (/^REF\s*[:.]?\s*[A-Z0-9]/i.test(desc) && !partNo) continue
 
-    const refNoRaw = refTxt && /^\d+$/.test(refTxt) ? parseInt(refTxt, 10) : null
-const refNo = (refNoRaw && refNoRaw > 2147483647) ? null : refNoRaw
+    // Cek apakah ada multi-line (newline) di part number atau desc
+    const partLines = partNo.split('\n').map((s: string) => s.trim()).filter(Boolean)
+    const descLines = desc.split('\n').map((s: string) => s.trim()).filter(Boolean)
 
-const qtyRaw = qtyTxt ? parseInt(qtyTxt.replace(/[^\d]/g, ''), 10) : null
-const qty = (qtyRaw && qtyRaw > 2147483647) ? null : qtyRaw
+    if (partLines.length > 1) {
+      // Multi-line part number → pecah jadi beberapa row
+      for (let i = 0; i < partLines.length; i++) {
+        const refNo = refTxt && /^\d+$/.test(refTxt) ? parseInt(refTxt, 10) : null
+        const safeRef = (refNo && refNo > 2147483647) ? null : refNo
+        const qty = qtyTxt ? parseInt(qtyTxt.replace(/[^\d]/g, ''), 10) : null
+        const safeQty = (qty && qty > 2147483647) ? null : qty
+        
+        out.push({
+          ref_no: safeRef,
+          part_number: partLines[i] || null,
+          part_name: (descLines[i] || descLines[0] || desc) || null,
+          qty: Number.isFinite(safeQty as any) ? safeQty : null,
+          serial_no: serial || null,
+        })
+      }
+    } else {
+      // Normal single-line
+      const refNo = refTxt && /^\d+$/.test(refTxt) ? parseInt(refTxt, 10) : null
+      const safeRef = (refNo && refNo > 2147483647) ? null : refNo
+      const qty = qtyTxt ? parseInt(qtyTxt.replace(/[^\d]/g, ''), 10) : null
+      const safeQty = (qty && qty > 2147483647) ? null : qty
 
-    out.push({
-      ref_no: refNo,
-      part_number: partNo || null,
-      part_name: desc || null,
-      qty: Number.isFinite(qty as any) ? qty : null,
-      serial_no: serial || null,
-    })
+      out.push({
+        ref_no: safeRef,
+        part_number: partNo || null,
+        part_name: desc || null,
+        qty: Number.isFinite(safeQty as any) ? safeQty : null,
+        serial_no: serial || null,
+      })
+    }
   }
   return out
 }
