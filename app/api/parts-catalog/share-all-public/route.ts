@@ -7,17 +7,26 @@ export const maxDuration = 300
 
 function getDriveClient() {
   const oAuth2Client = new google.auth.OAuth2(
-    process.env.GDRIVE_OAUTH_CLIENT_ID!,
-    process.env.GDRIVE_OAUTH_CLIENT_SECRET!,
+    process.env.GDRIVE_OAUTH_CLIENT_ID,
+    process.env.GDRIVE_OAUTH_CLIENT_SECRET,
     'https://developers.google.com/oauthplayground'
   )
   oAuth2Client.setCredentials({
-    refresh_token: process.env.GDRIVE_OAUTH_REFRESH_TOKEN!,
+    refresh_token: process.env.GDRIVE_OAUTH_REFRESH_TOKEN,
   })
   return google.drive({ version: 'v3', auth: oAuth2Client })
 }
 
 export async function GET() {
+  // DEBUG: cek env dulu
+  const envCheck = {
+    has_client_id: !!process.env.GDRIVE_OAUTH_CLIENT_ID,
+    has_client_secret: !!process.env.GDRIVE_OAUTH_CLIENT_SECRET,
+    has_refresh_token: !!process.env.GDRIVE_OAUTH_REFRESH_TOKEN,
+    has_folder_id: !!process.env.GDRIVE_FOLDER_ID,
+    folder_id_preview: process.env.GDRIVE_FOLDER_ID?.substring(0, 10) + '...',
+  }
+
   try {
     const drive = getDriveClient()
     const folderId = process.env.GDRIVE_FOLDER_ID!
@@ -51,12 +60,17 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
+      env: envCheck,
       total: files.length,
       shared: success,
       failed,
-      errors: errors.slice(0, 10),
+      errors: errors.slice(0, 5),
     })
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+    return NextResponse.json({ 
+      success: false, 
+      env: envCheck,
+      error: err.message 
+    }, { status: 500 })
   }
 }
