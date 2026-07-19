@@ -3,6 +3,7 @@ import { google } from 'googleapis'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 300
 
 function getDriveClient() {
   const oAuth2Client = new google.auth.OAuth2(
@@ -21,7 +22,6 @@ export async function GET() {
     const drive = getDriveClient()
     const folderId = process.env.GDRIVE_FOLDER_ID!
 
-    // List semua file di folder
     const list = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
       fields: 'files(id, name)',
@@ -29,7 +29,9 @@ export async function GET() {
     })
 
     const files = list.data.files || []
-    const results: any[] = []
+    let success = 0
+    let failed = 0
+    const errors: any[] = []
 
     for (const f of files) {
       try {
@@ -40,16 +42,19 @@ export async function GET() {
             type: 'anyone',
           },
         })
-        results.push({ id: f.id, name: f.name, status: '✅ shared' })
+        success++
       } catch (e: any) {
-        results.push({ id: f.id, name: f.name, status: `⚠️ ${e.message}` })
+        failed++
+        errors.push({ name: f.name, error: e.message })
       }
     }
 
     return NextResponse.json({
       success: true,
       total: files.length,
-      results,
+      shared: success,
+      failed,
+      errors: errors.slice(0, 10),
     })
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })
