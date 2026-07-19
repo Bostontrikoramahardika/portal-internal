@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { translatePartName } from '@/app/lib/part-translations'
 
 interface Unit {
   id: string
@@ -215,6 +216,162 @@ export default function PartsCatalogPage() {
   const [orderKeterangan, setOrderKeterangan] = useState('')
   const [orderSubmitting, setOrderSubmitting] = useState(false)
   const [orderMsg, setOrderMsg] = useState('')
+
+    // 🛒 CART STATE (Multi-part order via localStorage)
+  interface CartItem {
+    id: string
+    part_number: string
+    part_name: string
+    assembly_id: string
+    assembly_name: string
+    unit_code: string
+    qty: number
+    max_qty: number
+  }
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showBulkOrder, setShowBulkOrder] = useState(false)
+  const [bulkMachine, setBulkMachine] = useState('')
+  const [bulkPrioritas, setBulkPrioritas] = useState<'Normal' | 'Urgent'>('Normal')
+  const [bulkKeterangan, setBulkKeterangan] = useState('')
+  const [bulkSubmitting, setBulkSubmitting] = useState(false)
+  const [bulkMsg, setBulkMsg] = useState('')
+  const [showImageMobile, setShowImageMobile] = useState(true) // Toggle image
+
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('btm_parts_cart')
+      if (saved) setCart(JSON.parse(saved))
+    } catch (e) { console.warn('Cart load failed:', e) }
+  }, [])
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('btm_parts_cart', JSON.stringify(cart))
+    } catch (e) { console.warn('Cart save failed:', e) }
+  }, [cart])
+
+  // Reset selected when pindah assembly
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [selectedAssembly?.id])
+
+  // Helper: cek apakah item sudah di cart
+  function isInCart(itemId: string) {
+    return cart.some(c => c.id === itemId)
+  }
+
+  // Toggle checkbox
+  function toggleSelect(itemId: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(itemId)) next.delete(itemId)
+      else next.add(itemId)
+      return next
+    })
+  }
+
+  // Select all in current assembly
+  function toggleSelectAll() {
+    if (selectedIds.size === items.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(items.filter(i => i.part_number).map(i => i.id)))
+    }
+  }
+
+  // Add selected to cart
+  function addSelectedToCart() {
+    if (!selectedUnit || !selectedAssembly) return
+    if (selectedIds.size === 0) return
+
+    const newItems: CartItem[] = items
+      .filter(it => selectedIds.has(it.id) && it.part_number)
+      .map(it => ({
+        id: it.id,
+        part_number: it.part_number!,
+        part_name: it.part_name || '-',
+        assembly_id: selectedAssembly.id,
+        assembly_name: selectedAssembly.assembly_name,
+        unit_code: selectedUnit.unit_code,
+        qty: 1,
+        max_qty: it.qty || 999,
+      }))
+
+    setCart(prev => {
+      const existing = new Set(prev.map(c => c.id))
+      const filtered = newItems.filter(n => !existing.has(n.id))
+      return [...prev, ...filtered]
+    })
+    setSelectedIds(new Set())
+  }
+
+  // Remove from cart
+  function removeFromCart(id: string) {
+    setCart(prev => prev.filter(c => c.id !== id))
+  }
+
+  // Update qty in cart
+  function updateCartQty(id: string, qty: number) {
+    setCart(prev => prev.map(c => c.id === id ? { ...c, qty: Math.max(1, qty) } : c))
+  }
+
+  // Clear cart
+  function clearCart() {
+    if (confirm('Yakin hapus semua item di cart?')) {
+      setCart([])
+    }
+  }
+
+  // Submit bulk order
+  async function submitBulkOrder() {
+    if (cart.length === 0) return
+    if (!bulkMachine.trim()) { setBulkMsg('❌ Machine Unit wajib diisi'); return }
+    setBulkSubmitting(true)
+    setBulkMsg('')
+
+    let success = 0
+    let failed = 0
+
+    for (const item of cart) {
+      try {
+        const res = await fetch('/api/part-orders/submit', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            part_number: item.part_number,
+            part_name: item.part_name,
+            assembly_name: item.assembly_name,
+            unit_code: item.unit_code,
+            machine_unit: bulkMachine.trim(),
+            qty: item.qty,
+            keterangan: bulkKeterangan.trim(),
+            prioritas: bulkPrioritas,
+          }),
+        })
+        const json = await res.json()
+        if (json.ok) success++
+        else failed++
+      } catch (e) { failed++ }
+    }
+
+    setBulkSubmitting(false)
+    if (failed === 0) {
+      setBulkMsg(`✅ ${success} order berhasil dikirim!`)
+      setCart([])
+      setTimeout(() => {
+        setShowBulkOrder(false)
+        setBulkMsg('')
+        setBulkMachine('')
+        setBulkKeterangan('')
+      }, 1500)
+    } else {
+      setBulkMsg(`⚠️ ${success} berhasil, ${failed} gagal`)
+    }
+  }
 
   useEffect(() => { fetchUnits() }, [])
 
@@ -479,83 +636,202 @@ export default function PartsCatalogPage() {
         >
           🔍 Cari
         </button>
-        <a
-          href="/part-orders"
-          className="flex-1 bg-amber-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
-        >
-          🛒 Orders
-        </a>
+<a
+  href="/part-orders"
+  className="flex-1 bg-amber-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
+>
+  🛒 Orders
+</a>
+{cart.length > 0 && (
+  <button
+    onClick={() => setShowBulkOrder(true)}
+    className="relative px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold"
+    title={`${cart.length} part di cart`}
+  >
+    🛍️
+    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+      {cart.length}
+    </span>
+  </button>
+)}
       </div>
 
-      {/* ═══════ MOBILE CONTENT (scroll ke bawah) ═══════ */}
+      {/* ═══════ MOBILE CONTENT ═══════ */}
       <div className="md:hidden flex-1 flex flex-col">
         {/* Breadcrumb */}
         {selectedAssembly && (
-          <div className="bg-white border-b px-3 py-2 text-xs">
-            <span className="text-slate-500">{selectedUnit?.unit_code}</span>
-            <span className="text-slate-400 mx-1">›</span>
-            <span className="font-bold text-amber-600">{selectedAssembly.assembly_name}</span>
+          <div className="bg-white border-b px-3 py-2 text-xs flex items-center justify-between">
+            <div className="flex-1 truncate">
+              <span className="text-slate-500">{selectedUnit?.unit_code}</span>
+              <span className="text-slate-400 mx-1">›</span>
+              <span className="font-bold text-amber-600">{selectedAssembly.assembly_name}</span>
+            </div>
+            <button
+              onClick={() => setShowImageMobile(v => !v)}
+              className="ml-2 px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded text-[10px] font-bold text-slate-700 whitespace-nowrap"
+            >
+              {showImageMobile ? '⬒ Sembunyikan' : '⬓ Tampilkan'} Gambar
+            </button>
           </div>
         )}
 
-        {/* Image */}
-        <div className="bg-white border-b relative" style={{ height: '45vh', minHeight: '280px', maxHeight: '500px' }}>
-          {!selectedAssembly ? (
-            <div className="h-full flex items-center justify-center text-slate-400 text-sm p-4 text-center">
-              Klik ☰ Browse untuk pilih assembly
-            </div>
-          ) : getImageSrc(selectedAssembly) ? (
-            <ZoomableImage
-              src={getImageSrc(selectedAssembly)!}
-              alt={selectedAssembly.assembly_name}
-            />
-          ) : (
-            <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-              Tidak ada gambar
-            </div>
-          )}
-        </div>
+        {/* Sticky Image */}
+        {selectedAssembly && showImageMobile && (
+          <div
+            className="bg-white border-b relative sticky z-10"
+            style={{
+              top: '96px', // 52px header + 44px mobile top bar
+              height: '38vh',
+              minHeight: '240px',
+              maxHeight: '400px',
+            }}
+          >
+            {getImageSrc(selectedAssembly) ? (
+              <ZoomableImage
+                src={getImageSrc(selectedAssembly)!}
+                alt={selectedAssembly.assembly_name}
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+                Tidak ada gambar
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Kalau belum pilih assembly */}
+        {!selectedAssembly && (
+          <div className="flex-1 flex items-center justify-center text-slate-400 text-sm p-4 text-center">
+            Klik ☰ Browse untuk pilih assembly
+          </div>
+        )}
 
         {/* Parts info + list */}
         {selectedAssembly && (
           <>
-            <div className="bg-slate-100 px-3 py-2 border-b">
-              <div className="font-bold text-sm text-slate-800">{selectedAssembly.assembly_name}</div>
-              <div className="text-[11px] text-emerald-700 font-bold mt-0.5">
-                ✅ {items.length} part ditemukan
+            {/* Sticky Toolbar */}
+            <div
+              className="bg-slate-100 px-3 py-2 border-b sticky z-10"
+              style={{ top: showImageMobile ? 'calc(96px + 38vh)' : '96px' }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-xs text-slate-800 truncate">{selectedAssembly.assembly_name}</div>
+                  <div className="text-[10px] text-emerald-700 font-bold">
+                    ✅ {items.length} part
+                    {selectedIds.size > 0 && <span className="text-blue-600 ml-2">• {selectedIds.size} dipilih</span>}
+                  </div>
+                </div>
+                <button
+                  onClick={toggleSelectAll}
+                  className="px-2 py-1 bg-white border border-slate-300 rounded text-[10px] font-bold text-slate-700 whitespace-nowrap"
+                >
+                  {selectedIds.size === items.length ? '☐ Batal' : '☑ Semua'}
+                </button>
+                {selectedIds.size > 0 && (
+                  <button
+                    onClick={addSelectedToCart}
+                    className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold whitespace-nowrap"
+                  >
+                    + Cart
+                  </button>
+                )}
               </div>
             </div>
 
-            <div className="flex-1 bg-white">
+            {/* Parts List Compact */}
+            <div className="flex-1 bg-white pb-24">
               {loadingItems ? (
                 <div className="p-4 text-sm text-slate-400 text-center">Loading...</div>
               ) : items.length === 0 ? (
                 <div className="p-4 text-sm text-slate-400 text-center">Tidak ada parts</div>
               ) : (
-                <div className="divide-y">
-                  {items.map(it => (
-                    <div key={it.id} className="p-3">
-                      <div className="flex items-start gap-2 mb-1">
-                        <span className="text-[10px] font-bold text-slate-400 mt-1">#{it.ref_no ?? '-'}</span>
-                        <div className="flex-1">
-                          <div className="font-mono font-bold text-[#003D79] text-sm">{it.part_number || '-'}</div>
-                          <div className="text-xs text-slate-700 mt-0.5">{it.part_name || '-'}</div>
-                          {it.qty && <div className="text-[10px] text-slate-500 mt-0.5">Qty: {it.qty}</div>}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => openOrderModal(it)}
-                        disabled={!it.part_number}
-                        className="w-full mt-2 py-2 bg-[#003D79] hover:bg-blue-800 disabled:bg-slate-300 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"
+                <div className="divide-y divide-slate-100">
+                  {items.map(it => {
+                    const isSelected = selectedIds.has(it.id)
+                    const inCart = isInCart(it.id)
+                    return (
+                      <div
+                        key={it.id}
+                        onClick={() => it.part_number && toggleSelect(it.id)}
+                        className={`px-2 py-2 flex items-center gap-2 ${
+                          isSelected ? 'bg-blue-50' : inCart ? 'bg-emerald-50/50' : 'bg-white'
+                        } ${it.part_number ? 'cursor-pointer active:bg-blue-100' : 'opacity-60'}`}
                       >
-                        🛒 Order Part
-                      </button>
-                    </div>
-                  ))}
+                        {/* Checkbox */}
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelect(it.id)}
+                          onClick={e => e.stopPropagation()}
+                          disabled={!it.part_number}
+                          className="w-4 h-4 accent-blue-600 flex-shrink-0"
+                        />
+
+                        {/* Ref No */}
+                        <div className="w-8 text-center flex-shrink-0">
+                          <span className="text-[10px] font-bold text-slate-500">
+                            #{it.ref_no ?? '-'}
+                          </span>
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-mono font-bold text-[#003D79] text-xs truncate">
+                            {it.part_number || '-'}
+                          </div>
+                          <div className="text-[11px] text-slate-700 truncate">
+                            {translatePartName(it.part_name)}
+                          </div>
+                        </div>
+
+                        {/* Qty */}
+                        <div className="text-[10px] text-slate-500 flex-shrink-0 text-right">
+                          <div>Qty</div>
+                          <div className="font-bold text-slate-700">{it.qty ?? '-'}</div>
+                        </div>
+
+                        {/* Quick order button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openOrderModal(it)
+                          }}
+                          disabled={!it.part_number}
+                          className="w-8 h-8 flex items-center justify-center bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white rounded text-sm flex-shrink-0"
+                          title="Order langsung 1 part"
+                        >
+                          🛒
+                        </button>
+
+                        {inCart && (
+                          <span className="absolute right-2 -mt-8 text-[9px] bg-emerald-600 text-white px-1.5 py-0.5 rounded-full font-bold">
+                            ✓ Cart
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
           </>
+        )}
+
+        {/* Sticky Bottom: Cart Summary */}
+        {cart.length > 0 && (
+          <button
+            onClick={() => setShowBulkOrder(true)}
+            className="fixed bottom-0 left-0 right-0 md:hidden bg-[#003D79] hover:bg-blue-800 text-white py-3 px-4 font-bold text-sm flex items-center justify-center gap-2 shadow-2xl z-20 border-t-2 border-blue-400"
+          >
+            🛒 Order {cart.length} Part
+            {new Set(cart.map(c => c.unit_code)).size > 1 && (
+              <span className="text-xs opacity-80">
+                ({new Set(cart.map(c => c.unit_code)).size} Unit)
+              </span>
+            )}
+            <span className="ml-auto text-lg">→</span>
+          </button>
         )}
       </div>
 
@@ -832,6 +1108,153 @@ export default function PartsCatalogPage() {
           </div>
         </>
       )}
+
+      {/* ═══════ BULK ORDER MODAL ═══════ */}
+      {showBulkOrder && (
+        <>
+          <div
+            className="fixed inset-0 bg-slate-900/60 z-50"
+            onClick={() => !bulkSubmitting && setShowBulkOrder(false)}
+          />
+          <div className="fixed inset-x-2 top-4 bottom-4 md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[92%] md:max-w-lg md:max-h-[90vh] md:inset-auto bg-white rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col">
+            <div className="bg-[#003D79] text-white px-5 py-3 flex justify-between items-center flex-shrink-0">
+              <h3 className="font-bold">🛍️ Cart ({cart.length} part)</h3>
+              <button
+                onClick={() => !bulkSubmitting && setShowBulkOrder(false)}
+                className="text-white/80 hover:text-white text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Cart Items */}
+            <div className="flex-1 overflow-y-auto">
+              {cart.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-sm">
+                  Cart kosong. Pilih part terlebih dahulu.
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {cart.map(item => (
+                    <div key={item.id} className="p-3 flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-mono font-bold text-[#003D79] text-sm truncate">
+                          {item.part_number}
+                        </div>
+                        <div className="text-xs text-slate-700 truncate">
+                          {translatePartName(item.part_name)}
+                        </div>
+                        <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                          {item.unit_code} › {item.assembly_name}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => updateCartQty(item.id, item.qty - 1)}
+                          className="w-7 h-7 bg-slate-200 hover:bg-slate-300 rounded font-bold"
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min={1}
+                          value={item.qty}
+                          onChange={e => updateCartQty(item.id, parseInt(e.target.value) || 1)}
+                          className="w-12 text-center border border-slate-300 rounded py-1 text-sm font-bold"
+                        />
+                        <button
+                          onClick={() => updateCartQty(item.id, item.qty + 1)}
+                          className="w-7 h-7 bg-slate-200 hover:bg-slate-300 rounded font-bold"
+                        >
+                          +
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="w-7 h-7 bg-red-100 hover:bg-red-200 text-red-600 rounded font-bold ml-1"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Form Order */}
+            {cart.length > 0 && (
+              <div className="border-t p-3 space-y-2 bg-slate-50 flex-shrink-0">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Machine Unit * <span className="text-slate-400 font-normal">(unit yang rusak)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={bulkMachine}
+                    onChange={e => setBulkMachine(e.target.value)}
+                    disabled={bulkSubmitting}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79]"
+                    placeholder="Contoh: PC200-7 Unit 03"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Prioritas</label>
+                    <select
+                      value={bulkPrioritas}
+                      onChange={e => setBulkPrioritas(e.target.value as any)}
+                      disabled={bulkSubmitting}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                    >
+                      <option value="Normal">Normal</option>
+                      <option value="Urgent">🔥 Urgent</option>
+                    </select>
+                  </div>
+                  <div>
+                    <button
+                      onClick={clearCart}
+                      disabled={bulkSubmitting}
+                      className="w-full h-full mt-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-bold"
+                    >
+                      🗑️ Clear Cart
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Keterangan (opsional)</label>
+                  <textarea
+                    value={bulkKeterangan}
+                    onChange={e => setBulkKeterangan(e.target.value)}
+                    disabled={bulkSubmitting}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79] resize-none"
+                    placeholder="Contoh: perlu segera, unit sedang breakdown"
+                  />
+                </div>
+
+                {bulkMsg && (
+                  <div className={`p-2 rounded-lg text-xs font-bold text-center ${
+                    bulkMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' :
+                    bulkMsg.startsWith('⚠️') ? 'bg-amber-50 text-amber-700' :
+                    'bg-red-50 text-red-700'
+                  }`}>
+                    {bulkMsg}
+                  </div>
+                )}
+
+                <button
+                  onClick={submitBulkOrder}
+                  disabled={bulkSubmitting || cart.length === 0}
+                  className="w-full py-3 bg-[#003D79] hover:bg-blue-800 text-white rounded-lg font-bold text-sm disabled:opacity-50"
+                >
+                  {bulkSubmitting ? '⏳ Submitting...' : `🛒 Submit ${cart.length} Order`}
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
     </div>
   )
 }

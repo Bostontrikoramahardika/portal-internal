@@ -29,3 +29,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Excel imports (jangan di-commit ke Git)
+imports/
+imports/**
+*.xlsx
+imports/raw/
+imports/split/
+imports/raw-backup/
+imports/split-backup/
+imports/import-log.txt
+imports/test-image-*.png

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const { data: asm, error: asmErr } = await supabaseAdmin
     .from('parts_assemblies')
-    .select('id, unit_id, sheet_name, assembly_name, unit_header, image_drive_web_view_link, sort_order')
+    .select('id, unit_id, sheet_name, assembly_name, unit_header, image_drive_file_id, image_drive_web_view_link, sort_order')
     .eq('id', id)
     .single()
 

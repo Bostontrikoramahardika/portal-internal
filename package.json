@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "split:excel": "ts-node --project scripts/tsconfig.json scripts/split-excel.ts",
+    "import:partbook": "ts-node --project scripts/tsconfig.json scripts/import-partbook.ts",
+    "debug:image": "ts-node --project scripts/tsconfig.json scripts/debug-image.ts",
+    "debug:upload": "ts-node --project scripts/tsconfig.json scripts/debug-upload.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
@@ -28,10 +32,12 @@
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.5.2",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "postcss": "^8.5.16",
     "tailwindcss": "^4.3.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
