@@ -42,3 +42,7 @@ next-env.d.ts
 
 # google drive credentials
 gdrive-credentials.json
+
+# Import files (Excel + PDF - jangan di-push)
+imports/
+
