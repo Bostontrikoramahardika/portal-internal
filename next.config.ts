@@ -5,7 +5,12 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
-  turbopack: {},
+  serverExternalPackages: ['pdfjs-dist'],
+
+  webpack: (config) => {
+    config.externals = [...(config.externals || []), { canvas: 'canvas' }]
+    return config
+  },
 
 };
 

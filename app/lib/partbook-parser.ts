@@ -7,7 +7,18 @@ import { getFileBuffer } from '@/app/lib/gdrive'
 
 // pdfjs-dist legacy build untuk Node.js
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js')
+import type { PDFDocumentProxy } from 'pdfjs-dist'
+
+let pdfjsLib: typeof import('pdfjs-dist')
+
+async function getPdfJs() {
+  if (!pdfjsLib) {
+    pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs' as any)
+    // Disable worker untuk Node.js environment
+    pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+  }
+  return pdfjsLib
+}
 
 // ============================================
 // TYPES
@@ -308,16 +319,17 @@ export async function processUpload(uploadId: string): Promise<ParseResult> {
     throw new Error(errInfo.message)
   }
 
-  // 5. Load PDF
-  let pdfDoc: any
-  try {
-    const uint8 = new Uint8Array(pdfBuffer)
-    const loadingTask = pdfjsLib.getDocument({
-      data: uint8,
-      useSystemFonts: true,
-      disableFontFace: true,
-    })
-    pdfDoc = await loadingTask.promise
+// 5. Load PDF
+let pdfDoc: any
+try {
+  const pdfjs = await getPdfJs()                    // ✅ TAMBAH BARIS INI
+  const uint8 = new Uint8Array(pdfBuffer)
+  const loadingTask = pdfjs.getDocument({           // ✅ GANTI pdfjsLib → pdfjs
+    data: uint8,
+    useSystemFonts: true,
+    disableFontFace: true,
+  })
+  pdfDoc = await loadingTask.promise
   } catch (err: any) {
     const errInfo = getErrorInfo('ERR_PDF_LOAD')
     await supabaseAdmin

@@ -3,6 +3,8 @@ import { requireAuth } from '@/app/lib/auth'
 import { processUpload } from '@/app/lib/partbook-parser'
 import { supabaseAdmin } from '@/app/lib/supabase'
 
+export const runtime = 'nodejs'
+
 // Vercel timeout — set max 60 detik (limit hobby plan)
 export const maxDuration = 60
 
