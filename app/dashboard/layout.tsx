@@ -265,8 +265,7 @@ const TAB_CONFIG = [
       return (
         m.menu_key === 'plant_katalog' ||
         m.menu_key === 'plant_orders' ||
-        m.menu_key === 'plant_admin' ||
-        m.menu_key === 'parts_book'
+        m.menu_key === 'plant_admin' 
       )
     }
   },
