@@ -3,18 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
-  "lint": "eslint",
-  "split:excel": "ts-node --project scripts/tsconfig.json scripts/split-excel.ts",
-  "import:partbook": "ts-node --project scripts/tsconfig.json scripts/import-partbook.ts",
-  "import:pdf": "ts-node --project scripts/tsconfig.json scripts/import-partbook-pdf.ts",
-  "debug:image": "ts-node --project scripts/tsconfig.json scripts/debug-image.ts",
-  "debug:upload": "ts-node --project scripts/tsconfig.json scripts/debug-upload.ts",
-  "fix:units": "ts-node --project scripts/tsconfig.json scripts/fix-unit-codes.ts",
-  "process:partbook": "ts-node --project scripts/tsconfig.json scripts/process-partbook.ts"
-},
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "split:excel": "ts-node --project scripts/tsconfig.json scripts/split-excel.ts",
+    "import:partbook": "ts-node --project scripts/tsconfig.json scripts/import-partbook.ts",
+    "import:pdf": "ts-node --project scripts/tsconfig.json scripts/import-partbook-pdf.ts",
+    "debug:image": "ts-node --project scripts/tsconfig.json scripts/debug-image.ts",
+    "debug:upload": "ts-node --project scripts/tsconfig.json scripts/debug-upload.ts",
+    "fix:units": "ts-node --project scripts/tsconfig.json scripts/fix-unit-codes.ts",
+    "process:partbook": "ts-node --project scripts/tsconfig.json scripts/process-partbook.ts"
+  },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
     "@capacitor/cli": "^8.4.1",
@@ -42,6 +42,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "postcss": "^8.5.16",
+    "sharp": "^0.35.3",
     "tailwindcss": "^4.3.2",
     "ts-node": "^10.9.2",
     "typescript": "^5"

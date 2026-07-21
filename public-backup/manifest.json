@@ -1,0 +1,33 @@
+{
+  "name": "BTM Portal - PT. Boston Trikora Mahardika",
+  "short_name": "BTM Portal",
+  "description": "Portal Absensi & HR - PT. Boston Trikora Mahardika",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#003D79",
+  "theme_color": "#003D79",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/btm-fix.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/btm-fix.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/btm-fix.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
