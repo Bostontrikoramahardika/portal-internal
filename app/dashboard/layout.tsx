@@ -85,6 +85,12 @@ const DATA_MONITOR_ROLES = [
   'atasan', 'pjo', 'admin', 'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat'
 ]
 
+// Role yang bisa akses menu Plant (Katalog Part, Order, Admin Partbook)
+const PLANT_ROLES = [
+  'super_admin','admin_plant','gl_plant','pjo_site',
+  'manager_ops','director_ops','business_dev','hr_ho'
+]
+
 const TAB_CONFIG = [
   // TAB 1: ABSENSI
   {
@@ -257,7 +263,26 @@ const TAB_CONFIG = [
       return m.menu_key === 'parts_book'
     }
   },
+
+    // TAB 11: PLANT (Katalog Part, Order, Admin Partbook)
+  {
+    key: 'plant',
+    label: 'Plant',
+    icon: '🚜',
+    roles: PLANT_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'plant_katalog' ||
+        m.menu_key === 'plant_orders' ||
+        m.menu_key === 'plant_admin'
+      )
+    }
+  },
 ]
+
+
+
+
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -367,6 +392,17 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
       return
     }
 
+        // Handle tab Plant → tampilkan bottom sheet menu
+    if (tab.key === 'plant') {
+      const tabMenus = menus.filter(m => tab.customMatch(m))
+      tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      setBottomSheetMenus(tabMenus)
+      setBottomSheetTitle('Plant')
+      setActiveTab('plant')
+      setBottomSheetOpen(true)
+      return
+    }
+
     const tabMenus = menus.filter(m => tab.customMatch(m))
     tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
     
@@ -391,6 +427,24 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
   }
 
   function navigateMenu(menuKey: string) {
+    // Routing khusus untuk menu Plant
+    if (menuKey === 'plant_katalog') {
+      router.push('/parts-catalog')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'plant_orders') {
+      router.push('/part-orders')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'plant_admin') {
+      router.push('/partbook/admin')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    // Default: menu dashboard biasa
     router.push(`/dashboard?menu=${menuKey}`)
     setBottomSheetOpen(false)
   }
@@ -457,12 +511,7 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
               )}
             </div>
           ))}
-          <button
-            onClick={() => { router.push('/parts-catalog'); setActiveTab('dokumen') }}
-            className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === 'dokumen' ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}
-          >
-            <span className="text-lg">📚</span><span>Parts Catalog</span>
-          </button>
+          
           <button
             onClick={() => { router.push('/part-orders'); setActiveTab('dokumen') }}
             className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === 'dokumen' ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}
