@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     user: {
       ...emp,
       is_super_admin: Boolean(emp?.is_super_admin)
@@ -34,4 +34,12 @@ export async function GET(request: NextRequest) {
     is_super_admin: Boolean(emp?.is_super_admin),
     permissions: session.permissions || []
   })
+  
+  // ✨ Cache di browser 30 detik
+  response.headers.set(
+    'Cache-Control',
+    'private, max-age=30, stale-while-revalidate=120'
+  )
+  
+  return response
 }

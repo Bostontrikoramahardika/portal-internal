@@ -323,21 +323,40 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
 
     async function checkAuth() {
     try {
-      const res = await fetch('/api/auth/me')
-      if (!res.ok) { router.push('/'); return }
-      const data = await res.json()
+      // ✨ PARALEL: fetch auth & menus BARENGAN (bukan berurutan)
+      // Coba ambil menu dari cache localStorage dulu (instant)
+      const cachedMenu = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_v1') : null
+      const cachedMenuTime = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_time_v1') : null
+      const isCacheValid = cachedMenuTime && (Date.now() - parseInt(cachedMenuTime)) < 3600000 // 1 jam
+      
+      if (cachedMenu && isCacheValid) {
+        try {
+          const parsedMenus = JSON.parse(cachedMenu)
+          setMenus(parsedMenus)
+        } catch {}
+      }
+      
+      // Fetch keduanya PARALEL
+      const [authRes, menuRes] = await Promise.all([
+        fetch('/api/auth/me'),
+        fetch('/api/menus')
+      ])
+      
+      if (!authRes.ok) { router.push('/'); return }
+      
+      const [data, menuData] = await Promise.all([
+        authRes.json(),
+        menuRes.json()
+      ])
       
       setUser(data.user)
       const roles: string[] = Array.isArray(data.roles) ? data.roles : []
       setUserRoles(roles)
       
-      // Ambil flag super admin & permissions dari API
       const superAdminStatus = data.user?.is_super_admin || false
       setIsSuperAdmin(superAdminStatus)
       setUserPermissions(data.permissions || [])
 
-      const menuRes = await fetch('/api/menus')
-      const menuData = await menuRes.json()
       const menusArray = Array.isArray(menuData) ? menuData : (menuData.menus || menuData.data || [])
       
       // PERBAIKAN FILTER: Jika Super Admin, loloskan semua menu yang active. 
@@ -349,6 +368,14 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
 })
       
       setMenus(filtered)
+      
+      // ✨ Simpan cache untuk load berikutnya
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('btm_menus_v1', JSON.stringify(filtered))
+          localStorage.setItem('btm_menus_time_v1', Date.now().toString())
+        } catch {}
+      }
     } catch (err) { 
       console.error("Auth Error:", err)
       router.push('/') 
@@ -424,12 +451,6 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
     }
     if (menuKey === 'plant_admin') {
       router.push('/partbook/admin')
-      setBottomSheetOpen(false)
-      return
-    }
-
-        if (menuKey === 'parts_book') {
-      router.push('/parts-book')
       setBottomSheetOpen(false)
       return
     }

@@ -41,5 +41,13 @@ export async function GET(request: NextRequest) {
   const deduplicated = Array.from(uniqueMenus.values())
     .sort((a: any, b: any) => a.sort_order - b.sort_order)
 
-  return NextResponse.json({ menus: deduplicated })
+  const response = NextResponse.json({ menus: deduplicated })
+  
+  // ✨ Cache di browser 60 detik + stale-while-revalidate 5 menit
+  response.headers.set(
+    'Cache-Control',
+    'private, max-age=60, stale-while-revalidate=300'
+  )
+  
+  return response
 }
