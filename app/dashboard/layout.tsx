@@ -430,7 +430,7 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
     }
 
         if (menuKey === 'parts_book') {
-      router.push('/dashboard?menu=parts_book')
+      router.push('/parts-book')
       setBottomSheetOpen(false)
       return
     }
