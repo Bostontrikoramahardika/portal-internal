@@ -48,7 +48,14 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="BTM Portal" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#003D79" />
-        <meta name="msapplication-tap-highlight" content="no" />
+                <meta name="msapplication-tap-highlight" content="no" />
+        
+        {/* ✨ BARU: Preconnect untuk speedup API */}
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+        <link rel="preconnect" href="https://drive.google.com" />
+        <link rel="dns-prefetch" href="https://drive.google.com" />
+        <link rel="preconnect" href="https://lh3.googleusercontent.com" />
       </head>
       {/* 3. Gunakan class font-sans di body */}
       <body className="font-sans min-h-screen text-slate-800 antialiased">
