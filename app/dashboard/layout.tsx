@@ -253,18 +253,9 @@ const TAB_CONFIG = [
     }
   },
 
-  // TAB 10: DOKUMEN (Parts Book, semua user login)
-  {
-    key: 'dokumen',
-    label: 'Dokumen',
-    icon: '📚',
-    roles: ALL_ROLES,
-    customMatch: (m: MenuItem) => {
-      return m.menu_key === 'parts_book'
-    }
-  },
 
-    // TAB 11: PLANT (Katalog Part, Order, Admin Partbook)
+
+    // TAB 10: PLANT (Katalog, Order, Admin Partbook, Dokumen)
   {
     key: 'plant',
     label: 'Plant',
@@ -274,7 +265,8 @@ const TAB_CONFIG = [
       return (
         m.menu_key === 'plant_katalog' ||
         m.menu_key === 'plant_orders' ||
-        m.menu_key === 'plant_admin'
+        m.menu_key === 'plant_admin' ||
+        m.menu_key === 'parts_book'
       )
     }
   },
@@ -385,13 +377,6 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
   }
 
     function handleTabClick(tab: typeof TAB_CONFIG[0]) {
-    // Handle tab Dokumen langsung redirect ke /parts-catalog
-    if (tab.key === 'dokumen') {
-      router.push('/parts-catalog')
-      setActiveTab('dokumen')
-      return
-    }
-
         // Handle tab Plant → tampilkan bottom sheet menu
     if (tab.key === 'plant') {
       const tabMenus = menus.filter(m => tab.customMatch(m))
@@ -440,6 +425,12 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
     }
     if (menuKey === 'plant_admin') {
       router.push('/partbook/admin')
+      setBottomSheetOpen(false)
+      return
+    }
+
+        if (menuKey === 'parts_book') {
+      router.push('/dashboard?menu=parts_book')
       setBottomSheetOpen(false)
       return
     }
@@ -511,19 +502,7 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
               )}
             </div>
           ))}
-          
-          <button
-            onClick={() => { router.push('/part-orders'); setActiveTab('dokumen') }}
-            className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === 'dokumen' ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}
-          >
-            <span className="text-lg">📋</span><span>Part Orders</span>
-          </button>
-          <button
-            onClick={() => { router.push('/parts-book'); setActiveTab('dokumen') }}
-            className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === 'dokumen' ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}
-          >
-            <span className="text-lg">📚</span><span>Dokumen</span>
-          </button>
+  
           <button onClick={handleLogout} className="w-full mt-6 bg-red-600/20 text-red-400 py-2.5 rounded-xl text-xs font-bold hover:bg-red-600/30 transition-colors">🚪 Keluar</button>
         </div>
       </aside>
