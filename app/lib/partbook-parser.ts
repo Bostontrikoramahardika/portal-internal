@@ -5,19 +5,22 @@
 import { supabaseAdmin } from '@/app/lib/supabase'
 import { getFileBuffer } from '@/app/lib/gdrive'
 
-// pdfjs-dist legacy build untuk Node.js
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import type { PDFDocumentProxy } from 'pdfjs-dist'
-
-let pdfjsLib: typeof import('pdfjs-dist')
+// ============================================
+// PDFJS — Dynamic import (server-safe)
+// ============================================
+let _pdfjs: any = null
 
 async function getPdfJs() {
-  if (!pdfjsLib) {
-    pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs' as any)
-    // Disable worker untuk Node.js environment
-    pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+  if (_pdfjs) return _pdfjs
+  try {
+    _pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  } catch {
+    _pdfjs = await import('pdfjs-dist')
   }
-  return pdfjsLib
+  if (_pdfjs?.GlobalWorkerOptions) {
+    _pdfjs.GlobalWorkerOptions.workerSrc = ''
+  }
+  return _pdfjs
 }
 
 // ============================================
@@ -59,7 +62,7 @@ export type ExtractedItem = {
 const ERROR_CATALOG: Record<string, { message: string; hint: string }> = {
   ERR_NO_PARTS: {
     message: 'Halaman ini tidak mengandung tabel part number',
-    hint: 'Normal untuk halaman cover, daftar isi, atau halaman prosedur (Shop Manual). Tidak perlu diperbaiki.',
+    hint: 'Normal untuk halaman cover, daftar isi, atau halaman prosedur. Tidak perlu diperbaiki.',
   },
   ERR_PARSE_FAILED: {
     message: 'Gagal membaca struktur tabel di halaman ini',
@@ -80,21 +83,23 @@ const ERROR_CATALOG: Record<string, { message: string; hint: string }> = {
 }
 
 function getErrorInfo(code: string) {
-  return ERROR_CATALOG[code] || {
-    message: 'Error tidak dikenali',
-    hint: 'Hubungi administrator dan berikan kode error di atas.',
-  }
+  return (
+    ERROR_CATALOG[code] || {
+      message: 'Error tidak dikenali',
+      hint: 'Hubungi administrator dan berikan kode error di atas.',
+    }
+  )
 }
 
 // ============================================
 // PART NUMBER PATTERNS (Komatsu format)
 // ============================================
 const PART_PATTERNS = [
-  /\b\d{3,5}[-.]\d{2}[-.]\d{4,5}\b/,          // 6754-11-1101
-  /\b\d{5}[-.]\d{5}\b/,                        // 01643-32460
-  /\b\d{2,3}[A-Z][-.]\d{2}[-.]\d{4,5}\b/,      // 21T-70-52140
-  /\b[A-Z]{2,3}\d{4,6}[-.]\d{2,4}\b/,          // ND169500-0620
-  /\b\d{3}[-.]\d{2}[-.]\d{5}\b/,               // 707-98-25330
+  /\b\d{3,5}[-.]\d{2}[-.]\d{4,5}\b/,
+  /\b\d{5}[-.]\d{5}\b/,
+  /\b\d{2,3}[A-Z][-.]\d{2}[-.]\d{4,5}\b/,
+  /\b[A-Z]{2,3}\d{4,6}[-.]\d{2,4}\b/,
+  /\b\d{3}[-.]\d{2}[-.]\d{5}\b/,
 ]
 
 function extractPartNumber(text: string): string | null {
@@ -108,43 +113,36 @@ function extractPartNumber(text: string): string | null {
 // ============================================
 // EXTRACT TEXT ITEMS FROM PDF PAGE
 // ============================================
-async function extractPageTextItems(page: any): Promise<Array<{ str: string; x: number; y: number }>> {
+async function extractPageTextItems(
+  page: any
+): Promise<Array<{ str: string; x: number; y: number }>> {
   const textContent = await page.getTextContent()
   const items: Array<{ str: string; x: number; y: number }> = []
-
   for (const item of textContent.items) {
     const str = (item.str || '').trim()
     if (!str) continue
-    items.push({
-      str,
-      x: item.transform[4],
-      y: item.transform[5],
-    })
+    items.push({ str, x: item.transform[4], y: item.transform[5] })
   }
   return items
 }
 
 // ============================================
-// DETECT ASSEMBLY NAME (biggest uppercase text at top)
+// DETECT ASSEMBLY NAME
 // ============================================
 function detectAssemblyName(
   items: Array<{ str: string; x: number; y: number }>,
   pageHeight: number
 ): string | null {
-  // Ambil text di 30% atas halaman, uppercase, minimal 5 karakter
-  const topArea = items.filter(i =>
-    i.y > pageHeight * 0.7 &&
-    i.str.length >= 5 &&
-    i.str === i.str.toUpperCase() &&
-    /[A-Z]/.test(i.str) &&
-    !/^\d+$/.test(i.str) // bukan hanya angka
+  const topArea = items.filter(
+    (i) =>
+      i.y > pageHeight * 0.7 &&
+      i.str.length >= 5 &&
+      i.str === i.str.toUpperCase() &&
+      /[A-Z]/.test(i.str) &&
+      !/^\d+$/.test(i.str)
   )
-
   if (topArea.length === 0) return null
-
-  // Ambil yang paling panjang
-  const longest = topArea.sort((a, b) => b.str.length - a.str.length)[0]
-  return longest.str
+  return topArea.sort((a, b) => b.str.length - a.str.length)[0].str
 }
 
 // ============================================
@@ -156,50 +154,37 @@ function extractPartsFromPage(
   const parts: ExtractedItem[] = []
   const seen = new Set<string>()
 
-  // Group items by Y coordinate (baris yang sama)
   const rowsMap: Map<number, Array<{ str: string; x: number }>> = new Map()
   for (const item of items) {
-    const yKey = Math.round(item.y / 5) * 5 // toleransi 5px
+    const yKey = Math.round(item.y / 5) * 5
     if (!rowsMap.has(yKey)) rowsMap.set(yKey, [])
     rowsMap.get(yKey)!.push({ str: item.str, x: item.x })
   }
 
-  // Sort rows top to bottom
   const rows = Array.from(rowsMap.entries())
     .sort(([a], [b]) => b - a)
     .map(([, cols]) => cols.sort((a, b) => a.x - b.x))
 
   for (const row of rows) {
-    const rowText = row.map(c => c.str).join(' ')
+    const rowText = row.map((c) => c.str).join(' ')
     const partNum = extractPartNumber(rowText)
-    if (!partNum) continue
-    if (seen.has(partNum)) continue
+    if (!partNum || seen.has(partNum)) continue
     seen.add(partNum)
 
-    // Ekstrak komponen row
-    const partNumIdx = row.findIndex(c => c.str.includes(partNum.split('-')[0]))
-    const beforePart = row.slice(0, partNumIdx).map(c => c.str).join(' ')
-    const afterPart = row.slice(partNumIdx + 1).map(c => c.str).join(' ')
+    const partNumIdx = row.findIndex((c) => c.str.includes(partNum.split('-')[0]))
+    const beforePart = row.slice(0, partNumIdx).map((c) => c.str).join(' ')
+    const afterPart = row.slice(partNumIdx + 1).map((c) => c.str).join(' ')
 
-    // Ref No: angka di paling kiri
     const refMatch = beforePart.match(/^\s*(\d{1,4})\b/)
     const refNo = refMatch ? parseInt(refMatch[1]) : null
 
-    // Part Name: text setelah part number, sebelum qty
     let partName = afterPart.replace(/\s+\d+\s*$/, '').trim().toUpperCase()
     if (!partName || partName.length < 2) partName = 'UNKNOWN'
 
-    // Qty: angka di akhir row
     const qtyMatch = afterPart.match(/\s(\d{1,6})\s*$/)
     const qty = qtyMatch ? Math.min(parseInt(qtyMatch[1]), 2000000000) : null
 
-    parts.push({
-      refNo,
-      partNumber: partNum,
-      partName,
-      qty,
-      serialNo: null,
-    })
+    parts.push({ refNo, partNumber: partNum, partName, qty, serialNo: null })
   }
 
   return parts
@@ -229,7 +214,6 @@ async function parsePage(page: any, pageNumber: number): Promise<PageParseResult
     const assemblyName = detectAssemblyName(items, viewport.height)
     const extractedParts = extractPartsFromPage(items)
 
-    // Kalau tidak ada part → status no_parts (bukan failed)
     if (extractedParts.length === 0) {
       const err = getErrorInfo('ERR_NO_PARTS')
       return {
@@ -295,10 +279,7 @@ export async function processUpload(uploadId: string): Promise<ParseResult> {
     .eq('id', uploadId)
 
   // 3. Hapus pages lama (kalau reprocess)
-  await supabaseAdmin
-    .from('partbook_pages')
-    .delete()
-    .eq('upload_id', uploadId)
+  await supabaseAdmin.from('partbook_pages').delete().eq('upload_id', uploadId)
 
   // 4. Download file dari Google Drive
   let pdfBuffer: Buffer
@@ -319,17 +300,17 @@ export async function processUpload(uploadId: string): Promise<ParseResult> {
     throw new Error(errInfo.message)
   }
 
-// 5. Load PDF
-let pdfDoc: any
-try {
-  const pdfjs = await getPdfJs()                    // ✅ TAMBAH BARIS INI
-  const uint8 = new Uint8Array(pdfBuffer)
-  const loadingTask = pdfjs.getDocument({           // ✅ GANTI pdfjsLib → pdfjs
-    data: uint8,
-    useSystemFonts: true,
-    disableFontFace: true,
-  })
-  pdfDoc = await loadingTask.promise
+  // 5. Load PDF
+  let pdfDoc: any
+  try {
+    const pdfjs = await getPdfJs()
+    const uint8 = new Uint8Array(pdfBuffer)
+    const loadingTask = pdfjs.getDocument({
+      data: uint8,
+      useSystemFonts: true,
+      disableFontFace: true,
+    })
+    pdfDoc = await loadingTask.promise
   } catch (err: any) {
     const errInfo = getErrorInfo('ERR_PDF_LOAD')
     await supabaseAdmin
@@ -375,11 +356,10 @@ try {
 
     let assemblyId: string | null = null
 
-    // 8. Kalau sukses → insert ke parts_assemblies + parts_items
+    // 8. Kalau sukses → insert ke DB
     if (pageResult.status === 'success' && pageResult.items && pageResult.items.length > 0) {
       const sheetName = `${runId}_p${pageNum}`
       try {
-        // Insert assembly
         const { data: assy, error: assyErr } = await supabaseAdmin
           .from('parts_assemblies')
           .insert({
@@ -398,8 +378,7 @@ try {
         if (assyErr) throw assyErr
         assemblyId = assy.id
 
-        // Insert items
-        const itemsData = pageResult.items.map(item => ({
+        const itemsData = pageResult.items.map((item) => ({
           assembly_id: assemblyId,
           ref_no: item.refNo,
           part_number: item.partNumber,
@@ -450,14 +429,18 @@ try {
 
   // 10. Update status final
   const finalStatus =
-    failedPages === 0 && successPages > 0 ? 'done' :
-    successPages === 0 && failedPages > 0 ? 'failed' :
-    'partial'
+    failedPages === 0 && successPages > 0
+      ? 'done'
+      : successPages === 0 && failedPages > 0
+      ? 'failed'
+      : 'partial'
 
   const errorSummary =
-    finalStatus === 'partial' ? `${failedPages} halaman gagal, ${successPages} sukses` :
-    finalStatus === 'failed'  ? `Semua ${failedPages} halaman gagal diproses` :
-    null
+    finalStatus === 'partial'
+      ? `${failedPages} halaman gagal, ${successPages} sukses`
+      : finalStatus === 'failed'
+      ? `Semua ${failedPages} halaman gagal diproses`
+      : null
 
   await supabaseAdmin
     .from('partbook_uploads')
