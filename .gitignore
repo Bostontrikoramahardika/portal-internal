@@ -46,3 +46,5 @@ gdrive-credentials.json
 # Import files (Excel + PDF - jangan di-push)
 imports/
 
+.vercel
+.env*
