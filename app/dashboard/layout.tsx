@@ -4,6 +4,9 @@ import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { AuthProvider } from '@/app/lib/AuthContext'
+import { saveUserCache, getUserCache, isCacheValid, saveMenusCache, getMenusCache } from '@/app/lib/auth-cache'
+import { initAutoSync } from '@/app/lib/sync-manager'
+import SyncIndicator from '@/app/dashboard/components/SyncIndicator'
 
 interface User {
   nrp: string
@@ -305,6 +308,7 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
   useEffect(() => { 
     checkAuth()
     fetchNotif()
+    initAutoSync()
 
     // ✨ Dengerin sinyal dari halaman approval untuk update lonceng
     window.addEventListener('refreshNotif', fetchNotif);
@@ -321,34 +325,66 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
     }
   }, [activeMenu, menus])
 
-    async function checkAuth() {
-    try {
-      // ✨ PARALEL: fetch auth & menus BARENGAN (bukan berurutan)
-      // Coba ambil menu dari cache localStorage dulu (instant)
-      const cachedMenu = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_v1') : null
-      const cachedMenuTime = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_time_v1') : null
-      const isCacheValid = cachedMenuTime && (Date.now() - parseInt(cachedMenuTime)) < 3600000 // 1 jam
+async function checkAuth() {
+    // ✨ OFFLINE-FIRST: Load dari cache dulu (biar tidak flash)
+    const cachedUser = getUserCache()
+    const cachedMenusData = getMenusCache()
+    
+    if (cachedUser) {
+      setUser(cachedUser)
+      const cachedRoles = Array.isArray(cachedUser.roles) ? cachedUser.roles : []
+      setUserRoles(cachedRoles)
+      setIsSuperAdmin(cachedUser.is_super_admin || false)
+      setUserPermissions(cachedUser.permissions || [])
       
-      if (cachedMenu && isCacheValid) {
-        try {
-          const parsedMenus = JSON.parse(cachedMenu)
-          setMenus(parsedMenus)
-        } catch {}
+      if (cachedMenusData && Array.isArray(cachedMenusData.menus)) {
+        setMenus(cachedMenusData.menus)
       }
+    }
+    
+    // Coba ambil menu dari cache localStorage lama (backward compat)
+    const cachedMenu = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_v1') : null
+    const cachedMenuTime = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_time_v1') : null
+    const isMenuCacheValid = cachedMenuTime && (Date.now() - parseInt(cachedMenuTime)) < 3600000 // 1 jam
+    
+    if (cachedMenu && isMenuCacheValid && !cachedMenusData) {
+      try {
+        const parsedMenus = JSON.parse(cachedMenu)
+        setMenus(parsedMenus)
+      } catch {}
+    }
+    
+    try {
+      // ✨ PARALEL: fetch auth & menus BARENGAN
+      // Timeout 8 detik supaya tidak nunggu forever kalau offline
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 8000)
       
-      // Fetch keduanya PARALEL
       const [authRes, menuRes] = await Promise.all([
-        fetch('/api/auth/me'),
-        fetch('/api/menus')
+        fetch('/api/auth/me', { signal: controller.signal }),
+        fetch('/api/menus', { signal: controller.signal })
       ])
       
-      if (!authRes.ok) { router.push('/'); return }
+      clearTimeout(timeoutId)
+      
+      if (!authRes.ok) {
+        // Server bilang session invalid → cek cache
+        if (cachedUser && isCacheValid()) {
+          console.log('📴 Session invalid but cache valid, staying offline mode')
+          setLoading(false)
+          return
+        }
+        // Tidak ada cache → paksa login
+        router.push('/')
+        return
+      }
       
       const [data, menuData] = await Promise.all([
         authRes.json(),
         menuRes.json()
       ])
       
+      // ✨ Set state dari data fresh
       setUser(data.user)
       const roles: string[] = Array.isArray(data.roles) ? data.roles : []
       setUserRoles(roles)
@@ -359,25 +395,46 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
 
       const menusArray = Array.isArray(menuData) ? menuData : (menuData.menus || menuData.data || [])
       
-      // PERBAIKAN FILTER: Jika Super Admin, loloskan semua menu yang active. 
-      // Jika bukan, tetap pakai filter role lama.
+      // Filter menu berdasarkan role
       const filtered = menusArray.filter((m: MenuItem) => {
-  if (m.active === false) return false
-  if (data.user?.is_super_admin) return true // Bapak lolos filter role
-  return roles.includes(m.role)
-})
+        if (m.active === false) return false
+        if (data.user?.is_super_admin) return true
+        return roles.includes(m.role)
+      })
       
       setMenus(filtered)
       
-      // ✨ Simpan cache untuk load berikutnya
+      // ✨ Simpan cache lama (backward compat)
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('btm_menus_v1', JSON.stringify(filtered))
           localStorage.setItem('btm_menus_time_v1', Date.now().toString())
         } catch {}
       }
-    } catch (err) { 
+      
+      // ✨ Simpan cache baru untuk offline access
+      saveUserCache({
+        ...data.user,
+        roles: roles,
+        permissions: data.permissions || []
+      })
+      saveMenusCache({ menus: filtered })
+      
+    } catch (err: any) { 
       console.error("Auth Error:", err)
+      
+      // ✨ OFFLINE FALLBACK: kalau ada cache valid, tetap masuk dashboard
+      const isNetworkError = err.name === 'AbortError' || 
+                             err.name === 'TypeError' || 
+                             !navigator.onLine
+      
+      if (isNetworkError && cachedUser && isCacheValid()) {
+        console.log('📴 Offline detected, using cached session')
+        setLoading(false)
+        return
+      }
+      
+      // Tidak ada cache atau bukan network error → logout
       router.push('/') 
     }
     finally { setLoading(false) }
@@ -398,9 +455,20 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
   }
 
   async function handleLogout() {
+    // ✨ Hapus semua cache offline
+    try {
+      const { clearAuthCache } = await import('@/app/lib/auth-cache')
+      clearAuthCache()
+      // Hapus cache menu lama juga
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('btm_menus_v1')
+        localStorage.removeItem('btm_menus_time_v1')
+      }
+    } catch {}
+    
     try { await fetch('/api/auth/logout', { method: 'POST' }) } catch {}
     router.push('/')
-  }
+}
 
     function handleTabClick(tab: typeof TAB_CONFIG[0]) {
         // Handle tab Plant → tampilkan bottom sheet menu
@@ -529,6 +597,8 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
 
       {/* MAIN CONTENT */}
       <main className="flex-1 min-w-0 lg:ml-64 pb-24 lg:pb-6">
+        <SyncIndicator />  {/* ← BARU! Badge sync indicator */}
+        
         {/* HEADER MOBILE */}
                        <div className="lg:hidden bg-white/70 backdrop-blur-xl border-b border-white/40 px-3 py-1.5 flex items-center justify-between fixed top-0 left-0 right-0 z-[60] shadow-[0_4px_20px_rgba(0,61,121,0.05)]">
           {/* Kiri: Logo + Nama App + Versi (Kompak) */}

@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/app/lib/AuthContext'
 import { getTablePermissions } from '@/app/lib/tablePermissions'
+import { saveOfflineAttendance } from '@/app/lib/offlineDB'
 
 /**
  * 📊 HELPER: Salam Dinamis
@@ -132,12 +133,57 @@ function DashboardContent() {
 
   async function loadData() {
     setLoading(true); setError('')
+    
+    // ✨ Deteksi online/offline
+    const isOnlineNow = typeof navigator !== 'undefined' ? navigator.onLine : true
+    
+    // ✨ Coba load cache dulu (biar cepat & jadi fallback offline)
+    let cachedData: any = null
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(`btm_data_cache_${menuKey}`)
+        if (cached) cachedData = JSON.parse(cached)
+      } catch {}
+    }
+    
+    // ✨ KALAU OFFLINE → langsung pakai cache, jangan fetch
+    if (!isOnlineNow) {
+      if (cachedData) {
+        setData(cachedData)
+        console.log(`📴 Offline: pakai cache untuk ${menuKey}`)
+      } else {
+        // Cache kosong → set data kosong tapi JANGAN set error
+        // Ini penting supaya halaman tetap render (tombol Clock In muncul)
+        setData({})
+        console.log(`📴 Offline: cache kosong untuk ${menuKey}`)
+      }
+      setLoading(false)
+      return
+    }
+    
+    // ✨ KALAU ONLINE → fetch normal
     try {
       const res = await fetch(`/api/data?menu=${menuKey}`)
       const json = await res.json()
       if (!res.ok) { setError(json.error || 'Gagal mengambil data'); setData(null); return }
       setData(json)
-    } catch { setError('Terjadi kesalahan koneksi server') }
+      
+      // ✨ Simpan ke cache untuk offline access
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(`btm_data_cache_${menuKey}`, JSON.stringify(json))
+        } catch {}
+      }
+    } catch { 
+      // ✨ Fetch gagal (network error) → cek cache lagi
+      if (cachedData) {
+        setData(cachedData)
+        console.log(`📴 Network gagal: pakai cache untuk ${menuKey}`)
+      } else {
+        // Benar-benar gagal & tidak ada cache
+        setError('Terjadi kesalahan koneksi server') 
+      }
+    }
     finally { setLoading(false) }
   }
 
@@ -1424,14 +1470,15 @@ function AbsensiClockView({ title }: any) {
     loadStatus()
     fetch('/api/announcements').then(r => r.json()).then(d => setAnnouncement(d.announcement)).catch(() => {})
     
-    // 🌟 Fetch dokumen expired milik user sendiri (dashboard endpoint sudah filter per user)
+    // 🌟 Fetch dokumen expired milik user sendiri
     fetch('/api/data?menu=monitoring_expired')
       .then(r => r.json())
       .then(d => {
-        const rows = (d.rows || []).slice(0, 10) // max 10 item
+        const rows = (d.rows || []).slice(0, 10)
         setDokumenExpired(rows)
       })
       .catch(() => {})
+    
     fetch('/api/data?menu=riwayat_absensi').then(r => r.json()).then(d => {
       const today = new Date()
       today.setHours(23, 59, 59, 999)
@@ -1449,36 +1496,165 @@ function AbsensiClockView({ title }: any) {
       
       setRiwayat7Hari(filtered)
     }).catch(() => {})
+    
     navigator.geolocation.getCurrentPosition(
       pos => setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       err => console.log(err),
       { enableHighAccuracy: true }
     )
-    return () => clearInterval(interval)
+    
+    // 🆕 Listener: refresh status saat offline attendance saved atau sync selesai
+    const handleRefreshStatus = () => {
+      console.log('[Dashboard] Refresh status triggered')
+      loadStatus()
+    }
+    window.addEventListener('btm:offline-attendance-saved', handleRefreshStatus)
+    window.addEventListener('btm:sync-completed', handleRefreshStatus)
+    
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('btm:offline-attendance-saved', handleRefreshStatus)
+      window.removeEventListener('btm:sync-completed', handleRefreshStatus)
+    }
   }, [])
 
   async function loadStatus() {
     try {
-      const res = await fetch('/api/attendance/status')
-      if (!res.ok) throw new Error('Gagal')
-      const data = await res.json()
-      setStatus(data)
+      // 1. AMBIL DATA OFFLINE (IndexedDB) DULU
+      let offlineClockIn: any = null
+      let offlineClockOut: any = null
+      try {
+        const { getTodayOfflineAttendance } = await import('@/app/lib/offlineDB')
+        const offline = await getTodayOfflineAttendance()
+        offlineClockIn = offline.clockIn
+        offlineClockOut = offline.clockOut
+      } catch (e) {
+        console.warn('[loadStatus] Gagal baca offline DB:', e)
+      }
+
+      // 2. FETCH DARI SERVER (kalau online)
+      let serverStatus: any = null
+      try {
+        const res = await fetch('/api/attendance/status', { cache: 'no-store' })
+        if (res.ok) {
+          serverStatus = await res.json()
+          try {
+            localStorage.setItem('btm_attendance_status_v1', JSON.stringify(serverStatus))
+          } catch {}
+        }
+      } catch (err) {
+        console.warn('[loadStatus] Offline, pakai cache')
+        try {
+          const cached = localStorage.getItem('btm_attendance_status_v1')
+          if (cached) serverStatus = JSON.parse(cached)
+        } catch {}
+      }
+
+      // 3. MERGE: Server + Offline
+      const merged: any = serverStatus || { today: null, site: null }
+      
+      if (offlineClockIn && !merged.today?.clock_in) {
+        const offlineTime = new Date(offlineClockIn.timestamp)
+        merged.today = {
+          ...(merged.today || {}),
+          clock_in: offlineTime.toISOString(),
+          clock_in_lat: offlineClockIn.lat,
+          clock_in_lng: offlineClockIn.lng,
+          is_offline_pending: true,
+        }
+      }
+      
+      if (offlineClockOut && !merged.today?.clock_out) {
+        const offlineTime = new Date(offlineClockOut.timestamp)
+        merged.today = {
+          ...(merged.today || {}),
+          clock_out: offlineTime.toISOString(),
+          clock_out_lat: offlineClockOut.lat,
+          clock_out_lng: offlineClockOut.lng,
+          is_offline_pending_out: true,
+        }
+      }
+
+      setStatus(merged)
     } catch (err) {
-      console.error("Gagal load status absensi:", err)
+      console.error('[loadStatus] Error:', err)
     } finally {
-      setLoading(false) 
+      setLoading(false)
     }
   }
 
   async function handleClock(type: 'in' | 'out') {
-    if (!gps) { alert("⚠️ Mohon izinkan akses GPS di browser Anda"); return }
-    const res = await fetch(`/api/attendance/clock-${type}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ latitude: gps.lat, longitude: gps.lng })
-    })
-    const d = await res.json()
-    alert(d.message || d.error)
-    loadStatus()
+    // ============================================
+    // 🆕 CEK OFFLINE DULU — SKIP GPS, LANGSUNG SAVE
+    // ============================================
+    if (!navigator.onLine) {
+      // Ambil GPS terakhir yang ter-cache (kalau ada), atau 0,0 kalau tidak ada
+      const lastGps = gps || { lat: 0, lng: 0 }
+      
+      try {
+        const record = await saveOfflineAttendance(
+          type === 'in' ? 'clock_in' : 'clock_out',
+          lastGps.lat,
+          lastGps.lng
+        )
+        
+        const gpsInfo = (lastGps.lat === 0 && lastGps.lng === 0)
+          ? '⚠️ GPS tidak tersedia (offline)'
+          : `📍 GPS: ${lastGps.lat.toFixed(4)}, ${lastGps.lng.toFixed(4)}`
+        
+        alert(
+          `📴 ${type === 'in' ? 'CLOCK IN' : 'CLOCK OUT'} berhasil disimpan OFFLINE\n\n` +
+          `⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n` +
+          `${gpsInfo}\n\n` +
+          `📶 Akan otomatis terkirim saat online.`
+        )
+        window.dispatchEvent(new CustomEvent('btm:offline-attendance-saved'))
+        await loadStatus()
+      } catch (e: any) {
+        alert('❌ Gagal simpan offline: ' + (e?.message || 'Unknown error'))
+      }
+      return
+    }
+
+    // ============================================
+    // ONLINE — GPS WAJIB
+    // ============================================
+    if (!gps) {
+      alert('⏳ Menunggu GPS... Coba lagi sebentar.')
+      return
+    }
+    
+    // Kirim ke server
+    try {
+      const res = await fetch(`/api/attendance/clock-${type}`, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude: gps.lat, longitude: gps.lng })
+      })
+      const d = await res.json()
+      alert(d.message || d.error)
+      loadStatus()
+    } catch (err: any) {
+      // FALLBACK: online tapi request gagal
+      console.log('⚠️ Server unreachable, saving offline...', err)
+      try {
+        const record = await saveOfflineAttendance(
+          type === 'in' ? 'clock_in' : 'clock_out',
+          gps.lat,
+          gps.lng
+        )
+        alert(
+          `⚠️ Server tidak merespons, data DISIMPAN OFFLINE\n\n` +
+          `⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n` +
+          `📍 GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}\n\n` +
+          `📶 Akan otomatis terkirim saat server pulih.`
+        )
+        window.dispatchEvent(new CustomEvent('btm:offline-attendance-saved'))
+        await loadStatus()
+      } catch (saveErr: any) {
+        alert("❌ Gagal simpan: " + (saveErr?.message || 'Unknown error'))
+      }
+    }
   }
 
   if (loading) return <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-[0.3em]">Memvalidasi Sesi Absensi...</div>
@@ -1548,7 +1724,7 @@ function AbsensiClockView({ title }: any) {
       
       {announcement && <AnnouncementCard announcement={announcement} />}
 
-                  <div className="bg-slate-800/40 backdrop-blur-2xl text-white rounded-[1.5rem] md:rounded-[3rem] p-3 md:p-10 text-center shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] mb-4 md:mb-6 border border-slate-700/30 relative overflow-hidden">
+      <div className="bg-slate-800/40 backdrop-blur-2xl text-white rounded-[1.5rem] md:rounded-[3rem] p-3 md:p-10 text-center shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] mb-4 md:mb-6 border border-slate-700/30 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-700/20 via-transparent to-slate-900/30 pointer-events-none"></div>
         <div className="text-2xl md:text-6xl font-black mb-1 tracking-tighter text-white font-mono relative z-10">
           {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -1556,7 +1732,18 @@ function AbsensiClockView({ title }: any) {
         <div className="text-blue-300 font-black uppercase text-[7px] md:text-xs tracking-[0.25em] md:tracking-[0.4em] mb-3 md:mb-10 relative z-10">
           {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
-        <div className="flex justify-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 relative z-10">
+        
+        {/* 🆕 BADGE OFFLINE PENDING */}
+        {(status?.today?.is_offline_pending || status?.today?.is_offline_pending_out) && (
+          <div className="mb-4 mx-auto max-w-sm px-4 py-2 bg-amber-400/20 border-2 border-amber-400/60 backdrop-blur rounded-full flex items-center justify-center gap-2 animate-pulse relative z-10">
+            <span className="w-2 h-2 bg-amber-300 rounded-full"></span>
+            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-amber-100">
+              📴 {status?.today?.is_offline_pending_out ? 'Clock Out' : 'Clock In'} Offline — Menunggu Sync
+            </span>
+          </div>
+        )}
+        
+        <div className="flex justify-center gap-2 md:gap-4 relative z-10">
           {!hasIn ? (
             <button onClick={() => handleClock('in')} className="bg-emerald-500/90 hover:bg-emerald-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-emerald-500/20 active:scale-90 transition-all">🟢 CLOCK IN</button>
           ) : !hasOut ? (
@@ -1571,14 +1758,14 @@ function AbsensiClockView({ title }: any) {
         </div>
       </div>
       
-            <div className="grid grid-cols-2 gap-3 md:gap-6">
+      <div className="grid grid-cols-2 gap-3 md:gap-6">
         <div className="bg-white p-3 md:p-8 rounded-[1.2rem] md:rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-emerald-100 transition-all">
           <div className="text-[8px] md:text-[10px] text-slate-400 font-black mb-1 md:mb-2 uppercase tracking-widest">Record Masuk</div>
-          <div className="text-lg md:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{hasIn ? new Date(hasIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
+          <div className="text-lg md:text-3xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{hasIn ? new Date(hasIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
         </div>
         <div className="bg-white p-3 md:p-8 rounded-[1.2rem] md:rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-rose-100 transition-all">
           <div className="text-[8px] md:text-[10px] text-slate-400 font-black mb-1 md:mb-2 uppercase tracking-widest">Record Pulang</div>
-          <div className="text-lg md:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 group-hover:text-rose-600 transition-colors">{hasOut ? new Date(hasOut).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
+          <div className="text-lg md:text-3xl font-black text-slate-900 group-hover:text-rose-600 transition-colors">{hasOut ? new Date(hasOut).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
         </div>
       </div>
 
@@ -1630,7 +1817,7 @@ function AbsensiClockView({ title }: any) {
               });
               
               return (
-                <div key={i} className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
+                <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
                   <div className={`w-2.5 h-2.5 rounded-full ${statusColor.dot} shadow-sm flex-shrink-0`}></div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-black text-slate-900 tracking-tight mb-0.5 capitalize">{tglFormatted}</p>
@@ -1863,12 +2050,17 @@ const canEdit = isSuperAdmin || (hasSchema && (
   // Handler Delete
   async function handleDelete(id: string, label: string) {
     if (!confirm(`⚠️ Hapus data "${label || id}"?`)) return
-    const res = await fetch('/api/crud', {
+    const url = `/api/crud?table=${encodeURIComponent(table)}&id=${encodeURIComponent(id)}`
+    const res = await fetch(url, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ table, id })
     })
-    if (res.ok) { alert('✅ Terhapus'); onReload() }
+    const data = await res.json()
+    if (res.ok) { 
+      alert('✅ Terhapus')
+      onReload()
+    } else {
+      alert('❌ Gagal hapus: ' + (data.error || 'Unknown error'))
+    }
   }
 
   return (

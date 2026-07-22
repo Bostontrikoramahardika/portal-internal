@@ -1,33 +1,33 @@
 // ============================================
-// BTM PORTAL - SERVICE WORKER v3
-// Fix: Auto-cache halaman login saat install
+// BTM PORTAL - SERVICE WORKER v5
+// Fix: Route ke /offline (Next.js route)
+// Sinkron dengan app/offline/page.tsx
 // ============================================
 
-const CACHE_NAME = 'btm-portal-v3'
-const OFFLINE_URL = '/offline'
+const CACHE_NAME = 'btm-portal-v5'
+const OFFLINE_URL = '/offline'  // ✅ Next.js route
 
 // Halaman yang langsung di-cache saat install
 const PRECACHE_URLS = [
   '/',
-  '/login',
   '/dashboard',
-  '/offline',
+  '/offline',           // ✅ Next.js route
   '/manifest.json',
-  '/logo.png',
+  '/btm-fix.png',
   '/bg-login.jpg',
+  '/bg-pattern.png',
 ]
 
 // ============ INSTALL ============
-// Cache halaman PENTING langsung saat pertama kali install
 self.addEventListener('install', (event) => {
-  console.log('🔧 SW: Installing & pre-caching important pages...')
+  console.log('🔧 SW v5: Installing...')
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Cache satu per satu (jangan gagalkan semuanya kalau 1 error)
       return Promise.allSettled(
         PRECACHE_URLS.map(url => 
           cache.add(new Request(url, { cache: 'reload' }))
-            .catch(err => console.log(`⚠️ Failed to cache ${url}:`, err))
+            .then(() => console.log(`✅ Cached: ${url}`))
+            .catch(err => console.log(`⚠️ Failed: ${url}`, err.message))
         )
       )
     })
@@ -37,7 +37,7 @@ self.addEventListener('install', (event) => {
 
 // ============ ACTIVATE ============
 self.addEventListener('activate', (event) => {
-  console.log('✅ SW: Activated v3')
+  console.log('✅ SW v5: Activated')
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -57,7 +57,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
   
-  // SKIP: API requests
+  // SKIP: API requests → biarkan browser handle (biar bisa detect offline)
   if (url.pathname.startsWith('/api/')) return
   
   // SKIP: Domain lain
@@ -66,11 +66,13 @@ self.addEventListener('fetch', (event) => {
   // SKIP: Bukan GET
   if (event.request.method !== 'GET') return
   
+  // SKIP: Chrome extension
+  if (url.protocol === 'chrome-extension:') return
+  
   // Strategy: Network First, fallback cache
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Simpan ke cache
         if (response.status === 200) {
           const responseClone = response.clone()
           caches.open(CACHE_NAME).then((cache) => {
@@ -82,17 +84,24 @@ self.addEventListener('fetch', (event) => {
         return response
       })
       .catch(() => {
-        // OFFLINE: ambil dari cache
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {
             console.log('📦 SW: Serving from cache:', url.pathname)
             return cachedResponse
           }
           
-          // Untuk halaman HTML: redirect ke /offline
+          // Untuk halaman HTML: tampilkan offline page
           if (event.request.mode === 'navigate' || 
               event.request.headers.get('accept')?.includes('text/html')) {
-            return caches.match(OFFLINE_URL)
+            console.log('📴 SW: Serving offline page for:', url.pathname)
+            return caches.match(OFFLINE_URL).then(offlinePage => {
+              if (offlinePage) return offlinePage
+              // Fallback terakhir
+              return new Response(
+                '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Offline</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;background:#f4f7fa"><h1 style="color:#003D79">📡 BTM Portal Offline</h1><p>Tidak ada koneksi. <a href="/dashboard">Buka Dashboard</a></p></body></html>',
+                { headers: { 'Content-Type': 'text/html' } }
+              )
+            })
           }
           
           return new Response('Offline', { status: 503 })
@@ -107,3 +116,22 @@ self.addEventListener('message', (event) => {
     self.skipWaiting()
   }
 })
+
+// ============ BACKGROUND SYNC ============
+self.addEventListener('sync', (event) => {
+  console.log('🔄 SW: Sync event:', event.tag)
+  
+  if (event.tag === 'sync-attendance') {
+    event.waitUntil(notifyClientsToSync())
+  }
+})
+
+async function notifyClientsToSync() {
+  const clients = await self.clients.matchAll({ type: 'window' })
+  clients.forEach(client => {
+    client.postMessage({ 
+      type: 'SYNC_ATTENDANCE',
+      timestamp: new Date().toISOString()
+    })
+  })
+}

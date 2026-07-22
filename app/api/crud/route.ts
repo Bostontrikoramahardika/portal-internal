@@ -142,13 +142,26 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  try {
-    const session = await checkAccess(req)
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    
-    const { searchParams } = new URL(req.url)
-    const table = searchParams.get('table') || ''
-    const id = searchParams.get('id') || ''
+try {
+  const session = await checkAccess(req)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  
+  // Baca dari query string ATAU body (fleksibel)
+  let table = ''
+  let id = ''
+  
+  const { searchParams } = new URL(req.url)
+  table = searchParams.get('table') || ''
+  id = searchParams.get('id') || ''
+  
+  // Kalau kosong, coba baca dari body
+  if (!table || !id) {
+    try {
+      const body = await req.json()
+      table = table || body.table || ''
+      id = id || body.id || ''
+    } catch {}
+  }
     
     if (!ALLOWED_TABLES.includes(table)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 400 })
