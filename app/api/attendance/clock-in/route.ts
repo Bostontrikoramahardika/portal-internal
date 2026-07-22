@@ -143,8 +143,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Detect shift & hitung telat (pakai clockTime, bukan now)
-    const jamSekarang = clockTime.getHours()
-    const menitSekarang = clockTime.getMinutes()
+    // ✨ FIX: Konversi ke jam WITA (UTC+8) karena getHours() default return UTC
+    const witaTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
+    const jamSekarang = witaTime.getUTCHours()
+    const menitSekarang = witaTime.getUTCMinutes()
     
     // v1.6.0: Deteksi shift pakai config dari DB
     const shift = detectShift(jamSekarang, siteConfig)
