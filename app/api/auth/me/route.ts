@@ -3,14 +3,21 @@ import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get('session_token')?.value
-  
+  // ✅ v2.0: Support cookie DAN Authorization header (untuk iPhone PWA)
+  let token = request.cookies.get('session_token')?.value
+
+  // Kalau tidak ada cookie → coba dari Authorization header
+  if (!token) {
+    const authHeader = request.headers.get('authorization') || ''
+    token = authHeader.replace(/^Bearer\s+/i, '').trim() || undefined
+  }
+
   if (!token) {
     return NextResponse.json({ error: 'No session' }, { status: 401 })
   }
 
   const session = await getSession(token)
-  
+
   if (!session) {
     return NextResponse.json({ error: 'Session expired' }, { status: 401 })
   }
@@ -34,12 +41,11 @@ export async function GET(request: NextRequest) {
     is_super_admin: Boolean(emp?.is_super_admin),
     permissions: session.permissions || []
   })
-  
-  // ✨ Cache di browser 30 detik
+
   response.headers.set(
     'Cache-Control',
     'private, max-age=30, stale-while-revalidate=120'
   )
-  
+
   return response
 }

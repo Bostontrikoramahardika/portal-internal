@@ -76,7 +76,7 @@ export async function loginByNrp(nrp: string) {
   // 3. Buat session token
   const token = uuidv4()
   const expiresAt = new Date()
-  expiresAt.setHours(expiresAt.getHours() + 8)
+expiresAt.setDate(expiresAt.getDate() + 7)
 
   const { error: sessError } = await supabase
     .from('sessions')

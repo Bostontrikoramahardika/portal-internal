@@ -326,119 +326,187 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
   }, [activeMenu, menus])
 
 async function checkAuth() {
-    // ✨ OFFLINE-FIRST: Load dari cache dulu (biar tidak flash)
-    const cachedUser = getUserCache()
-    const cachedMenusData = getMenusCache()
-    
-    if (cachedUser) {
-      setUser(cachedUser)
-      const cachedRoles = Array.isArray(cachedUser.roles) ? cachedUser.roles : []
-      setUserRoles(cachedRoles)
-      setIsSuperAdmin(cachedUser.is_super_admin || false)
-      setUserPermissions(cachedUser.permissions || [])
-      
-      if (cachedMenusData && Array.isArray(cachedMenusData.menus)) {
-        setMenus(cachedMenusData.menus)
-      }
-    }
-    
-    // Coba ambil menu dari cache localStorage lama (backward compat)
-    const cachedMenu = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_v1') : null
-    const cachedMenuTime = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_time_v1') : null
-    const isMenuCacheValid = cachedMenuTime && (Date.now() - parseInt(cachedMenuTime)) < 3600000 // 1 jam
-    
-    if (cachedMenu && isMenuCacheValid && !cachedMenusData) {
-      try {
-        const parsedMenus = JSON.parse(cachedMenu)
-        setMenus(parsedMenus)
-      } catch {}
-    }
-    
-    try {
-      // ✨ PARALEL: fetch auth & menus BARENGAN
-      // Timeout 8 detik supaya tidak nunggu forever kalau offline
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 8000)
-      
-      const [authRes, menuRes] = await Promise.all([
-        fetch('/api/auth/me', { signal: controller.signal }),
-        fetch('/api/menus', { signal: controller.signal })
-      ])
-      
-      clearTimeout(timeoutId)
-      
-      if (!authRes.ok) {
-        // Server bilang session invalid → cek cache
-        if (cachedUser && isCacheValid()) {
-          console.log('📴 Session invalid but cache valid, staying offline mode')
-          setLoading(false)
-          return
-        }
-        // Tidak ada cache → paksa login
-        router.push('/')
-        return
-      }
-      
-      const [data, menuData] = await Promise.all([
-        authRes.json(),
-        menuRes.json()
-      ])
-      
-      // ✨ Set state dari data fresh
-      setUser(data.user)
-      const roles: string[] = Array.isArray(data.roles) ? data.roles : []
-      setUserRoles(roles)
-      
-      const superAdminStatus = data.user?.is_super_admin || false
-      setIsSuperAdmin(superAdminStatus)
-      setUserPermissions(data.permissions || [])
+  // ── STEP 1: Load cache dulu (instant, tidak nunggu network) ──
+  const cachedUser      = getUserCache()
+  const cachedMenusData = getMenusCache()
 
-      const menusArray = Array.isArray(menuData) ? menuData : (menuData.menus || menuData.data || [])
-      
-      // Filter menu berdasarkan role
-      const filtered = menusArray.filter((m: MenuItem) => {
-        if (m.active === false) return false
-        if (data.user?.is_super_admin) return true
-        return roles.includes(m.role)
-      })
-      
-      setMenus(filtered)
-      
-      // ✨ Simpan cache lama (backward compat)
-      if (typeof window !== 'undefined') {
+  if (cachedUser) {
+    setUser(cachedUser)
+    setUserRoles(Array.isArray(cachedUser.roles) ? cachedUser.roles : [])
+    setIsSuperAdmin(cachedUser.is_super_admin || false)
+    setUserPermissions(cachedUser.permissions || [])
+    if (cachedMenusData?.menus) setMenus(cachedMenusData.menus)
+  }
+
+  // Backward compat: cache menu lama
+  const cachedMenu     = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_v1') : null
+  const cachedMenuTime = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_time_v1') : null
+  const isMenuOldValid = cachedMenuTime && (Date.now() - parseInt(cachedMenuTime)) < 3600000
+  if (cachedMenu && isMenuOldValid && !cachedMenusData) {
+    try { setMenus(JSON.parse(cachedMenu)) } catch {}
+  }
+
+  // ── STEP 2: Kalau offline → langsung pakai cache, tidak perlu fetch ──
+  if (!navigator.onLine) {
+    console.log('📴 Offline — menggunakan cache lokal')
+    if (cachedUser && isCacheValid()) {
+      setLoading(false)
+      return
+    }
+    // Tidak ada cache sama sekali → terpaksa minta login
+    router.push('/')
+    return
+  }
+
+  // ── STEP 3: Online → coba fetch dengan cookie dulu ──
+  try {
+    const controller = new AbortController()
+    const timeoutId  = setTimeout(() => controller.abort(), 8000)
+
+    const [authRes, menuRes] = await Promise.all([
+      fetch('/api/auth/me', { signal: controller.signal }),
+      fetch('/api/menus',   { signal: controller.signal })
+    ])
+
+    clearTimeout(timeoutId)
+
+    // ── STEP 4: Kalau cookie gagal → coba token dari localStorage ──
+    if (!authRes.ok) {
+      const localToken = typeof window !== 'undefined'
+        ? localStorage.getItem('btm_session_token_v1')
+        : null
+
+      if (localToken) {
+        console.log('🔄 Cookie hilang, coba token dari localStorage...')
         try {
-          localStorage.setItem('btm_menus_v1', JSON.stringify(filtered))
-          localStorage.setItem('btm_menus_time_v1', Date.now().toString())
-        } catch {}
+          const retryRes = await fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${localToken}` },
+            signal: AbortSignal.timeout(5000)
+          })
+
+          if (retryRes.ok) {
+            // Token localStorage masih valid → set ulang cookie via renew
+            const retryData = await retryRes.json()
+            console.log('✅ Token localStorage valid, lanjut masuk')
+
+            // Panggil renew endpoint untuk set ulang cookie
+            await fetch('/api/auth/renew', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localToken}`
+              },
+              signal: AbortSignal.timeout(5000)
+            })
+
+            // Set state dari data yang didapat
+            setUser(retryData.user)
+            const roles = Array.isArray(retryData.roles) ? retryData.roles : []
+            setUserRoles(roles)
+            setIsSuperAdmin(retryData.user?.is_super_admin || false)
+            setUserPermissions(retryData.permissions || [])
+
+            // Fetch menus ulang
+            try {
+              const menuRetry = await fetch('/api/menus', {
+                headers: { 'Authorization': `Bearer ${localToken}` },
+                signal: AbortSignal.timeout(5000)
+              })
+              if (menuRetry.ok) {
+                const menuRetryData = await menuRetry.json()
+                const menusArr = Array.isArray(menuRetryData)
+                  ? menuRetryData
+                  : (menuRetryData.menus || menuRetryData.data || [])
+                const filtered = menusArr.filter((m: MenuItem) => {
+                  if (m.active === false) return false
+                  if (retryData.user?.is_super_admin) return true
+                  return roles.includes(m.role)
+                })
+                setMenus(filtered)
+                saveMenusCache({ menus: filtered })
+              }
+            } catch {}
+
+            saveUserCache({ ...retryData.user, roles, permissions: retryData.permissions || [] })
+            setLoading(false)
+            return
+          }
+        } catch (retryErr) {
+          console.warn('⚠️ Retry dengan localStorage token gagal:', retryErr)
+        }
       }
-      
-      // ✨ Simpan cache baru untuk offline access
-      saveUserCache({
-        ...data.user,
-        roles: roles,
-        permissions: data.permissions || []
-      })
-      saveMenusCache({ menus: filtered })
-      
-    } catch (err: any) { 
-      console.error("Auth Error:", err)
-      
-      // ✨ OFFLINE FALLBACK: kalau ada cache valid, tetap masuk dashboard
-      const isNetworkError = err.name === 'AbortError' || 
-                             err.name === 'TypeError' || 
-                             !navigator.onLine
-      
-      if (isNetworkError && cachedUser && isCacheValid()) {
-        console.log('📴 Offline detected, using cached session')
+
+      // Token localStorage juga gagal → cek cache offline
+      if (cachedUser && isCacheValid()) {
+        console.log('🔴 Session invalid, pakai cache offline')
         setLoading(false)
         return
       }
-      
-      // Tidak ada cache atau bukan network error → logout
-      router.push('/') 
+
+      // Tidak ada fallback → paksa login
+      router.push('/')
+      return
     }
-    finally { setLoading(false) }
+
+    // ── STEP 5: Cookie valid → proses normal ──
+    const [data, menuData] = await Promise.all([
+      authRes.json(),
+      menuRes.json()
+    ])
+
+    setUser(data.user)
+    const roles: string[] = Array.isArray(data.roles) ? data.roles : []
+    setUserRoles(roles)
+    setIsSuperAdmin(data.user?.is_super_admin || false)
+    setUserPermissions(data.permissions || [])
+
+    const menusArray = Array.isArray(menuData)
+      ? menuData
+      : (menuData.menus || menuData.data || [])
+
+    const filtered = menusArray.filter((m: MenuItem) => {
+      if (m.active === false) return false
+      if (data.user?.is_super_admin) return true
+      return roles.includes(m.role)
+    })
+
+    setMenus(filtered)
+
+    // Simpan cache lama (backward compat)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('btm_menus_v1', JSON.stringify(filtered))
+        localStorage.setItem('btm_menus_time_v1', Date.now().toString())
+      } catch {}
+    }
+
+    // Simpan cache baru
+    saveUserCache({ ...data.user, roles, permissions: data.permissions || [] })
+    saveMenusCache({ menus: filtered })
+
+    // ✅ v2.0: Pastikan token di localStorage selalu fresh
+    // (token sudah ada dari login, tapi kalau user login lama → tidak ada)
+    // Kita tidak bisa ambil token dari /api/auth/me karena httpOnly
+    // Token sudah tersimpan saat login, tidak perlu update di sini
+
+  } catch (err: any) {
+    console.error('Auth Error:', err)
+
+    const isNetworkError = err.name === 'AbortError' ||
+                           err.name === 'TypeError' ||
+                           !navigator.onLine
+
+    if (isNetworkError && cachedUser && isCacheValid()) {
+      console.log('🔴 Network error, pakai cached session')
+      setLoading(false)
+      return
+    }
+
+    router.push('/')
+  } finally {
+    setLoading(false)
   }
+}
 
   async function fetchNotif() {
     try {

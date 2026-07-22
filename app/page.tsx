@@ -50,15 +50,32 @@ export default function LoginPage() {
         body: JSON.stringify({ nrp: nrp.trim(), password: password.trim(), site: site })
       })
       
-      const data = await res.json()
-      
-      if (!res.ok) {
-        setError(data.error || 'Login gagal')
-        setLoading(false)
-        return
-      }
-      
-      router.push('/dashboard?menu=absensi_saya')
+const data = await res.json()
+
+if (!res.ok) {
+  setError(data.error || 'Login gagal')
+  setLoading(false)
+  return
+}
+
+// ✅ v2.0: Simpan token ke localStorage untuk backup iPhone PWA
+if (data.token) {
+  try {
+    localStorage.setItem('btm_session_token_v1', data.token)
+    console.log('💾 Token saved to localStorage')
+  } catch {}
+}
+
+// Simpan user cache langsung saat login (biar offline langsung siap)
+if (data.user) {
+  try {
+    localStorage.setItem('btm_user_cache_v1', JSON.stringify(data.user))
+    localStorage.setItem('btm_cache_timestamp_v1', new Date().toISOString())
+  } catch {}
+}
+
+router.push('/dashboard?menu=absensi_saya')
+
     } catch (err) {
       setError('Koneksi Gagal ke Server')
       setLoading(false)
