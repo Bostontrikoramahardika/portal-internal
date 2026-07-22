@@ -3,10 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { getUserCache, isCacheValid, saveUserCache, saveToken } from '@/app/lib/auth-cache'
 
 /**
- * BTM PORTAL v1.6.2 - LOGIN SCREEN (with Password & Help Modal)
- * Style: 1Pama Mobile App
+ * BTM PORTAL v1.7.0 - LOGIN SCREEN
+ * FIX:
+ * - Auto bypass login jika session/token/cache masih ada
+ * - Cocok untuk PWA Android & iPhone
  */
 
 export default function LoginPage() {
@@ -16,30 +19,142 @@ export default function LoginPage() {
   const [sites, setSites] = useState<string[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [booting, setBooting] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    fetch('/api/public/sites')
-      .then(r => r.json())
-      .then(d => {
+    let cancelled = false
+
+    async function bootstrapLogin() {
+      const cachedUser = getUserCache()
+      const cacheValid = isCacheValid()
+      const localToken =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('btm_session_token_v1')
+          : null
+
+      // 1) Kalau offline dan cache valid → langsung masuk dashboard
+      if (!navigator.onLine) {
+        if (cachedUser && cacheValid) {
+          console.log('📴 Offline + cache valid → bypass login')
+          router.replace('/dashboard?menu=absensi_saya')
+          return
+        }
+
+        if (!cancelled) setBooting(false)
+        return
+      }
+
+      // 2) Coba session dari cookie dulu
+      try {
+        const res = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          signal: AbortSignal.timeout(5000)
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          saveUserCache({
+            ...data.user,
+            roles: data.roles || [],
+            permissions: data.permissions || []
+          })
+          console.log('✅ Session cookie valid → bypass login')
+          router.replace('/dashboard?menu=absensi_saya')
+          return
+        }
+      } catch (err) {
+        console.warn('Auth bootstrap via cookie gagal:', err)
+      }
+
+      // 3) Kalau cookie gagal, coba token localStorage (khusus PWA iPhone/Android)
+      if (localToken) {
+        try {
+          const retryRes = await fetch('/api/auth/me', {
+            headers: {
+              Authorization: `Bearer ${localToken}`
+            },
+            cache: 'no-store',
+            signal: AbortSignal.timeout(5000)
+          })
+
+          if (retryRes.ok) {
+            const retryData = await retryRes.json()
+
+            saveToken(localToken)
+            saveUserCache({
+              ...retryData.user,
+              roles: retryData.roles || [],
+              permissions: retryData.permissions || []
+            })
+
+            // renew cookie lagi
+            await fetch('/api/auth/renew', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${localToken}`
+              },
+              signal: AbortSignal.timeout(5000)
+            })
+
+            console.log('🔄 Token localStorage valid → cookie renewed → bypass login')
+            router.replace('/dashboard?menu=absensi_saya')
+            return
+          }
+        } catch (err) {
+          console.warn('Auth bootstrap via local token gagal:', err)
+        }
+      }
+
+      // 4) Fallback terakhir: kalau ada cache valid, tetap masuk dashboard
+      if (cachedUser && cacheValid) {
+        console.log('💾 Cache valid ditemukan → bypass login')
+        router.replace('/dashboard?menu=absensi_saya')
+        return
+      }
+
+      if (!cancelled) setBooting(false)
+    }
+
+    async function loadSites() {
+      try {
+        const res = await fetch('/api/public/sites')
+        const d = await res.json()
         const siteList = (d.sites || []).map((s: any) => s.nama_site)
         if (siteList.length > 0) {
           setSites(siteList)
         } else {
           setSites(['PPA-MLP', 'HO', 'PPA-BIB', 'PPA-MCB'])
         }
-      })
-      .catch(() => {
+      } catch {
         setSites(['PPA-MLP', 'HO', 'PPA-BIB', 'PPA-MCB'])
-      })
-  }, [])
+      }
+    }
+
+    bootstrapLogin().finally(() => {
+      if (!cancelled) setBooting(false)
+    })
+    loadSites()
+
+    return () => {
+      cancelled = true
+    }
+  }, [router])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    if (!site) { setError('Pilih Site Kerja'); return }
-    if (!password) { setError('Password wajib diisi'); return }
+    if (!site) {
+      setError('Pilih Site Kerja')
+      return
+    }
+    if (!password) {
+      setError('Password wajib diisi')
+      return
+    }
+
     setLoading(true)
     setError('')
 
@@ -47,72 +162,66 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nrp: nrp.trim(), password: password.trim(), site: site })
+        body: JSON.stringify({
+          nrp: nrp.trim(),
+          password: password.trim(),
+          site: site
+        })
       })
-      
-const data = await res.json()
 
-if (!res.ok) {
-  setError(data.error || 'Login gagal')
-  setLoading(false)
-  return
-}
+      const data = await res.json()
 
-// ✅ v2.0: Simpan token ke localStorage untuk backup iPhone PWA
-if (data.token) {
-  try {
-    localStorage.setItem('btm_session_token_v1', data.token)
-    console.log('💾 Token saved to localStorage')
-  } catch {}
-}
+      if (!res.ok) {
+        setError(data.error || 'Login gagal')
+        setLoading(false)
+        return
+      }
 
-// Simpan user cache langsung saat login (biar offline langsung siap)
-if (data.user) {
-  try {
-    localStorage.setItem('btm_user_cache_v1', JSON.stringify(data.user))
-    localStorage.setItem('btm_cache_timestamp_v1', new Date().toISOString())
-  } catch {}
-}
+      if (data.token) {
+        saveToken(data.token)
+      }
 
-router.push('/dashboard?menu=absensi_saya')
+      if (data.user) {
+        saveUserCache(data.user)
+      }
 
+      router.replace('/dashboard?menu=absensi_saya')
     } catch (err) {
       setError('Koneksi Gagal ke Server')
       setLoading(false)
     }
   }
 
-  // Loading Screen
-  if (loading) return (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[999]">
-      <div className="animate-swivel mb-6">
-        <Image src="/btm-fix.png" alt="Logo" width={180} height={180} priority />
+  if (booting || loading) {
+    return (
+      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[999]">
+        <div className="animate-swivel mb-6">
+          <Image src="/btm-fix.png" alt="Logo" width={180} height={180} priority />
+        </div>
+        <p className="text-[#003D79] font-black text-xs tracking-[0.3em] animate-pulse uppercase">
+          {booting ? 'Memeriksa Sesi...' : 'Authenticating...'}
+        </p>
       </div>
-      <p className="text-[#003D79] font-black text-xs tracking-[0.3em] animate-pulse uppercase">Authenticating...</p>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 relative overflow-hidden bg-[#F8FAFC]">
-      
-      {/* Background Pattern */}
-      <div 
+      <div
         className="fixed inset-0 pointer-events-none opacity-[0.01] z-0"
-        style={{ 
-          backgroundImage: `url('/bg-pattern.png')`, 
+        style={{
+          backgroundImage: `url('/bg-pattern.png')`,
           backgroundRepeat: 'repeat',
           backgroundSize: '160px',
         }}
       />
-      
-      {/* Blur Blobs */}
+
       <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[120px] pointer-events-none z-[1]" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-[#003D79]/10 rounded-full blur-[120px] pointer-events-none z-[1]" />
-      
+
       <div className="relative z-10 w-full max-w-[360px] flex flex-col items-center">
-        
         <div className="fixed top-8 right-8 text-slate-400 text-[10px] font-bold tracking-widest opacity-50">
-          V.1.6.2
+          V.1.7.0
         </div>
 
         <div className="flex flex-col items-center mb-10 text-center">
@@ -125,15 +234,12 @@ router.push('/dashboard?menu=absensi_saya')
           </p>
         </div>
 
-        {/* Card Login */}
         <div className="w-full bg-white/80 backdrop-blur-md rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,61,121,0.12)] p-9 border border-white/50">
           <h2 className="text-center font-bold text-[#003D79] text-[11px] mb-8 tracking-[0.3em] uppercase opacity-80">
             Secure Login
           </h2>
-          
+
           <form onSubmit={handleLogin} className="space-y-4">
-            
-            {/* NRP Input */}
             <div className="flex items-center bg-slate-100/50 border-2 border-transparent rounded-2xl px-5 py-4 focus-within:border-[#003D79] focus-within:bg-white transition-all group">
               <span className="text-slate-400 group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">👤</span>
               <input
@@ -146,7 +252,6 @@ router.push('/dashboard?menu=absensi_saya')
               />
             </div>
 
-            {/* Password Input (dengan icon mata 👁️) */}
             <div className="flex items-center bg-slate-100/50 border-2 border-transparent rounded-2xl px-5 py-4 focus-within:border-[#003D79] focus-within:bg-white transition-all group">
               <span className="text-slate-400 group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">🔒</span>
               <input
@@ -166,7 +271,6 @@ router.push('/dashboard?menu=absensi_saya')
               </button>
             </div>
 
-            {/* Site Selection */}
             <div className="flex items-center bg-slate-100/50 border-2 border-transparent rounded-2xl px-5 py-4 focus-within:border-[#003D79] focus-within:bg-white transition-all group">
               <span className="text-slate-400 group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">🏢</span>
               <select
@@ -176,7 +280,9 @@ router.push('/dashboard?menu=absensi_saya')
                 required
               >
                 <option value="">Pilih Site Kerja</option>
-                {sites.map(s => <option key={s} value={s}>{s}</option>)}
+                {sites.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
               </select>
               <span className="text-slate-400 text-[10px]">▼</span>
             </div>
@@ -195,11 +301,10 @@ router.push('/dashboard?menu=absensi_saya')
               <p className="text-rose-500 text-[10px] font-bold uppercase tracking-wider">{error}</p>
             </div>
           )}
-          
-          {/* Tombol Bantuan Login */}
+
           <div className="text-center mt-8">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => setShowHelp(true)}
               className="text-[#003D79] text-[10px] font-black tracking-widest uppercase border-b-2 border-blue-100 pb-1 hover:border-[#003D79] transition-all"
             >
@@ -210,39 +315,33 @@ router.push('/dashboard?menu=absensi_saya')
 
         <div className="mt-12 text-center px-6">
           <p className="text-[9px] text-slate-400 leading-relaxed mb-6 font-medium">
-            Sistem Informasi SDM Terpadu <br/>
+            Sistem Informasi SDM Terpadu <br />
             <span className="text-[#003D79] font-bold cursor-pointer">PT Boston Trikora Mahardika</span>
           </p>
         </div>
-
       </div>
 
-      {/* MODAL POPUP: BANTUAN LOGIN */}
       {showHelp && (
         <>
-          <div 
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[998]" 
-            onClick={() => setShowHelp(false)} 
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[998]"
+            onClick={() => setShowHelp(false)}
           />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[999] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            
-            {/* Header Modal */}
             <div className="p-6 bg-[#003D79] text-white flex justify-between items-center">
               <div>
                 <h3 className="font-black text-base tracking-tight">📖 Cara Login</h3>
                 <p className="text-blue-200 text-[9px] font-bold uppercase tracking-[0.2em] mt-1">Panduan Singkat</p>
               </div>
-              <button 
-                onClick={() => setShowHelp(false)} 
+              <button
+                onClick={() => setShowHelp(false)}
                 className="bg-white/10 hover:bg-white/20 h-9 w-9 flex items-center justify-center rounded-full transition-colors text-lg"
               >
                 ✕
               </button>
             </div>
-            
-            {/* Isi Bantuan */}
+
             <div className="p-6 space-y-4">
-              
               <div className="flex gap-3">
                 <div className="w-7 h-7 bg-blue-100 text-[#003D79] rounded-full flex items-center justify-center font-black text-xs shrink-0">1</div>
                 <div>
@@ -289,12 +388,10 @@ router.push('/dashboard?menu=absensi_saya')
                   </p>
                 </div>
               </div>
-
             </div>
 
-            {/* Footer Modal */}
             <div className="p-4 bg-slate-50 border-t border-slate-100 text-center">
-              <button 
+              <button
                 onClick={() => setShowHelp(false)}
                 className="w-full bg-[#003D79] text-white py-3 rounded-2xl font-black text-[11px] tracking-[0.2em] uppercase active:scale-95 transition-all"
               >
