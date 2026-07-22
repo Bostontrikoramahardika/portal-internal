@@ -138,6 +138,23 @@ export async function getSession(token: string) {
     scopeSite = roleData?.scope_site || null
   }
 
+  // ✨ v2.0 (Chat 16): Ambil roles FRESH dari tabel roles (bukan dari sessions)
+  // Supaya perubahan role tidak perlu login ulang
+  const { data: freshRoles } = await supabase
+    .from('roles')
+    .select('role')
+    .eq('nrp', data.nrp)
+    .eq('active', true)
+
+  const rolesFromDb = (freshRoles || [])
+    .map((r: any) => r.role)
+    .filter(Boolean)
+
+  // Merge: roles dari sessions (backward compat) + roles dari DB (fresh)
+  const mergedRoles = Array.from(
+    new Set([...(data.roles || []), ...rolesFromDb])
+  )
+
   const isSuperAdmin = Boolean(emp?.is_super_admin)
   const permissions = await getUserPermissions(data.nrp, isSuperAdmin)
 
@@ -148,9 +165,9 @@ export async function getSession(token: string) {
     site: emp?.site || null,
     jabatan: emp?.jabatan || null,
     departemen: emp?.departemen || null,
-    roles: data.roles,
+    roles: mergedRoles,
     scope_site: scopeSite,
-    primaryRole: getPrimaryRole(data.roles),
+    primaryRole: getPrimaryRole(mergedRoles),
     is_super_admin: isSuperAdmin,
     permissions
   }

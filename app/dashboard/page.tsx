@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/app/lib/AuthContext'
 import { getTablePermissions } from '@/app/lib/tablePermissions'
 import { saveOfflineAttendance } from '@/app/lib/offlineDB'
+import KoreksiBadge from './components/KoreksiBadge'
 
 /**
  * 📊 HELPER: Salam Dinamis
@@ -36,6 +37,7 @@ function DashboardView({ title, data }: any) {
             <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-white tracking-tight">{data.user_name || stats.user_name || 'Rekan BTM'} 👋</h2>
             <p className="text-blue-200/50 text-[10px] font-medium mt-1 uppercase tracking-widest italic">{stats.periode}</p>
           </div>
+          <KoreksiBadge /> 
         </div>
 
         <div className="bg-white rounded-[2.2rem] mx-4 -mt-16 p-6 shadow-[0_20px_50px_rgba(0,61,121,0.12)] border border-white relative z-20">

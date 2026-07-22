@@ -108,7 +108,8 @@ const TAB_CONFIG = [
         m.menu_key === 'riwayat_absensi' ||
         m.menu_key === 'kelola_absensi' ||
         m.menu_key === 'import_roster' ||
-        m.menu_key === 'export_absensi_matrix'
+        m.menu_key === 'export_absensi_matrix' ||
+        m.menu_key === 'koreksi_absensi'
       )
     }
   },
@@ -172,7 +173,8 @@ const TAB_CONFIG = [
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'approval_center' ||
-        m.menu_key === 'riwayat_approval'
+        m.menu_key === 'riwayat_approval' ||
+        m.menu_key === 'approval_koreksi'
       )
     }
   },
@@ -201,7 +203,8 @@ const TAB_CONFIG = [
         m.menu_key === 'kelola_site_master' ||
         m.menu_key === 'kelola_job_kategori' ||
         m.menu_key === 'kelola_hak_cuti' ||
-        m.menu_key === 'data_sakit'
+        m.menu_key === 'data_sakit' ||
+        m.menu_key === 'hr_override_absensi'
       )
     }
   },
@@ -588,6 +591,23 @@ async function checkAuth() {
     }
     if (menuKey === 'plant_admin') {
       router.push('/partbook/admin')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    // Routing menu Koreksi Absensi (STANDALONE pages)
+    if (menuKey === 'koreksi_absensi') {
+      router.push('/dashboard/koreksi-absensi')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'approval_koreksi') {
+      router.push('/dashboard/approval-koreksi')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'hr_override_absensi') {
+      router.push('/dashboard/hr-override-absensi')
       setBottomSheetOpen(false)
       return
     }

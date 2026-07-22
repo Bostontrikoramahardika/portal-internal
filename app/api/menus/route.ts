@@ -9,20 +9,20 @@ export async function GET(request: NextRequest) {
   const session = await getSession(token)
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
-   // Jika Super Admin (Ricky), ambil SEMUA menu aktif tanpa filter role
   const isSuperAdmin = session.is_super_admin || false
-  
+
   let query = supabase
     .from('menus')
     .select('*')
     .eq('active', true)
     .order('sort_order')
-  
-  // Kalau bukan super admin, baru filter berdasarkan role
+
   if (!isSuperAdmin) {
-    query = query.in('role', session.roles)
+    // Tambah role '*' supaya menu global juga kebawa
+    const rolesToQuery = Array.from(new Set([...(session.roles || []), '*']))
+    query = query.in('role', rolesToQuery)
   }
-  
+
   const { data: menus, error } = await query
 
   if (error) {
@@ -30,7 +30,6 @@ export async function GET(request: NextRequest) {
   }
 
   // Deduplikasi menu berdasarkan menu_key
-  // Kalau ada menu yang sama di 2 role, ambil yang sort_order lebih kecil
   const uniqueMenus = new Map()
   ;(menus || []).forEach((m: any) => {
     if (!uniqueMenus.has(m.menu_key)) {
@@ -38,16 +37,17 @@ export async function GET(request: NextRequest) {
     }
   })
 
-  const deduplicated = Array.from(uniqueMenus.values())
-    .sort((a: any, b: any) => a.sort_order - b.sort_order)
+  const deduplicated = Array.from(uniqueMenus.values()).sort(
+    (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
+  )
 
   const response = NextResponse.json({ menus: deduplicated })
-  
-  // ✨ Cache di browser 60 detik + stale-while-revalidate 5 menit
+
+  // Cache di browser 60 detik + stale-while-revalidate 5 menit
   response.headers.set(
     'Cache-Control',
     'private, max-age=60, stale-while-revalidate=300'
   )
-  
+
   return response
 }
