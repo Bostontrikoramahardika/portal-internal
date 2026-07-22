@@ -8,6 +8,7 @@ import { saveUserCache, getUserCache, isCacheValid, saveMenusCache, getMenusCach
 import { initAutoSync } from '@/app/lib/sync-manager'
 import SyncIndicator from '@/app/dashboard/components/SyncIndicator'
 import ClockOutReminder from '@/app/dashboard/components/ClockOutReminder'
+import VerificationModal from '@/app/dashboard/components/VerificationModal'
 
 interface User {
   nrp: string
@@ -688,6 +689,7 @@ async function checkAuth() {
       <main className="flex-1 min-w-0 lg:ml-64 pb-24 lg:pb-6">
         <SyncIndicator />  {/* ← BARU! Badge sync indicator */}
         <ClockOutReminder />
+        <VerificationModal />
 
         {/* HEADER MOBILE */}
                        <div className="lg:hidden bg-white/70 backdrop-blur-xl border-b border-white/40 px-3 py-1.5 flex items-center justify-between fixed top-0 left-0 right-0 z-[60] shadow-[0_4px_20px_rgba(0,61,121,0.05)]">
