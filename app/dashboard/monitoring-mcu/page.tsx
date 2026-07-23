@@ -331,11 +331,14 @@ export default function MonitoringMcuPage() {
   )
 }
 
-// ─── Modal Tambah MCU ─────────────────────────────────────────
+// ─── Modal Tambah MCU (v2 - Search Autocomplete) ─────────────
 function AddMcuModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
-  const [nrp, setNrp] = useState('')
-  const [namaPreview, setNamaPreview] = useState('')
-  const [loadingNrp, setLoadingNrp] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Array<{ nrp: string; nama: string; jabatan: string; site: string }>>([])
+  const [selectedEmp, setSelectedEmp] = useState<{ nrp: string; nama: string; jabatan: string; site: string } | null>(null)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [loadingSearch, setLoadingSearch] = useState(false)
+
   const [form, setForm] = useState({
     tanggal_mcu: new Date().toISOString().split('T')[0],
     jenis_mcu: 'MCU Periodik',
@@ -351,42 +354,66 @@ function AddMcuModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Cari karyawan by NRP
-  const searchNrp = async () => {
-    if (!nrp.trim()) return
-    setLoadingNrp(true)
-    try {
-      const token = localStorage.getItem('btm_session_token_v1')
-      const headers: Record<string, string> = {}
-      if (token) headers['Authorization'] = `Bearer ${token}`
-      const res = await fetch(`/api/employees?nrp=${nrp}`, { headers })
-      const json = await res.json()
-      if (json.data && json.data.length > 0) {
-        setNamaPreview(json.data[0].nama)
-        setError('')
-      } else {
-        setNamaPreview('')
-        setError('NRP tidak ditemukan')
-      }
-    } catch {
-      setError('Gagal cari karyawan')
-    } finally {
-      setLoadingNrp(false)
+  // Debounced search
+  useEffect(() => {
+    if (searchQuery.length < 1) {
+      setSearchResults([])
+      return
     }
+    if (selectedEmp && selectedEmp.nama === searchQuery) return
+
+    const timer = setTimeout(async () => {
+      setLoadingSearch(true)
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('btm_session_token_v1') : null
+        const headers: Record<string, string> = {}
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
+        const res = await fetch(`/api/employees/search?q=${encodeURIComponent(searchQuery)}`, { headers })
+        const json = await res.json()
+        if (json.ok) {
+          setSearchResults(json.data)
+          setShowDropdown(true)
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoadingSearch(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery, selectedEmp])
+
+  const handleSelectEmp = (emp: { nrp: string; nama: string; jabatan: string; site: string }) => {
+    setSelectedEmp(emp)
+    setSearchQuery(emp.nama)
+    setShowDropdown(false)
+    setError('')
+  }
+
+  const handleClearEmp = () => {
+    setSelectedEmp(null)
+    setSearchQuery('')
+    setSearchResults([])
+    setShowDropdown(false)
   }
 
   const handleSubmit = async () => {
-    if (!nrp || !namaPreview) { setError('Cari NRP dulu'); return }
+    if (!selectedEmp) {
+      setError('Pilih karyawan dulu')
+      return
+    }
     setSaving(true)
     setError('')
 
     try {
-      const token = localStorage.getItem('btm_session_token_v1')
+      const token = typeof window !== 'undefined' ? localStorage.getItem('btm_session_token_v1') : null
       const headers: Record<string, string> = {}
       if (token) headers['Authorization'] = `Bearer ${token}`
 
       const fd = new FormData()
-      fd.append('nrp', nrp)
+      fd.append('nrp', selectedEmp.nrp)
       Object.entries(form).forEach(([k, v]) => { if (v) fd.append(k, v) })
       if (file) fd.append('file', file)
 
@@ -401,7 +428,8 @@ function AddMcuModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
       } else {
         setError(json.error || 'Gagal simpan')
       }
-    } catch {
+    } catch (err) {
+      console.error(err)
       setError('Terjadi kesalahan')
     } finally {
       setSaving(false)
@@ -414,46 +442,93 @@ function AddMcuModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-black text-slate-800">Input MCU Baru</h2>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full">✕</button>
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full font-bold text-slate-500">✕</button>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-[1.2rem] text-rose-600 text-sm">
+            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-[1.2rem] text-rose-600 text-sm font-semibold">
               {error}
             </div>
           )}
 
-          {/* NRP Search */}
-          <div className="mb-4">
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 block">NRP Karyawan</label>
-            <div className="flex gap-2">
+          {/* ── Search Karyawan (Autocomplete) ── */}
+          <div className="mb-4 relative">
+            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 block">
+              Cari Karyawan (Nama / NRP) *
+            </label>
+            <div className="relative">
               <input
-                value={nrp}
-                onChange={e => setNrp(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && searchNrp()}
-                placeholder="Masukkan NRP..."
-                className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[1.2rem] text-sm focus:outline-none focus:ring-2 focus:ring-[#003D79]/20"
+                value={searchQuery}
+                onChange={e => {
+                  setSearchQuery(e.target.value)
+                  if (selectedEmp) setSelectedEmp(null)
+                }}
+                onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+                placeholder="Ketik nama atau NRP..."
+                className="w-full px-4 py-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-[1.2rem] text-sm focus:outline-none focus:ring-2 focus:ring-[#003D79]/20"
+                autoComplete="off"
               />
-              <button
-                onClick={searchNrp}
-                disabled={loadingNrp}
-                className="px-4 py-2.5 bg-[#003D79] text-white rounded-[1.2rem] text-sm font-bold"
-              >
-                {loadingNrp ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Cari'}
-              </button>
+              {selectedEmp && (
+                <button
+                  onClick={handleClearEmp}
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 font-bold"
+                >
+                  ✕
+                </button>
+              )}
+              {loadingSearch && !selectedEmp && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <svg className="animate-spin h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                </div>
+              )}
             </div>
-            {namaPreview && (
-              <div className="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700 font-semibold">
-                ✓ {namaPreview}
+
+            {/* Dropdown suggestion */}
+            {showDropdown && searchResults.length > 0 && !selectedEmp && (
+              <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-[1.2rem] shadow-xl max-h-64 overflow-y-auto">
+                {searchResults.map(emp => (
+                  <button
+                    key={emp.nrp}
+                    type="button"
+                    onClick={() => handleSelectEmp(emp)}
+                    className="w-full px-4 py-3 text-left hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors"
+                  >
+                    <div className="font-bold text-slate-800 text-sm">{emp.nama}</div>
+                    <div className="text-xs text-slate-500">
+                      {emp.nrp} · {emp.jabatan || '-'} · {emp.site || '-'}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* No result */}
+            {showDropdown && searchQuery.length > 0 && !loadingSearch && searchResults.length === 0 && !selectedEmp && (
+              <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-[1.2rem] shadow-xl p-4 text-center text-sm text-slate-400">
+                Tidak ada karyawan ditemukan
+              </div>
+            )}
+
+            {/* Preview selected */}
+            {selectedEmp && (
+              <div className="mt-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <div className="text-sm font-bold text-emerald-800">✓ {selectedEmp.nama}</div>
+                <div className="text-xs text-emerald-600">
+                  {selectedEmp.nrp} · {selectedEmp.jabatan || '-'} · {selectedEmp.site || '-'}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Form Fields */}
+          {/* ── Form Fields ── */}
           {[
-            { key: 'tanggal_mcu', label: 'Tanggal MCU', type: 'date' },
+            { key: 'tanggal_mcu', label: 'Tanggal MCU *', type: 'date' },
             { key: 'jenis_mcu', label: 'Jenis MCU', type: 'text', placeholder: 'MCU Periodik / Pre-Employ / dll' },
-            { key: 'hasil', label: 'Hasil', type: 'select', options: ['FIT','FIT BERSYARAT','TIDAK FIT'] },
+            { key: 'hasil', label: 'Hasil *', type: 'select', options: ['FIT','FIT BERSYARAT','TIDAK FIT'] },
             { key: 'dokter', label: 'Dokter', type: 'text', placeholder: 'Nama dokter' },
             { key: 'rumah_sakit', label: 'Rumah Sakit / Klinik', type: 'text' },
             { key: 'tanggal_berlaku', label: 'Tanggal Berlaku', type: 'date' },
@@ -489,31 +564,55 @@ function AddMcuModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
             </div>
           ))}
 
-          {/* Upload PDF */}
+          {/* ── Upload File ── */}
           <div className="mb-6">
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Upload Hasil MCU (PDF/JPG/PNG, maks 3MB)</label>
+            <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 block">
+              Upload Hasil MCU (PDF/JPG/PNG, maks 3MB)
+            </label>
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
               onChange={e => setFile(e.target.files?.[0] || null)}
               className="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#003D79] file:text-white file:text-xs file:font-bold"
             />
-            {file && <p className="text-xs text-emerald-600 mt-1">✓ {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</p>}
+            {file && (
+              <p className="text-xs text-emerald-600 mt-1 font-semibold">
+                ✓ {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+            )}
           </div>
 
+          {/* ── Action Buttons ── */}
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-[1.2rem] font-bold text-sm"
-            >Batal</button>
+              className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-[1.2rem] font-bold text-sm hover:bg-slate-200"
+            >
+              Batal
+            </button>
             <button
               onClick={handleSubmit}
-              disabled={saving || !namaPreview}
-              className="flex-1 py-3 bg-[#003D79] text-white rounded-[1.2rem] font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+              disabled={saving || !selectedEmp}
+              className="flex-1 py-3 bg-[#003D79] text-white rounded-[1.2rem] font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#002D5F] flex items-center justify-center gap-2"
             >
-              {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Menyimpan...</> : 'Simpan MCU'}
+              {saving ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Menyimpan...
+                </>
+              ) : 'Simpan MCU'}
             </button>
           </div>
+
+          {/* Info kenapa button disabled */}
+          {!selectedEmp && (
+            <p className="text-center text-xs text-slate-400 mt-2 italic">
+              💡 Pilih karyawan dulu untuk mengaktifkan tombol simpan
+            </p>
+          )}
         </div>
       </div>
     </div>
