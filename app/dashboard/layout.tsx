@@ -110,7 +110,9 @@ const TAB_CONFIG = [
         m.menu_key === 'kelola_absensi' ||
         m.menu_key === 'import_roster' ||
         m.menu_key === 'export_absensi_matrix' ||
-        m.menu_key === 'koreksi_absensi'
+        m.menu_key === 'manajemen_absensi' ||
+m.menu_key === 'rekap_absensi' ||
+m.menu_key === 'koreksi_absensi'
       )
     }
   },
@@ -607,7 +609,17 @@ async function checkAuth() {
       setBottomSheetOpen(false)
       return
     }
-    if (menuKey === 'hr_override_absensi') {
+    if (menuKey === 'manajemen_absensi') {
+  router.push('/dashboard/manajemen-absensi')
+  setBottomSheetOpen(false)
+  return
+}
+if (menuKey === 'rekap_absensi') {
+  router.push('/dashboard/rekap-absensi')
+  setBottomSheetOpen(false)
+  return
+}
+if (menuKey === 'hr_override_absensi') {
       router.push('/dashboard/hr-override-absensi')
       setBottomSheetOpen(false)
       return

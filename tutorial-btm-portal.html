@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Tutorial BTM Portal</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #f4f7fa;
+    color: #1e293b;
+  }
+  .slide {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+  .slide::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 8mm;
+    background: linear-gradient(90deg, #003D79 0%, #005a9c 100%);
+  }
+  h1 {
+    font-size: 32pt;
+    color: #003D79;
+    margin-bottom: 8mm;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+  h2 {
+    font-size: 22pt;
+    color: #003D79;
+    margin-bottom: 6mm;
+    font-weight: 900;
+    border-bottom: 3px solid #003D79;
+    padding-bottom: 3mm;
+  }
+  h3 {
+    font-size: 14pt;
+    color: #005a9c;
+    margin: 4mm 0 2mm 0;
+    font-weight: bold;
+  }
+  p, li {
+    font-size: 11pt;
+    line-height: 1.7;
+    margin-bottom: 3mm;
+  }
+  ul, ol { margin-left: 8mm; margin-bottom: 4mm; }
+  .cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-height: 260mm;
+  }
+  .cover h1 { font-size: 48pt; color: #003D79; }
+  .cover .subtitle {
+    font-size: 18pt;
+    color: #64748b;
+    margin: 10mm 0;
+    font-weight: bold;
+  }
+  .cover .company {
+    font-size: 14pt;
+    color: #003D79;
+    font-weight: bold;
+    margin-top: 20mm;
+  }
+  .cover .version {
+    background: #003D79;
+    color: white;
+    padding: 3mm 10mm;
+    border-radius: 20mm;
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 10mm;
+  }
+  .badge {
+    display: inline-block;
+    background: #003D79;
+    color: white;
+    padding: 2mm 5mm;
+    border-radius: 10mm;
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5mm;
+  }
+  .step {
+    background: #f1f5f9;
+    border-left: 5px solid #003D79;
+    padding: 5mm;
+    margin: 3mm 0;
+    border-radius: 3mm;
+  }
+  .step-number {
+    display: inline-block;
+    background: #003D79;
+    color: white;
+    width: 8mm; height: 8mm;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 8mm;
+    font-weight: bold;
+    margin-right: 3mm;
+  }
+  .warning {
+    background: #fef3c7;
+    border-left: 5px solid #f59e0b;
+    padding: 5mm;
+    margin: 3mm 0;
+    border-radius: 3mm;
+    font-size: 10pt;
+  }
+  .danger {
+    background: #fee2e2;
+    border-left: 5px solid #dc2626;
+    padding: 5mm;
+    margin: 3mm 0;
+    border-radius: 3mm;
+    font-size: 10pt;
+  }
+  .success {
+    background: #d1fae5;
+    border-left: 5px solid #10b981;
+    padding: 5mm;
+    margin: 3mm 0;
+    border-radius: 3mm;
+    font-size: 10pt;
+  }
+  .info {
+    background: #dbeafe;
+    border-left: 5px solid #3b82f6;
+    padding: 5mm;
+    margin: 3mm 0;
+    border-radius: 3mm;
+    font-size: 10pt;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5mm;
+    margin: 5mm 0;
+  }
+  .screenshot-box {
+    border: 3px dashed #cbd5e1;
+    background: #f8fafc;
+    padding: 10mm;
+    text-align: center;
+    color: #94a3b8;
+    font-weight: bold;
+    border-radius: 5mm;
+    margin: 5mm 0;
+    min-height: 60mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .screenshot-box::before {
+    content: '📸';
+    font-size: 24pt;
+    display: block;
+    margin-bottom: 3mm;
+  }
+  .icon-large { font-size: 40pt; margin-bottom: 3mm; }
+  .footer-page {
+    position: absolute;
+    bottom: 10mm; right: 15mm;
+    font-size: 9pt; color: #94a3b8;
+  }
+  .footer-page::before { content: 'BTM Portal Tutorial • Halaman '; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 4mm 0;
+    font-size: 10pt;
+  }
+  th {
+    background: #003D79;
+    color: white;
+    padding: 3mm;
+    text-align: left;
+  }
+  td {
+    padding: 3mm;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  tr:nth-child(even) { background: #f8fafc; }
+  .code {
+    background: #1e293b;
+    color: #10b981;
+    padding: 3mm 5mm;
+    border-radius: 3mm;
+    font-family: monospace;
+    font-size: 10pt;
+    display: inline-block;
+    margin: 1mm 0;
+  }
+  @media print {
+    body { background: white; }
+    .slide { margin: 0; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: COVER -->
+<div class="slide cover">
+  <div style="font-size: 80pt; margin-bottom: 5mm;">📱</div>
+  <h1>PANDUAN PENGGUNAAN<br>BTM PORTAL MOBILE</h1>
+  <div class="subtitle">Aplikasi Absensi & HR Karyawan</div>
+  <div class="company">PT. BOSTON TRIKORAMA HARDIKA</div>
+  <div class="version">Versi 1.0 — Juli 2026</div>
+</div>
+
+<!-- SLIDE 2: APA ITU BTM PORTAL -->
+<div class="slide">
+  <span class="badge">Pengenalan</span>
+  <h2>📱 Apa itu BTM Portal?</h2>
+  <p>BTM Portal adalah aplikasi mobile untuk seluruh karyawan PT. Boston Trikorama Hardika. Dapat diakses dari HP Anda kapan saja, di mana saja.</p>
+  <h3>Fitur Utama:</h3>
+  <ul>
+    <li>✅ <b>Absensi Harian</b> — Clock In & Clock Out via GPS</li>
+    <li>✅ <b>Pengajuan Cuti & Lembur</b> — Ajukan dari HP</li>
+    <li>✅ <b>Koreksi Absensi</b> — Kalau lupa clock in/out</li>
+    <li>✅ <b>Riwayat Absensi</b> — Cek kehadiran per bulan</li>
+    <li>✅ <b>Notifikasi</b> — Approval & dokumen expired</li>
+    <li>✅ <b>Data Profil</b> — Update data pribadi</li>
+  </ul>
+  <div class="success">
+    💡 <b>Bisa digunakan OFFLINE!</b><br>
+    Kalau sinyal hilang, absen tetap tersimpan & otomatis dikirim saat sinyal kembali.
+  </div>
+  <div class="screenshot-box">
+    [ INSERT: Screenshot Dashboard Utama ]
+  </div>
+  <div class="footer-page">2</div>
+</div>
+
+<!-- SLIDE 3: INSTALL DI ANDROID -->
+<div class="slide">
+  <span class="badge">Instalasi</span>
+  <h2>📲 Install di HP Android</h2>
+  <div class="step"><span class="step-number">1</span> Buka <b>Chrome</b> di HP</div>
+  <div class="step"><span class="step-number">2</span> Ketik alamat: <span class="code">portal-internal-omega.vercel.app</span></div>
+  <div class="step"><span class="step-number">3</span> Tunggu halaman login muncul</div>
+  <div class="step"><span class="step-number">4</span> Klik tombol <b>⋮ (titik 3)</b> di kanan atas</div>
+  <div class="step"><span class="step-number">5</span> Pilih <b>"Tambahkan ke Layar Utama"</b></div>
+  <div class="step"><span class="step-number">6</span> Klik <b>"Tambah"</b></div>
+  <div class="step"><span class="step-number">7</span> ✅ Icon BTM Portal muncul di layar HP</div>
+  <div class="warning">
+    ⚠️ <b>PENTING:</b> Jangan hapus icon ini!<br>
+    Kalau dihapus, harus install ulang dari awal.
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot proses install di Android ]</div>
+  <div class="footer-page">3</div>
+</div>
+
+<!-- SLIDE 4: INSTALL DI iPHONE -->
+<div class="slide">
+  <span class="badge">Instalasi</span>
+  <h2>📲 Install di iPhone</h2>
+  <div class="danger">
+    ⚠️ <b>HARUS PAKAI SAFARI</b><br>
+    Tidak bisa install dari Chrome/Firefox di iPhone!
+  </div>
+  <div class="step"><span class="step-number">1</span> Buka <b>Safari</b> di iPhone</div>
+  <div class="step"><span class="step-number">2</span> Ketik alamat: <span class="code">portal-internal-omega.vercel.app</span></div>
+  <div class="step"><span class="step-number">3</span> Tunggu halaman login muncul</div>
+  <div class="step"><span class="step-number">4</span> Klik tombol <b>📤 (Share)</b> di bawah</div>
+  <div class="step"><span class="step-number">5</span> Scroll ke bawah, pilih <b>"Tambahkan ke Layar Utama"</b></div>
+  <div class="step"><span class="step-number">6</span> Klik <b>"Tambah"</b> di kanan atas</div>
+  <div class="step"><span class="step-number">7</span> ✅ Icon BTM Portal muncul di layar iPhone</div>
+  <div class="screenshot-box">[ INSERT: Screenshot proses install di iPhone ]</div>
+  <div class="footer-page">4</div>
+</div>
+
+<!-- SLIDE 5: LOGIN -->
+<div class="slide">
+  <span class="badge">Langkah Awal</span>
+  <h2>🔐 Cara Login</h2>
+  <div class="step"><span class="step-number">1</span> Buka aplikasi BTM Portal</div>
+  <div class="step"><span class="step-number">2</span> Masukkan <b>NRP</b> (Nomor Registrasi Pegawai)</div>
+  <div class="step"><span class="step-number">3</span> Masukkan <b>Password</b></div>
+  <div class="step"><span class="step-number">4</span> Klik tombol <b>MASUK</b></div>
+  <div class="info">
+    💡 NRP sama seperti yang di ID Card Anda<br>
+    💡 Password awal akan diberikan oleh HR<br>
+    💡 Setelah login, Anda tetap login <b>7 HARI</b> (tidak perlu login ulang setiap hari)
+  </div>
+  <div class="warning">
+    ⚠️ <b>Kalau lupa password:</b> Hubungi HR Site untuk reset password.
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Halaman Login ]</div>
+  <div class="footer-page">5</div>
+</div>
+
+<!-- SLIDE 6: VERIFIKASI EMAIL & NO HP -->
+<div class="slide">
+  <span class="badge">Wajib</span>
+  <h2>📧 Wajib Isi Email & No HP</h2>
+  <p>Saat <b>PERTAMA KALI</b> login, akan muncul popup wajib isi data kontak:</p>
+  <h3>📧 EMAIL:</h3>
+  <ul>
+    <li>Wajib diisi dengan email <b>AKTIF</b></li>
+    <li>Contoh: <span class="code">nama.anda@gmail.com</span></li>
+    <li>Email ini untuk menerima notifikasi kerja</li>
+  </ul>
+  <h3>📱 NO HP:</h3>
+  <ul>
+    <li>Wajib diisi dengan nomor HP aktif</li>
+    <li>Contoh: <span class="code">08123456789</span></li>
+    <li>Otomatis diformat ke <span class="code">628123456789</span></li>
+  </ul>
+  <div class="warning">
+    ⚠️ Anda bisa <b>SKIP MAKSIMAL 3 KALI</b>.<br>
+    Setelah 3x skip, WAJIB isi (tidak bisa akses dashboard).
+  </div>
+  <div class="danger">
+    🔴 <b>PENTING:</b> Pastikan email BENAR & AKTIF, karena notifikasi akan dikirim ke email ini.
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Modal Verifikasi Email & No HP ]</div>
+  <div class="footer-page">6</div>
+</div>
+
+<!-- SLIDE 7: CLOCK IN -->
+<div class="slide">
+  <span class="badge">Absensi</span>
+  <h2>🟢 Cara Clock In (Absensi Masuk)</h2>
+  <div class="step"><span class="step-number">1</span> Buka aplikasi BTM Portal</div>
+  <div class="step"><span class="step-number">2</span> Pastikan <b>GPS / Lokasi</b> di HP AKTIF</div>
+  <div class="step"><span class="step-number">3</span> Tunggu status <b>"📍 Connected"</b> muncul</div>
+  <div class="step"><span class="step-number">4</span> Klik tombol hijau <b>🟢 CLOCK IN</b></div>
+  <div class="step"><span class="step-number">5</span> Izinkan akses lokasi (klik <b>"Izinkan"</b>)</div>
+  <div class="step"><span class="step-number">6</span> Tunggu muncul <b>✅ Clock In Berhasil</b></div>
+  <h3>⏰ Jam Masuk:</h3>
+  <table>
+    <tr><th>Shift</th><th>Jam Masuk</th><th>Jam Pulang</th></tr>
+    <tr><td>☀️ SIANG</td><td>06:00 WITA</td><td>17:00 WITA</td></tr>
+    <tr><td>🌙 MALAM</td><td>18:00 WITA</td><td>05:00 WITA</td></tr>
+  </table>
+  <div class="warning">
+    ⚠️ GPS <b>WAJIB AKTIF</b> — tidak bisa absen tanpa GPS.<br>
+    ⚠️ Shift otomatis terdeteksi dari <b>jam</b> clock in Anda.
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Tombol Clock In ]</div>
+  <div class="footer-page">7</div>
+</div>
+
+<!-- SLIDE 8: CLOCK OUT -->
+<div class="slide">
+  <span class="badge">Absensi</span>
+  <h2>🔴 Cara Clock Out (Absensi Pulang)</h2>
+  <div class="step"><span class="step-number">1</span> Buka aplikasi BTM Portal</div>
+  <div class="step"><span class="step-number">2</span> Pastikan GPS aktif</div>
+  <div class="step"><span class="step-number">3</span> Klik tombol <b>🔴 CLOCK OUT</b></div>
+  <div class="step"><span class="step-number">4</span> Tunggu muncul <b>✅ Clock Out Berhasil</b></div>
+  <div class="danger">
+    🚨 <b>JANGAN LUPA CLOCK OUT!</b><br>
+    Kalau lewat <b>1 JAM</b> dari jam pulang tanpa clock out,<br>
+    sistem akan <b>OTOMATIS clock out</b> untuk Anda.<br>
+    Status akan tercatat: <b>"TIDAK CLOCK OUT"</b>.<br>
+    Ini mempengaruhi penilaian kehadiran Anda!
+  </div>
+  <div class="info">
+    💡 Kalau LUPA clock out & sudah auto clock out, Anda bisa ajukan <b>Koreksi Absensi</b>.
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Tombol Clock Out ]</div>
+  <div class="footer-page">8</div>
+</div>
+
+<!-- SLIDE 9: OFFLINE -->
+<div class="slide">
+  <span class="badge">Fitur Khusus</span>
+  <h2>📴 Absensi Saat Offline (Sinyal Hilang)</h2>
+  <p>Kalau sinyal hilang / tidak ada internet:</p>
+  <div class="step"><span class="step-number">1</span> Buka aplikasi (tetap bisa dibuka walau offline)</div>
+  <div class="step"><span class="step-number">2</span> Klik CLOCK IN / CLOCK OUT seperti biasa</div>
+  <div class="step"><span class="step-number">3</span> Muncul: <b>🟡 CLOCK IN OFFLINE — MENUNGGU SYNC</b></div>
+  <div class="step"><span class="step-number">4</span> Data disimpan di HP Anda secara aman</div>
+  <div class="step"><span class="step-number">5</span> Saat sinyal kembali → data <b>OTOMATIS</b> dikirim ke server</div>
+  <div class="success">
+    ✅ Anda <b>TIDAK PERLU</b> clock in ulang saat online.<br>
+    ✅ Jam yang tercatat = jam saat Anda klik tombol (offline).<br>
+    ✅ Setelah sync berhasil, status berubah hijau.
+  </div>
+  <div class="danger">
+    ⚠️ <b>JANGAN HAPUS APLIKASI</b> saat ada data offline yang belum ter-sync!
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Badge Sync Offline ]</div>
+  <div class="footer-page">9</div>
+</div>
+
+<!-- SLIDE 10: BANNER PERINGATAN -->
+<div class="slide">
+  <span class="badge">Peringatan</span>
+  <h2>⚠️ Banner Peringatan Belum Clock Out</h2>
+  <p>Kalau Anda sudah CLOCK IN tapi BELUM CLOCK OUT setelah lewat jam pulang, akan muncul banner:</p>
+  <div class="warning">
+    🟡 <b>BANNER KUNING:</b><br>
+    "Anda belum Clock Out. Segera Clock Out sebelum sistem auto clock out."<br>
+    → Klik tombol <b>CLOCK OUT SEKARANG</b>
+  </div>
+  <div class="danger">
+    🔴 <b>BANNER MERAH</b> (setelah 1 jam lewat):<br>
+    "Sudah 1 jam melewati jam pulang! Segera Clock Out sebelum sistem auto clock out."
+  </div>
+  <div class="info">
+    ℹ️ <b>BANNER BIRU</b> (keesokan hari):<br>
+    "Sistem sudah auto clock out kemarin karena Anda tidak clock out manual."
+  </div>
+  <div class="danger">
+    🚨 Auto Clock Out = status <b>"TIDAK CLOCK OUT"</b><br>
+    Ini tercatat permanen di riwayat absensi Anda!
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Banner Kuning/Merah ]</div>
+  <div class="footer-page">10</div>
+</div>
+
+<!-- SLIDE 11: KOREKSI ABSENSI -->
+<div class="slide">
+  <span class="badge">Fitur Baru</span>
+  <h2>📝 Koreksi Absensi (Lupa Clock In/Out)</h2>
+  <p>Kalau LUPA clock in atau clock out, ajukan koreksi absensi:</p>
+  <div class="step"><span class="step-number">1</span> Klik tab <b>⏰ ABSENSI</b> di bawah</div>
+  <div class="step"><span class="step-number">2</span> Pilih menu <b>📝 Koreksi Absensi</b></div>
+  <div class="step"><span class="step-number">3</span> Isi form:
+    <ul style="margin-top: 2mm;">
+      <li>Pilih <b>TANGGAL</b> yang mau dikoreksi</li>
+      <li>Pilih <b>TIPE</b>: Lupa Clock In / Lupa Clock Out / Koreksi Jam</li>
+      <li>Isi <b>JAM</b> yang benar (contoh: 17:00)</li>
+      <li>Isi <b>ALASAN</b> (wajib diisi)</li>
+      <li>Bukti foto/link (opsional)</li>
+    </ul>
+  </div>
+  <div class="step"><span class="step-number">4</span> Klik <b>📤 AJUKAN KOREKSI</b></div>
+  <div class="step"><span class="step-number">5</span> Menunggu approval <b>ATASAN</b></div>
+  <div class="info">
+    📋 Cek status pengajuan Anda di tab <b>"RIWAYAT"</b>
+  </div>
+  <div class="warning">
+    ⚠️ Atasan bisa <b>SETUJUI</b> atau <b>TOLAK</b> pengajuan Anda. Isi alasan yang jujur & jelas!
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Form Koreksi + Riwayat ]</div>
+  <div class="footer-page">11</div>
+</div>
+
+<!-- SLIDE 12: RIWAYAT ABSENSI -->
+<div class="slide">
+  <span class="badge">Monitoring</span>
+  <h2>📊 Riwayat Absensi</h2>
+  <p>Untuk melihat riwayat kehadiran Anda:</p>
+  <div class="step"><span class="step-number">1</span> Klik tab <b>⏰ ABSENSI</b></div>
+  <div class="step"><span class="step-number">2</span> Pilih <b>"Riwayat Absensi"</b></div>
+  <div class="step"><span class="step-number">3</span> Akan tampil daftar absensi per hari:
+    <ul style="margin-top: 2mm;">
+      <li>Tanggal</li>
+      <li>Shift (Siang/Malam)</li>
+      <li>Jam Masuk & Jam Pulang</li>
+      <li>Status (Hadir / Terlambat / Tidak Clock Out)</li>
+      <li>Jam kerja (menit)</li>
+    </ul>
+  </div>
+  <div class="info">
+    💡 Data ini bisa dilihat kapan saja.<br>
+    💡 Kalau ada kesalahan, ajukan <b>Koreksi Absensi</b>.
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Halaman Riwayat Absensi ]</div>
+  <div class="footer-page">12</div>
+</div>
+
+<!-- SLIDE 13: NAVIGASI TAB -->
+<div class="slide">
+  <span class="badge">Navigasi</span>
+  <h2>📱 Navigasi Aplikasi (Tab Bawah)</h2>
+  <p>Di bagian bawah layar ada tab navigasi:</p>
+  <table>
+    <tr><th>Icon</th><th>Nama</th><th>Fungsi</th></tr>
+    <tr><td>⏰</td><td>ABSENSI</td><td>Clock In/Out, Riwayat, Koreksi</td></tr>
+    <tr><td>📋</td><td>PENGAJUAN</td><td>Cuti, Lembur, Sakit</td></tr>
+    <tr><td>📁</td><td>DATA</td><td>Monitoring (khusus atasan)</td></tr>
+    <tr><td>👥</td><td>TIM</td><td>Data bawahan (khusus atasan)</td></tr>
+    <tr><td>✅</td><td>APPROVAL</td><td>Approve pengajuan (atasan)</td></tr>
+    <tr><td>🛠️</td><td>KELOLA</td><td>Kelola data HR (khusus HR)</td></tr>
+    <tr><td>📥</td><td>IMPORT</td><td>Import Excel (khusus HR)</td></tr>
+    <tr><td>👤</td><td>PROFILE</td><td>Data diri, Ganti Password</td></tr>
+    <tr><td>⚙️</td><td>SYSTEM</td><td>Konfigurasi (khusus Admin)</td></tr>
+    <tr><td>🚜</td><td>PLANT</td><td>Katalog Part Alat Berat</td></tr>
+  </table>
+  <div class="info">
+    💡 Tidak semua tab muncul untuk semua karyawan.<br>
+    💡 Tab yang muncul sesuai <b>JABATAN / ROLE</b> Anda.
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Bottom Navigation ]</div>
+  <div class="footer-page">13</div>
+</div>
+
+<!-- SLIDE 14: GANTI PASSWORD -->
+<div class="slide">
+  <span class="badge">Keamanan</span>
+  <h2>🔑 Cara Ganti Password</h2>
+  <div class="step"><span class="step-number">1</span> Klik tab <b>👤 PROFILE</b></div>
+  <div class="step"><span class="step-number">2</span> Pilih <b>"Ganti Password"</b></div>
+  <div class="step"><span class="step-number">3</span> Isi:
+    <ul style="margin-top: 2mm;">
+      <li>Password Lama</li>
+      <li>Password Baru</li>
+      <li>Konfirmasi Password Baru</li>
+    </ul>
+  </div>
+  <div class="step"><span class="step-number">4</span> Klik <b>Simpan</b></div>
+  <div class="info">
+    💡 Password minimal <b>6 karakter</b>.<br>
+    💡 Gunakan kombinasi huruf + angka.<br>
+    💡 Jangan share password ke orang lain!
+  </div>
+  <div class="warning">
+    ⚠️ Kalau lupa password: Hubungi HR Site untuk reset.
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Halaman Ganti Password ]</div>
+  <div class="footer-page">14</div>
+</div>
+
+<!-- SLIDE 15: NOTIFIKASI -->
+<div class="slide">
+  <span class="badge">Fitur</span>
+  <h2>🔔 Notifikasi</h2>
+  <p>Klik icon <b>🔔</b> di kanan atas untuk melihat semua notifikasi:</p>
+  <h3>📝 PERSETUJUAN</h3>
+  <ul>
+    <li>Pengajuan cuti/lembur yang perlu diproses</li>
+    <li>Jumlah pengajuan pending</li>
+  </ul>
+  <h3>🚨 DOKUMEN EXPIRED</h3>
+  <ul>
+    <li>MCU, SIMPER, PKWT yang sudah/hampir expired</li>
+    <li>Warna merah = kritis (harus segera diurus)</li>
+  </ul>
+  <div class="info">
+    💡 Angka merah di icon 🔔 = jumlah notifikasi.<br>
+    💡 Klik notifikasi untuk langsung ke halaman terkait.
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Modal Notifikasi ]</div>
+  <div class="footer-page">15</div>
+</div>
+
+<!-- SLIDE 16: KHUSUS ATASAN -->
+<div class="slide">
+  <span class="badge">Untuk Atasan</span>
+  <h2>👔 Khusus Atasan (GL / PJO / HR)</h2>
+  <p>Sebagai atasan, Anda punya menu tambahan:</p>
+  <h3>✅ APPROVAL KOREKSI ABSENSI</h3>
+  <ul>
+    <li>Approve/Reject pengajuan koreksi bawahan</li>
+    <li>Menu: Tab ✅ Approval → "Approval Koreksi Absensi"</li>
+  </ul>
+  <h3>👥 DATA TIM</h3>
+  <ul>
+    <li>Lihat data bawahan</li>
+    <li>Monitoring absensi tim</li>
+  </ul>
+  <h3>📊 MONITORING</h3>
+  <ul>
+    <li>Lihat data expired tim</li>
+    <li>Monitoring CR, roster</li>
+  </ul>
+  <div class="info">
+    💡 Kalau ada bawahan ajukan koreksi, akan muncul notifikasi di 🔔
+  </div>
+  <div class="screenshot-box">[ INSERT: Screenshot Tab Approval + Koreksi ]</div>
+  <div class="footer-page">16</div>
+</div>
+
+<!-- SLIDE 17: FAQ -->
+<div class="slide">
+  <span class="badge">FAQ</span>
+  <h2>❓ Pertanyaan Umum</h2>
+  <h3>T: Kenapa tidak bisa Clock In?</h3>
+  <p>J: Pastikan GPS aktif & izin lokasi diberikan. Coba restart aplikasi.</p>
+  <h3>T: Kenapa shift saya salah?</h3>
+  <p>J: Shift otomatis terdeteksi dari JAM clock in. Kalau salah, ajukan Koreksi Absensi.</p>
+  <h3>T: Sudah Clock In tapi status "Menunggu Sync"?</h3>
+  <p>J: Sinyal sedang offline. Data akan otomatis terkirim saat sinyal kembali.</p>
+  <h3>T: Bagaimana kalau lupa Clock Out?</h3>
+  <p>J: Sistem auto clock out 1 jam setelah jam pulang. Anda bisa ajukan Koreksi Absensi.</p>
+  <h3>T: Bagaimana kalau HP mati/hilang?</h3>
+  <p>J: Login di HP lain, data tetap aman di server.</p>
+  <h3>T: Siapa yang bisa reset password saya?</h3>
+  <p>J: Hubungi HR Site.</p>
+  <div class="footer-page">17</div>
+</div>
+
+<!-- SLIDE 18: RINGKASAN & PENUTUP -->
+<div class="slide">
+  <span class="badge">Penutup</span>
+  <h2>📋 Ringkasan Penting</h2>
+  <div class="success">
+    <b>✅ YANG WAJIB DILAKUKAN SETIAP HARI:</b>
+    <ul style="margin-top: 2mm;">
+      <li>Clock In saat mulai kerja</li>
+      <li>Clock Out saat pulang kerja</li>
+      <li>Aktifkan GPS sebelum absen</li>
+      <li>Isi Email & No HP (pertama kali)</li>
+    </ul>
+  </div>
+  <div class="danger">
+    <b>❌ YANG TIDAK BOLEH DILAKUKAN:</b>
+    <ul style="margin-top: 2mm;">
+      <li>Jangan share NRP & password</li>
+      <li>Jangan hapus aplikasi saat ada data offline</li>
+      <li>Jangan absen untuk orang lain</li>
+    </ul>
+  </div>
+  <div class="info">
+    <b>📞 BUTUH BANTUAN?</b><br><br>
+    Hubungi HR Site<br>
+    Email: [isi email HR site]<br>
+    Chat langsung ke atasan
+  </div>
+  <div style="text-align: center; margin-top: 20mm; padding: 10mm; background: #003D79; color: white; border-radius: 5mm;">
+    <div style="font-size: 24pt; font-weight: bold;">TERIMA KASIH 🙏</div>
+    <div style="margin-top: 3mm; font-size: 12pt;">PT. Boston Trikorama Hardika</div>
+  </div>
+  <div class="footer-page">18</div>
+</div>
+
+</body>
+</html>
