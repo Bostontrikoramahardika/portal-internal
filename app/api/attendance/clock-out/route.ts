@@ -84,8 +84,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Cari attendance tanggal tersebut
-    const targetDate = clockTime.toISOString().split('T')[0]
+    // 4. Cari attendance tanggal tersebut (WITA UTC+8)
+    const witaClockTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
+    const targetDate = witaClockTime.toISOString().split('T')[0]
 
     const { data: existing } = await supabase
       .from('attendance')

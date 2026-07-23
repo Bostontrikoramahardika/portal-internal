@@ -17,9 +17,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // ⚠️ WITA timezone (UTC+8)
     const now = new Date()
-    const today = now.toISOString().split('T')[0]
-    const wibHour = (now.getUTCHours() + 7) % 24
+    const witaNow = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+    const today = witaNow.toISOString().split('T')[0]
+    const witaHour = witaNow.getUTCHours()
 
     // 1. Cek attendance hari ini
     const { data: todayAtt } = await supabase
@@ -85,10 +87,10 @@ export async function GET(req: NextRequest) {
     // Cek apakah sudah lewat jam pulang
     let sudahLewatJamPulang = false
     if (shift === 'SIANG') {
-      sudahLewatJamPulang = wibHour >= pulangH
+      sudahLewatJamPulang = witaHour >= pulangH
     } else {
       // Shift malam: jam pulang 05:00 → lewat kalau jam 05-17
-      sudahLewatJamPulang = wibHour >= pulangH && wibHour < 17
+      sudahLewatJamPulang = witaHour >= pulangH && witaHour < 17
     }
 
     if (!sudahLewatJamPulang) {
@@ -96,7 +98,7 @@ export async function GET(req: NextRequest) {
     }
 
     // ── Sudah lewat jam pulang dan belum clock out → tampilkan reminder ──
-    const lewatJam = wibHour - pulangH
+    const lewatJam = witaHour - pulangH
     let severity: 'warning' | 'danger' = 'warning'
     let message = `⚠️ Anda belum Clock Out! Jam pulang shift ${shift} adalah ${jamPulang.slice(0, 5)}.`
 
