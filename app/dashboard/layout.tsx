@@ -207,7 +207,8 @@ m.menu_key === 'koreksi_absensi'
         m.menu_key === 'kelola_job_kategori' ||
         m.menu_key === 'kelola_hak_cuti' ||
         m.menu_key === 'data_sakit' ||
-        m.menu_key === 'hr_override_absensi'
+        m.menu_key === 'hr_override_absensi' ||
+        m.menu_key === 'monitoring_mcu'
       )
     }
   },
@@ -242,6 +243,7 @@ m.menu_key === 'koreksi_absensi'
       return (
         m.menu_key === 'data_saya' ||
         m.menu_key === 'kpi_saya' ||
+        m.menu_key === 'mcu_saya' ||        // ← BARU
         m.menu_key === 'ganti_password'
       )
     }
@@ -402,6 +404,7 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
             const filtered = menusArr.filter((m: MenuItem) => {
               if (m.active === false) return false
               if (fresh.user?.is_super_admin) return true
+              if (m.role === '*') return true                       // ← BARU
               return (fresh.roles || []).includes(m.role)
             })
             saveMenusCache({ menus: filtered })
@@ -561,6 +564,7 @@ async function checkAuth() {
                 const filtered = menusArr.filter((m: MenuItem) => {
                   if (m.active === false) return false
                   if (retryData.user?.is_super_admin) return true
+                  if (m.role === '*') return true                   // ← BARU
                   return roles.includes(m.role)
                 })
                 setMenus(filtered)
@@ -608,6 +612,7 @@ async function checkAuth() {
     const filtered = menusArray.filter((m: MenuItem) => {
       if (m.active === false) return false
       if (data.user?.is_super_admin) return true
+      if (m.role === '*') return true                 // ← BARU: wildcard match semua role
       return roles.includes(m.role)
     })
 
