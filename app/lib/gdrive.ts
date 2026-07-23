@@ -11,7 +11,7 @@ const GDRIVE_OAUTH_CLIENT_SECRET = process.env.GDRIVE_OAUTH_CLIENT_SECRET!;
 const GDRIVE_OAUTH_REFRESH_TOKEN = process.env.GDRIVE_OAUTH_REFRESH_TOKEN!;
 
 // ---------- AUTH (OAuth Delegation - User Personal Account) ----------
-function getOAuth2Client() {
+export function getOAuth2Client() {
   const oAuth2Client = new google.auth.OAuth2(
     GDRIVE_OAUTH_CLIENT_ID,
     GDRIVE_OAUTH_CLIENT_SECRET,
@@ -62,9 +62,19 @@ export async function uploadFile(
     fields: 'id, name, webViewLink, webContentLink, size, mimeType',
   });
 
-  // File otomatis owned by user OAuth (absensimlp@gmail.com)
-  // Skip permission "anyone" — set manual di UI kalau perlu public link
-  // Untuk sharing internal, cukup via webViewLink (login required)
+  // ✅ AUTO-SHARE: Set file jadi public (anyone with link can view)
+  try {
+    await drive.permissions.create({
+      fileId: response.data.id!,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone',
+      },
+    });
+    console.log('✅ File set to public:', response.data.id);
+  } catch (permErr) {
+    console.error('⚠️ Failed to set public permission:', permErr);
+  }
 
   return {
     fileId: response.data.id!,
@@ -176,4 +186,139 @@ export async function testConnection(): Promise<{
       message: err.message || 'Unknown error',
     };
   }
+}
+
+// ============================================================
+// MCU GOOGLE DRIVE FUNCTIONS — CHAT 18
+// ============================================================
+
+/**
+ * Cari subfolder berdasarkan nama di dalam parentId.
+ * Kalau tidak ada → buat baru.
+ * Returns: folderId (string)
+ */
+export async function getOrCreateFolder(
+  folderName: string,
+  parentFolderId: string
+): Promise<string> {
+  const auth = await getOAuth2Client()
+  const drive = google.drive({ version: 'v3', auth })
+
+  // Cari dulu
+  const searchRes = await drive.files.list({
+    q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and '${parentFolderId}' in parents and trashed=false`,
+    fields: 'files(id, name)',
+    spaces: 'drive',
+  })
+
+  if (searchRes.data.files && searchRes.data.files.length > 0) {
+    return searchRes.data.files[0].id!
+  }
+
+  // Buat baru
+  const createRes = await drive.files.create({
+    requestBody: {
+      name: folderName,
+      mimeType: 'application/vnd.google-apps.folder',
+      parents: [parentFolderId],
+    },
+    fields: 'id',
+  })
+
+  return createRes.data.id!
+}
+
+/**
+ * Upload file MCU ke Drive dengan struktur:
+ * Root BTM → BTM MCU → [Site] → [NRP - Nama] → file
+ *
+ * Returns: { fileId, fileUrl, folderIdKaryawan }
+ */
+export async function uploadMcuFile(params: {
+  nrp: string
+  nama: string
+  site: string
+  filename: string       // e.g. MCU_2026-07-15_hasil.pdf
+  buffer: Buffer
+  mimeType: string       // 'application/pdf' | 'image/jpeg' | 'image/png'
+}): Promise<{ fileId: string; fileUrl: string; folderIdKaryawan: string }> {
+  const { nrp, nama, site, filename, buffer, mimeType } = params
+  const auth = await getOAuth2Client()
+  const drive = google.drive({ version: 'v3', auth })
+
+  const rootFolderId = process.env.GDRIVE_FOLDER_ID!
+
+  // Layer 1: BTM MCU
+  const mcuRootId = await getOrCreateFolder('BTM MCU', rootFolderId)
+
+  // Layer 2: Site
+  const siteFolderName = site || 'Site Tidak Diketahui'
+  const siteFolderId = await getOrCreateFolder(siteFolderName, mcuRootId)
+
+  // Layer 3: Karyawan (NRP - Nama)
+  const karyawanFolderName = `${nrp} - ${nama}`
+  const karyawanFolderId = await getOrCreateFolder(karyawanFolderName, siteFolderId)
+
+  // Upload file
+  const { Readable } = await import('stream')
+  const stream = Readable.from(buffer)
+
+  const uploadRes = await drive.files.create({
+    requestBody: {
+      name: filename,
+      parents: [karyawanFolderId],
+    },
+    media: {
+      mimeType,
+      body: stream,
+    },
+    fields: 'id, webViewLink',
+  })
+
+  const fileId = uploadRes.data.id!
+  const fileUrl = uploadRes.data.webViewLink || `https://drive.google.com/file/d/${fileId}/view`
+
+  return { fileId, fileUrl, folderIdKaryawan: karyawanFolderId }
+}
+
+/**
+ * Generate temporary view link untuk file MCU.
+ * Karyawan akses via app (bukan langsung Drive).
+ * Returns: link Google Drive viewer (public jika sudah di-share)
+ */
+export async function getMcuFileViewLink(fileId: string): Promise<string> {
+  const auth = await getOAuth2Client()
+  const drive = google.drive({ version: 'v3', auth })
+
+  // Set permission: anyone with link can view
+  try {
+    await drive.permissions.create({
+      fileId,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone',
+      },
+    })
+  } catch {
+    // Permission mungkin sudah ada, lanjut
+  }
+
+  return `https://drive.google.com/file/d/${fileId}/view`
+}
+
+
+/**
+ * Update folder karyawan di tabel mcu (simpan gdrive_folder_id)
+ * Dipanggil setelah uploadMcuFile
+ */
+export async function saveMcuFolderToDb(
+  mcuId: string,
+  folderIdKaryawan: string
+): Promise<void> {
+  // Import di sini untuk hindari circular dependency
+  const { supabaseAdmin } = await import('@/app/lib/supabase')
+  await supabaseAdmin
+    .from('mcu')
+    .update({ gdrive_folder_id: folderIdKaryawan })
+    .eq('id', mcuId)
 }
