@@ -758,8 +758,20 @@ if (menuKey === 'rekap_absensi') {
   setBottomSheetOpen(false)
   return
 }
-if (menuKey === 'hr_override_absensi') {
+    if (menuKey === 'hr_override_absensi') {
       router.push('/dashboard/hr-override-absensi')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    // ✨ MCU Advanced (Chat 18) ─────────────────
+    if (menuKey === 'monitoring_mcu') {
+      router.push('/dashboard/monitoring-mcu')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'mcu_saya') {
+      router.push('/dashboard/mcu-saya')
       setBottomSheetOpen(false)
       return
     }
