@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
   try {
-    const today = new Date().toISOString().split('T')[0]
+    // ⚠️ WITA timezone (UTC+8) — jangan pakai UTC langsung!
+    const nowWita = new Date(Date.now() + 8 * 60 * 60 * 1000)
+    const today = nowWita.toISOString().split('T')[0]
 
     // Ambil data karyawan
     const { data: emp } = await supabase
@@ -39,8 +41,9 @@ export async function GET(request: NextRequest) {
       .single()
 
     // Hitung statistik bulan ini
-    const firstDayOfMonth = new Date()
-    firstDayOfMonth.setDate(1)
+    // WITA untuk hitung stats bulan ini
+    const firstDayOfMonth = new Date(nowWita)
+    firstDayOfMonth.setUTCDate(1)
     const firstDayStr = firstDayOfMonth.toISOString().split('T')[0]
 
     const { data: monthAttendance } = await supabase
