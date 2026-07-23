@@ -3,6 +3,169 @@ import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
 import * as XLSX from 'xlsx'
 
+
+// ============================================================
+// 📥 HANDLER GET: Download Template Excel Kosong
+// URL: /api/template-excel?table=mcu&mode=empty
+// ============================================================
+export async function GET(request: NextRequest) {
+  try {
+    // 1. Cek Auth
+    const token = request.cookies.get('session_token')?.value
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getSession(token)
+    if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+
+    // 2. Parameter
+    const { searchParams } = new URL(request.url)
+    const table = (searchParams.get('table') || '').toLowerCase()
+    const mode  = searchParams.get('mode') || 'empty'  // 'empty' | 'existing'
+
+    if (!table) {
+      return NextResponse.json({ error: 'Parameter table wajib' }, { status: 400 })
+    }
+
+    // 3. Definisi kolom template per tabel
+    const TEMPLATE_COLUMNS: Record<string, string[]> = {
+      mcu: [
+        'nrp', 'nama_karyawan', 'tanggal_mcu', 'jenis_mcu', 'hasil',
+        'dokter', 'rumah_sakit', 'tanggal_berlaku', 'tanggal_expired', 'keterangan'
+      ],
+      simper: [
+        'nrp', 'nama_karyawan', 'no_simper', 'kelas_simper',
+        'tanggal_terbit', 'tanggal_expired', 'penerbit', 'keterangan'
+      ],
+      apd: [
+        'nrp', 'nama_karyawan', 'jenis_apd', 'ukuran',
+        'tanggal_terima', 'tanggal_expired', 'kondisi', 'keterangan'
+      ],
+      pkwt: [
+        'nrp', 'nama_karyawan', 'no_pkwt', 'tanggal_mulai',
+        'tanggal_selesai', 'jabatan', 'gaji', 'keterangan'
+      ],
+      sp: [
+        'nrp', 'nama_karyawan', 'jenis_sp', 'no_sp',
+        'tanggal_sp', 'tanggal_expired', 'alasan', 'keterangan'
+      ],
+      bpjs: [
+        'nrp', 'nama_karyawan', 'jenis_bpjs', 'no_bpjs',
+        'tanggal_daftar', 'status_aktif', 'keterangan'
+      ],
+      kpi: [
+        'nrp', 'nama_karyawan', 'periode', 'nilai_kpi',
+        'grade', 'catatan_atasan', 'keterangan'
+      ],
+      karyawan: [
+        'nrp', 'nama', 'jabatan', 'departemen', 'site',
+        'tanggal_masuk', 'tempat_lahir', 'tanggal_lahir',
+        'no_hp', 'email', 'alamat', 'status_pernikahan'
+      ],
+    }
+
+    const columns = TEMPLATE_COLUMNS[table]
+    if (!columns) {
+      return NextResponse.json({
+        error: `Template untuk tabel "${table}" belum tersedia`
+      }, { status: 400 })
+    }
+
+    // 4. Kalau mode = 'existing', ambil data existing sebagai preview
+    let dataRows: any[][] = []
+    if (mode === 'existing') {
+      const { data } = await supabase.from(table).select('*').limit(100)
+      if (data && data.length > 0) {
+        dataRows = data.map((row: any) => columns.map(col => row[col] ?? ''))
+      }
+    }
+
+    // 5. Build Excel workbook
+    const wb = XLSX.utils.book_new()
+
+    // Sheet 1: Data
+    const wsData: any[][] = [columns, ...dataRows]
+
+    // Kalau kosong, tambah 1 baris contoh
+    if (dataRows.length === 0) {
+      const exampleRow: any[] = columns.map(col => {
+        if (col === 'nrp') return '0530999'
+        if (col === 'nama' || col === 'nama_karyawan') return 'Nama Contoh'
+        if (col.includes('tanggal')) return '2026-07-15'
+        if (col === 'no_hp') return '081234567890'
+        if (col === 'email') return 'contoh@email.com'
+        if (col === 'jabatan') return 'Operator'
+        if (col === 'departemen') return 'Operator'
+        if (col === 'site') return 'Site A'
+        if (col === 'jenis_mcu') return 'Awal'
+        if (col === 'hasil') return 'Fit'
+        if (col === 'dokter') return 'dr. Contoh'
+        if (col === 'rumah_sakit') return 'RS Contoh'
+        if (col === 'keterangan') return 'Contoh keterangan'
+        return ''
+      })
+      wsData.push(exampleRow)
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData)
+
+    // Set lebar kolom
+    ws['!cols'] = columns.map(() => ({ wch: 18 }))
+
+    // Style header (bold + biru navy BTM)
+    columns.forEach((_, idx) => {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c: idx })
+      if (ws[cellRef]) {
+        ws[cellRef].s = {
+          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { fgColor: { rgb: '003D79' } },
+          alignment: { horizontal: 'center', vertical: 'center' }
+        }
+      }
+    })
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Data')
+
+    // Sheet 2: Petunjuk
+    const petunjukData = [
+      ['📋 PETUNJUK IMPORT ' + table.toUpperCase()],
+      [''],
+      ['1. Isi data mulai baris 2 (baris 1 adalah header, JANGAN DIUBAH)'],
+      ['2. Format tanggal: YYYY-MM-DD (contoh: 2026-07-15)'],
+      ['3. NRP wajib diisi dan harus sudah ada di data karyawan'],
+      ['4. Kolom keterangan bersifat opsional'],
+      ['5. Setelah selesai, upload file ini di halaman Import'],
+      [''],
+      ['⚠️ PENTING:'],
+      ['- Jangan ubah nama header di baris 1'],
+      ['- Jangan menghapus kolom'],
+      ['- Baris contoh boleh dihapus sebelum upload'],
+      [''],
+      ['Kolom yang dibutuhkan:'],
+      ...columns.map((col, i) => [`${i + 1}. ${col}`])
+    ]
+    const wsPetunjuk = XLSX.utils.aoa_to_sheet(petunjukData)
+    wsPetunjuk['!cols'] = [{ wch: 80 }]
+    XLSX.utils.book_append_sheet(wb, wsPetunjuk, 'Petunjuk')
+
+    // 6. Generate buffer & return
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+    const filename = `Template_${table}_${mode}_${new Date().toISOString().split('T')[0]}.xlsx`
+
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-cache'
+      }
+    })
+  } catch (err: any) {
+    console.error('Template Excel Error:', err)
+    return NextResponse.json({
+      error: err?.message || 'Gagal generate template'
+    }, { status: 500 })
+  }
+}
+
 // ============================================================
 // 🎯 SPECIAL HANDLER: Import ROSTER (Format Standar Baru)
 // ============================================================
