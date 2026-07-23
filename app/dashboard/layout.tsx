@@ -332,6 +332,135 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
     }
   }, [activeMenu, menus])
 
+    // ── ✨ Silent role check di background (tidak block UI) ──
+  async function silentRoleCheck(cachedUser: any) {
+    try {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('btm_session_token_v1')
+        : null
+
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
+      const res = await fetch('/api/auth/me', {
+        headers,
+        signal: AbortSignal.timeout(5000)
+      })
+
+      if (!res.ok) return  // silent fail, tidak ganggu user
+
+      const fresh = await res.json()
+      if (!fresh.user) return
+
+      // Bandingkan roles cache vs fresh
+      const cachedRoles = new Set((cachedUser.roles || []).sort())
+      const freshRoles  = new Set((fresh.roles || []).sort())
+
+      const rolesChanged =
+        cachedRoles.size !== freshRoles.size ||
+        [...cachedRoles].some(r => !freshRoles.has(r as string)) ||
+        [...freshRoles].some(r => !cachedRoles.has(r as string))
+
+      // Bandingkan permissions
+      const cachedPerms = new Set((cachedUser.permissions || []).sort())
+      const freshPerms  = new Set((fresh.permissions || []).sort())
+
+      const permsChanged =
+        cachedPerms.size !== freshPerms.size ||
+        [...cachedPerms].some(p => !freshPerms.has(p as string)) ||
+        [...freshPerms].some(p => !cachedPerms.has(p as string))
+
+      // Bandingkan super admin status
+      const superChanged = 
+        Boolean(cachedUser.is_super_admin) !== Boolean(fresh.user.is_super_admin)
+
+      // Kalau ada perubahan → auto refresh
+      if (rolesChanged || permsChanged || superChanged) {
+        console.log('🔄 Roles/Permissions berubah → auto refresh')
+        console.log('Cached roles:', [...cachedRoles])
+        console.log('Fresh roles:',  [...freshRoles])
+
+        // Update cache dengan data fresh
+        const newUserData = {
+          ...fresh.user,
+          roles: fresh.roles || [],
+          permissions: fresh.permissions || []
+        }
+        saveUserCache(newUserData)
+
+        // Fetch menus baru juga
+        try {
+          const menuRes = await fetch('/api/menus', {
+            headers,
+            signal: AbortSignal.timeout(5000)
+          })
+          if (menuRes.ok) {
+            const menuData = await menuRes.json()
+            const menusArr = Array.isArray(menuData) 
+              ? menuData 
+              : (menuData.menus || menuData.data || [])
+            const filtered = menusArr.filter((m: MenuItem) => {
+              if (m.active === false) return false
+              if (fresh.user?.is_super_admin) return true
+              return (fresh.roles || []).includes(m.role)
+            })
+            saveMenusCache({ menus: filtered })
+
+            // Update juga cache lama
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('btm_menus_v1', JSON.stringify(filtered))
+              localStorage.setItem('btm_menus_time_v1', Date.now().toString())
+            }
+          }
+        } catch {}
+
+        // Tampilkan notif kecil
+        showRoleUpdateNotification()
+
+        // Reload halaman setelah 1.5 detik biar user sadar
+        setTimeout(() => {
+          window.location.reload()
+        }, 1500)
+      }
+    } catch (err) {
+      // Silent fail, tidak ganggu user
+      console.debug('Silent role check gagal (tidak masalah)')
+    }
+  }
+
+  // Notifikasi kecil di kanan atas
+  function showRoleUpdateNotification() {
+    if (typeof window === 'undefined') return
+
+    const notif = document.createElement('div')
+    notif.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #003D79;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 13px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      z-index: 99999;
+      animation: slideIn 0.3s ease;
+    `
+    notif.innerHTML = '🔄 Menu diperbarui, memuat ulang...'
+    document.body.appendChild(notif)
+
+    // Style animation
+    const style = document.createElement('style')
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to   { transform: translateX(0);      opacity: 1; }
+      }
+    `
+    document.head.appendChild(style)
+  }
+
 async function checkAuth() {
   // ── STEP 1: Load cache dulu (instant, tidak nunggu network) ──
   const cachedUser      = getUserCache()
@@ -343,6 +472,11 @@ async function checkAuth() {
     setIsSuperAdmin(cachedUser.is_super_admin || false)
     setUserPermissions(cachedUser.permissions || [])
     if (cachedMenusData?.menus) setMenus(cachedMenusData.menus)
+  }
+
+    // ── ✨ AUTO-REFRESH: Cek perubahan roles di background ──
+  if (cachedUser && navigator.onLine) {
+    silentRoleCheck(cachedUser)
   }
 
   // Backward compat: cache menu lama
