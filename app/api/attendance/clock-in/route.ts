@@ -116,8 +116,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Cek apakah sudah clock in di tanggal tersebut
-    // ⚡ Pakai tanggal dari clockTime (bukan hari ini)
-    const targetDate = clockTime.toISOString().split('T')[0]
+    // ⚡ Pakai tanggal WITA (UTC+8), bukan UTC
+    const witaClockTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
+    const targetDate = witaClockTime.toISOString().split('T')[0]
 
     const { data: existing } = await supabase
       .from('attendance')
