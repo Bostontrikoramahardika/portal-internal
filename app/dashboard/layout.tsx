@@ -228,6 +228,7 @@ m.menu_key === 'koreksi_absensi'
         m.menu_key === 'import_sp' ||
         m.menu_key === 'import_bpjs' ||
         m.menu_key === 'import_mcu' ||
+        m.menu_key === 'import_mcu_bulk' ||  // 🆕 Bulk import auto-fill
         m.menu_key === 'import_simper'
       )
     }
@@ -776,8 +777,8 @@ if (menuKey === 'rekap_absensi') {
       return
     }
 
-    // 📥 Import MCU Massal (Chat 20) ─────────────────
-    if (menuKey === 'import_mcu') {
+    // 📥 Import MCU Massal Auto-Fill (Chat 20) ─────────────────
+    if (menuKey === 'import_mcu_bulk') {
       router.push('/dashboard/import-mcu')
       setBottomSheetOpen(false)
       return
