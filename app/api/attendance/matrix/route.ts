@@ -1,56 +1,79 @@
+// app/api/attendance/matrix/route.ts v2.1
+// Fix: TypeScript strict + tanggal future + resign + timezone WITA
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
+import { getWitaToday } from '@/app/lib/timezone'
 
 const HO_VIEW_ONLY  = ['hr_ho','director_ops','business_dev','manager_ops','spv_she_ho','she_site']
 const SITE_EDIT     = ['hr_site','pjo_site','super_admin']
 const LEADER_EDIT   = ['gl_produksi','gl_plant']
 
-// Konversi ROSTER + ATTENDANCE → kode cell display
-function konversiCell(rosterShift: string | null, att: any): { code: string, type: 'roster'|'actual'|'empty' } {
+// ═══════════════════════════════════════════════════
+function konversiCell(
+  rosterShift: string | null,
+  att: any,
+  isFuture: boolean = false,
+  isAfterResign: boolean = false
+): { code: string, type: 'roster'|'actual'|'empty'|'future'|'resigned' } {
   const roster = (rosterShift || '').toUpperCase().trim()
 
-  // 1. Kalau roster OFF / CR / CT / ID → pakai roster
+  if (isAfterResign) {
+    return { code: '', type: 'resigned' }
+  }
+
+  if (isFuture) {
+    if (['OFF','CR','CT','ID','SCK','MCK','TR','LV','S','M'].includes(roster)) {
+      return { code: roster, type: 'future' }
+    }
+    return { code: '-', type: 'future' }
+  }
+
   if (['OFF','CR','CT','ID','SCK','MCK','TR','LV'].includes(roster)) {
     return { code: roster, type: 'roster' }
   }
 
-  // 2. Kalau attendance status ada
   if (att) {
     const status = (att.status || '').toUpperCase()
     const shift  = (att.shift || '').toUpperCase()
 
-    // Sakit / Izin
-    if (status === 'SAKIT') return { code: 'S', type: 'actual' }
-    if (status === 'IZIN')  return { code: 'I', type: 'actual' }
+    if (status === 'SAKIT' || status === 'S')  return { code: 'S',  type: 'actual' }
+    if (status === 'IZIN'  || status === 'I')  return { code: 'I',  type: 'actual' }
+    if (status === 'IZIN_RESMI' || status === 'IR') return { code: 'IR', type: 'actual' }
+    if (status === 'ALFA'  || status === 'A')  return { code: 'A',  type: 'actual' }
+    if (status === 'CUTI'  || status === 'CT') return { code: 'CT', type: 'actual' }
+    if (status === 'CR')                        return { code: 'CR', type: 'actual' }
+    if (status === 'ID' || status === 'INDUKSI')   return { code: 'ID', type: 'actual' }
+    if (status === 'TR' || status === 'TRAINING')  return { code: 'TR', type: 'actual' }
 
-    // Sudah clock in
     if (att.clock_in) {
-      if (shift === 'MALAM') return { code: 'NS', type: 'actual' }
+      if (shift === 'MALAM' || shift === 'NS' || shift === 'M') return { code: 'NS', type: 'actual' }
       return { code: 'DS', type: 'actual' }
     }
 
-    // Alpha (roster S/M tapi tidak clock in)
     if (roster === 'S' || roster === 'M') {
       return { code: 'A', type: 'actual' }
     }
   }
 
-  // 3. Roster S/M tapi tidak ada attendance = ALPHA
   if (roster === 'S' || roster === 'M') {
     return { code: 'A', type: 'actual' }
   }
 
-  // 4. Kosong
   return { code: '-', type: 'empty' }
 }
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status })
-  const session = auth.session
+  const session: any = auth.session!
 
-  if (session.role === 'employee') {
+  // 🆕 Ambil role & super admin flag dari array roles
+  const userRoles: string[] = Array.isArray(session.roles) ? session.roles : []
+  const role: string = userRoles[0] || 'employee'
+  const isSuperAdmin = userRoles.includes('super_admin')
+
+  if (role === 'employee' && !isSuperAdmin) {
     return NextResponse.json({ error: 'Tidak punya akses' }, { status: 403 })
   }
 
@@ -67,16 +90,17 @@ export async function GET(req: NextRequest) {
   const jmlHari   = new Date(tahun, bln, 0).getDate()
   const endDate   = `${tahun}-${String(bln).padStart(2,'0')}-${String(jmlHari).padStart(2,'0')}`
 
-  // ── STEP 1: Ambil daftar karyawan sesuai scope role ──
+  const todayWita = getWitaToday()
+
+  // ── STEP 1: Ambil karyawan ──
   let empQuery = supabaseAdmin
     .from('employees')
     .select('nrp, nama, jabatan, departemen, site, status_karyawan, tanggal_resign')
 
-  // Scope role
-  if (['hr_site','pjo_site','she_site'].includes(session.role)) {
+  if (!isSuperAdmin && ['hr_site','pjo_site','she_site'].includes(role)) {
     empQuery = empQuery.eq('site', session.site || '')
   }
-  if (['gl_plant','gl_produksi'].includes(session.role)) {
+  if (!isSuperAdmin && ['gl_plant','gl_produksi'].includes(role)) {
     const { data: bawahan } = await supabaseAdmin
       .from('approval_matrix')
       .select('employee_nrp')
@@ -88,7 +112,6 @@ export async function GET(req: NextRequest) {
     empQuery = empQuery.in('nrp', nrpList)
   }
 
-  // Filter
   if (site) empQuery = empQuery.eq('site', site)
   if (departemen) empQuery = empQuery.eq('departemen', departemen)
   if (nama) empQuery = empQuery.ilike('nama', `%${nama}%`)
@@ -101,7 +124,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {} })
   }
 
-  // ── STEP 2: Ambil roster (tabel `rosters`) ──
+  // ── STEP 2: Ambil roster ──
   const { data: rosters } = await supabaseAdmin
     .from('rosters')
     .select('nrp, tanggal, shift_code')
@@ -117,8 +140,8 @@ export async function GET(req: NextRequest) {
     .gte('tanggal', startDate)
     .lte('tanggal', endDate)
 
-  // ── STEP 4: Bangun map untuk lookup cepat ──
-  const rosterMap: Record<string, string> = {}   // key: nrp_tanggal
+  // ── STEP 4: Map ──
+  const rosterMap: Record<string, string> = {}
   ;(rosters || []).forEach((r: any) => {
     rosterMap[`${r.nrp}_${r.tanggal}`] = r.shift_code
   })
@@ -128,18 +151,23 @@ export async function GET(req: NextRequest) {
     attMap[`${a.nrp}_${a.tanggal}`] = a
   })
 
-  // ── STEP 5: Bangun matrix per karyawan ──
+  // ── STEP 5: Matrix per karyawan ──
   const rows = (employees || []).map((emp: any) => {
     const days: any[] = []
     let hariKerja = 0, hariHadir = 0, shiftS = 0, shiftM = 0
     let off = 0, cuti = 0, sakit = 0, izin = 0, alpha = 0, stb = 0
+
+    const resignDate: string | null = emp.tanggal_resign || null
 
     for (let d = 1; d <= jmlHari; d++) {
       const tgl = `${tahun}-${String(bln).padStart(2,'0')}-${String(d).padStart(2,'0')}`
       const roster = rosterMap[`${emp.nrp}_${tgl}`] || null
       const att    = attMap[`${emp.nrp}_${tgl}`] || null
 
-      const cell = konversiCell(roster, att)
+      const isFuture = tgl > todayWita
+      const isAfterResign = !!(resignDate && tgl > resignDate)
+
+      const cell = konversiCell(roster, att, isFuture, isAfterResign)
 
       days.push({
         tanggal: tgl,
@@ -147,6 +175,8 @@ export async function GET(req: NextRequest) {
         code: cell.code,
         type: cell.type,
         roster,
+        isFuture,
+        isAfterResign,
         clock_in: att?.clock_in || null,
         clock_out: att?.clock_out || null,
         clock_in_lokasi: att?.clock_in_lokasi || null,
@@ -161,9 +191,10 @@ export async function GET(req: NextRequest) {
         keterangan: att?.keterangan || null,
       })
 
-      // Summary
+      if (isFuture || isAfterResign) continue
+
       if (['S','M'].includes(roster || '')) hariKerja++
-      if (['DS','NS'].includes(cell.code)) { hariHadir++ }
+      if (['DS','NS'].includes(cell.code)) hariHadir++
       if (cell.code === 'DS') shiftS++
       if (cell.code === 'NS') shiftM++
       if (cell.code === 'OFF') off++
@@ -202,7 +233,7 @@ export async function GET(req: NextRequest) {
     }
   })
 
-  // ── STEP 6: Group by departemen ──
+  // ── STEP 6: Group by dept ──
   const DEPT_ORDER = ['Staff','Plant','Operator','Lainnya']
   const grouped: Record<string, any[]> = {}
   rows.forEach(r => {
@@ -211,7 +242,6 @@ export async function GET(req: NextRequest) {
     grouped[dept].push(r)
   })
 
-  // Sort tiap group by nama
   Object.keys(grouped).forEach(dept => {
     grouped[dept].sort((a, b) => a.nama.localeCompare(b.nama))
   })
@@ -221,20 +251,21 @@ export async function GET(req: NextRequest) {
     rows: grouped[d]
   }))
 
-  // ── STEP 7: Permission info ──
-  const canEdit = session.is_super_admin ||
-                  SITE_EDIT.includes(session.role) ||
-                  LEADER_EDIT.includes(session.role)
+  // ── STEP 7: Permission ──
+  const canEdit = isSuperAdmin ||
+                  SITE_EDIT.includes(role) ||
+                  LEADER_EDIT.includes(role)
 
   return NextResponse.json({
     ok: true,
     bulan,
     jmlHari,
+    todayWita,
     groups,
     permission: {
       canEdit,
-      role: session.role,
-      isViewOnly: HO_VIEW_ONLY.includes(session.role)
+      role,
+      isViewOnly: HO_VIEW_ONLY.includes(role)
     }
   })
 }
