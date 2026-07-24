@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/app/lib/supabase'
 import { getSession } from '@/app/lib/auth'
+import { getWitaToday } from '@/app/lib/timezone'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
 
 export async function GET() {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getWitaToday()
 
     // Hanya ambil 1 pengumuman terakhir yang ACTIVE
     const { data, error } = await supabase

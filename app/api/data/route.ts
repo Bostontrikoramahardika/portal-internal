@@ -5,6 +5,7 @@ import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
 import { hasPermission } from '@/app/lib/permissions'
 import { getTablePermissions } from '@/app/lib/tablePermissions'
+import { getWitaToday } from '@/app/lib/timezone'
 
 const NAME_BASED_TABLES = ['bpjs', 'apd_history', 'attendance_evidences']
 const HIDDEN_COLUMNS = ['created_at', 'updated_at', 'id', 'nrp', 'atasan_nrp', 'pjo_nrp', 'employee_nrp', 'uploaded_by']
@@ -581,7 +582,7 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
     if (menuKey === 'data_saya') {
       const nrpStr = String(session.nrp).trim();
       const nrpWithZero = nrpStr.startsWith('0') ? nrpStr : '0' + nrpStr;
-      const today = new Date().toISOString().split('T')[0];
+      const today = getWitaToday();
 
       const { data: employeeData } = await supabase.from('employees').select('*').in('nrp', [nrpStr, nrpWithZero]).single()
       if (!employeeData) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })

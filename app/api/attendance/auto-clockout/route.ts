@@ -1,23 +1,24 @@
 // app/api/attendance/auto-clockout/route.ts
 // ═══════════════════════════════════════════
 // CRON JOB: Auto clock out karyawan yang lupa
-// Jalan setiap jam via Vercel Cron
+// Jalan setiap jam via Supabase pg_cron
 // TIDAK MENGUBAH file attendance existing
+// v2.0 - Chat 19: FIX timezone WITA (UTC+8) consistent
 // ═══════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/app/lib/supabase'
+import { getWitaHour, getWitaToday, toWita, toWitaDate } from '@/app/lib/timezone'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 30 // max 30 detik
+export const maxDuration = 30
 
 export async function GET(req: NextRequest) {
-  // ── SECURITY: Hanya boleh dari Vercel Cron atau manual super admin ──
+  // ── SECURITY: Hanya boleh dari Cron atau super admin ──
   const authHeader = req.headers.get('authorization') || ''
   const cronSecret = process.env.CRON_SECRET || ''
   const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`
 
-  // Kalau bukan cron, cek apakah super admin
   if (!isCron) {
     const token = req.cookies.get('session_token')?.value
     if (!token) {
@@ -32,10 +33,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const now = new Date()
-    const currentHour = now.getUTCHours() + 8 // WIB = UTC+7, tapi kita pakai +8 untuk safety margin
-    const adjustedHour = ((now.getUTCHours() + 7) % 24)
-    
-    console.log(`⏰ Auto Clock Out running at ${now.toISOString()} (WIB ~${adjustedHour}:00)`)
+    const witaHour = getWitaHour() // WITA = UTC+8
+    const witaToday = getWitaToday()
+
+    console.log(`⏰ Auto Clock Out running at ${now.toISOString()} (WITA hour: ${witaHour})`)
 
     // ── Ambil semua site config ──
     const { data: sites } = await supabase
@@ -56,41 +57,38 @@ export async function GET(req: NextRequest) {
       const siangPulangH = parseInt((site.siang_jam_pulang || '17:00:00').split(':')[0])
       const malamPulangH = parseInt((site.malam_jam_pulang || '05:00:00').split(':')[0])
 
-      // ── CEK SHIFT SIANG: 1 jam setelah jam pulang siang ──
-      // Misal: pulang 17:00 → auto clock out jam 18:00
+      // Auto clock out = 1 jam setelah jam pulang
       const siangAutoH = siangPulangH + 1
-
-      // ── CEK SHIFT MALAM: 1 jam setelah jam pulang malam ──
-      // Misal: pulang 05:00 → auto clock out jam 06:00
       const malamAutoH = malamPulangH + 1
 
-      // Cek apakah jam sekarang cocok untuk auto clock out
+      // Cek apakah jam WITA sekarang cocok
       let processShift: string | null = null
-      let jamPulang: string = ''
+      let jamPulang = ''
 
-      if (adjustedHour === siangAutoH) {
+      if (witaHour === siangAutoH) {
         processShift = 'SIANG'
         jamPulang = site.siang_jam_pulang
-      } else if (adjustedHour === malamAutoH) {
+      } else if (witaHour === malamAutoH) {
         processShift = 'MALAM'
         jamPulang = site.malam_jam_pulang
       }
 
       if (!processShift) continue
 
-      // ── Cari attendance yang clock in tapi belum clock out ──
-      // Untuk shift SIANG: tanggal = hari ini
-      // Untuk shift MALAM: tanggal = kemarin (karena clock in malam, pulang pagi)
+      // ── Tentukan tanggal target ──
+      // Shift SIANG: tanggal hari ini (WITA)
+      // Shift MALAM: tanggal kemarin (WITA) karena clock in malam, pulang pagi
       let targetDate: string
       if (processShift === 'SIANG') {
-        targetDate = now.toISOString().split('T')[0]
+        targetDate = witaToday
       } else {
-        // Shift malam: tanggal attendance = kemarin
-        const yesterday = new Date(now)
-        yesterday.setDate(yesterday.getDate() - 1)
-        targetDate = yesterday.toISOString().split('T')[0]
+        // Kemarin WITA
+        const yesterdayWita = new Date(Date.now() + 8 * 60 * 60 * 1000)
+        yesterdayWita.setUTCDate(yesterdayWita.getUTCDate() - 1)
+        targetDate = yesterdayWita.toISOString().split('T')[0]
       }
 
+      // ── Cari attendance yang clock in tapi belum clock out ──
       const { data: pendingList } = await supabase
         .from('attendance')
         .select('id, nrp, tanggal, clock_in, shift, site')
@@ -102,22 +100,29 @@ export async function GET(req: NextRequest) {
 
       if (!pendingList || pendingList.length === 0) continue
 
-      // ── Auto clock out setiap orang ──
+      // ── Auto clock out setiap karyawan ──
       for (const att of pendingList) {
-        // Hitung jam pulang yang seharusnya
+        // Hitung waktu auto clock out (WITA)
         const [pH, pM] = jamPulang.split(':').map(Number)
-        const autoClockOutTime = new Date(att.tanggal + 'T00:00:00+07:00')
-        autoClockOutTime.setHours(pH, pM || 0, 0, 0)
-        
-        // Untuk shift malam, jam pulang = hari berikutnya
+        // Buat ISO string dengan offset WITA (+08:00)
+        let autoClockOutIso = `${att.tanggal}T${String(pH).padStart(2, '0')}:${String(pM || 0).padStart(2, '0')}:00+08:00`
+        let autoClockOutTime = new Date(autoClockOutIso)
+
+        // Untuk shift malam dengan jam pulang pagi (<12), waktu pulang = hari berikutnya
         if (processShift === 'MALAM' && pH < 12) {
-          autoClockOutTime.setDate(autoClockOutTime.getDate() + 1)
+          const nextDay = new Date(autoClockOutTime)
+          nextDay.setUTCDate(nextDay.getUTCDate() + 1)
+          autoClockOutTime = nextDay
         }
 
         // Hitung jam kerja
         const clockInTime = new Date(att.clock_in)
         const diffMs = autoClockOutTime.getTime() - clockInTime.getTime()
         const jamKerjaMenit = Math.max(0, Math.floor(diffMs / (1000 * 60)))
+
+        // Format log message WITA
+        const witaLogTime = toWita(now).toISOString().replace('T', ' ').substring(0, 19) + ' WITA'
+        const witaClockOutLog = toWita(autoClockOutTime).toISOString().replace('T', ' ').substring(0, 19) + ' WITA'
 
         // Update attendance
         const { error: updateErr } = await supabase
@@ -129,7 +134,7 @@ export async function GET(req: NextRequest) {
             clock_out_lokasi: 'AUTO CLOCK OUT - SISTEM',
             jam_kerja_menit: jamKerjaMenit,
             status: 'TIDAK CLOCK OUT',
-            keterangan: `[AUTO CLOCK OUT] Karyawan tidak clock out manual. Sistem auto clock out pada jam pulang ${jamPulang}. Waktu proses: ${now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`,
+            keterangan: `[AUTO CLOCK OUT] Karyawan tidak clock out manual. Sistem auto clock out pada jam pulang ${jamPulang} WITA. Waktu proses: ${witaLogTime}`,
             updated_at: now.toISOString()
           })
           .eq('id', att.id)
@@ -148,7 +153,7 @@ export async function GET(req: NextRequest) {
           .eq('active', true)
           .limit(1)
           .single()
-        
+
         if (approval) atasanNrp = approval.atasan_nrp
 
         // ── Ambil email karyawan & atasan ──
@@ -179,16 +184,13 @@ export async function GET(req: NextRequest) {
             nrp: att.nrp,
             tanggal: att.tanggal,
             tipe: 'auto_clockout',
-            pesan: `Auto clock out oleh sistem pada ${autoClockOutTime.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}. Karyawan ${empData?.nama || att.nrp} tidak clock out manual.`,
+            pesan: `Auto clock out oleh sistem pada ${witaClockOutLog}. Karyawan ${empData?.nama || att.nrp} tidak clock out manual.`,
             email_sent: false,
             email_to: emailKaryawan,
             email_atasan_to: emailAtasan
           }, {
             onConflict: 'nrp,tanggal,tipe'
           })
-
-        // ── TODO: Kirim email (aktifkan nanti setelah email service siap) ──
-        // await sendAutoClockOutEmail(emailKaryawan, emailAtasan, empData?.nama, att.tanggal)
 
         totalAutoClockOut++
         results.push({
@@ -212,7 +214,8 @@ export async function GET(req: NextRequest) {
       total_checked: totalProcessed,
       total_auto_clockout: totalAutoClockOut,
       results,
-      executed_at: now.toISOString()
+      executed_at: now.toISOString(),
+      executed_at_wita: toWita(now).toISOString().replace('T', ' ').substring(0, 19) + ' WITA'
     })
 
   } catch (err: any) {

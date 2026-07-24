@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
 import { uploadMcuFile, getMcuFileViewLink } from '@/app/lib/gdrive'
+import { getWitaToday } from '@/app/lib/timezone'
 
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req)
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
       const arrayBuffer = await file.arrayBuffer()
       fileBuffer = Buffer.from(arrayBuffer)
       fileMimeType = file.type
-      const tanggal = formData.get('tanggal_mcu') as string || new Date().toISOString().split('T')[0]
+      const tanggal = (formData.get('tanggal_mcu') as string) || getWitaToday()
       const jenis = (formData.get('jenis_mcu') as string || 'umum').replace(/\s+/g, '-').toLowerCase()
       const ext = fileMimeType.includes('pdf') ? '.pdf' : fileMimeType.includes('png') ? '.png' : '.jpg'
       fileName = `MCU_${tanggal}_${jenis}${ext}`

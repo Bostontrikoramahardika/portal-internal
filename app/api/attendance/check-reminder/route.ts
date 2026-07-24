@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSessionFromRequest } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { getWitaToday, getWitaHour } from '@/app/lib/timezone'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,11 +18,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // ⚠️ WITA timezone (UTC+8)
-    const now = new Date()
-    const witaNow = new Date(now.getTime() + 8 * 60 * 60 * 1000)
-    const today = witaNow.toISOString().split('T')[0]
-    const witaHour = witaNow.getUTCHours()
+    const today = getWitaToday()
+    const witaHour = getWitaHour()
 
     // 1. Cek attendance hari ini
     const { data: todayAtt } = await supabase

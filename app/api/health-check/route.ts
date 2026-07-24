@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { getWitaToday } from '@/app/lib/timezone'
 
 export const dynamic = 'force-dynamic'
 
@@ -208,7 +209,7 @@ export async function GET(req: NextRequest) {
   // 7. RECENT ACTIVITY CHECK
   // ═══════════════════════════════════════════════
   await runCheck('ACTIVITY', 'Absensi hari ini', async () => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getWitaToday()
     const { count, error } = await supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('tanggal', today)
     if (error) throw new Error(error.message)
     return { message: `📊 ${count ?? 0} karyawan absensi hari ini` }

@@ -337,7 +337,7 @@ export async function getTodayOfflineAttendance(): Promise<{
     
     req.onsuccess = () => {
       const all = req.result || []
-      const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+      const today = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().split('T')[0] // WITA YYYY-MM-DD
       
       // Filter: hari ini, belum sync, belum rejected
       const todayRecords = all.filter((r: any) => {

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
 import { uploadMcuFile, getMcuFileViewLink } from '@/app/lib/gdrive'
+import { getWitaToday } from '@/app/lib/timezone'
 
 export async function POST(
   req: NextRequest,
@@ -41,7 +42,7 @@ export async function POST(
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
   const mimeType = file.type
-  const tanggal = new Date().toISOString().split('T')[0]
+  const tanggal = getWitaToday()
   const jenisClean = finding.jenis_temuan.replace(/\s+/g, '-').toLowerCase()
   const ext = mimeType.includes('pdf') ? '.pdf' : mimeType.includes('png') ? '.png' : '.jpg'
   const filename = `MCU_${mcu.tanggal_mcu}_FU-${jenisClean}_${tanggal}${ext}`

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { toWitaDate, toWita } from '@/app/lib/timezone'
 
 // Hitung jarak antar 2 koordinat (dalam meter)
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -115,10 +116,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Cek apakah sudah clock in di tanggal tersebut
-    // ⚡ Pakai tanggal WITA (UTC+8), bukan UTC
-    const witaClockTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
-    const targetDate = witaClockTime.toISOString().split('T')[0]
+    // 4. Cek apakah sudah clock in di tanggal tersebut (WITA UTC+8)
+    const targetDate = toWitaDate(clockTime)
 
     const { data: existing } = await supabase
       .from('attendance')
@@ -144,8 +143,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Detect shift & hitung telat (pakai clockTime, bukan now)
-    // ✨ FIX: Konversi ke jam WITA (UTC+8) karena getHours() default return UTC
-    const witaTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
+    // Jam & menit WITA
+    const witaTime = toWita(clockTime)
     const jamSekarang = witaTime.getUTCHours()
     const menitSekarang = witaTime.getUTCMinutes()
     

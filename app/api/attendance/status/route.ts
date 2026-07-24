@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { getWitaToday, getWitaFirstDayOfMonth } from '@/app/lib/timezone'
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get('session_token')?.value
@@ -10,9 +11,7 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
   try {
-    // ⚠️ WITA timezone (UTC+8) — jangan pakai UTC langsung!
-    const nowWita = new Date(Date.now() + 8 * 60 * 60 * 1000)
-    const today = nowWita.toISOString().split('T')[0]
+    const today = getWitaToday()
 
     // Ambil data karyawan
     const { data: emp } = await supabase
@@ -42,9 +41,7 @@ export async function GET(request: NextRequest) {
 
     // Hitung statistik bulan ini
     // WITA untuk hitung stats bulan ini
-    const firstDayOfMonth = new Date(nowWita)
-    firstDayOfMonth.setUTCDate(1)
-    const firstDayStr = firstDayOfMonth.toISOString().split('T')[0]
+    const firstDayStr = getWitaFirstDayOfMonth()
 
     const { data: monthAttendance } = await supabase
       .from('attendance')

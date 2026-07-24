@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
 import * as XLSX from 'xlsx'
-
+import { getWitaToday } from '@/app/lib/timezone'
 
 // ============================================================
 // 📥 HANDLER GET: Download Template Excel Kosong
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
 
     // 6. Generate buffer & return
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
-    const filename = `Template_${table}_${mode}_${new Date().toISOString().split('T')[0]}.xlsx`
+    const filename = `Template_${table}_${mode}_${getWitaToday()}.xlsx`
 
     return new NextResponse(buffer, {
       status: 200,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { toWitaDate } from '@/app/lib/timezone'
 
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000
@@ -85,8 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Cari attendance tanggal tersebut (WITA UTC+8)
-    const witaClockTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
-    const targetDate = witaClockTime.toISOString().split('T')[0]
+    const targetDate = toWitaDate(clockTime)
 
     const { data: existing } = await supabase
       .from('attendance')

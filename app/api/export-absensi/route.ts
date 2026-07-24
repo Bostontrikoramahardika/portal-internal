@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
 import * as XLSX from 'xlsx'
+import { getWitaToday } from '@/app/lib/timezone'
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get('session_token')?.value
@@ -159,7 +160,7 @@ if (!canExport) {
 
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
 
-    const fileName = `Laporan_Absensi_${tanggalMulai || 'all'}_sd_${tanggalSelesai || 'all'}_${new Date().toISOString().split('T')[0]}.xlsx`
+    const fileName = `Laporan_Absensi_${tanggalMulai || 'all'}_sd_${tanggalSelesai || 'all'}_${getWitaToday()}.xlsx`
 
     return new NextResponse(buffer, {
       headers: {
