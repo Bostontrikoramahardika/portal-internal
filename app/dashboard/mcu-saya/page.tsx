@@ -283,17 +283,6 @@ export default function McuSayaPage() {
 
               {expanded === mcu.id && (
                 <div className="border-t border-slate-100 p-5 space-y-4">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Dokter</div>
-                      <div className="font-semibold text-slate-700">{mcu.dokter || '-'}</div>
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Rumah Sakit</div>
-                      <div className="font-semibold text-slate-700">{mcu.rumah_sakit || '-'}</div>
-                    </div>
-                  </div>
-
                   {mcu.foto_catatan_url && (
                     <a
                       href={mcu.foto_catatan_url}
