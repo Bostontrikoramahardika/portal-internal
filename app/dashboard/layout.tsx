@@ -208,7 +208,8 @@ m.menu_key === 'koreksi_absensi'
         m.menu_key === 'kelola_hak_cuti' ||
         m.menu_key === 'data_sakit' ||
         m.menu_key === 'hr_override_absensi' ||
-        m.menu_key === 'monitoring_mcu'
+        m.menu_key === 'monitoring_mcu' ||
+        m.menu_key === 'monitoring_mcu_matrix'  // 🆕 Matrix view
       )
     }
   },
@@ -780,6 +781,13 @@ if (menuKey === 'rekap_absensi') {
     // 📥 Import MCU Massal Auto-Fill (Chat 20) ─────────────────
     if (menuKey === 'import_mcu_bulk') {
       router.push('/dashboard/import-mcu')
+      setBottomSheetOpen(false)
+      return
+    }
+
+        // 📊 Monitoring MCU Matrix (Chat 20) ─────────────────
+    if (menuKey === 'monitoring_mcu_matrix') {
+      router.push('/dashboard/monitoring-mcu-matrix')
       setBottomSheetOpen(false)
       return
     }
