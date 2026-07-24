@@ -368,12 +368,45 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
   }
 
   if (error || !mcu) {
+    const isNotFound = error?.includes('tidak ditemukan') || !mcu
     return (
-      <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-3" />
-          <p className="font-semibold text-slate-600">{error || 'Data tidak ditemukan'}</p>
-          <button onClick={() => router.back()} className="mt-4 text-[#003D79] font-bold text-sm">← Kembali</button>
+      <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center px-4">
+        <div className="bg-white rounded-[2rem] shadow-xl border border-slate-100 p-8 max-w-md w-full text-center">
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
+            isNotFound ? 'bg-amber-50' : 'bg-rose-50'
+          }`}>
+            <AlertCircle className={`w-8 h-8 ${isNotFound ? 'text-amber-500' : 'text-rose-500'}`} />
+          </div>
+          <h2 className="text-lg font-black text-slate-800 mb-1">
+            {isNotFound ? 'MCU Tidak Ditemukan' : 'Terjadi Kesalahan'}
+          </h2>
+          <p className="text-sm text-slate-500 mb-6">
+            {isNotFound
+              ? 'Data MCU ini mungkin sudah dihapus atau URL tidak valid.'
+              : (error || 'Gagal memuat data MCU')}
+          </p>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => router.push('/dashboard/monitoring-mcu')}
+              className="w-full py-3 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002d5a] transition-colors"
+            >
+              📋 Ke Daftar MCU
+            </button>
+            {!isNotFound && (
+              <button
+                onClick={() => { setError(''); fetchDetail() }}
+                className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors"
+              >
+                🔄 Coba Lagi
+              </button>
+            )}
+            <button
+              onClick={() => router.back()}
+              className="w-full py-2 text-slate-500 text-xs font-semibold hover:text-slate-700"
+            >
+              ← Kembali ke halaman sebelumnya
+            </button>
+          </div>
         </div>
       </div>
     )
