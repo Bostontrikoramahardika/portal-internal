@@ -1499,11 +1499,17 @@ function AbsensiClockView({ title }: any) {
       setRiwayat7Hari(filtered)
     }).catch(() => {})
     
-    navigator.geolocation.getCurrentPosition(
-      pos => setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      err => console.log(err),
-      { enableHighAccuracy: true }
-    )
+        // 🚀 Smart GPS dengan 3-layer strategy (cache → fast → accurate)
+    import('@/app/lib/gps-cache').then(({ getSmartGps }) => {
+      getSmartGps({
+        onProgress: (msg) => console.log('[GPS]', msg)
+      })
+        .then(coords => {
+          setGps({ lat: coords.lat, lng: coords.lng, accuracy: coords.accuracy })
+          console.log(`✅ GPS ready (${coords.source}, ±${Math.round(coords.accuracy)}m)`)
+        })
+        .catch(err => console.warn('[GPS] Initial fetch failed:', err.message))
+    })
     
     // 🆕 Listener: refresh status saat offline attendance saved atau sync selesai
     const handleRefreshStatus = () => {
@@ -1619,11 +1625,46 @@ function AbsensiClockView({ title }: any) {
     }
 
     // ============================================
-    // ONLINE — GPS WAJIB
+    // ONLINE — GPS SMART FETCH (tidak bikin user nunggu manual)
     // ============================================
-    if (!gps) {
-      alert('⏳ Menunggu GPS... Coba lagi sebentar.')
-      return
+    let gpsCoords = gps
+    
+    if (!gpsCoords) {
+      // 🚀 GPS belum ada → fetch smart sekarang juga
+      try {
+        const { getSmartGps } = await import('@/app/lib/gps-cache')
+        const coords = await getSmartGps({
+          onProgress: (msg) => console.log('[GPS handleClock]', msg)
+        })
+        gpsCoords = { lat: coords.lat, lng: coords.lng, accuracy: coords.accuracy }
+        setGps(gpsCoords) // update state buat next click
+      } catch (gpsErr: any) {
+        // GPS benar-benar gagal → tawarkan opsi ke user
+        const useFallback = confirm(
+          `⚠️ GPS tidak bisa didapat.\n\n` +
+          `Kemungkinan penyebab:\n` +
+          `• Lokasi HP belum aktif\n` +
+          `• Sinyal GPS lemah (indoor?)\n` +
+          `• Pertama kali buka setelah HP restart\n\n` +
+          `Coba: keluar sebentar / restart lokasi HP.\n\n` +
+          `Klik OK untuk COBA LAGI, atau Cancel untuk batal.`
+        )
+        if (useFallback) {
+          // User klik OK → coba sekali lagi dengan progress alert
+          alert('🔄 Mencoba GPS sekali lagi... Tunggu maksimal 25 detik ya.')
+          try {
+            const { getSmartGps } = await import('@/app/lib/gps-cache')
+            const coords = await getSmartGps({ allowFallback: true })
+            gpsCoords = { lat: coords.lat, lng: coords.lng, accuracy: coords.accuracy }
+            setGps(gpsCoords)
+          } catch {
+            alert('❌ GPS masih gagal. Silakan cek pengaturan lokasi HP lalu buka ulang app.')
+            return
+          }
+        } else {
+          return
+        }
+      }
     }
     
     // Kirim ke server
