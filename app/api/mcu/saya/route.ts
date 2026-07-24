@@ -1,4 +1,5 @@
-// app/api/mcu/saya/route.ts
+// app/api/mcu/saya/route.ts v2.0
+// Fix: tambah kolom rujukan_* di SELECT mcu_findings
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
@@ -19,7 +20,8 @@ export async function GET(req: NextRequest) {
         id, jenis_temuan, keterangan_temuan,
         status_followup, followup_file_url, followup_file_name,
         followup_keterangan, followup_submitted_at,
-        verified_at, verified_status, verified_note
+        verified_at, verified_status, verified_note,
+        rujukan_file_url, rujukan_file_name, rujukan_uploaded_at
       )
     `)
     .eq('nrp', session.nrp)
