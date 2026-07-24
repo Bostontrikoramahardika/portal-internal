@@ -775,6 +775,11 @@ if (menuKey === 'rekap_absensi') {
       setBottomSheetOpen(false)
       return
     }
+    // Dalam navigateMenu(), tambahkan case:
+if (menuKey === 'import_mcu') {
+  router.push('/dashboard/import-mcu')
+  return
+}
 
     // Default: menu dashboard biasa
     router.push(`/dashboard?menu=${menuKey}`)
