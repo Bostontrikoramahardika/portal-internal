@@ -1,5 +1,4 @@
-// app/api/mcu/import/preview/route.ts
-// Parse Excel + validasi (belum commit ke DB)
+// app/api/mcu/import/preview/route.ts v2.0 — support 5 kolom temuan + ket
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
@@ -12,11 +11,7 @@ export const maxDuration = 60
 const ALLOWED_ROLES = ['super_admin', 'hr_ho', 'hr_site']
 const VALID_HASIL = ['FIT', 'FIT WITH NOTE', 'UNFIT', 'TEMPORARY UNFIT']
 const VALID_JENIS = ['PERIODIK', 'KHUSUS', 'AWAL', 'PRA-KERJA', 'BERKALA']
-const FINDING_TYPES = [
-  'Mata', 'Gigi', 'Telinga', 'Kulit', 'Jantung', 'Paru-paru',
-  'Hati', 'Ginjal', 'Tekanan Darah', 'Kolesterol', 'Gula Darah',
-  'Asam Urat', 'Lainnya'
-]
+const NUM_TEMUAN_COLS = 5
 
 function parseDate(v: any): string | null {
   if (!v) return null
@@ -63,7 +58,6 @@ export async function POST(req: NextRequest) {
 
     const today = getWitaToday()
 
-    // Ambil semua NRP karyawan aktif (untuk validasi)
     const { data: allEmployees } = await supabaseAdmin
       .from('employees')
       .select('nrp, nama, site')
@@ -77,20 +71,16 @@ export async function POST(req: NextRequest) {
     let processedCount = 0
     let skippedCount = 0
 
-    // Loop mulai baris 4 (skip 3 baris header)
     ws.eachRow((row, rowNum) => {
       if (rowNum < 4) return
 
       const nrp = String(row.getCell(1).value || '').trim()
       const nama = String(row.getCell(2).value || '').trim()
-      const site = String(row.getCell(3).value || '').trim()
 
-      // Skip kalau NRP kosong
       if (!nrp) return
 
       const tanggalMcu = parseDate(row.getCell(6).value)
 
-      // Skip baris tanpa TGL MCU (dianggap tidak diisi)
       if (!tanggalMcu) {
         skippedCount++
         return
@@ -99,18 +89,13 @@ export async function POST(req: NextRequest) {
       processedCount++
       const rowErrors: string[] = []
 
-      // Validasi NRP
       const emp = empMap[nrp]
-      if (!emp) {
-        rowErrors.push(`NRP ${nrp} tidak ditemukan / tidak aktif`)
-      }
+      if (!emp) rowErrors.push(`NRP ${nrp} tidak ditemukan / tidak aktif`)
 
-      // Scope role
       if (!isSuperAdmin && role === 'hr_site' && emp && emp.site !== session.site) {
         rowErrors.push(`NRP ${nrp} bukan site Anda (${session.site})`)
       }
 
-      // Validasi tanggal MCU
       if (tanggalMcu > today) {
         rowErrors.push(`Tanggal MCU (${tanggalMcu}) tidak boleh masa depan`)
       }
@@ -137,24 +122,28 @@ export async function POST(req: NextRequest) {
         rowErrors.push(`Tanggal Expired (${tanggalExpired}) harus > Tanggal MCU (${tanggalMcu})`)
       }
 
-      // Kolom temuan (13 kolom mulai kolom 13)
+      // 🆕 5 pair kolom TEMUAN + KETERANGAN (mulai kolom 13)
       const findings: { jenis: string, keterangan: string }[] = []
-      FINDING_TYPES.forEach((jenis, idx) => {
-        const colIdx = 13 + idx
-        const val = String(row.getCell(colIdx).value || '').trim()
-        if (val && val.toUpperCase() !== 'N' && val !== '0') {
-          const ket = ['Y', '1', 'YA', 'YES'].includes(val.toUpperCase()) ? '' : val
-          findings.push({ jenis, keterangan: ket })
+      for (let i = 0; i < NUM_TEMUAN_COLS; i++) {
+        const colTemuan = 13 + (i * 2)   // 13, 15, 17, 19, 21
+        const colKet = colTemuan + 1     // 14, 16, 18, 20, 22
+
+        const temuan = String(row.getCell(colTemuan).value || '').trim()
+        const ket = String(row.getCell(colKet).value || '').trim()
+
+        if (temuan) {
+          findings.push({ jenis: temuan, keterangan: ket || '' })
         }
-      })
+      }
 
-      const keterangan = String(row.getCell(13 + FINDING_TYPES.length).value || '').trim() || null
+      // Kolom keterangan umum (kolom 23)
+      const keterangan = String(row.getCell(23).value || '').trim() || null
 
-      const rowData = {
+      rows.push({
         rowNum,
         nrp,
         nama: emp?.nama || nama,
-        site: emp?.site || site,
+        site: emp?.site || '',
         tanggal_mcu: tanggalMcu,
         jenis_mcu: jenisMcu,
         hasil,
@@ -166,9 +155,8 @@ export async function POST(req: NextRequest) {
         keterangan,
         valid: rowErrors.length === 0,
         errors: rowErrors,
-      }
+      })
 
-      rows.push(rowData)
       if (rowErrors.length > 0) errors.push({ row: rowNum, nrp, errors: rowErrors })
     })
 
