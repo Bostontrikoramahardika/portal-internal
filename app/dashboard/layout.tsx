@@ -775,11 +775,13 @@ if (menuKey === 'rekap_absensi') {
       setBottomSheetOpen(false)
       return
     }
-    // Dalam navigateMenu(), tambahkan case:
-if (menuKey === 'import_mcu') {
-  router.push('/dashboard/import-mcu')
-  return
-}
+
+    // 📥 Import MCU Massal (Chat 20) ─────────────────
+    if (menuKey === 'import_mcu') {
+      router.push('/dashboard/import-mcu')
+      setBottomSheetOpen(false)
+      return
+    }
 
     // Default: menu dashboard biasa
     router.push(`/dashboard?menu=${menuKey}`)
