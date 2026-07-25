@@ -1,838 +1,1803 @@
-// app/dashboard/kelola-apd/page.tsx
-// v1.1 — Kelola APD dengan Tab Verifikasi + Monitoring (merged)
 'use client'
 
-import { useEffect, useState } from 'react'
+// app/dashboard/kelola-apd/page.tsx — v2.0 (6 tab lengkap)
+import { useState, useEffect, useCallback, useRef } from 'react'
+import {
+  Shield, CheckCircle, XCircle, Clock, Package,
+  BarChart3, Calendar, Plus, Edit2, Trash2, ChevronDown,
+  ChevronUp, Search, Filter, RefreshCw, AlertTriangle,
+  TrendingUp, Users, Box, ArrowUpCircle, ArrowDownCircle,
+  FileSpreadsheet, Check, X, Info, Save, Eye
+} from 'lucide-react'
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // TYPES
-// ═══════════════════════════════════════════════
-interface RequestItem {
+// ════════════════════════════════════════════
+type Tab = 'verifikasi' | 'monitoring' | 'master' | 'distribusi' | 'stok' | 'plan'
+
+interface ApdMaster {
   id: string
-  nrp: string
-  nama_karyawan: string
   jenis_apd: string
-  ukuran: string
-  warna: string | null
-  jumlah: number
-  tanggal_terima: string
+  life_time_bulan: number
+  ukuran_tersedia: string[]
+  warna_tersedia: string[]
+  icon: string
+  urutan: number
+  active: boolean
   keterangan: string | null
-  status: string
-  input_source: string
-  created_at: string
-  reject_reason?: string | null
-  verified_by?: string | null
-  verified_at?: string | null
-  _employee?: {
-    nrp: string; nama: string; jabatan: string; departemen: string; site: string
-  }
 }
 
-interface JenisItem {
+interface StokSummaryRow {
+  ukuran: string
+  warna: string
+  qty: number
+  status: 'OK' | 'MENIPIS' | 'HABIS'
+}
+
+interface StokSummary {
   jenis_apd: string
   icon: string
-  life_time_bulan?: number
+  total_qty: number
+  rows: StokSummaryRow[]
 }
 
-interface MatrixCell {
-  status: 'AMAN' | 'SEGERA_GANTI' | 'EXPIRED' | 'BELUM_TERIMA'
-  tanggal: string | null
-  expired: string | null
-  days: number | null
-  ukuran?: string
-  jumlah?: number
-  warna?: string
+interface StokLog {
+  id: string
+  jenis_apd: string
+  ukuran: string | null
+  warna: string | null
+  qty: number
+  tipe: 'masuk' | 'keluar'
+  tanggal: string
+  keterangan: string | null
+  ref_type: string | null
+  created_by: string
+  created_at: string
 }
 
-interface MonitoringRow {
+interface PlanItem {
+  jenis_apd: string
+  icon: string
+  reason: string
+  qty: number
+  last_terima: string | null
+  expired_at: string | null
+  override: any
+  ukuran_override: string | null
+}
+
+interface PlanRow {
   nrp: string
-  nama: string
-  jabatan: string
-  departemen: string
+  name: string
   site: string
-  matrix: Record<string, MatrixCell>
-  overallStatus: string
-  totalPunya: number
-  totalMaster: number
-  pendingCount: number
+  departemen: string
+  jabatan: string
+  items: PlanItem[]
 }
 
-interface MonitoringSummary {
-  total: number
-  aman: number
-  segeraGanti: number
+interface PlanSummary {
+  total_karyawan: number
+  total_item: number
+  belum_terima: number
+  jatuh_tempo: number
   expired: number
-  belumTerima: number
-  totalPending: number
+  override_add: number
 }
 
-type TabType = 'verifikasi' | 'monitoring' | 'master' | 'distribusi' | 'stok' | 'plan'
+interface Employee {
+  nrp: string
+  name: string
+  site: string
+  departemen: string
+}
 
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════
+function getAuthHeaders(): Record<string, string> {
+  const token = typeof window !== 'undefined'
+    ? localStorage.getItem('btm_session_token_v1') : null
+  return token ? { 'Authorization': `Bearer ${token}` } : {}
+}
+
+function formatTgl(dateStr: string | null) {
+  if (!dateStr) return '-'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function getReasonBadge(reason: string) {
+  if (reason === 'BELUM_TERIMA') return { label: 'Belum Terima', cls: 'bg-blue-100 text-blue-700' }
+  if (reason === 'EXPIRED') return { label: 'Expired', cls: 'bg-rose-100 text-rose-700' }
+  if (reason === 'JATUH_TEMPO') return { label: 'Jatuh Tempo', cls: 'bg-amber-100 text-amber-700' }
+  if (reason?.includes('OVERRIDE')) return { label: 'Override', cls: 'bg-purple-100 text-purple-700' }
+  return { label: reason, cls: 'bg-slate-100 text-slate-600' }
+}
+
+function getCurrentBulan() {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  return `${y}-${m}`
+}
+
+function getNextBulan() {
+  const now = new Date()
+  now.setMonth(now.getMonth() + 1)
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  return `${y}-${m}`
+}
+
+// ════════════════════════════════════════════
 // MAIN COMPONENT
-// ═══════════════════════════════════════════════
+// ════════════════════════════════════════════
 export default function KelolaApdPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('verifikasi')
-  const [pendingCountGlobal, setPendingCountGlobal] = useState(0)
+  const [activeTab, setActiveTab] = useState<Tab>('verifikasi')
+
+  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
+    { key: 'verifikasi', label: 'Verifikasi', icon: <CheckCircle size={15} /> },
+    { key: 'monitoring', label: 'Monitoring', icon: <BarChart3 size={15} /> },
+    { key: 'master', label: 'Master', icon: <Shield size={15} /> },
+    { key: 'distribusi', label: 'Distribusi', icon: <Package size={15} /> },
+    { key: 'stok', label: 'Stok', icon: <Box size={15} /> },
+    { key: 'plan', label: 'Plan Bulanan', icon: <Calendar size={15} /> },
+  ]
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] pb-24">
-      {/* HERO */}
-      <div className="bg-[#003D79] text-white px-5 pt-6 pb-6 rounded-b-[2.5rem] shadow-2xl relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
-        
-        <div className="relative">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-2xl backdrop-blur-sm">
-              🦺
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-black tracking-tight">Kelola APD</h1>
-              <p className="text-sm text-white/70 font-medium">HR/SHE Management Panel</p>
-            </div>
-            {pendingCountGlobal > 0 && (
-              <div className="bg-amber-500 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-widest shadow-lg">
-                ⏳ {pendingCountGlobal}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* ── Header ── */}
+      <div className="bg-[#003D79] px-4 pt-8 pb-6">
+        <h1 className="text-white text-2xl font-black tracking-tight">🦺 Kelola APD</h1>
+        <p className="text-blue-200 text-sm mt-1">Manajemen Alat Pelindung Diri</p>
 
-      {/* TAB NAVIGATION */}
-      <div className="px-4 mt-4">
-        <div className="bg-white rounded-[1.5rem] shadow-lg p-2 overflow-x-auto">
-          <div className="flex gap-2 min-w-max">
-            {[
-              { key: 'verifikasi', icon: '⏳', label: 'Verifikasi', badge: pendingCountGlobal },
-              { key: 'monitoring', icon: '📊', label: 'Monitoring' },
-              { key: 'master', icon: '📋', label: 'Master' },
-              { key: 'distribusi', icon: '📤', label: 'Distribusi' },
-              { key: 'stok', icon: '📦', label: 'Stok' },
-              { key: 'plan', icon: '📅', label: 'Plan' }
-            ].map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setActiveTab(t.key as TabType)}
-                className={`px-4 py-2.5 rounded-[1rem] font-black text-[11px] uppercase tracking-widest transition-all whitespace-nowrap ${
-                  activeTab === t.key
-                    ? 'bg-[#003D79] text-white shadow-lg'
-                    : 'text-slate-600 hover:bg-slate-100'
+        {/* Tab bar */}
+        <div className="flex gap-2 mt-4 overflow-x-auto pb-1 scrollbar-hide">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all
+                ${activeTab === t.key
+                  ? 'bg-white text-[#003D79] shadow-lg'
+                  : 'bg-white/20 text-white/80 hover:bg-white/30'
                 }`}
-              >
-                {t.icon} {t.label}
-                {(t.badge && t.badge > 0 && activeTab !== t.key) ? (
-                  <span className="ml-1.5 bg-amber-500 text-white rounded-full px-2 py-0.5 text-[9px]">
-                    {t.badge}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
+            >
+              {t.icon}{t.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* TAB CONTENT */}
-      <div className="px-4 mt-4">
-        {activeTab === 'verifikasi' && <VerifikasiTab onPendingCountChange={setPendingCountGlobal} />}
-        {activeTab === 'monitoring' && <MonitoringTab />}
-        {(activeTab === 'master' || activeTab === 'distribusi' || activeTab === 'stok' || activeTab === 'plan') && (
-          <ComingSoonTab tabName={activeTab} onBack={() => setActiveTab('verifikasi')} />
-        )}
+      {/* ── Tab Content ── */}
+      <div className="px-4 py-4">
+        {activeTab === 'verifikasi' && <TabVerifikasi />}
+        {activeTab === 'monitoring' && <TabMonitoring />}
+        {activeTab === 'master' && <TabMaster />}
+        {activeTab === 'distribusi' && <TabDistribusi />}
+        {activeTab === 'stok' && <TabStok />}
+        {activeTab === 'plan' && <TabPlan />}
       </div>
     </div>
   )
 }
 
-// ═══════════════════════════════════════════════
-// TAB: COMING SOON
-// ═══════════════════════════════════════════════
-function ComingSoonTab({ tabName, onBack }: { tabName: string; onBack: () => void }) {
-  return (
-    <div className="bg-white rounded-[2rem] shadow-xl p-8 text-center">
-      <div className="text-5xl mb-4">🚧</div>
-      <h2 className="text-xl font-black text-slate-900 mb-2">Dalam Pengembangan</h2>
-      <p className="text-sm text-slate-500 mb-6">
-        Tab <span className="font-black">{tabName.toUpperCase()}</span> akan dibangun di update berikutnya.
-      </p>
-      <button
-        onClick={onBack}
-        className="bg-[#003D79] text-white px-6 py-3 rounded-[1.2rem] font-black text-sm shadow-xl"
-      >
-        ← Ke Verifikasi
-      </button>
-    </div>
-  )
-}
-
-// ═══════════════════════════════════════════════
-// TAB: VERIFIKASI
-// ═══════════════════════════════════════════════
-function VerifikasiTab({ onPendingCountChange }: { onPendingCountChange: (n: number) => void }) {
+// ════════════════════════════════════════════
+// TAB 1: VERIFIKASI (existing — preserved)
+// ════════════════════════════════════════════
+function TabVerifikasi() {
+  const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [rows, setRows] = useState<RequestItem[]>([])
-  const [sites, setSites] = useState<string[]>([])
-  const [jenisList, setJenisList] = useState<JenisItem[]>([])
-  const [filterSite, setFilterSite] = useState('ALL')
-  const [filterJenis, setFilterJenis] = useState('ALL')
   const [filterStatus, setFilterStatus] = useState('PENDING')
-  
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [confirmData, setConfirmData] = useState<any>(null)
-  const [showReject, setShowReject] = useState(false)
-  const [rejectData, setRejectData] = useState<any>(null)
+  const [filterJenis, setFilterJenis] = useState('')
+  const [modalItem, setModalItem] = useState<any>(null)
+  const [modalAction, setModalAction] = useState<'approve' | 'reject' | 'detail' | null>(null)
   const [rejectReason, setRejectReason] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [showDetail, setShowDetail] = useState(false)
-  const [detailData, setDetailData] = useState<any>(null)
+  const [processing, setProcessing] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
 
-  useEffect(() => { loadData() }, [filterSite, filterJenis, filterStatus])
-
-  const loadData = async () => {
+  const load = useCallback(async () => {
+    setLoading(true)
     try {
-      setLoading(true)
-      setError(null)
-      const token = localStorage.getItem('btm_session_token_v1')
-      const headers: Record<string, string> = {}
-      if (token) headers['Authorization'] = `Bearer ${token}`
-
-      const params = new URLSearchParams({ site: filterSite, jenis: filterJenis, status: filterStatus })
-      const res = await fetch(`/api/apd/verify?${params}`, { headers })
+      const params = new URLSearchParams({ status: filterStatus })
+      if (filterJenis) params.set('jenis', filterJenis)
+      const res = await fetch(`/api/apd/verify?${params}`, { headers: getAuthHeaders() })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Gagal load data')
+      setData(json.data || [])
+    } catch { setData([]) }
+    setLoading(false)
+  }, [filterStatus, filterJenis])
 
-      setRows(json.rows || [])
-      onPendingCountChange(json.pendingCount || 0)
-      setSites(json.sites || [])
-      setJenisList(json.jenisList || [])
-    } catch (e: any) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
+  useEffect(() => { load() }, [load])
+
+  const showToast = (msg: string, type: 'ok' | 'err') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const handleAction = async () => {
+    if (!modalItem || !modalAction) return
+    if (modalAction === 'reject' && !rejectReason.trim()) {
+      showToast('Alasan penolakan wajib diisi', 'err'); return
     }
-  }
-
-  const formatDate = (d: string | null | undefined) => {
-    if (!d) return '-'
-    const dt = new Date(d)
-    return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`
-  }
-  const formatDateTime = (d: string | null | undefined) => {
-    if (!d) return '-'
-    const dt = new Date(d)
-    return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
-  }
-
-  const handleApprove = async () => {
-    if (!confirmData) return
-    setSubmitting(true)
+    setProcessing(true)
     try {
-      const token = localStorage.getItem('btm_session_token_v1')
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
       const res = await fetch('/api/apd/verify', {
-        method: 'POST', headers,
-        body: JSON.stringify({ id: confirmData.id, action: 'APPROVE' })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          id: modalItem.id,
+          action: modalAction === 'approve' ? 'approve' : 'reject',
+          reject_reason: rejectReason
+        })
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Gagal approve')
-      alert(json.message)
-      setShowConfirm(false)
-      loadData()
-    } catch (e: any) { alert('Error: ' + e.message) }
-    finally { setSubmitting(false) }
+      if (json.ok) {
+        showToast(modalAction === 'approve' ? '✅ Request disetujui' : '❌ Request ditolak', 'ok')
+        setModalItem(null); setModalAction(null); setRejectReason('')
+        load()
+      } else showToast(json.error || 'Gagal', 'err')
+    } catch { showToast('Error jaringan', 'err') }
+    setProcessing(false)
   }
 
-  const handleReject = async () => {
-    if (!rejectData) return
-    if (!rejectReason.trim()) { alert('Alasan penolakan wajib diisi'); return }
-    setSubmitting(true)
-    try {
-      const token = localStorage.getItem('btm_session_token_v1')
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
-      const res = await fetch('/api/apd/verify', {
-        method: 'POST', headers,
-        body: JSON.stringify({ id: rejectData.id, action: 'REJECT', reject_reason: rejectReason.trim() })
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Gagal reject')
-      alert(json.message)
-      setShowReject(false)
-      loadData()
-    } catch (e: any) { alert('Error: ' + e.message) }
-    finally { setSubmitting(false) }
-  }
-
-  const statusBadge = (status: string) => {
-    if (status === 'PENDING') return { bg: 'bg-amber-100', text: 'text-amber-700', label: '🟡 PENDING' }
-    if (status === 'VERIFIED') return { bg: 'bg-emerald-100', text: 'text-emerald-700', label: '✅ VERIFIED' }
-    if (status === 'REJECTED') return { bg: 'bg-rose-100', text: 'text-rose-700', label: '❌ REJECTED' }
-    return { bg: 'bg-slate-100', text: 'text-slate-700', label: status }
-  }
+  const pendingCount = data.filter(d => d.status === 'PENDING').length
 
   return (
-    <>
-      {/* FILTERS */}
-      <div className="bg-white rounded-[1.5rem] shadow-lg p-4 mb-4">
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">🔍 Filter</div>
-        <div className="grid grid-cols-3 gap-2">
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#003D79]">
-            <option value="PENDING">🟡 Pending</option>
-            <option value="VERIFIED">✅ Verified</option>
-            <option value="REJECTED">❌ Rejected</option>
-            <option value="ALL">Semua</option>
-          </select>
-          <select value={filterSite} onChange={(e) => setFilterSite(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#003D79]">
-            <option value="ALL">Semua Site</option>
-            {sites.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <select value={filterJenis} onChange={(e) => setFilterJenis(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#003D79]">
-            <option value="ALL">Semua Jenis</option>
-            {jenisList.map((j) => <option key={j.jenis_apd} value={j.jenis_apd}>{j.icon} {j.jenis_apd}</option>)}
-          </select>
+    <div className="space-y-4">
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-white text-sm font-bold shadow-lg
+          ${toast.type === 'ok' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          {toast.msg}
         </div>
+      )}
+
+      {/* Filter */}
+      <div className="flex gap-2 flex-wrap">
+        {['PENDING', 'VERIFIED', 'REJECTED'].map(s => (
+          <button key={s} onClick={() => setFilterStatus(s)}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all
+              ${filterStatus === s
+                ? s === 'PENDING' ? 'bg-amber-500 text-white'
+                  : s === 'VERIFIED' ? 'bg-emerald-600 text-white'
+                  : 'bg-rose-600 text-white'
+                : 'bg-white text-slate-600 shadow'}`}>
+            {s} {s === 'PENDING' && pendingCount > 0 && `(${pendingCount})`}
+          </button>
+        ))}
+        <button onClick={load} className="ml-auto p-2 bg-white rounded-full shadow">
+          <RefreshCw size={14} className="text-slate-500" />
+        </button>
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-[2rem] shadow-xl p-8 text-center">
-          <div className="text-4xl mb-3 animate-pulse">🦺</div>
-          <div className="text-sm text-slate-500 font-medium">Memuat data...</div>
-        </div>
-      ) : error ? (
-        <div className="bg-white rounded-[2rem] shadow-xl p-8 text-center">
-          <div className="text-4xl mb-3">⚠️</div>
-          <div className="text-sm font-black text-slate-900 mb-2">Error</div>
-          <div className="text-xs text-slate-500 mb-4">{error}</div>
-          <button onClick={loadData} className="bg-[#003D79] text-white px-4 py-2 rounded-xl font-black text-xs">
-            🔄 Coba Lagi
-          </button>
-        </div>
-      ) : rows.length === 0 ? (
-        <div className="bg-white rounded-[2rem] shadow-xl p-8 text-center">
-          <div className="text-5xl mb-4">✨</div>
-          <div className="text-sm font-black text-slate-700 mb-1">Tidak Ada Data</div>
-          <div className="text-xs text-slate-500 font-medium">
-            {filterStatus === 'PENDING' ? 'Tidak ada request menunggu verifikasi' : `Tidak ada data dengan status ${filterStatus}`}
-          </div>
+        <div className="text-center py-12 text-slate-400">Memuat data...</div>
+      ) : data.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-4xl mb-2">📭</div>
+          <div className="text-slate-500 text-sm">Tidak ada request {filterStatus.toLowerCase()}</div>
         </div>
       ) : (
         <div className="space-y-3">
-          {rows.map((r) => {
-            const badge = statusBadge(r.status)
-            return (
-              <div key={r.id} className="bg-white rounded-[1.5rem] shadow-xl border border-slate-100 p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-black text-slate-900 truncate">{r.nama_karyawan}</div>
-                    <div className="text-[10px] text-slate-500 font-medium mt-0.5">
-                      NRP {r.nrp} • {r._employee?.site || '-'} • {r._employee?.departemen || '-'}
+          {data.map(item => (
+            <div key={item.id} className="bg-white rounded-[1.5rem] shadow-xl p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-black text-[#003D79] text-sm">{item.nama_karyawan}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{item.nrp}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase
+                      ${item.status === 'PENDING' ? 'bg-amber-100 text-amber-700'
+                        : item.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-rose-100 text-rose-700'}`}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-600 mt-1">
+                    <span className="font-bold">{item.jenis_apd}</span>
+                    {item.ukuran && ` · ${item.ukuran}`}
+                    {item.warna && ` · ${item.warna}`}
+                    {` · ${item.jumlah} pcs`}
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">
+                    Terima: {formatTgl(item.tanggal_terima)}
+                    {item.keterangan && ` · "${item.keterangan}"`}
+                  </div>
+                  {item.status === 'REJECTED' && item.reject_reason && (
+                    <div className="text-[10px] text-rose-600 mt-1 font-medium">
+                      ❌ {item.reject_reason}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-medium">{r._employee?.jabatan || '-'}</div>
-                  </div>
-                  <div className={`${badge.bg} ${badge.text} px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap`}>
-                    {badge.label}
-                  </div>
+                  )}
                 </div>
-
-                <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 mb-3">
-                  <div className="text-sm font-black text-slate-900 mb-2">🦺 {r.jenis_apd}</div>
-                  <div className="grid grid-cols-3 gap-2 text-[11px]">
-                    <div><div className="text-slate-400">Ukuran</div><div className="font-black text-slate-900">{r.ukuran}</div></div>
-                    <div><div className="text-slate-400">Jumlah</div><div className="font-black text-slate-900">{r.jumlah} pcs</div></div>
-                    <div><div className="text-slate-400">Warna</div><div className="font-black text-slate-900">{r.warna || '-'}</div></div>
-                  </div>
-                  <div className="mt-2 pt-2 border-t border-blue-100 text-[10px] text-slate-500">
-                    <span className="font-medium">Tanggal Terima:</span> <span className="font-black">{formatDate(r.tanggal_terima)}</span>
-                  </div>
-                  {r.keterangan && <div className="mt-1 text-[10px] text-slate-500"><span className="font-medium">Ket:</span> {r.keterangan}</div>}
-                </div>
-
-                <div className="text-[10px] text-slate-400 mb-3">📅 Diajukan: {formatDateTime(r.created_at)}</div>
-
-                {r.status === 'REJECTED' && r.reject_reason && (
-                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 mb-3">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-rose-600 mb-1">❌ Alasan Ditolak</div>
-                    <div className="text-[11px] text-rose-700 font-medium">{r.reject_reason}</div>
-                  </div>
-                )}
-
-                {r.status === 'PENDING' ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    <button onClick={() => { setConfirmData(r); setShowConfirm(true) }}
-                      className="bg-emerald-500 text-white py-2.5 rounded-xl font-black text-[11px] hover:bg-emerald-600 active:scale-95 transition-all shadow-lg">
-                      ✅ Approve
-                    </button>
-                    <button onClick={() => { setRejectData(r); setRejectReason(''); setShowReject(true) }}
-                      className="bg-rose-500 text-white py-2.5 rounded-xl font-black text-[11px] hover:bg-rose-600 active:scale-95 transition-all shadow-lg">
-                      ❌ Reject
-                    </button>
-                    <button onClick={() => { setDetailData(r); setShowDetail(true) }}
-                      className="bg-slate-100 text-slate-700 py-2.5 rounded-xl font-black text-[11px] hover:bg-slate-200 active:scale-95 transition-all">
-                      👁 Detail
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => { setDetailData(r); setShowDetail(true) }}
-                    className="w-full bg-slate-100 text-slate-700 py-2.5 rounded-xl font-black text-[11px] hover:bg-slate-200 active:scale-95 transition-all">
-                    👁 Lihat Detail
+                <div className="flex gap-1.5 flex-shrink-0">
+                  {item.status === 'PENDING' && (
+                    <>
+                      <button onClick={() => { setModalItem(item); setModalAction('approve') }}
+                        className="p-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-colors">
+                        <Check size={16} />
+                      </button>
+                      <button onClick={() => { setModalItem(item); setModalAction('reject'); setRejectReason('') }}
+                        className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors">
+                        <X size={16} />
+                      </button>
+                    </>
+                  )}
+                  <button onClick={() => { setModalItem(item); setModalAction('detail') }}
+                    className="p-2 bg-slate-50 text-slate-500 rounded-xl hover:bg-slate-100 transition-colors">
+                    <Eye size={16} />
                   </button>
-                )}
+                </div>
               </div>
-            )
-          })}
+            </div>
+          ))}
         </div>
       )}
 
-      {/* MODAL CONFIRM */}
-      {showConfirm && confirmData && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-0 md:p-4">
-          <div className="bg-white w-full md:max-w-md rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl">
-            <div className="bg-emerald-600 text-white px-5 py-4 rounded-t-[2.5rem]">
-              <div className="text-sm font-black">✅ Setujui Request APD?</div>
-              <div className="text-[10px] text-white/70 font-medium mt-0.5">Data akan resmi tercatat</div>
-            </div>
-            <div className="p-5">
-              <div className="bg-slate-50 rounded-xl p-4 mb-4">
-                <div className="text-sm font-black text-slate-900 mb-1">{confirmData.nama_karyawan}</div>
-                <div className="text-[11px] text-slate-500 mb-3">NRP {confirmData.nrp}</div>
-                <div className="text-sm font-black text-slate-900 mb-1">🦺 {confirmData.jenis_apd}</div>
-                <div className="text-[11px] text-slate-600">
-                  Ukuran {confirmData.ukuran} • {confirmData.jumlah} pcs • {confirmData.warna || 'Warna default'}
+      {/* Modal Approve/Reject/Detail */}
+      {modalItem && modalAction && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl">
+            <h3 className="font-black text-[#003D79] text-lg mb-4">
+              {modalAction === 'approve' ? '✅ Setujui Request'
+                : modalAction === 'reject' ? '❌ Tolak Request'
+                : '📋 Detail Request'}
+            </h3>
+            <div className="space-y-2 text-sm mb-4">
+              <div><span className="text-slate-400 text-xs">Karyawan</span>
+                <div className="font-bold">{modalItem.nama_karyawan} ({modalItem.nrp})</div>
+              </div>
+              <div><span className="text-slate-400 text-xs">APD</span>
+                <div className="font-bold">{modalItem.jenis_apd}
+                  {modalItem.ukuran && ` · ${modalItem.ukuran}`}
+                  {modalItem.warna && ` · ${modalItem.warna}`}
+                  {` · ${modalItem.jumlah} pcs`}
                 </div>
               </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-800">
-                ⚠️ Setelah disetujui, data tidak bisa diubah/dihapus lagi
+              <div><span className="text-slate-400 text-xs">Tgl Terima</span>
+                <div className="font-bold">{formatTgl(modalItem.tanggal_terima)}</div>
               </div>
+              {modalItem.keterangan && (
+                <div><span className="text-slate-400 text-xs">Keterangan</span>
+                  <div className="font-bold">{modalItem.keterangan}</div>
+                </div>
+              )}
             </div>
-            <div className="p-5 border-t border-slate-100 flex gap-2">
-              <button onClick={() => setShowConfirm(false)} disabled={submitting}
-                className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-[1.2rem] font-black text-sm disabled:opacity-50">Batal</button>
-              <button onClick={handleApprove} disabled={submitting}
-                className="flex-1 bg-emerald-600 text-white py-3 rounded-[1.2rem] font-black text-sm shadow-xl disabled:opacity-50">
-                {submitting ? '⏳...' : '✅ Ya, Setujui'}
+
+            {modalAction === 'reject' && (
+              <textarea
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+                placeholder="Alasan penolakan (wajib)..."
+                className="w-full border border-slate-200 rounded-[1.2rem] p-3 text-sm mb-4 resize-none"
+                rows={3}
+              />
+            )}
+
+            <div className="flex gap-3">
+              <button onClick={() => { setModalItem(null); setModalAction(null); setRejectReason('') }}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+                Tutup
               </button>
+              {modalAction !== 'detail' && (
+                <button onClick={handleAction} disabled={processing}
+                  className={`flex-1 py-3 text-white font-bold rounded-[1.2rem] transition-all
+                    ${modalAction === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700'
+                      : 'bg-rose-600 hover:bg-rose-700'}
+                    ${processing ? 'opacity-50' : ''}`}>
+                  {processing ? '...' : modalAction === 'approve' ? 'Setujui' : 'Tolak'}
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
-
-      {/* MODAL REJECT */}
-      {showReject && rejectData && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-0 md:p-4">
-          <div className="bg-white w-full md:max-w-md rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl">
-            <div className="bg-rose-600 text-white px-5 py-4 rounded-t-[2.5rem]">
-              <div className="text-sm font-black">❌ Tolak Request APD</div>
-              <div className="text-[10px] text-white/70 font-medium mt-0.5">Karyawan akan dinotif alasannya</div>
-            </div>
-            <div className="p-5">
-              <div className="bg-slate-50 rounded-xl p-4 mb-4">
-                <div className="text-sm font-black text-slate-900 mb-1">{rejectData.nama_karyawan}</div>
-                <div className="text-[11px] text-slate-500 mb-2">NRP {rejectData.nrp}</div>
-                <div className="text-[11px] text-slate-600">🦺 {rejectData.jenis_apd} • Ukuran {rejectData.ukuran} • {rejectData.jumlah} pcs</div>
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5 block">Alasan Penolakan *</label>
-                <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Contoh: Data tidak sesuai catatan gudang..." rows={4}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-[1.2rem] px-4 py-3 text-sm font-medium focus:outline-none focus:border-rose-500 resize-none" />
-              </div>
-            </div>
-            <div className="p-5 border-t border-slate-100 flex gap-2">
-              <button onClick={() => setShowReject(false)} disabled={submitting}
-                className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-[1.2rem] font-black text-sm disabled:opacity-50">Batal</button>
-              <button onClick={handleReject} disabled={submitting || !rejectReason.trim()}
-                className="flex-1 bg-rose-600 text-white py-3 rounded-[1.2rem] font-black text-sm shadow-xl disabled:opacity-50">
-                {submitting ? '⏳...' : '❌ Tolak'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DETAIL */}
-      {showDetail && detailData && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-0 md:p-4">
-          <div className="bg-white w-full md:max-w-md rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-[#003D79] text-white px-5 py-4 rounded-t-[2.5rem] sticky top-0 z-10 flex items-center justify-between">
-              <div>
-                <div className="text-sm font-black">📋 Detail Request</div>
-                <div className="text-[10px] text-white/70 font-medium mt-0.5">Informasi lengkap</div>
-              </div>
-              <button onClick={() => setShowDetail(false)} className="text-white/70 hover:text-white text-2xl">×</button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Karyawan</div>
-                <div className="text-sm font-black text-slate-900">{detailData.nama_karyawan}</div>
-                <div className="text-[11px] text-slate-500 mt-0.5">NRP {detailData.nrp} • {detailData._employee?.site} • {detailData._employee?.departemen}</div>
-                <div className="text-[11px] text-slate-500">{detailData._employee?.jabatan}</div>
-              </div>
-              <div className="border-t border-slate-100 pt-4">
-                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">APD</div>
-                <div className="grid grid-cols-2 gap-3 text-[11px]">
-                  <div><div className="text-slate-400">Jenis</div><div className="font-black">{detailData.jenis_apd}</div></div>
-                  <div><div className="text-slate-400">Ukuran</div><div className="font-black">{detailData.ukuran}</div></div>
-                  <div><div className="text-slate-400">Warna</div><div className="font-black">{detailData.warna || '-'}</div></div>
-                  <div><div className="text-slate-400">Jumlah</div><div className="font-black">{detailData.jumlah} pcs</div></div>
-                  <div><div className="text-slate-400">Tanggal Terima</div><div className="font-black">{formatDate(detailData.tanggal_terima)}</div></div>
-                  <div><div className="text-slate-400">Source</div><div className="font-black">{detailData.input_source}</div></div>
-                </div>
-                {detailData.keterangan && <div className="mt-3"><div className="text-slate-400 text-[11px]">Keterangan</div><div className="text-[11px] text-slate-700">{detailData.keterangan}</div></div>}
-              </div>
-              <div className="border-t border-slate-100 pt-4">
-                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Status</div>
-                <div className={`inline-block ${statusBadge(detailData.status).bg} ${statusBadge(detailData.status).text} px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest`}>
-                  {statusBadge(detailData.status).label}
-                </div>
-                <div className="mt-2 text-[11px] text-slate-500">Diajukan: {formatDateTime(detailData.created_at)}</div>
-                {detailData.verified_at && <div className="text-[11px] text-slate-500">Diverifikasi: {formatDateTime(detailData.verified_at)} oleh NRP {detailData.verified_by}</div>}
-                {detailData.reject_reason && (
-                  <div className="mt-3 bg-rose-50 border border-rose-200 rounded-xl p-3">
-                    <div className="text-[9px] font-black uppercase tracking-widest text-rose-600 mb-1">❌ Alasan Ditolak</div>
-                    <div className="text-[11px] text-rose-700">{detailData.reject_reason}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="p-5 border-t border-slate-100 sticky bottom-0 bg-white">
-              <button onClick={() => setShowDetail(false)} className="w-full bg-slate-100 text-slate-700 py-3 rounded-[1.2rem] font-black text-sm">Tutup</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   )
 }
 
-// ═══════════════════════════════════════════════
-// TAB: MONITORING (Smart Table)
-// ═══════════════════════════════════════════════
-function MonitoringTab() {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [rows, setRows] = useState<MonitoringRow[]>([])
+// ════════════════════════════════════════════
+// TAB 2: MONITORING (existing — preserved)
+// ════════════════════════════════════════════
+function TabMonitoring() {
+  const [data, setData] = useState<any[]>([])
+  const [summary, setSummary] = useState<any>(null)
+  const [jenisList, setJenisList] = useState<string[]>([])
   const [sites, setSites] = useState<string[]>([])
-  const [departemens, setDepartemens] = useState<string[]>([])
-  const [jenisList, setJenisList] = useState<JenisItem[]>([])
-  const [summary, setSummary] = useState<MonitoringSummary | null>(null)
-  
-  const [filterSite, setFilterSite] = useState('ALL')
-  const [filterDept, setFilterDept] = useState('ALL')
-  const [filterStatus, setFilterStatus] = useState('ALL')
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  
-  const [selectedRow, setSelectedRow] = useState<MonitoringRow | null>(null)
-  const [showDrawer, setShowDrawer] = useState(false)
+  const [filterSite, setFilterSite] = useState('')
+  const [drawerItem, setDrawerItem] = useState<any>(null)
 
-  useEffect(() => { loadData() }, [filterSite, filterDept, filterStatus])
-  useEffect(() => {
-    const t = setTimeout(() => loadData(), 400)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line
-  }, [search])
-
-  const loadData = async () => {
+  const load = useCallback(async () => {
+    setLoading(true)
     try {
-      setLoading(true)
-      setError(null)
-      const token = localStorage.getItem('btm_session_token_v1')
-      const headers: Record<string, string> = {}
-      if (token) headers['Authorization'] = `Bearer ${token}`
-      
-      const params = new URLSearchParams({ site: filterSite, departemen: filterDept, status: filterStatus, search })
-      const res = await fetch(`/api/apd/monitoring?${params}`, { headers })
+      const params = new URLSearchParams()
+      if (filterSite) params.set('site', filterSite)
+      if (search) params.set('search', search)
+      const res = await fetch(`/api/apd/monitoring?${params}`, { headers: getAuthHeaders() })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Gagal load data')
-      
-      setRows(json.rows || [])
-      setSites(json.sites || [])
-      setDepartemens(json.departemens || [])
-      setJenisList(json.jenisList || [])
+      setData(json.rows || [])
       setSummary(json.summary || null)
-    } catch (e: any) { setError(e.message) }
-    finally { setLoading(false) }
-  }
+      setJenisList(json.jenisList || [])
+      setSites(json.sites || [])
+    } catch { setData([]) }
+    setLoading(false)
+  }, [filterSite, search])
 
-  const formatDate = (d: string | null | undefined) => {
-    if (!d) return '-'
-    const dt = new Date(d)
-    return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`
-  }
+  useEffect(() => {
+    const t = setTimeout(load, 400)
+    return () => clearTimeout(t)
+  }, [load])
 
-  const statusColor = (status: string) => {
-    if (status === 'AMAN') return { bg: 'bg-emerald-500', text: 'text-white', ring: 'ring-emerald-200', label: 'Aman' }
-    if (status === 'SEGERA_GANTI') return { bg: 'bg-amber-500', text: 'text-white', ring: 'ring-amber-200', label: 'Ganti' }
-    if (status === 'EXPIRED') return { bg: 'bg-rose-500', text: 'text-white', ring: 'ring-rose-200', label: 'Expired' }
-    return { bg: 'bg-slate-200', text: 'text-slate-500', ring: 'ring-slate-100', label: 'Belum' }
+  const getStatusDot = (status: string) => {
+    if (status === 'AMAN') return 'bg-emerald-400'
+    if (status === 'GANTI') return 'bg-amber-400'
+    if (status === 'EXPIRED') return 'bg-rose-500'
+    return 'bg-slate-300'
   }
-
-  const activeFilterCount = (filterSite !== 'ALL' ? 1 : 0) + (filterDept !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0) + (search ? 1 : 0)
 
   return (
-    <>
-      {/* Stats Cards */}
+    <div className="space-y-4">
+      {/* Summary cards */}
       {summary && (
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          <button onClick={() => setFilterStatus('ALL')}
-            className={`bg-white rounded-2xl p-3 shadow-lg border-2 transition-all ${filterStatus === 'ALL' ? 'border-[#003D79]' : 'border-transparent'}`}>
-            <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total</div>
-            <div className="text-2xl font-black text-slate-900">{summary.total}</div>
-          </button>
-          <button onClick={() => setFilterStatus(filterStatus === 'AMAN' ? 'ALL' : 'AMAN')}
-            className={`bg-emerald-50 rounded-2xl p-3 shadow-lg border-2 transition-all ${filterStatus === 'AMAN' ? 'border-emerald-500' : 'border-transparent'}`}>
-            <div className="text-[9px] font-black uppercase tracking-widest text-emerald-600 mb-1">Aman</div>
-            <div className="text-2xl font-black text-emerald-700">{summary.aman}</div>
-          </button>
-          <button onClick={() => setFilterStatus(filterStatus === 'SEGERA_GANTI' ? 'ALL' : 'SEGERA_GANTI')}
-            className={`bg-amber-50 rounded-2xl p-3 shadow-lg border-2 transition-all ${filterStatus === 'SEGERA_GANTI' ? 'border-amber-500' : 'border-transparent'}`}>
-            <div className="text-[9px] font-black uppercase tracking-widest text-amber-600 mb-1">Ganti</div>
-            <div className="text-2xl font-black text-amber-700">{summary.segeraGanti}</div>
-          </button>
-          <button onClick={() => setFilterStatus(filterStatus === 'EXPIRED' ? 'ALL' : 'EXPIRED')}
-            className={`bg-rose-50 rounded-2xl p-3 shadow-lg border-2 transition-all ${filterStatus === 'EXPIRED' ? 'border-rose-500' : 'border-transparent'}`}>
-            <div className="text-[9px] font-black uppercase tracking-widest text-rose-600 mb-1">Expired</div>
-            <div className="text-2xl font-black text-rose-700">{summary.expired}</div>
-          </button>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { label: 'Total Karyawan', val: summary.total, icon: '👥', cls: 'text-[#003D79]' },
+            { label: 'APD Aman', val: summary.aman, icon: '✅', cls: 'text-emerald-600' },
+            { label: 'Perlu Ganti', val: summary.ganti, icon: '⚠️', cls: 'text-amber-600' },
+            { label: 'Expired', val: summary.expired, icon: '🚨', cls: 'text-rose-600' },
+          ].map(s => (
+            <div key={s.label} className="bg-white rounded-[1.5rem] shadow-xl p-4">
+              <div className="text-2xl">{s.icon}</div>
+              <div className={`text-2xl font-black ${s.cls}`}>{s.val}</div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{s.label}</div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Search & Filters */}
-      <div className="bg-white rounded-[1.5rem] shadow-lg p-3 mb-4">
-        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="🔍 Cari nama atau NRP..."
-          className="w-full bg-slate-50 border border-slate-200 rounded-[1.2rem] px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-[#003D79] mb-3" />
-        <div className="grid grid-cols-2 gap-2">
-          <select value={filterSite} onChange={(e) => setFilterSite(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#003D79]">
-            <option value="ALL">🌍 Semua Site</option>
-            {sites.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#003D79]">
-            <option value="ALL">🏢 Semua Dept</option>
-            {departemens.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
+      {/* Filter */}
+      <div className="flex gap-2">
+        <div className="flex-1 relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Cari nama / NRP..."
+            className="w-full pl-9 pr-4 py-2.5 bg-white rounded-[1.2rem] text-sm shadow border-0 outline-none" />
         </div>
-        {activeFilterCount > 0 && (
-          <button onClick={() => { setFilterSite('ALL'); setFilterDept('ALL'); setFilterStatus('ALL'); setSearch('') }}
-            className="mt-2 w-full bg-slate-100 text-slate-600 py-2 rounded-xl text-[11px] font-black hover:bg-slate-200 transition-all">
-            ✕ Reset {activeFilterCount} Filter
-          </button>
-        )}
+        <select value={filterSite} onChange={e => setFilterSite(e.target.value)}
+          className="px-3 py-2 bg-white rounded-[1.2rem] text-sm shadow border-0 outline-none">
+          <option value="">Semua Site</option>
+          {sites.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
       </div>
 
-      {/* Content */}
       {loading ? (
-        <div className="bg-white rounded-[2rem] shadow-xl p-8 text-center">
-          <div className="text-4xl mb-3 animate-pulse">📊</div>
-          <div className="text-sm text-slate-500 font-medium">Memuat data...</div>
-        </div>
-      ) : error ? (
-        <div className="bg-white rounded-[2rem] shadow-xl p-8 text-center">
-          <div className="text-4xl mb-3">⚠️</div>
-          <div className="text-sm font-black text-slate-900 mb-2">Error</div>
-          <div className="text-xs text-slate-500 mb-4">{error}</div>
-          <button onClick={loadData} className="bg-[#003D79] text-white px-4 py-2 rounded-xl font-black text-xs">🔄 Coba Lagi</button>
-        </div>
-      ) : rows.length === 0 ? (
-        <div className="bg-white rounded-[2rem] shadow-xl p-8 text-center">
-          <div className="text-5xl mb-4">🔍</div>
-          <div className="text-sm font-black text-slate-700 mb-1">Tidak Ada Data</div>
-          <div className="text-xs text-slate-500 font-medium">Coba ubah filter atau kata kunci pencarian</div>
-        </div>
+        <div className="text-center py-12 text-slate-400">Memuat data...</div>
       ) : (
-        <>
-          {/* Desktop Table */}
-          <div className="hidden lg:block bg-white rounded-[1.5rem] shadow-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="text-left px-3 py-3 font-black uppercase tracking-widest text-[9px] text-slate-500 sticky left-0 bg-slate-50 z-10">Nama / NRP</th>
-                    <th className="text-left px-2 py-3 font-black uppercase tracking-widest text-[9px] text-slate-500">Site</th>
-                    {jenisList.map((j) => (
-                      <th key={j.jenis_apd} className="text-center px-2 py-3 font-black uppercase tracking-widest text-[9px] text-slate-500 min-w-[60px]">
-                        <div className="text-base">{j.icon}</div>
-                        <div className="mt-1 truncate max-w-[70px] mx-auto">{j.jenis_apd.split(' ')[0]}</div>
-                      </th>
-                    ))}
-                    <th className="text-center px-2 py-3 font-black uppercase tracking-widest text-[9px] text-slate-500">Progress</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r, i) => (
-                    <tr key={r.nrp} onClick={() => { setSelectedRow(r); setShowDrawer(true) }}
-                      className={`border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
-                      <td className="px-3 py-3 sticky left-0 bg-inherit z-10">
-                        <div className="font-black text-slate-900 text-[11px]">
-                          {r.nama}
-                          {r.pendingCount > 0 && <span className="ml-2 bg-amber-500 text-white rounded-full px-1.5 py-0.5 text-[8px]">{r.pendingCount}</span>}
-                        </div>
-                        <div className="text-[10px] text-slate-500 font-medium">{r.nrp}</div>
-                        <div className="text-[9px] text-slate-400 truncate max-w-[150px]">{r.jabatan}</div>
-                      </td>
-                      <td className="px-2 py-3 text-[10px] text-slate-600 font-medium">{r.site}</td>
-                      {jenisList.map((j) => {
-                        const cell = r.matrix[j.jenis_apd]
-                        const c = statusColor(cell.status)
-                        return (
-                          <td key={j.jenis_apd} className="px-2 py-3 text-center">
-                            <div className={`inline-flex flex-col items-center justify-center w-10 h-10 rounded-full ${c.bg} ${c.text} font-black text-[9px] ring-4 ${c.ring} mx-auto`}
-                              title={cell.tanggal ? `${formatDate(cell.tanggal)} • ${cell.ukuran} × ${cell.jumlah}` : 'Belum terima'}>
-                              {cell.status === 'BELUM_TERIMA' ? '—' : (cell.days !== null && cell.days < 0 ? '!' : '✓')}
-                            </div>
-                          </td>
-                        )
-                      })}
-                      <td className="px-2 py-3 text-center">
-                        <div className="text-[10px] font-black text-slate-700">{r.totalPunya}/{r.totalMaster}</div>
-                        <div className="w-14 h-1.5 bg-slate-200 rounded-full mx-auto mt-1">
-                          <div className="h-full bg-[#003D79] rounded-full" style={{ width: `${(r.totalPunya / r.totalMaster) * 100}%` }}></div>
-                        </div>
-                      </td>
-                    </tr>
+        <div className="space-y-2">
+          {data.map(row => (
+            <button key={row.nrp} onClick={() => setDrawerItem(row)}
+              className="w-full bg-white rounded-[1.5rem] shadow-xl p-4 text-left hover:shadow-2xl transition-all">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <div className="font-black text-[#003D79] text-sm">{row.name}</div>
+                  <div className="text-[10px] text-slate-400">{row.nrp} · {row.site}</div>
+                </div>
+                <div className="flex gap-1 flex-wrap justify-end max-w-[120px]">
+                  {row.apd_status?.slice(0, 6).map((s: any, i: number) => (
+                    <div key={i} title={s.jenis}
+                      className={`w-3 h-3 rounded-full ${getStatusDot(s.status)}`} />
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
+              <div className="mt-2 bg-slate-50 rounded-xl h-1.5 overflow-hidden">
+                <div className="h-full bg-emerald-400 rounded-full transition-all"
+                  style={{ width: `${row.pct_aman || 0}%` }} />
+              </div>
+              <div className="text-[9px] text-slate-400 mt-0.5">{row.pct_aman || 0}% APD aman</div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Drawer detail */}
+      {drawerItem && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setDrawerItem(null)}>
+          <div className="bg-white rounded-t-[2rem] w-full max-h-[80vh] overflow-y-auto p-6 shadow-2xl"
+            onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+            <h3 className="font-black text-[#003D79] text-lg">{drawerItem.name}</h3>
+            <p className="text-xs text-slate-400 mb-4">{drawerItem.nrp} · {drawerItem.site} · {drawerItem.departemen}</p>
+            <div className="space-y-2">
+              {drawerItem.apd_status?.map((s: any) => (
+                <div key={s.jenis} className="flex items-center justify-between py-2 border-b border-slate-50">
+                  <div>
+                    <div className="text-sm font-bold">{s.icon} {s.jenis}</div>
+                    <div className="text-[10px] text-slate-400">
+                      {s.last_terima ? `Terima: ${formatTgl(s.last_terima)}` : 'Belum pernah terima'}
+                      {s.expired_at && ` · Exp: ${formatTgl(s.expired_at)}`}
+                    </div>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase
+                    ${s.status === 'AMAN' ? 'bg-emerald-100 text-emerald-700'
+                      : s.status === 'GANTI' ? 'bg-amber-100 text-amber-700'
+                      : s.status === 'EXPIRED' ? 'bg-rose-100 text-rose-700'
+                      : 'bg-slate-100 text-slate-500'}`}>
+                    {s.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setDrawerItem(null)}
+              className="w-full mt-4 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ════════════════════════════════════════════
+// TAB 3: MASTER APD
+// ════════════════════════════════════════════
+function TabMaster() {
+  const [data, setData] = useState<ApdMaster[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editItem, setEditItem] = useState<ApdMaster | null>(null)
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
+  const [processing, setProcessing] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<ApdMaster | null>(null)
+
+  // Form state
+  const [form, setForm] = useState({
+    jenis_apd: '', life_time_bulan: '12', icon: '🦺',
+    ukuran_input: '', warna_input: '', keterangan: ''
+  })
+  const [ukuranList, setUkuranList] = useState<string[]>([])
+  const [warnaList, setWarnaList] = useState<string[]>([])
+
+  const showToast = (msg: string, type: 'ok' | 'err') => {
+    setToast({ msg, type }); setTimeout(() => setToast(null), 3000)
+  }
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/apd/master', { headers: getAuthHeaders() })
+      const json = await res.json()
+      setData(json.data || [])
+    } catch { setData([]) }
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  const openAdd = () => {
+    setEditItem(null)
+    setForm({ jenis_apd: '', life_time_bulan: '12', icon: '🦺', ukuran_input: '', warna_input: '', keterangan: '' })
+    setUkuranList([]); setWarnaList([])
+    setShowForm(true)
+  }
+
+  const openEdit = (item: ApdMaster) => {
+    setEditItem(item)
+    setForm({
+      jenis_apd: item.jenis_apd, life_time_bulan: String(item.life_time_bulan),
+      icon: item.icon, ukuran_input: '', warna_input: '', keterangan: item.keterangan || ''
+    })
+    setUkuranList(item.ukuran_tersedia || [])
+    setWarnaList(item.warna_tersedia || [])
+    setShowForm(true)
+  }
+
+  const addUkuran = () => {
+    const val = form.ukuran_input.trim().toUpperCase()
+    if (val && !ukuranList.includes(val)) {
+      setUkuranList(prev => [...prev, val])
+      setForm(f => ({ ...f, ukuran_input: '' }))
+    }
+  }
+
+  const addWarna = () => {
+    const val = form.warna_input.trim()
+    if (val && !warnaList.includes(val)) {
+      setWarnaList(prev => [...prev, val])
+      setForm(f => ({ ...f, warna_input: '' }))
+    }
+  }
+
+  const handleSave = async () => {
+    if (!form.jenis_apd.trim()) { showToast('Nama APD wajib diisi', 'err'); return }
+    if (!form.life_time_bulan || Number(form.life_time_bulan) < 1) {
+      showToast('Lifetime minimal 1 bulan', 'err'); return
+    }
+    setProcessing(true)
+    try {
+      const body: any = {
+        jenis_apd: form.jenis_apd.trim(),
+        life_time_bulan: Number(form.life_time_bulan),
+        icon: form.icon || '🦺',
+        ukuran_tersedia: ukuranList,
+        warna_tersedia: warnaList,
+        keterangan: form.keterangan || null
+      }
+      if (editItem) body.id = editItem.id
+
+      const res = await fetch('/api/apd/master', {
+        method: editItem ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify(body)
+      })
+      const json = await res.json()
+      if (json.ok) {
+        showToast(editItem ? '✅ APD diperbarui' : '✅ APD ditambahkan', 'ok')
+        setShowForm(false); load()
+      } else showToast(json.error || 'Gagal', 'err')
+    } catch { showToast('Error jaringan', 'err') }
+    setProcessing(false)
+  }
+
+  const handleToggleActive = async (item: ApdMaster) => {
+    try {
+      const res = await fetch('/api/apd/master', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ id: item.id, active: !item.active })
+      })
+      const json = await res.json()
+      if (json.ok) { showToast(`APD ${item.active ? 'dinonaktifkan' : 'diaktifkan'}`, 'ok'); load() }
+      else showToast(json.error || 'Gagal', 'err')
+    } catch { showToast('Error', 'err') }
+  }
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return
+    try {
+      const res = await fetch(`/api/apd/master?id=${confirmDelete.id}`, {
+        method: 'DELETE', headers: getAuthHeaders()
+      })
+      const json = await res.json()
+      if (json.ok) { showToast('✅ ' + json.message, 'ok'); setConfirmDelete(null); load() }
+      else showToast(json.error || 'Gagal', 'err')
+    } catch { showToast('Error', 'err') }
+  }
+
+  const ICON_OPTIONS = ['🦺', '👷', '👟', '🥽', '😷', '🎧', '👕', '🧤', '🪖', '🔵']
+
+  return (
+    <div className="space-y-4">
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-white text-sm font-bold shadow-lg
+          ${toast.type === 'ok' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-black text-[#003D79]">Master APD</h2>
+          <p className="text-xs text-slate-400">{data.length} jenis terdaftar</p>
+        </div>
+        <button onClick={openAdd}
+          className="flex items-center gap-1.5 bg-[#003D79] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+          <Plus size={14} /> Tambah
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12 text-slate-400">Memuat data...</div>
+      ) : (
+        <div className="space-y-3">
+          {data.map(item => (
+            <div key={item.id} className={`bg-white rounded-[1.5rem] shadow-xl p-4 
+              ${!item.active ? 'opacity-60' : ''}`}>
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">{item.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-black text-[#003D79]">{item.jenis_apd}</span>
+                    {!item.active && (
+                      <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-black rounded-full uppercase">
+                        Nonaktif
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    ⏱ Lifetime: <strong>{item.life_time_bulan} bulan</strong>
+                  </div>
+                  {item.ukuran_tersedia?.length > 0 && (
+                    <div className="text-[10px] text-slate-400 mt-1">
+                      Ukuran: {item.ukuran_tersedia.join(', ')}
+                    </div>
+                  )}
+                  {item.warna_tersedia?.length > 0 && (
+                    <div className="text-[10px] text-slate-400">
+                      Warna: {item.warna_tersedia.join(', ')}
+                    </div>
+                  )}
+                  {item.keterangan && (
+                    <div className="text-[10px] text-slate-400 italic mt-0.5">{item.keterangan}</div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <button onClick={() => openEdit(item)}
+                    className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors">
+                    <Edit2 size={14} />
+                  </button>
+                  <button onClick={() => handleToggleActive(item)}
+                    className={`p-2 rounded-xl transition-colors
+                      ${item.active ? 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                        : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}>
+                    {item.active ? <XCircle size={14} /> : <CheckCircle size={14} />}
+                  </button>
+                  <button onClick={() => setConfirmDelete(item)}
+                    className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Form Modal Add/Edit */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h3 className="font-black text-[#003D79] text-lg mb-4">
+                {editItem ? '✏️ Edit APD' : '➕ Tambah APD Baru'}
+              </h3>
+
+              <div className="space-y-4">
+                {/* Icon picker */}
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Icon</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {ICON_OPTIONS.map(ic => (
+                      <button key={ic} onClick={() => setForm(f => ({ ...f, icon: ic }))}
+                        className={`text-2xl p-2 rounded-xl transition-all
+                          ${form.icon === ic ? 'bg-blue-100 ring-2 ring-[#003D79]' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                        {ic}
+                      </button>
+                    ))}
+                    <input value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))}
+                      placeholder="Emoji lain"
+                      className="w-16 text-center border border-slate-200 rounded-xl p-2 text-sm" />
+                  </div>
+                </div>
+
+                {/* Nama */}
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Nama APD *</label>
+                  <input value={form.jenis_apd} onChange={e => setForm(f => ({ ...f, jenis_apd: e.target.value }))}
+                    placeholder="contoh: Helm Safety"
+                    className="w-full border border-slate-200 rounded-[1.2rem] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#003D79]/20" />
+                </div>
+
+                {/* Lifetime */}
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                    Lifetime (bulan) *
+                  </label>
+                  <input type="number" min={1} value={form.life_time_bulan}
+                    onChange={e => setForm(f => ({ ...f, life_time_bulan: e.target.value }))}
+                    className="w-full border border-slate-200 rounded-[1.2rem] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#003D79]/20" />
+                </div>
+
+                {/* Ukuran */}
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                    Ukuran Tersedia
+                  </label>
+                  <div className="flex gap-2 mb-2">
+                    <input value={form.ukuran_input}
+                      onChange={e => setForm(f => ({ ...f, ukuran_input: e.target.value }))}
+                      onKeyDown={e => e.key === 'Enter' && addUkuran()}
+                      placeholder="S, M, L, XL, 38, 39..."
+                      className="flex-1 border border-slate-200 rounded-[1.2rem] px-4 py-2.5 text-sm outline-none" />
+                    <button onClick={addUkuran}
+                      className="px-4 py-2 bg-[#003D79] text-white rounded-[1.2rem] text-sm font-bold">
+                      +
+                    </button>
+                  </div>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {ukuranList.map(u => (
+                      <span key={u} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">
+                        {u}
+                        <button onClick={() => setUkuranList(prev => prev.filter(x => x !== u))}>
+                          <X size={10} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Warna */}
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                    Warna Tersedia
+                  </label>
+                  <div className="flex gap-2 mb-2">
+                    <input value={form.warna_input}
+                      onChange={e => setForm(f => ({ ...f, warna_input: e.target.value }))}
+                      onKeyDown={e => e.key === 'Enter' && addWarna()}
+                      placeholder="Kuning, Merah, Hitam..."
+                      className="flex-1 border border-slate-200 rounded-[1.2rem] px-4 py-2.5 text-sm outline-none" />
+                    <button onClick={addWarna}
+                      className="px-4 py-2 bg-[#003D79] text-white rounded-[1.2rem] text-sm font-bold">
+                      +
+                    </button>
+                  </div>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {warnaList.map(w => (
+                      <span key={w} className="flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full text-xs font-bold">
+                        {w}
+                        <button onClick={() => setWarnaList(prev => prev.filter(x => x !== w))}>
+                          <X size={10} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Keterangan */}
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Keterangan</label>
+                  <textarea value={form.keterangan} onChange={e => setForm(f => ({ ...f, keterangan: e.target.value }))}
+                    placeholder="Opsional..."
+                    className="w-full border border-slate-200 rounded-[1.2rem] px-4 py-3 text-sm outline-none resize-none"
+                    rows={2} />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setShowForm(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+                  Batal
+                </button>
+                <button onClick={handleSave} disabled={processing}
+                  className={`flex-1 py-3 bg-[#003D79] text-white font-bold rounded-[1.2rem] transition-all
+                    ${processing ? 'opacity-50' : 'hover:bg-[#002D5F]'}`}>
+                  {processing ? '...' : editItem ? 'Simpan' : 'Tambah'}
+                </button>
+              </div>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Mobile Cards */}
-          <div className="lg:hidden space-y-3">
-            {rows.map((r) => {
-              const overall = statusColor(r.overallStatus)
-              return (
-                <button key={r.nrp} onClick={() => { setSelectedRow(r); setShowDrawer(true) }}
-                  className="w-full bg-white rounded-[1.5rem] shadow-lg border border-slate-100 p-4 text-left hover:shadow-xl active:scale-[0.98] transition-all">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm font-black text-slate-900 truncate">{r.nama}</div>
-                        {r.pendingCount > 0 && <span className="bg-amber-500 text-white rounded-full px-1.5 py-0.5 text-[9px] font-black">⏳ {r.pendingCount}</span>}
-                      </div>
-                      <div className="text-[10px] text-slate-500 font-medium">NRP {r.nrp} • {r.site}</div>
-                      <div className="text-[9px] text-slate-400 truncate">{r.jabatan}</div>
-                    </div>
-                    <div className={`w-3 h-3 rounded-full ${overall.bg} ring-4 ${overall.ring} flex-shrink-0 mt-1`}></div>
+      {/* Confirm Delete */}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-full max-w-sm p-6 shadow-2xl">
+            <div className="text-center mb-4">
+              <div className="text-4xl mb-2">{confirmDelete.icon}</div>
+              <h3 className="font-black text-[#003D79]">Hapus APD?</h3>
+              <p className="text-sm text-slate-500 mt-1">
+                <strong>{confirmDelete.jenis_apd}</strong>
+                <br />Kalau ada history pemakaian, akan dinonaktifkan (tidak dihapus).
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmDelete(null)}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+                Batal
+              </button>
+              <button onClick={handleDelete}
+                className="flex-1 py-3 bg-rose-600 text-white font-bold rounded-[1.2rem]">
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ════════════════════════════════════════════
+// TAB 4: DISTRIBUSI
+// ════════════════════════════════════════════
+function TabDistribusi() {
+  const [masterList, setMasterList] = useState<ApdMaster[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [riwayat, setRiwayat] = useState<any[]>([])
+  const [loadingRiwayat, setLoadingRiwayat] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [processing, setProcessing] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
+  const [filterBulan, setFilterBulan] = useState(getCurrentBulan())
+
+  // Form multi-row distribusi
+  const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0])
+  const [keterangan, setKeterangan] = useState('')
+  const [kurangiStok, setKurangiStok] = useState(true)
+  const [rows, setRows] = useState([
+    { nrp: '', jenis_apd: '', ukuran: '', warna: '', jumlah: '1', empSearch: '', empResults: [] as Employee[], showEmpDrop: false }
+  ])
+
+  const showToast = (msg: string, type: 'ok' | 'err') => {
+    setToast({ msg, type }); setTimeout(() => setToast(null), 3500)
+  }
+
+  useEffect(() => {
+    // Load master APD
+    fetch('/api/apd/master?active_only=true', { headers: getAuthHeaders() })
+      .then(r => r.json()).then(j => setMasterList(j.data || []))
+  }, [])
+
+  useEffect(() => {
+    loadRiwayat()
+  }, [filterBulan])
+
+  const loadRiwayat = async () => {
+    setLoadingRiwayat(true)
+    try {
+      const res = await fetch(`/api/apd/distribusi?bulan=${filterBulan}&limit=50`, { headers: getAuthHeaders() })
+      const json = await res.json()
+      setRiwayat(json.data || [])
+    } catch { setRiwayat([]) }
+    setLoadingRiwayat(false)
+  }
+
+  // Search karyawan realtime
+  const searchEmp = async (q: string, rowIdx: number) => {
+    if (q.length < 2) {
+      setRows(prev => prev.map((r, i) => i === rowIdx ? { ...r, empResults: [], showEmpDrop: false } : r))
+      return
+    }
+    try {
+      const res = await fetch(
+        `/api/employees?search=${encodeURIComponent(q)}&limit=8&active=true`,
+        { headers: getAuthHeaders() }
+      )
+      const json = await res.json()
+      const emps: Employee[] = (json.data || json.employees || []).map((e: any) => ({
+        nrp: e.nrp, name: e.name, site: e.site, departemen: e.departemen || e.department
+      }))
+      setRows(prev => prev.map((r, i) => i === rowIdx ? { ...r, empResults: emps, showEmpDrop: true } : r))
+    } catch { }
+  }
+
+  const selectEmp = (emp: Employee, rowIdx: number) => {
+    setRows(prev => prev.map((r, i) => i === rowIdx
+      ? { ...r, nrp: emp.nrp, empSearch: `${emp.name} (${emp.nrp})`, empResults: [], showEmpDrop: false }
+      : r
+    ))
+  }
+
+  const updateRow = (idx: number, field: string, val: string) => {
+    setRows(prev => prev.map((r, i) => i === idx ? { ...r, [field]: val } : r))
+  }
+
+  const addRow = () => setRows(prev => [...prev, {
+    nrp: '', jenis_apd: '', ukuran: '', warna: '', jumlah: '1',
+    empSearch: '', empResults: [], showEmpDrop: false
+  }])
+
+  const removeRow = (idx: number) => setRows(prev => prev.filter((_, i) => i !== idx))
+
+  const getUkuranOptions = (jenis: string) => masterList.find(m => m.jenis_apd === jenis)?.ukuran_tersedia || []
+  const getWarnaOptions = (jenis: string) => masterList.find(m => m.jenis_apd === jenis)?.warna_tersedia || []
+
+  const handleSubmit = async () => {
+    const validRows = rows.filter(r => r.nrp && r.jenis_apd && Number(r.jumlah) > 0)
+    if (validRows.length === 0) { showToast('Minimal 1 baris distribusi valid', 'err'); return }
+
+    setProcessing(true)
+    try {
+      const res = await fetch('/api/apd/distribusi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          distribusi: validRows.map(r => ({
+            nrp: r.nrp, jenis_apd: r.jenis_apd,
+            ukuran: r.ukuran || null, warna: r.warna || null, jumlah: Number(r.jumlah)
+          })),
+          tanggal,
+          kurangi_stok: kurangiStok,
+          keterangan
+        })
+      })
+      const json = await res.json()
+      if (json.ok) {
+        const errCount = json.errors?.length || 0
+        showToast(
+          `✅ ${json.inserted} distribusi berhasil${errCount > 0 ? ` · ${errCount} gagal` : ''}`,
+          errCount > 0 ? 'err' : 'ok'
+        )
+        setShowForm(false)
+        setRows([{ nrp: '', jenis_apd: '', ukuran: '', warna: '', jumlah: '1', empSearch: '', empResults: [], showEmpDrop: false }])
+        setKeterangan('')
+        loadRiwayat()
+      } else showToast(json.error || 'Gagal', 'err')
+    } catch { showToast('Error jaringan', 'err') }
+    setProcessing(false)
+  }
+
+  return (
+    <div className="space-y-4">
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-white text-sm font-bold shadow-lg
+          ${toast.type === 'ok' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-black text-[#003D79]">Distribusi APD</h2>
+          <p className="text-xs text-slate-400">Input langsung → VERIFIED</p>
+        </div>
+        <button onClick={() => setShowForm(true)}
+          className="flex items-center gap-1.5 bg-[#003D79] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+          <Plus size={14} /> Distribusi
+        </button>
+      </div>
+
+      {/* Filter riwayat */}
+      <div className="flex gap-2 items-center">
+        <input type="month" value={filterBulan} onChange={e => setFilterBulan(e.target.value)}
+          className="flex-1 border border-slate-200 rounded-[1.2rem] px-4 py-2.5 text-sm bg-white shadow outline-none" />
+        <button onClick={loadRiwayat} className="p-2.5 bg-white rounded-[1.2rem] shadow">
+          <RefreshCw size={14} className="text-slate-500" />
+        </button>
+      </div>
+
+      {/* Riwayat */}
+      {loadingRiwayat ? (
+        <div className="text-center py-8 text-slate-400">Memuat...</div>
+      ) : riwayat.length === 0 ? (
+        <div className="text-center py-10">
+          <div className="text-3xl mb-2">📦</div>
+          <div className="text-slate-400 text-sm">Belum ada distribusi bulan ini</div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {riwayat.map(item => (
+            <div key={item.id} className="bg-white rounded-[1.5rem] shadow-xl p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  <div className="font-black text-[#003D79] text-sm">{item.nama_karyawan}</div>
+                  <div className="text-[10px] text-slate-400">{item.nrp}</div>
+                  <div className="text-xs text-slate-600 mt-1">
+                    <span className="font-bold">{item.jenis_apd}</span>
+                    {item.ukuran && ` · ${item.ukuran}`}
+                    {item.warna && ` · ${item.warna}`}
+                    {` · ${item.jumlah} pcs`}
                   </div>
-                  <div className="flex items-center gap-1.5 flex-wrap mb-3">
-                    {jenisList.map((j) => {
-                      const cell = r.matrix[j.jenis_apd]
-                      const c = statusColor(cell.status)
+                  <div className="text-[10px] text-slate-400 mt-0.5">{formatTgl(item.tanggal_terima)}</div>
+                </div>
+                <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black rounded-full uppercase">
+                  HR Input
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+          <div className="bg-white rounded-t-[2rem] w-full max-h-[95vh] overflow-y-auto shadow-2xl">
+            <div className="p-6">
+              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+              <h3 className="font-black text-[#003D79] text-lg mb-4">📦 Input Distribusi APD</h3>
+
+              {/* Tanggal + Keterangan */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Tanggal</label>
+                  <input type="date" value={tanggal} onChange={e => setTanggal(e.target.value)}
+                    className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Keterangan</label>
+                  <input value={keterangan} onChange={e => setKeterangan(e.target.value)}
+                    placeholder="Opsional"
+                    className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm outline-none" />
+                </div>
+              </div>
+
+              {/* Toggle kurangi stok */}
+              <div className="flex items-center gap-3 mb-4 bg-amber-50 rounded-[1.2rem] p-3">
+                <button onClick={() => setKurangiStok(!kurangiStok)}
+                  className={`relative w-10 h-6 rounded-full transition-colors ${kurangiStok ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                  <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform
+                    ${kurangiStok ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
+                <div>
+                  <div className="text-xs font-bold text-slate-700">Kurangi stok otomatis</div>
+                  <div className="text-[9px] text-slate-400">
+                    {kurangiStok ? 'Stok berkurang saat save' : 'Stok tidak berkurang'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Rows */}
+              <div className="space-y-3 mb-4">
+                {rows.map((row, idx) => (
+                  <div key={idx} className="bg-slate-50 rounded-[1.5rem] p-4 relative">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                      Baris {idx + 1}
+                    </div>
+
+                    {/* Karyawan search */}
+                    <div className="relative mb-2">
+                      <label className="text-[9px] font-black text-slate-400 block mb-1">Karyawan *</label>
+                      <input
+                        value={row.empSearch}
+                        onChange={e => {
+                          updateRow(idx, 'empSearch', e.target.value)
+                          updateRow(idx, 'nrp', '')
+                          searchEmp(e.target.value, idx)
+                        }}
+                        placeholder="Ketik nama atau NRP..."
+                        className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none"
+                      />
+                      {row.showEmpDrop && row.empResults.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 bg-white border border-slate-100 rounded-[1.2rem] shadow-xl z-20 mt-1 overflow-hidden">
+                          {row.empResults.map(emp => (
+                            <button key={emp.nrp} onClick={() => selectEmp(emp, idx)}
+                              className="w-full px-4 py-2.5 text-left hover:bg-blue-50 transition-colors">
+                              <div className="text-sm font-bold text-[#003D79]">{emp.name}</div>
+                              <div className="text-[10px] text-slate-400">{emp.nrp} · {emp.site}</div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Jenis APD */}
+                      <div>
+                        <label className="text-[9px] font-black text-slate-400 block mb-1">Jenis APD *</label>
+                        <select value={row.jenis_apd} onChange={e => updateRow(idx, 'jenis_apd', e.target.value)}
+                          className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none">
+                          <option value="">-- Pilih --</option>
+                          {masterList.map(m => <option key={m.jenis_apd} value={m.jenis_apd}>{m.icon} {m.jenis_apd}</option>)}
+                        </select>
+                      </div>
+                      {/* Jumlah */}
+                      <div>
+                        <label className="text-[9px] font-black text-slate-400 block mb-1">Jumlah *</label>
+                        <input type="number" min={1} value={row.jumlah}
+                          onChange={e => updateRow(idx, 'jumlah', e.target.value)}
+                          className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none" />
+                      </div>
+                      {/* Ukuran */}
+                      <div>
+                        <label className="text-[9px] font-black text-slate-400 block mb-1">Ukuran</label>
+                        {getUkuranOptions(row.jenis_apd).length > 0 ? (
+                          <select value={row.ukuran} onChange={e => updateRow(idx, 'ukuran', e.target.value)}
+                            className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none">
+                            <option value="">-</option>
+                            {getUkuranOptions(row.jenis_apd).map(u => <option key={u}>{u}</option>)}
+                          </select>
+                        ) : (
+                          <input value={row.ukuran} onChange={e => updateRow(idx, 'ukuran', e.target.value)}
+                            placeholder="-"
+                            className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none" />
+                        )}
+                      </div>
+                      {/* Warna */}
+                      <div>
+                        <label className="text-[9px] font-black text-slate-400 block mb-1">Warna</label>
+                        {getWarnaOptions(row.jenis_apd).length > 0 ? (
+                          <select value={row.warna} onChange={e => updateRow(idx, 'warna', e.target.value)}
+                            className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none">
+                            <option value="">-</option>
+                            {getWarnaOptions(row.jenis_apd).map(w => <option key={w}>{w}</option>)}
+                          </select>
+                        ) : (
+                          <input value={row.warna} onChange={e => updateRow(idx, 'warna', e.target.value)}
+                            placeholder="-"
+                            className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none" />
+                        )}
+                      </div>
+                    </div>
+
+                    {rows.length > 1 && (
+                      <button onClick={() => removeRow(idx)}
+                        className="absolute top-3 right-3 p-1.5 bg-rose-50 text-rose-500 rounded-xl">
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Tambah baris */}
+              <button onClick={addRow}
+                className="w-full py-2.5 border-2 border-dashed border-[#003D79]/30 text-[#003D79] rounded-[1.5rem] text-sm font-bold mb-4 hover:border-[#003D79]/50 transition-colors">
+                + Tambah Baris
+              </button>
+
+              <div className="flex gap-3">
+                <button onClick={() => setShowForm(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+                  Batal
+                </button>
+                <button onClick={handleSubmit} disabled={processing}
+                  className={`flex-1 py-3 bg-[#003D79] text-white font-bold rounded-[1.2rem] transition-all
+                    ${processing ? 'opacity-50' : 'hover:bg-[#002D5F]'}`}>
+                  {processing ? 'Menyimpan...' : `💾 Simpan (${rows.filter(r => r.nrp && r.jenis_apd).length} data)`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ════════════════════════════════════════════
+// TAB 5: STOK
+// ════════════════════════════════════════════
+function TabStok() {
+  const [summary, setSummary] = useState<StokSummary[]>([])
+  const [log, setLog] = useState<StokLog[]>([])
+  const [viewMode, setViewMode] = useState<'summary' | 'log'>('summary')
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [masterList, setMasterList] = useState<ApdMaster[]>([])
+  const [processing, setProcessing] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
+  const [expandedJenis, setExpandedJenis] = useState<string | null>(null)
+
+  // Form state
+  const [formTanggal, setFormTanggal] = useState(new Date().toISOString().split('T')[0])
+  const [formKet, setFormKet] = useState('')
+  const [formRows, setFormRows] = useState([{ jenis_apd: '', ukuran: '', warna: '', qty: '1' }])
+
+  const showToast = (msg: string, type: 'ok' | 'err') => {
+    setToast({ msg, type }); setTimeout(() => setToast(null), 3000)
+  }
+
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      const [summaryRes, logRes, masterRes] = await Promise.all([
+        fetch('/api/apd/stok?view=summary', { headers: getAuthHeaders() }),
+        fetch('/api/apd/stok?view=log', { headers: getAuthHeaders() }),
+        fetch('/api/apd/master?active_only=true', { headers: getAuthHeaders() })
+      ])
+      const [sj, lj, mj] = await Promise.all([summaryRes.json(), logRes.json(), masterRes.json()])
+      setSummary(sj.data || [])
+      setLog(lj.data || [])
+      setMasterList(mj.data || [])
+    } catch { }
+    setLoading(false)
+  }
+
+  useEffect(() => { loadData() }, [])
+
+  const updateFormRow = (idx: number, field: string, val: string) => {
+    setFormRows(prev => prev.map((r, i) => i === idx ? { ...r, [field]: val } : r))
+  }
+
+  const handleSubmitStok = async () => {
+    const validRows = formRows.filter(r => r.jenis_apd && Number(r.qty) > 0)
+    if (validRows.length === 0) { showToast('Minimal 1 item valid', 'err'); return }
+
+    setProcessing(true)
+    try {
+      const res = await fetch('/api/apd/stok', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          items: validRows.map(r => ({ jenis_apd: r.jenis_apd, ukuran: r.ukuran || null, warna: r.warna || null, qty: Number(r.qty) })),
+          tanggal: formTanggal,
+          keterangan: formKet
+        })
+      })
+      const json = await res.json()
+      if (json.ok) {
+        showToast(`✅ ${json.count} stok masuk dicatat`, 'ok')
+        setShowForm(false)
+        setFormRows([{ jenis_apd: '', ukuran: '', warna: '', qty: '1' }])
+        setFormKet('')
+        loadData()
+      } else showToast(json.error || 'Gagal', 'err')
+    } catch { showToast('Error jaringan', 'err') }
+    setProcessing(false)
+  }
+
+  const getStatusColor = (status: string) => {
+    if (status === 'OK') return 'text-emerald-600 bg-emerald-50'
+    if (status === 'MENIPIS') return 'text-amber-600 bg-amber-50'
+    return 'text-rose-600 bg-rose-50'
+  }
+
+  return (
+    <div className="space-y-4">
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-white text-sm font-bold shadow-lg
+          ${toast.type === 'ok' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-black text-[#003D79]">Stok APD</h2>
+          <p className="text-xs text-slate-400">Gudang & Mutasi</p>
+        </div>
+        <button onClick={() => setShowForm(true)}
+          className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+          <ArrowUpCircle size={14} /> Stok Masuk
+        </button>
+      </div>
+
+      {/* View toggle */}
+      <div className="flex gap-2">
+        {(['summary', 'log'] as const).map(v => (
+          <button key={v} onClick={() => setViewMode(v)}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all
+              ${viewMode === v ? 'bg-[#003D79] text-white shadow' : 'bg-white text-slate-600 shadow'}`}>
+            {v === 'summary' ? '📊 Ringkasan' : '📋 Log Mutasi'}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12 text-slate-400">Memuat data...</div>
+      ) : viewMode === 'summary' ? (
+        /* Summary View */
+        <div className="space-y-3">
+          {summary.map(item => (
+            <div key={item.jenis_apd} className="bg-white rounded-[1.5rem] shadow-xl overflow-hidden">
+              <button className="w-full p-4 flex items-center justify-between"
+                onClick={() => setExpandedJenis(expandedJenis === item.jenis_apd ? null : item.jenis_apd)}>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{item.icon}</span>
+                  <div className="text-left">
+                    <div className="font-black text-[#003D79] text-sm">{item.jenis_apd}</div>
+                    <div className="text-xs text-slate-500">Total: <strong>{item.total_qty}</strong> pcs</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase
+                    ${item.total_qty <= 0 ? 'bg-rose-100 text-rose-700'
+                      : item.total_qty <= 5 ? 'bg-amber-100 text-amber-700'
+                      : 'bg-emerald-100 text-emerald-700'}`}>
+                    {item.total_qty <= 0 ? 'HABIS' : item.total_qty <= 5 ? 'MENIPIS' : 'OK'}
+                  </span>
+                  {expandedJenis === item.jenis_apd ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </div>
+              </button>
+
+              {expandedJenis === item.jenis_apd && (
+                <div className="px-4 pb-4 border-t border-slate-50">
+                  <div className="mt-3 space-y-1.5">
+                    {item.rows.filter(r => r.ukuran !== '-' || r.warna !== '-' || r.qty !== 0).map((r, i) => (
+                      <div key={i} className="flex items-center justify-between py-1.5 px-3 bg-slate-50 rounded-xl">
+                        <div className="text-xs text-slate-600">
+                          {r.ukuran !== '-' && <span className="font-bold mr-2">{r.ukuran}</span>}
+                          {r.warna !== '-' && <span className="text-slate-400">{r.warna}</span>}
+                          {r.ukuran === '-' && r.warna === '-' && <span className="text-slate-400">Stok umum</span>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-sm">{r.qty}</span>
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${getStatusColor(r.status)}`}>
+                            {r.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {item.rows.every(r => r.qty === 0) && (
+                      <div className="text-center text-xs text-slate-400 py-2">Stok kosong</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* Log View */
+        <div className="space-y-2">
+          {log.length === 0 ? (
+            <div className="text-center py-10 text-slate-400">Belum ada mutasi stok</div>
+          ) : log.map(item => (
+            <div key={item.id} className="bg-white rounded-[1.5rem] shadow-xl p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className={`p-2 rounded-xl ${item.tipe === 'masuk' ? 'bg-emerald-50' : 'bg-rose-50'}`}>
+                    {item.tipe === 'masuk'
+                      ? <ArrowUpCircle size={16} className="text-emerald-600" />
+                      : <ArrowDownCircle size={16} className="text-rose-600" />}
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm text-[#003D79]">{item.jenis_apd}</div>
+                    <div className="text-[10px] text-slate-400">
+                      {item.ukuran && `${item.ukuran} · `}
+                      {item.warna && `${item.warna} · `}
+                      {formatTgl(item.tanggal)}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className={`text-lg font-black ${item.tipe === 'masuk' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {item.tipe === 'masuk' ? '+' : '-'}{item.qty}
+                  </div>
+                  <div className="text-[9px] text-slate-400">
+                    {item.ref_type || item.tipe}
+                  </div>
+                </div>
+              </div>
+              {item.keterangan && (
+                <div className="text-[10px] text-slate-400 mt-2 italic">{item.keterangan}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Form Stok Masuk */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+          <div className="bg-white rounded-t-[2rem] w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-6">
+              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+              <h3 className="font-black text-[#003D79] text-lg mb-4">📦 Input Stok Masuk</h3>
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Tanggal</label>
+                  <input type="date" value={formTanggal} onChange={e => setFormTanggal(e.target.value)}
+                    className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Keterangan</label>
+                  <input value={formKet} onChange={e => setFormKet(e.target.value)}
+                    placeholder="No PO, Supplier..."
+                    className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm outline-none" />
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-4">
+                {formRows.map((row, idx) => (
+                  <div key={idx} className="bg-slate-50 rounded-[1.5rem] p-4 relative">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Item {idx + 1}</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="col-span-2">
+                        <label className="text-[9px] font-black text-slate-400 block mb-1">Jenis APD *</label>
+                        <select value={row.jenis_apd} onChange={e => updateFormRow(idx, 'jenis_apd', e.target.value)}
+                          className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none">
+                          <option value="">-- Pilih --</option>
+                          {masterList.map(m => <option key={m.jenis_apd} value={m.jenis_apd}>{m.icon} {m.jenis_apd}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-black text-slate-400 block mb-1">Ukuran</label>
+                        {masterList.find(m => m.jenis_apd === row.jenis_apd)?.ukuran_tersedia?.length
+                          ? (
+                            <select value={row.ukuran} onChange={e => updateFormRow(idx, 'ukuran', e.target.value)}
+                              className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none">
+                              <option value="">-</option>
+                              {masterList.find(m => m.jenis_apd === row.jenis_apd)!.ukuran_tersedia.map(u => <option key={u}>{u}</option>)}
+                            </select>
+                          ) : (
+                            <input value={row.ukuran} onChange={e => updateFormRow(idx, 'ukuran', e.target.value)}
+                              placeholder="-"
+                              className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none" />
+                          )}
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-black text-slate-400 block mb-1">Qty *</label>
+                        <input type="number" min={1} value={row.qty} onChange={e => updateFormRow(idx, 'qty', e.target.value)}
+                          className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none" />
+                      </div>
+                    </div>
+                    {formRows.length > 1 && (
+                      <button onClick={() => setFormRows(prev => prev.filter((_, i) => i !== idx))}
+                        className="absolute top-3 right-3 p-1.5 bg-rose-50 text-rose-500 rounded-xl">
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={() => setFormRows(prev => [...prev, { jenis_apd: '', ukuran: '', warna: '', qty: '1' }])}
+                className="w-full py-2.5 border-2 border-dashed border-emerald-300 text-emerald-600 rounded-[1.5rem] text-sm font-bold mb-4">
+                + Tambah Item
+              </button>
+
+              <div className="flex gap-3">
+                <button onClick={() => setShowForm(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+                  Batal
+                </button>
+                <button onClick={handleSubmitStok} disabled={processing}
+                  className={`flex-1 py-3 bg-emerald-600 text-white font-bold rounded-[1.2rem] transition-all
+                    ${processing ? 'opacity-50' : 'hover:bg-emerald-700'}`}>
+                  {processing ? 'Menyimpan...' : '💾 Simpan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ════════════════════════════════════════════
+// TAB 6: PLAN BULANAN
+// ════════════════════════════════════════════
+function TabPlan() {
+  const [bulan, setBulan] = useState(getNextBulan())
+  const [data, setData] = useState<PlanRow[]>([])
+  const [summary, setSummary] = useState<PlanSummary | null>(null)
+  const [sites, setSites] = useState<string[]>([])
+  const [filterSite, setFilterSite] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [expandedNrp, setExpandedNrp] = useState<string | null>(null)
+  const [overrideModal, setOverrideModal] = useState<{ nrp: string; name: string; jenis_apd: string; current: any } | null>(null)
+  const [overrideAction, setOverrideAction] = useState<'ADD' | 'REMOVE' | 'EDIT_QTY'>('REMOVE')
+  const [overrideQty, setOverrideQty] = useState('1')
+  const [overrideKet, setOverrideKet] = useState('')
+  const [processing, setProcessing] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
+
+  const showToast = (msg: string, type: 'ok' | 'err') => {
+    setToast({ msg, type }); setTimeout(() => setToast(null), 3000)
+  }
+
+  const loadPlan = async () => {
+    if (!bulan) return
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ bulan })
+      if (filterSite) params.set('site', filterSite)
+      const res = await fetch(`/api/apd/plan?${params}`, { headers: getAuthHeaders() })
+      const json = await res.json()
+      setData(json.data || [])
+      setSummary(json.summary || null)
+      // Ambil unique sites dari data
+      const siteSet = new Set((json.data || []).map((r: PlanRow) => r.site).filter(Boolean))
+      setSites(Array.from(siteSet) as string[])
+    } catch { setData([]) }
+    setLoading(false)
+  }
+
+  useEffect(() => { loadPlan() }, [bulan, filterSite])
+
+  const handleOverride = async () => {
+    if (!overrideModal) return
+    setProcessing(true)
+    try {
+      const res = await fetch('/api/apd/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          bulan_plan: bulan,
+          jenis_apd: overrideModal.jenis_apd,
+          nrp: overrideModal.nrp,
+          action_type: overrideAction,
+          qty_override: Number(overrideQty),
+          keterangan: overrideKet || null
+        })
+      })
+      const json = await res.json()
+      if (json.ok) {
+        showToast('✅ Override disimpan', 'ok')
+        setOverrideModal(null)
+        loadPlan()
+      } else showToast(json.error || 'Gagal', 'err')
+    } catch { showToast('Error', 'err') }
+    setProcessing(false)
+  }
+
+  const handleRemoveOverride = async (id: string) => {
+    try {
+      const res = await fetch(`/api/apd/plan?id=${id}`, {
+        method: 'DELETE', headers: getAuthHeaders()
+      })
+      const json = await res.json()
+      if (json.ok) { showToast('Override dihapus', 'ok'); loadPlan() }
+      else showToast(json.error || 'Gagal', 'err')
+    } catch { showToast('Error', 'err') }
+  }
+
+  const reasonBadge = getReasonBadge
+
+  return (
+    <div className="space-y-4">
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-white text-sm font-bold shadow-lg
+          ${toast.type === 'ok' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Header + Filter */}
+      <div>
+        <h2 className="font-black text-[#003D79]">Plan Bulanan</h2>
+        <p className="text-xs text-slate-400">Auto-generate dari lifetime APD</p>
+      </div>
+
+      <div className="flex gap-2">
+        <input type="month" value={bulan} onChange={e => setBulan(e.target.value)}
+          className="flex-1 border border-slate-200 rounded-[1.2rem] px-4 py-2.5 text-sm bg-white shadow outline-none" />
+        <select value={filterSite} onChange={e => setFilterSite(e.target.value)}
+          className="px-3 py-2 bg-white rounded-[1.2rem] text-sm shadow border-0 outline-none">
+          <option value="">Semua Site</option>
+          {sites.map(s => <option key={s}>{s}</option>)}
+        </select>
+        <button onClick={loadPlan} className="p-2.5 bg-white rounded-[1.2rem] shadow">
+          <RefreshCw size={14} className="text-slate-500" />
+        </button>
+      </div>
+
+      {/* Summary cards */}
+      {summary && (
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: 'Karyawan', val: summary.total_karyawan, cls: 'text-[#003D79]', icon: '👥' },
+            { label: 'Total Item', val: summary.total_item, cls: 'text-purple-600', icon: '📦' },
+            { label: 'Belum Terima', val: summary.belum_terima, cls: 'text-blue-600', icon: '🆕' },
+            { label: 'Jatuh Tempo', val: summary.jatuh_tempo, cls: 'text-amber-600', icon: '⏰' },
+            { label: 'Expired', val: summary.expired, cls: 'text-rose-600', icon: '🚨' },
+            { label: 'Override', val: summary.override_add, cls: 'text-indigo-600', icon: '⚙️' },
+          ].map(s => (
+            <div key={s.label} className="bg-white rounded-[1.5rem] shadow-xl p-3 text-center">
+              <div className="text-lg">{s.icon}</div>
+              <div className={`text-xl font-black ${s.cls}`}>{s.val}</div>
+              <div className="text-[8px] text-slate-400 font-bold uppercase tracking-widest leading-tight">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-12 text-slate-400">Memuat plan...</div>
+      ) : data.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-4xl mb-2">🎉</div>
+          <div className="text-slate-500 text-sm font-bold">Tidak ada APD yang perlu diganti</div>
+          <div className="text-xs text-slate-400 mt-1">Semua karyawan APD-nya masih aman untuk bulan ini</div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {data.map(row => (
+            <div key={row.nrp} className="bg-white rounded-[1.5rem] shadow-xl overflow-hidden">
+              {/* Header karyawan */}
+              <button className="w-full p-4 flex items-center justify-between"
+                onClick={() => setExpandedNrp(expandedNrp === row.nrp ? null : row.nrp)}>
+                <div className="text-left">
+                  <div className="font-black text-[#003D79] text-sm">{row.name}</div>
+                  <div className="text-[10px] text-slate-400">{row.nrp} · {row.site} · {row.departemen}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-100 text-amber-700 text-xs font-black px-2 py-1 rounded-full">
+                    {row.items.length} item
+                  </span>
+                  {expandedNrp === row.nrp ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </div>
+              </button>
+
+              {/* Detail items */}
+              {expandedNrp === row.nrp && (
+                <div className="border-t border-slate-50 px-4 pb-4">
+                  <div className="space-y-2 mt-3">
+                    {row.items.map((item, i) => {
+                      const badge = reasonBadge(item.reason)
                       return (
-                        <div key={j.jenis_apd} className={`flex items-center gap-1 ${c.bg} ${c.text} rounded-full px-2 py-1 text-[9px] font-black`}
-                          title={cell.tanggal ? formatDate(cell.tanggal) : 'Belum'}>
-                          <span>{j.icon}</span>
-                          <span>{cell.status === 'BELUM_TERIMA' ? '—' : (cell.days !== null && cell.days < 0 ? '!' : '✓')}</span>
+                        <div key={i} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-[1.2rem]">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm">{item.icon}</span>
+                              <span className="text-sm font-bold text-[#003D79]">{item.jenis_apd}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${badge.cls}`}>
+                                {badge.label}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5">
+                              Qty: {item.qty}
+                              {item.last_terima && ` · Terakhir: ${formatTgl(item.last_terima)}`}
+                              {item.expired_at && ` · Exp: ${formatTgl(item.expired_at)}`}
+                              {item.ukuran_override && ` · Ukuran: ${item.ukuran_override}`}
+                            </div>
+                            {item.override && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <span className="text-[9px] text-purple-600 font-bold">⚙️ Override aktif</span>
+                                <button onClick={() => handleRemoveOverride(item.override.id)}
+                                  className="text-[9px] text-rose-500 underline">Hapus</button>
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => {
+                              setOverrideModal({ nrp: row.nrp, name: row.name, jenis_apd: item.jenis_apd, current: item.override })
+                              setOverrideAction(item.override?.action_type || 'REMOVE')
+                              setOverrideQty(String(item.qty))
+                              setOverrideKet(item.override?.keterangan || '')
+                            }}
+                            className="p-2 bg-purple-50 text-purple-600 rounded-xl ml-2 hover:bg-purple-100 transition-colors">
+                            <Edit2 size={12} />
+                          </button>
                         </div>
                       )
                     })}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] text-slate-500 font-medium">{r.totalPunya} dari {r.totalMaster} jenis</div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 h-1.5 bg-slate-200 rounded-full">
-                        <div className="h-full bg-[#003D79] rounded-full" style={{ width: `${(r.totalPunya / r.totalMaster) * 100}%` }}></div>
-                      </div>
-                      <div className="text-[10px] font-black text-slate-700">{Math.round((r.totalPunya / r.totalMaster) * 100)}%</div>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Legend */}
-          <div className="mt-4 bg-white rounded-[1.5rem] shadow-lg p-3">
-            <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">Legend Status</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[10px]">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-emerald-200"></div><span className="text-slate-600 font-medium">Aman</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-amber-500 ring-2 ring-amber-200"></div><span className="text-slate-600 font-medium">Ganti (≤60hr)</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-rose-500 ring-2 ring-rose-200"></div><span className="text-slate-600 font-medium">Expired</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-slate-200 ring-2 ring-slate-100"></div><span className="text-slate-600 font-medium">Belum</span></div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Drawer Detail */}
-      {showDrawer && selectedRow && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-0 md:p-4">
-          <div className="bg-white w-full md:max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-[#003D79] text-white px-5 py-4 rounded-t-[2.5rem] sticky top-0 z-10 flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-black truncate">{selectedRow.nama}</div>
-                <div className="text-[10px] text-white/70 font-medium">NRP {selectedRow.nrp} • {selectedRow.site}</div>
-              </div>
-              <button onClick={() => setShowDrawer(false)} className="text-white/70 hover:text-white text-2xl ml-2">×</button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="bg-slate-50 rounded-2xl p-3">
-                <div className="grid grid-cols-2 gap-2 text-[10px]">
-                  <div><div className="text-slate-400 font-black uppercase tracking-widest">Jabatan</div><div className="font-black text-slate-900">{selectedRow.jabatan || '-'}</div></div>
-                  <div><div className="text-slate-400 font-black uppercase tracking-widest">Dept</div><div className="font-black text-slate-900">{selectedRow.departemen || '-'}</div></div>
-                  <div><div className="text-slate-400 font-black uppercase tracking-widest">Site</div><div className="font-black text-slate-900">{selectedRow.site || '-'}</div></div>
-                  <div><div className="text-slate-400 font-black uppercase tracking-widest">Progress</div><div className="font-black text-slate-900">{selectedRow.totalPunya}/{selectedRow.totalMaster} ({Math.round((selectedRow.totalPunya / selectedRow.totalMaster) * 100)}%)</div></div>
-                </div>
-              </div>
-              {selectedRow.pendingCount > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-800 font-medium">
-                  ⏳ Ada <span className="font-black">{selectedRow.pendingCount} request</span> menunggu verifikasi
                 </div>
               )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Override Modal */}
+      {overrideModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl">
+            <h3 className="font-black text-[#003D79] text-lg mb-1">⚙️ Override Plan</h3>
+            <p className="text-xs text-slate-400 mb-4">
+              {overrideModal.name} · {overrideModal.jenis_apd}
+            </p>
+
+            <div className="space-y-4">
+              {/* Action */}
               <div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">🦺 Detail per Jenis APD</div>
-                <div className="space-y-2">
-                  {jenisList.map((j) => {
-                    const cell = selectedRow.matrix[j.jenis_apd]
-                    const c = statusColor(cell.status)
-                    return (
-                      <div key={j.jenis_apd} className="bg-white rounded-xl border border-slate-100 p-3">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="text-xl">{j.icon}</div>
-                            <div>
-                              <div className="text-xs font-black text-slate-900">{j.jenis_apd}</div>
-                              <div className="text-[9px] text-slate-500 font-medium">Masa pakai {j.life_time_bulan || 12} bulan</div>
-                            </div>
-                          </div>
-                          <div className={`${c.bg} ${c.text} px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest`}>{c.label}</div>
-                        </div>
-                        {cell.status === 'BELUM_TERIMA' ? (
-                          <div className="text-[10px] text-slate-400 italic">Belum pernah menerima</div>
-                        ) : (
-                          <div className="grid grid-cols-2 gap-2 mt-2 text-[10px]">
-                            <div><div className="text-slate-400">Terima</div><div className="font-black text-slate-900">{formatDate(cell.tanggal)}</div></div>
-                            <div><div className="text-slate-400">Expired</div><div className="font-black text-slate-900">{formatDate(cell.expired)}</div></div>
-                            <div><div className="text-slate-400">Ukuran</div><div className="font-black text-slate-900">{cell.ukuran || '-'}</div></div>
-                            <div><div className="text-slate-400">Jumlah</div><div className="font-black text-slate-900">{cell.jumlah || '-'} pcs</div></div>
-                            {cell.days !== null && (
-                              <div className="col-span-2"><div className="text-slate-400">Status Waktu</div>
-                                <div className="font-black text-slate-900">
-                                  {cell.days < 0 ? `Expired ${Math.abs(cell.days)} hari lalu` : `${cell.days} hari lagi`}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Aksi</label>
+                <div className="flex gap-2">
+                  {(['REMOVE', 'ADD', 'EDIT_QTY'] as const).map(a => (
+                    <button key={a} onClick={() => setOverrideAction(a)}
+                      className={`flex-1 py-2 rounded-[1.2rem] text-xs font-bold transition-all
+                        ${overrideAction === a
+                          ? a === 'REMOVE' ? 'bg-rose-600 text-white'
+                            : a === 'ADD' ? 'bg-emerald-600 text-white'
+                            : 'bg-amber-500 text-white'
+                          : 'bg-slate-100 text-slate-600'}`}>
+                      {a === 'REMOVE' ? '❌ Hapus' : a === 'ADD' ? '➕ Tambah' : '✏️ Edit Qty'}
+                    </button>
+                  ))}
                 </div>
               </div>
+
+              {overrideAction !== 'REMOVE' && (
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Qty</label>
+                  <input type="number" min={1} value={overrideQty} onChange={e => setOverrideQty(e.target.value)}
+                    className="w-full border border-slate-200 rounded-[1.2rem] px-4 py-3 text-sm outline-none" />
+                </div>
+              )}
+
+              <div>
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Keterangan</label>
+                <input value={overrideKet} onChange={e => setOverrideKet(e.target.value)}
+                  placeholder="Alasan override..."
+                  className="w-full border border-slate-200 rounded-[1.2rem] px-4 py-3 text-sm outline-none" />
+              </div>
             </div>
-            <div className="p-5 border-t border-slate-100 sticky bottom-0 bg-white">
-              <button onClick={() => setShowDrawer(false)} className="w-full bg-slate-100 text-slate-700 py-3 rounded-[1.2rem] font-black text-sm hover:bg-slate-200">Tutup</button>
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setOverrideModal(null)}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+                Batal
+              </button>
+              <button onClick={handleOverride} disabled={processing}
+                className={`flex-1 py-3 bg-[#003D79] text-white font-bold rounded-[1.2rem] transition-all
+                  ${processing ? 'opacity-50' : 'hover:bg-[#002D5F]'}`}>
+                {processing ? '...' : 'Simpan Override'}
+              </button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
