@@ -1,4 +1,4 @@
-// app/api/apd/distribusi/route.ts — v1.0
+// app/api/apd/distribusi/route.ts — v1.1 (fix: emp.name → emp.nama)
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     // ═══ Ambil data karyawan ═══
     const { data: emp } = await supabaseAdmin
       .from('employees')
-      .select('name, site')
+      .select('nama, site')
       .eq('nrp', nrp)
       .single()
 
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       .from('apd_history')
       .insert({
         nrp,
-        nama_karyawan: emp.name,
+        nama_karyawan: emp.nama,
         jenis_apd,
         penerimaan_ke: penerimaanKe,
         tanggal_terima: tanggalFinal,
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
         qty: Number(jumlah),
         tipe: 'keluar',
         tanggal: tanggalFinal,
-        keterangan: `Distribusi ke ${emp.name} (${nrp})`,
+        keterangan: `Distribusi ke ${emp.nama} (${nrp})`,
         ref_id: inserted.id,
         ref_type: 'distribusi',
         created_by: session.nrp

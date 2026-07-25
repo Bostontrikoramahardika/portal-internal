@@ -1,4 +1,4 @@
-// app/api/apd/plan/route.ts — v1.0
+// app/api/apd/plan/route.ts — v1.1 (fix: kolom nama, tanggal_resign)
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
@@ -29,11 +29,11 @@ export async function GET(req: NextRequest) {
   const bulanEnd = `${y}-${String(m).padStart(2, '0')}-${lastDay}`
 
   // ═══ 1. Ambil semua karyawan aktif ═══
+  // FIX: kolom name → nama, active → tidak ada, resign_date → tanggal_resign
   let empQuery = supabaseAdmin
     .from('employees')
-    .select('nrp, name, site, departemen, jabatan')
-    .eq('active', true)
-    .is('resign_date', null)
+    .select('nrp, nama, site, departemen, jabatan')
+    .is('tanggal_resign', null)
 
   if (site && site !== 'ALL') empQuery = empQuery.eq('site', site)
 
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
   for (const emp of employees || []) {
     const empPlan: any = {
       nrp: emp.nrp,
-      name: emp.name,
+      name: emp.nama,         // FIX: emp.name → emp.nama
       site: emp.site,
       departemen: emp.departemen,
       jabatan: emp.jabatan,
