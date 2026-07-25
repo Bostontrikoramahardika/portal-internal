@@ -208,7 +208,8 @@ m.menu_key === 'koreksi_absensi'
         m.menu_key === 'kelola_hak_cuti' ||
         m.menu_key === 'data_sakit' ||
         m.menu_key === 'hr_override_absensi' ||
-        m.menu_key === 'monitoring_mcu'
+        m.menu_key === 'monitoring_mcu' ||
+        m.menu_key === 'monitoring_apd'
       )
     }
   },
@@ -244,7 +245,8 @@ m.menu_key === 'koreksi_absensi'
       return (
         m.menu_key === 'data_saya' ||
         m.menu_key === 'kpi_saya' ||
-        m.menu_key === 'mcu_saya' ||        // ← BARU
+        m.menu_key === 'mcu_saya' ||
+        m.menu_key === 'apd_saya' ||      // ← BARU
         m.menu_key === 'ganti_password'
       )
     }
@@ -773,6 +775,26 @@ if (menuKey === 'rekap_absensi') {
     }
     if (menuKey === 'mcu_saya') {
       router.push('/dashboard/mcu-saya')
+      setBottomSheetOpen(false)
+      return
+    }
+    // 🦺 APD Saya (Chat 22)
+    if (menuKey === 'apd_saya') {
+      router.push('/dashboard/apd-saya')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    // 🦺 Kelola APD (Chat 22)
+    if (menuKey === 'kelola_apd') {
+      router.push('/dashboard/kelola-apd')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    // 📊 Monitoring APD (Chat 22)
+    if (menuKey === 'monitoring_apd') {
+      router.push('/dashboard/monitoring-apd')
       setBottomSheetOpen(false)
       return
     }
