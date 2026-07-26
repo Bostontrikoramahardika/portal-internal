@@ -1,5 +1,5 @@
 // app/api/schema/route.ts
-// v1.1 — Chat 25: Tambah schema 'employees' untuk fix tombol Tambah Karyawan
+// v1.2 — Chat 25: Fix eligible_tiket_pesawat + Jabatan dropdown
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
@@ -15,16 +15,51 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const table = searchParams.get('table')
 
+    // ═══════════════════════════════════════════════════════════
+    // DAFTAR JABATAN — Chat 25 ⭐
+    // ═══════════════════════════════════════════════════════════
+    const JABATAN_HO = [
+      'Director Operations',
+      'Business Development',
+      'Manager Operations',
+      'HR HO',
+      'SPV SHE HO',
+      'Staff Bus Dev',
+      'Staff Finance',
+      'Staff HR',
+      'Staff IT',
+      'Admin HO',
+    ]
+
+    const JABATAN_SITE = [
+      'PJO',
+      'Deputy PJO',
+      'HRGA',
+      'SHE Officer',
+      'Site Admin',
+      'Admin GL',
+      'Planner',
+      'Plant GL',
+      'Production GL',
+      'Mechanic A2B',
+      'Welder',
+      'Helper Plant',
+      'Operator Excavator',
+      'Operator Bulldozer',
+      'Operator Grader',
+      'Driver LV',
+      'Logistic Crew',
+    ]
+
+    const JABATAN_ALL = [...new Set([...JABATAN_HO, ...JABATAN_SITE])].sort()
+
     const schemas: Record<string, any[]> = {
       // ═══════════════════════════════════════════════════════════
-      // SCHEMA EMPLOYEES (Kelola Karyawan) — Chat 25 ⭐
+      // SCHEMA EMPLOYEES — Chat 25 v1.2
       // ═══════════════════════════════════════════════════════════
       employees: [
-        // === IDENTITAS UTAMA (WAJIB) ===
         { key: 'nrp', label: 'NRP (Nomor Registrasi)', type: 'text', placeholder: 'Contoh: 1961125', required: true },
         { key: 'nama', label: 'Nama Lengkap', type: 'text', placeholder: 'Nama sesuai KTP', required: true },
-        { key: 'jabatan', label: 'Jabatan', type: 'text', placeholder: 'Contoh: Staff HR, Mekanik, dll' },
-        { key: 'departemen', label: 'Departemen', type: 'text', placeholder: 'Contoh: HR, Operasional, Plant' },
         { 
           key: 'site', 
           label: 'Site Penempatan', 
@@ -33,22 +68,26 @@ export async function GET(request: NextRequest) {
           required: true 
         },
         { 
+          key: 'jabatan', 
+          label: 'Jabatan', 
+          type: 'select',
+          options: JABATAN_ALL
+        },
+        { key: 'departemen', label: 'Departemen', type: 'text', placeholder: 'Contoh: HR, Operasional, Plant' },
+        { 
           key: 'status_karyawan', 
           label: 'Status Karyawan', 
           type: 'select', 
           options: ['PKWT', 'PKWTT', 'MAGANG', 'HARIAN']
         },
 
-        // === KONTAK ===
         { key: 'no_hp', label: 'No HP', type: 'text', placeholder: '08xxxxxxxxxx' },
         { key: 'email', label: 'Email', type: 'text', placeholder: 'nama@email.com' },
 
-        // === TANGGAL & TEMPAT LAHIR ===
         { key: 'tanggal_masuk', label: 'Tanggal Mulai Kerja', type: 'date' },
         { key: 'tempat_lahir', label: 'Tempat Lahir', type: 'text', placeholder: 'Kota kelahiran' },
         { key: 'tanggal_lahir', label: 'Tanggal Lahir', type: 'date' },
 
-        // === STATUS PRIBADI ===
         { 
           key: 'status_pernikahan', 
           label: 'Status Pernikahan', 
@@ -57,13 +96,11 @@ export async function GET(request: NextRequest) {
         },
         { key: 'alamat', label: 'Alamat Domisili', type: 'textarea', placeholder: 'Alamat lengkap saat ini' },
 
-        // === DOKUMEN KELUARGA ===
         { key: 'no_kk', label: 'No Kartu Keluarga (KK)', type: 'text' },
         { key: 'nama_istri', label: 'Nama Istri/Suami', type: 'text' },
         { key: 'nama_anak', label: 'Nama Anak (pisahkan dengan koma)', type: 'text', placeholder: 'Andi, Budi, Citra' },
         { key: 'no_darurat', label: 'No Kontak Darurat', type: 'text', placeholder: 'No HP keluarga terdekat' },
 
-        // === BPJS ===
         { key: 'bpjs_tk', label: 'No BPJS Ketenagakerjaan', type: 'text' },
         { key: 'bpjs_kes', label: 'No BPJS Kesehatan (Pribadi)', type: 'text' },
         { key: 'bpjs_istri', label: 'No BPJS Kesehatan (Istri/Suami)', type: 'text' },
@@ -71,18 +108,16 @@ export async function GET(request: NextRequest) {
         { key: 'bpjs_anak2', label: 'No BPJS Kesehatan (Anak 2)', type: 'text' },
         { key: 'bpjs_anak3', label: 'No BPJS Kesehatan (Anak 3)', type: 'text' },
 
-        // === SIM / SIMPER / MCU ===
         { key: 'no_simpol', label: 'No SIMPOL', type: 'text' },
         { key: 'exp_simpol', label: 'Expired SIMPOL', type: 'date' },
         { key: 'exp_simper', label: 'Expired SIMPER', type: 'date' },
         { key: 'exp_mcu', label: 'Expired MCU', type: 'date' },
 
-        // === TIKET PESAWAT (HO) ===
         { key: 'eligible_tiket_pesawat', label: 'Eligible Tiket Pesawat?', type: 'checkbox' },
       ],
 
       // ═══════════════════════════════════════════════════════════
-      // SCHEMA SP (Surat Peringatan)
+      // SCHEMA SP
       // ═══════════════════════════════════════════════════════════
       sp: [
         { key: 'nrp', label: 'Pilih Karyawan', type: 'employee_select', required: true },
@@ -99,7 +134,7 @@ export async function GET(request: NextRequest) {
       ],
 
       // ═══════════════════════════════════════════════════════════
-      // SCHEMA KPI (Raport Penilaian)
+      // SCHEMA KPI
       // ═══════════════════════════════════════════════════════════
       kpi: [
         { key: 'nrp', label: 'Pilih Karyawan', type: 'employee_select', required: true },
@@ -111,7 +146,7 @@ export async function GET(request: NextRequest) {
       ],
 
       // ═══════════════════════════════════════════════════════════
-      // SCHEMA KPI SETTINGS (Bobot Pengurang)
+      // SCHEMA KPI SETTINGS
       // ═══════════════════════════════════════════════════════════
       kpi_settings: [
         { key: 'kode', label: 'Kode Sistem', type: 'text', placeholder: 'MINUS_TERLAMBAT', required: true },
@@ -122,7 +157,7 @@ export async function GET(request: NextRequest) {
       ],
 
       // ═══════════════════════════════════════════════════════════
-      // SCHEMA SITES_CONFIG v1.5.0 (Master Site)
+      // SCHEMA SITES_CONFIG
       // ═══════════════════════════════════════════════════════════
       sites_config: [
         { key: 'kode_site', label: 'Kode Site (Unik)', type: 'text', placeholder: 'PPA-MLP', required: true },
@@ -140,7 +175,7 @@ export async function GET(request: NextRequest) {
       ],
 
       // ═══════════════════════════════════════════════════════════
-      // SCHEMA JOB_CATEGORIES v1.5.0 (Pembagian Tim)
+      // SCHEMA JOB_CATEGORIES
       // ═══════════════════════════════════════════════════════════
       job_categories: [
         { 
