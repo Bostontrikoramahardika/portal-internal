@@ -8,7 +8,24 @@ import { getTablePermissions } from '@/app/lib/tablePermissions'
 import { getWitaToday } from '@/app/lib/timezone'
 
 const NAME_BASED_TABLES = ['bpjs', 'apd_history', 'attendance_evidences']
-const HIDDEN_COLUMNS = ['created_at', 'updated_at', 'id', 'nrp', 'atasan_nrp', 'pjo_nrp', 'employee_nrp', 'uploaded_by']
+const HIDDEN_COLUMNS = [
+  // System columns
+  'created_at', 'updated_at', 'id',
+  // Foreign key IDs (not for display)
+  'nrp', 'atasan_nrp', 'pjo_nrp', 'employee_nrp', 'uploaded_by', 'nrp_login',
+  // 🔒 CHAT 25: Security (SUPER SENSITIVE - JANGAN PERNAH TAMPIL)
+  'password', 'password_last_changed', 'is_super_admin',
+  // 🔒 CHAT 25: Sensitive personal data (BPJS, keluarga)
+  'nama_istri', 'nama_anak', 'no_darurat', 'no_kk',
+  'bpjs_tk', 'bpjs_kes', 'bpjs_istri', 'bpjs_anak1', 'bpjs_anak2', 'bpjs_anak3',
+  // 🔒 CHAT 25: Detail dokumen (tampil di halaman khusus MCU/SIMPER)
+  'no_simpol', 'exp_simpol', 'exp_simper', 'exp_mcu',
+  // 🔒 CHAT 25: Detail personal (tampil di halaman detail)
+  'tempat_lahir', 'tmpt_lahir', 'tanggal_lahir', 'status_pernikahan', 'alamat',
+  // 🔒 CHAT 25: Meta & legacy
+  'foto_url', 'tgl_masuk', 'eligible_tiket_pesawat',
+  'alasan_resign', 'resign_by',
+]
 const PRIORITY_COLUMNS = ['_nama_karyawan', '_jabatan', '_site', '_departemen']
 const SECONDARY_COLUMNS = ['_nama_atasan', '_nama_pjo']
 

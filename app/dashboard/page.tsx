@@ -2230,9 +2230,9 @@ const canEdit = isSuperAdmin || (hasSchema && (
 
       {/* TABEL */}
       <div className="bg-white rounded-xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-auto max-h-[75vh]">
           <table className="w-full text-left text-[11px] lg:text-xs">
-            <thead className="bg-[#003D79] text-white">
+            <thead className="bg-[#003D79] text-white sticky top-0 z-10 shadow-md">
               <tr>
                 {columns.map((c: string) => (
                   <th key={c} className="px-3 py-2.5 lg:px-5 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">
