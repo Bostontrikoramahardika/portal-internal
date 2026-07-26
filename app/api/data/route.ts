@@ -579,7 +579,7 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
     // ==========================================
     // 🎯 CASE: DATA SAYA (My Identity)
     // ==========================================
-    if (menuKey === 'data_saya') {
+        if (menuKey === 'data_saya') {
       const nrpStr = String(session.nrp).trim();
       const nrpWithZero = nrpStr.startsWith('0') ? nrpStr : '0' + nrpStr;
       const today = getWitaToday();
@@ -598,8 +598,32 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
         .gte('berlaku_sampai', today)
         .order('created_at', { ascending: false })
 
+      // ═══ CHAT 25: Ambil MCU terbaru (tanggal_expired paling akhir) ═══
+      const { data: mcuLatest } = await supabase
+        .from('mcu')
+        .select('tanggal_expired, tanggal_mcu, status_mcu, rumah_sakit')
+        .in('nrp', [nrpStr, nrpWithZero])
+        .not('tanggal_expired', 'is', null)
+        .order('tanggal_expired', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      // ═══ CHAT 25: Ambil SIMPER terbaru (tanggal_expired paling akhir) ═══
+      const { data: simperLatest } = await supabase
+        .from('simper')
+        .select('tanggal_expired, jenis_simper, nomor_simper')
+        .in('nrp', [nrpStr, nrpWithZero])
+        .not('tanggal_expired', 'is', null)
+        .order('tanggal_expired', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
       const finalData = {
         ...employeeData,
+        // ═══ CHAT 25: Override kolom expired dengan data terbaru dari tabel MCU/SIMPER ═══
+        exp_mcu: mcuLatest?.tanggal_expired || employeeData.exp_mcu || null,
+        exp_simper: simperLatest?.tanggal_expired || employeeData.exp_simper || null,
+        // === END CHAT 25 ===
         pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-',
         punishments: spData || [],
         bpjs_tk_no: bpjsTable?.bpjs_ketenagakerjaan || '-',

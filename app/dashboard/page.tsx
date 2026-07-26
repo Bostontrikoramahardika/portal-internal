@@ -231,6 +231,41 @@ function DashboardContent() {
   return <div className="p-10 text-center text-gray-500 italic">Tipe konten '{data.type}' tidak dikenali</div>
 }
 
+// ============ 🗓️ HELPER: Format Tanggal Indonesia + Smart Color (Chat 25) ============
+function formatExpiredDate(dateStr: any): string {
+  if (!dateStr) return '-'
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })
+  } catch {
+    return '-'
+  }
+}
+
+function getExpiredColor(dateStr: any, defaultColor: string = 'text-slate-800'): string {
+  if (!dateStr) return 'text-slate-400'
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return defaultColor
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const diffMs = d.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+    
+    if (diffDays < 0) return 'text-red-700 font-black'       // Sudah expired
+    if (diffDays <= 30) return 'text-orange-600 font-black'  // < 1 bulan
+    if (diffDays <= 90) return 'text-amber-600'              // < 3 bulan
+    return 'text-emerald-600'                                // > 3 bulan (aman)
+  } catch {
+    return defaultColor
+  }
+}
+
 // ============ 👤 MY IDENTITY VIEW v1.6.1 (Luxury Final) ============
 function IdentityView({ data }: { data: any }) {
   const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
@@ -291,10 +326,25 @@ function IdentityView({ data }: { data: any }) {
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>Validity & Permits</SectionTitle>
         <div className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
-          <InfoItem icon="🪪" label="Nomor SIMPOL" value={data.no_simpol} />
-          <InfoItem icon="⏳" label="Exp SIMPOL" value={data.exp_simpol} color="text-amber-600" />
-          <InfoItem icon="🎖️" label="Exp SIMPER" value={data.exp_simper} color="text-blue-600" />
-          <InfoItem icon="🏥" label="Exp MCU" value={data.exp_mcu} color="text-red-600" />
+          <InfoItem icon="🪪" label="Nomor SIMPOL" value={data.no_simpol || '-'} />
+          <InfoItem 
+            icon="⏳" 
+            label="Exp SIMPOL" 
+            value={formatExpiredDate(data.exp_simpol)} 
+            color={getExpiredColor(data.exp_simpol, 'text-amber-600')} 
+          />
+          <InfoItem 
+            icon="🎖️" 
+            label="Exp SIMPER" 
+            value={formatExpiredDate(data.exp_simper)} 
+            color={getExpiredColor(data.exp_simper, 'text-blue-600')} 
+          />
+          <InfoItem 
+            icon="🏥" 
+            label="Exp MCU" 
+            value={formatExpiredDate(data.exp_mcu)} 
+            color={getExpiredColor(data.exp_mcu, 'text-red-600')} 
+          />
         </div>
       </section>
 
