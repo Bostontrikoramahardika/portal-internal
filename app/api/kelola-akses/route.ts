@@ -126,11 +126,20 @@ export async function GET(req: NextRequest) {
     : result
 
   // ═══ Ambil daftar role & site & master permissions untuk dropdown ═══
-  const { data: allRoleList } = await supabaseAdmin
+  // 🔒 Guard: cuma super_admin yang boleh lihat/assign role 'super_admin'
+  const isSuperAdmin = userRoles.includes('super_admin')
+
+  let roleQuery = supabaseAdmin
     .from('role_templates')
     .select('role_key, nama, level, active')
     .eq('active', true)
     .order('level')
+
+  if (!isSuperAdmin) {
+    roleQuery = roleQuery.neq('role_key', 'super_admin')
+  }
+
+  const { data: allRoleList } = await roleQuery
 
   const { data: allSites } = await supabaseAdmin
     .from('sites_config')
@@ -173,6 +182,12 @@ export async function POST(req: NextRequest) {
   if (!action || !target_nrp) {
     return NextResponse.json({ error: 'action dan target_nrp wajib' }, { status: 400 })
   }
+
+      // 🔒 Extra guard: kalau target adalah super_admin dan user bukan super_admin → tolak
+    const isTargetSuper = target_nrp === session.nrp && userRoles.includes('super_admin')
+    if (action === 'REMOVE_ROLE' && role === 'super_admin' && !userRoles.includes('super_admin')) {
+      return NextResponse.json({ error: 'Hanya super_admin yang boleh copot role super_admin' }, { status: 403 })
+    }
 
   // ═══ Guard: super_admin cuma boleh dikelola super_admin ═══
   if (role === 'super_admin' && !userRoles.includes('super_admin')) {

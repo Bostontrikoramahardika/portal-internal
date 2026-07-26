@@ -191,7 +191,7 @@ m.menu_key === 'koreksi_absensi'
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'kelola_karyawan' ||
-        m.menu_key === 'kelola_roles' ||
+        m.menu_key === 'kelola_akses' ||
         m.menu_key === 'role_manager' ||
         m.menu_key === 'kelola_kpi' ||
         m.menu_key === 'kelola_apd' ||
