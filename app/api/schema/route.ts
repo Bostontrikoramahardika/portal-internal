@@ -74,12 +74,7 @@ export async function GET(request: NextRequest) {
           options: JABATAN_ALL
         },
         { key: 'departemen', label: 'Departemen', type: 'text', placeholder: 'Contoh: HR, Operasional, Plant' },
-        { 
-          key: 'status_karyawan', 
-          label: 'Status Karyawan', 
-          type: 'select', 
-          options: ['PKWT', 'PKWTT', 'MAGANG', 'HARIAN']
-        },
+        
 
         { key: 'no_hp', label: 'No HP', type: 'text', placeholder: '08xxxxxxxxxx' },
         { key: 'email', label: 'Email', type: 'text', placeholder: 'nama@email.com' },
