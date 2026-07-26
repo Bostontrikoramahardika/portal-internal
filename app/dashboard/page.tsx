@@ -5762,10 +5762,66 @@ function ApprovalCenterView() {
   const [filterJenis, setFilterJenis] = useState<'ALL' | 'CUTI' | 'LEMBUR' | 'SAKIT' | 'IZIN_POTONGAN' | 'IZIN_BERBAYAR'>('ALL')
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [detailItem, setDetailItem] = useState<any>(null)
+  // ─── Revisi Absensi ───
+  const [mainTab, setMainTab] = useState<'pengajuan' | 'revisi'>('pengajuan')
+  const [revisiItems, setRevisiItems] = useState<any[]>([])
+  const [revisiLoading, setRevisiLoading] = useState(false)
+  const [revisiProcessingId, setRevisiProcessingId] = useState<string | null>(null)
+  const [revisiRejectModal, setRevisiRejectModal] = useState<string | null>(null)
+  const [revisiRejectNote, setRevisiRejectNote] = useState('')
 
   useEffect(() => {
     loadData()
   }, [tahap])
+
+  useEffect(() => {
+    if (mainTab === 'revisi') loadRevisi()
+  }, [mainTab])
+
+  async function loadRevisi(silent = false) {
+    if (!silent) setRevisiLoading(true)
+    try {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('btm_session_token_v1') : null
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      const res = await fetch('/api/attendance/corrections?view=approval&status=PENDING&limit=100', { headers })
+      const json = await res.json()
+      if (json.ok) setRevisiItems(json.items || [])
+    } catch (err) {
+      console.error('Load revisi error:', err)
+    } finally {
+      setRevisiLoading(false)
+    }
+  }
+
+  async function handleRevisiAction(id: string, action: 'APPROVED' | 'REJECTED', note?: string) {
+    setRevisiProcessingId(id)
+    try {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('btm_session_token_v1') : null
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      const res = await fetch(`/api/attendance/corrections/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ action, approval_note: note || '' })
+      })
+      const json = await res.json()
+      if (res.ok) {
+        setRevisiItems(prev => prev.filter(i => i.id !== id))
+        setRevisiRejectModal(null)
+        setRevisiRejectNote('')
+        window.dispatchEvent(new Event('refreshNotif'))
+      } else {
+        alert('Gagal: ' + (json.error || 'Unknown error'))
+      }
+    } catch (err: any) {
+      alert('Koneksi bermasalah: ' + err.message)
+    } finally {
+      setRevisiProcessingId(null)
+    }
+  }
 
   async function loadData(silent = false) {
     if (!silent) setLoading(true)
@@ -5886,6 +5942,44 @@ function ApprovalCenterView() {
 
   return (
     <div className="animate-in fade-in duration-500 pb-24 space-y-2 lg:space-y-4">
+
+      {/* MAIN TAB SWITCHER */}
+      <div className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm flex gap-1">
+        <button
+          onClick={() => setMainTab('pengajuan')}
+          className={`flex-1 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+            mainTab === 'pengajuan'
+              ? 'bg-[#003D79] text-white shadow-lg'
+              : 'text-slate-400 hover:bg-slate-50'
+          }`}
+        >
+          📋 Pengajuan
+          {stats.total > 0 && (
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${
+              mainTab === 'pengajuan' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+            }`}>
+              {stats.total}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setMainTab('revisi')}
+          className={`flex-1 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+            mainTab === 'revisi'
+              ? 'bg-amber-500 text-white shadow-lg'
+              : 'text-slate-400 hover:bg-slate-50'
+          }`}
+        >
+          ✏️ Revisi Absensi
+          {revisiItems.length > 0 && (
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${
+              mainTab === 'revisi' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+            }`}>
+              {revisiItems.length}
+            </span>
+          )}
+        </button>
+      </div>
 
       {/* HEADER */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
@@ -6202,9 +6296,169 @@ function ApprovalCenterView() {
                 {processingId === detailItem.id ? '⏳ PROSES...' : '✅ Setujui'}
               </button>
             </div>
-          </div>
+        </div>
         </>
       )}
+
+      {/* ═══ SECTION REVISI ABSENSI ═══ */}
+      {mainTab === 'revisi' && (
+        <div className="space-y-3">
+
+          {/* Header revisi */}
+          <div className="bg-gradient-to-br from-amber-600 to-amber-500 text-white p-4 rounded-2xl shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl" />
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <p className="text-amber-100 font-black text-[9px] uppercase tracking-widest mb-1">Revisi Waktu Absensi</p>
+                <h2 className="text-sm font-black">
+                  {revisiLoading ? 'Memuat...' : `${revisiItems.length} Pengajuan Pending`}
+                </h2>
+              </div>
+              <button
+                onClick={() => loadRevisi()}
+                disabled={revisiLoading}
+                className="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+              >
+                {revisiLoading ? '⏳' : '🔄'} Refresh
+              </button>
+            </div>
+          </div>
+
+          {revisiLoading ? (
+            <div className="bg-white p-12 rounded-2xl text-center text-slate-400 text-sm font-bold animate-pulse">
+              Memuat pengajuan revisi...
+            </div>
+          ) : revisiItems.length === 0 ? (
+            <div className="bg-white p-12 rounded-2xl text-center border border-dashed border-slate-200">
+              <div className="text-4xl mb-3 opacity-30">🎉</div>
+              <p className="font-black text-slate-400 uppercase tracking-widest text-xs">
+                Tidak ada pengajuan revisi
+              </p>
+            </div>
+          ) : (
+            revisiItems.map((item: any) => {
+              const isProcessing = revisiProcessingId === item.id
+              const TIPE_LABEL: any = {
+                LUPA_CLOCK_IN: 'Lupa Clock In',
+                LUPA_CLOCK_OUT: 'Lupa Clock Out',
+                KOREKSI_JAM: 'Revisi Jam Kerja',
+              }
+              return (
+                <div key={item.id} className={`bg-white rounded-2xl border-2 shadow-sm p-4 transition-all ${
+                  isProcessing ? 'opacity-50' : 'hover:shadow-md'
+                } border-amber-100`}>
+
+                  {/* Header card */}
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-lg flex-shrink-0">
+                      ✏️
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="bg-amber-100 text-amber-700 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+                          {TIPE_LABEL[item.tipe] || item.tipe}
+                        </span>
+                        <span className="font-black text-sm text-slate-900 truncate">
+                          {item.employee_nama || item.employee_nrp}
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        {item.employee_nrp} · {item.employee_site_resolved || '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Detail */}
+                  <div className="bg-slate-50 rounded-xl p-3 space-y-1.5 mb-3 text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="font-black text-slate-400 uppercase tracking-widest">📅 Tanggal</span>
+                      <span className="font-bold text-slate-800">
+                        {new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                    {item.requested_clock_in && (
+                      <div className="flex justify-between">
+                        <span className="font-black text-slate-400 uppercase tracking-widest">🕐 Clock In</span>
+                        <span className="font-bold text-emerald-700">{item.requested_clock_in.slice(0, 5)}</span>
+                      </div>
+                    )}
+                    {item.requested_clock_out && (
+                      <div className="flex justify-between">
+                        <span className="font-black text-slate-400 uppercase tracking-widest">🕐 Clock Out</span>
+                        <span className="font-bold text-emerald-700">{item.requested_clock_out.slice(0, 5)}</span>
+                      </div>
+                    )}
+                    {item.approver_target_nama && (
+                      <div className="flex justify-between">
+                        <span className="font-black text-slate-400 uppercase tracking-widest">👤 Ditujukan</span>
+                        <span className="font-bold text-[#003D79]">{item.approver_target_nama}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-slate-100 pt-2">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">💬 Alasan</p>
+                      <p className="text-[11px] text-slate-700 italic">"{item.alasan}"</p>
+                    </div>
+                  </div>
+
+                  {/* Tombol aksi */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setRevisiRejectModal(item.id)
+                        setRevisiRejectNote('')
+                      }}
+                      disabled={isProcessing}
+                      className="flex-1 py-2.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl font-black text-[9px] uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-all disabled:opacity-50"
+                    >
+                      ❌ Tolak
+                    </button>
+                    <button
+                      onClick={() => handleRevisiAction(item.id, 'APPROVED', 'Disetujui via Approval Center')}
+                      disabled={isProcessing}
+                      className="flex-[2] py-2.5 bg-emerald-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-emerald-600 transition-all disabled:opacity-50 shadow-lg shadow-emerald-100"
+                    >
+                      {isProcessing ? '⏳ Proses...' : '✅ Setujui'}
+                    </button>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      )}
+
+      {/* Modal Reject Revisi */}
+      {revisiRejectModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-full max-w-sm p-6 shadow-2xl">
+            <h3 className="font-black text-[#003D79] text-lg mb-1">❌ Tolak Revisi?</h3>
+            <p className="text-xs text-slate-400 mb-4">Isi alasan penolakan (wajib)</p>
+            <textarea
+              value={revisiRejectNote}
+              onChange={e => setRevisiRejectNote(e.target.value)}
+              rows={3}
+              placeholder="Contoh: Data absensi sudah sesuai sistem..."
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-[1.2rem] text-sm outline-none focus:border-rose-400 resize-none mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setRevisiRejectModal(null); setRevisiRejectNote('') }}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => revisiRejectNote.trim() && handleRevisiAction(revisiRejectModal, 'REJECTED', revisiRejectNote)}
+                disabled={!revisiRejectNote.trim() || !!revisiProcessingId}
+                className="flex-1 py-3 bg-rose-600 text-white font-bold rounded-[1.2rem] disabled:opacity-50"
+              >
+                {revisiProcessingId ? '⏳...' : 'Tolak'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
@@ -6872,7 +7126,6 @@ function KelolaHakCutiView() {
       Memuat data...
     </div>
   )
-
   return (
     <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
       {/* HEADER */}
@@ -7104,7 +7357,7 @@ function KelolaHakCutiView() {
             </div>
           </div>
         </>
-      )}
+        )}
     </div>
   )
 }
