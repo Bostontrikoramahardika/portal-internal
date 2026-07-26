@@ -135,9 +135,8 @@ export async function GET(req: NextRequest) {
     .eq('active', true)
     .order('level')
 
-  if (!isSuperAdmin) {
-    roleQuery = roleQuery.neq('role_key', 'super_admin')
-  }
+  // 🔒 super_admin selalu di-hide dari dropdown (assign manual via SQL)
+  roleQuery = roleQuery.neq('role_key', 'super_admin')
 
   const { data: allRoleList } = await roleQuery
 
