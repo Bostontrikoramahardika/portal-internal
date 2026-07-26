@@ -1,4 +1,5 @@
 // app/api/schema/route.ts
+// v1.1 — Chat 25: Tambah schema 'employees' untuk fix tombol Tambah Karyawan
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
@@ -15,7 +16,74 @@ export async function GET(request: NextRequest) {
     const table = searchParams.get('table')
 
     const schemas: Record<string, any[]> = {
+      // ═══════════════════════════════════════════════════════════
+      // SCHEMA EMPLOYEES (Kelola Karyawan) — Chat 25 ⭐
+      // ═══════════════════════════════════════════════════════════
+      employees: [
+        // === IDENTITAS UTAMA (WAJIB) ===
+        { key: 'nrp', label: 'NRP (Nomor Registrasi)', type: 'text', placeholder: 'Contoh: 1961125', required: true },
+        { key: 'nama', label: 'Nama Lengkap', type: 'text', placeholder: 'Nama sesuai KTP', required: true },
+        { key: 'jabatan', label: 'Jabatan', type: 'text', placeholder: 'Contoh: Staff HR, Mekanik, dll' },
+        { key: 'departemen', label: 'Departemen', type: 'text', placeholder: 'Contoh: HR, Operasional, Plant' },
+        { 
+          key: 'site', 
+          label: 'Site Penempatan', 
+          type: 'select', 
+          options: ['Head Office Pusat', 'PPA-MLP'],
+          required: true 
+        },
+        { 
+          key: 'status_karyawan', 
+          label: 'Status Karyawan', 
+          type: 'select', 
+          options: ['PKWT', 'PKWTT', 'MAGANG', 'HARIAN']
+        },
+
+        // === KONTAK ===
+        { key: 'no_hp', label: 'No HP', type: 'text', placeholder: '08xxxxxxxxxx' },
+        { key: 'email', label: 'Email', type: 'text', placeholder: 'nama@email.com' },
+
+        // === TANGGAL & TEMPAT LAHIR ===
+        { key: 'tanggal_masuk', label: 'Tanggal Mulai Kerja', type: 'date' },
+        { key: 'tempat_lahir', label: 'Tempat Lahir', type: 'text', placeholder: 'Kota kelahiran' },
+        { key: 'tanggal_lahir', label: 'Tanggal Lahir', type: 'date' },
+
+        // === STATUS PRIBADI ===
+        { 
+          key: 'status_pernikahan', 
+          label: 'Status Pernikahan', 
+          type: 'select', 
+          options: ['BELUM MENIKAH', 'MENIKAH', 'DUDA', 'JANDA']
+        },
+        { key: 'alamat', label: 'Alamat Domisili', type: 'textarea', placeholder: 'Alamat lengkap saat ini' },
+
+        // === DOKUMEN KELUARGA ===
+        { key: 'no_kk', label: 'No Kartu Keluarga (KK)', type: 'text' },
+        { key: 'nama_istri', label: 'Nama Istri/Suami', type: 'text' },
+        { key: 'nama_anak', label: 'Nama Anak (pisahkan dengan koma)', type: 'text', placeholder: 'Andi, Budi, Citra' },
+        { key: 'no_darurat', label: 'No Kontak Darurat', type: 'text', placeholder: 'No HP keluarga terdekat' },
+
+        // === BPJS ===
+        { key: 'bpjs_tk', label: 'No BPJS Ketenagakerjaan', type: 'text' },
+        { key: 'bpjs_kes', label: 'No BPJS Kesehatan (Pribadi)', type: 'text' },
+        { key: 'bpjs_istri', label: 'No BPJS Kesehatan (Istri/Suami)', type: 'text' },
+        { key: 'bpjs_anak1', label: 'No BPJS Kesehatan (Anak 1)', type: 'text' },
+        { key: 'bpjs_anak2', label: 'No BPJS Kesehatan (Anak 2)', type: 'text' },
+        { key: 'bpjs_anak3', label: 'No BPJS Kesehatan (Anak 3)', type: 'text' },
+
+        // === SIM / SIMPER / MCU ===
+        { key: 'no_simpol', label: 'No SIMPOL', type: 'text' },
+        { key: 'exp_simpol', label: 'Expired SIMPOL', type: 'date' },
+        { key: 'exp_simper', label: 'Expired SIMPER', type: 'date' },
+        { key: 'exp_mcu', label: 'Expired MCU', type: 'date' },
+
+        // === TIKET PESAWAT (HO) ===
+        { key: 'eligible_tiket_pesawat', label: 'Eligible Tiket Pesawat?', type: 'checkbox' },
+      ],
+
+      // ═══════════════════════════════════════════════════════════
       // SCHEMA SP (Surat Peringatan)
+      // ═══════════════════════════════════════════════════════════
       sp: [
         { key: 'nrp', label: 'Pilih Karyawan', type: 'employee_select', required: true },
         { 
@@ -30,7 +98,9 @@ export async function GET(request: NextRequest) {
         { key: 'berlaku_sampai', label: 'Berlaku Sampai', type: 'date', required: false },
       ],
 
+      // ═══════════════════════════════════════════════════════════
       // SCHEMA KPI (Raport Penilaian)
+      // ═══════════════════════════════════════════════════════════
       kpi: [
         { key: 'nrp', label: 'Pilih Karyawan', type: 'employee_select', required: true },
         { key: 'periode', label: 'Periode (Bulan Tahun)', type: 'text', placeholder: 'CONTOH: JULI 2024', required: true },
@@ -40,7 +110,9 @@ export async function GET(request: NextRequest) {
         { key: 'catatan', label: 'Catatan Feedback', type: 'textarea' },
       ],
 
+      // ═══════════════════════════════════════════════════════════
       // SCHEMA KPI SETTINGS (Bobot Pengurang)
+      // ═══════════════════════════════════════════════════════════
       kpi_settings: [
         { key: 'kode', label: 'Kode Sistem', type: 'text', placeholder: 'MINUS_TERLAMBAT', required: true },
         { key: 'label', label: 'Nama Tampilan', type: 'text', placeholder: 'Terlambat Absensi', required: true },
@@ -49,7 +121,9 @@ export async function GET(request: NextRequest) {
         { key: 'deskripsi', label: 'Deskripsi', type: 'textarea' },
       ],
 
+      // ═══════════════════════════════════════════════════════════
       // SCHEMA SITES_CONFIG v1.5.0 (Master Site)
+      // ═══════════════════════════════════════════════════════════
       sites_config: [
         { key: 'kode_site', label: 'Kode Site (Unik)', type: 'text', placeholder: 'PPA-MLP', required: true },
         { key: 'nama_site', label: 'Nama Lengkap Site', type: 'text', placeholder: 'PPA Malinau', required: true },
@@ -65,7 +139,9 @@ export async function GET(request: NextRequest) {
         { key: 'is_active', label: 'Site Aktif?', type: 'checkbox' },
       ],
 
+      // ═══════════════════════════════════════════════════════════
       // SCHEMA JOB_CATEGORIES v1.5.0 (Pembagian Tim)
+      // ═══════════════════════════════════════════════════════════
       job_categories: [
         { 
           key: 'kategori', 
@@ -77,9 +153,6 @@ export async function GET(request: NextRequest) {
         { key: 'keyword', label: 'Keyword Jabatan (huruf kecil)', type: 'text', placeholder: 'operator', required: true },
         { key: 'active', label: 'Aktifkan Kategori?', type: 'checkbox' },
       ],
-
-      
-      // Tambahkan schema tabel lain di bawah ini jika diperlukan...
     }
 
     const fields = schemas[table || '']
