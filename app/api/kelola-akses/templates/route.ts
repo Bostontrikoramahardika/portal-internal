@@ -27,9 +27,8 @@ export async function GET(req: NextRequest) {
       .eq('active', true)
       .order('level', { ascending: true })
 
-    if (!isSuperAdmin) {
-      tplQuery = tplQuery.neq('role_key', 'super_admin')
-    }
+    // 🔒 super_admin SELALU hidden dari UI (assign hanya via SQL)
+    tplQuery = tplQuery.neq('role_key', 'super_admin')
 
     const { data: templates, error: tplErr } = await tplQuery
 
