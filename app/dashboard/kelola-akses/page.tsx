@@ -77,6 +77,17 @@ interface SiteDetail {
   }
 }
 
+// ─── Tab Template Types ───
+interface TemplateItem {
+  role_key: string
+  role_label: string
+  role_desc: string
+  level: number
+  scope: string
+  permissions: string[]
+  permissions_count: number
+}
+
 interface PicItem {
   nrp: string
   nama: string | null
@@ -151,7 +162,7 @@ export default function KelolaAksesPage() {
         {activeTab === 'karyawan' && <TabKaryawan />}
         {activeTab === 'site' && <TabSite />}
         {activeTab === 'role' && <TabPlaceholder label="Role" msg="🚧 Tab Role — Segera hadir di Batch 2 (Chat 24)" />}
-        {activeTab === 'template' && <TabPlaceholder label="Template" msg="🚧 Tab Template — Segera hadir di Batch 2 (Chat 24)" />}
+        {activeTab === 'template' && <TabTemplate />}
       </div>
     </div>
   )
@@ -888,6 +899,313 @@ function TabSite() {
         </div>
       </div>
 
+    </div>
+  )
+}
+
+// ═══ TAB 4: TEMPLATE ═══
+function TabTemplate() {
+  const [templates, setTemplates] = useState<TemplateItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [applyModal, setApplyModal] = useState<TemplateItem | null>(null)
+  const [searchEmp, setSearchEmp] = useState('')
+  const [empResults, setEmpResults] = useState<{ nrp: string; nama: string; site: string; jabatan: string }[]>([])
+  const [searchingEmp, setSearchingEmp] = useState(false)
+  const [selectedEmp, setSelectedEmp] = useState<{ nrp: string; nama: string } | null>(null)
+  const [processing, setProcessing] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
+
+  const showToast = (msg: string, type: 'ok' | 'err') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 4000)
+  }
+
+  const loadTemplates = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/kelola-akses/templates', { headers: getAuthHeaders() })
+      const json = await res.json()
+      if (json.ok) {
+        setTemplates(json.data || [])
+      } else {
+        setError(json.error || 'Gagal memuat template')
+      }
+    } catch {
+      setError('Error jaringan')
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => { loadTemplates() }, [])
+
+  // Search karyawan untuk apply
+  useEffect(() => {
+    if (!applyModal || searchEmp.length < 2) {
+      setEmpResults([])
+      return
+    }
+    const t = setTimeout(async () => {
+      setSearchingEmp(true)
+      try {
+        const params = new URLSearchParams({ search: searchEmp, limit: '10' })
+        const res = await fetch(`/api/employees?${params}`, { headers: getAuthHeaders() })
+        const json = await res.json()
+        if (json.ok) {
+          setEmpResults(json.data || [])
+        }
+      } catch { /* ignore */ }
+      setSearchingEmp(false)
+    }, 400)
+    return () => clearTimeout(t)
+  }, [searchEmp, applyModal])
+
+  const handleApply = async () => {
+    if (!applyModal || !selectedEmp) return
+    setProcessing(true)
+    try {
+      const res = await fetch('/api/kelola-akses/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ target_nrp: selectedEmp.nrp, role_key: applyModal.role_key })
+      })
+      const json = await res.json()
+      if (json.ok) {
+        showToast(`✅ ${json.message}`, 'ok')
+        closeApplyModal()
+      } else {
+        showToast(json.error || 'Gagal', 'err')
+      }
+    } catch {
+      showToast('Error jaringan', 'err')
+    }
+    setProcessing(false)
+  }
+
+  const closeApplyModal = () => {
+    setApplyModal(null)
+    setSearchEmp('')
+    setEmpResults([])
+    setSelectedEmp(null)
+  }
+
+  const getScopeColor = (scope: string) => {
+    if (scope === 'ALL') return 'bg-purple-100 text-purple-700'
+    if (scope === 'SITE') return 'bg-blue-100 text-blue-700'
+    if (scope === 'TEAM') return 'bg-emerald-100 text-emerald-700'
+    return 'bg-slate-100 text-slate-600'
+  }
+
+  const getLevelLabel = (level: number) => {
+    if (level === 0) return '👑 Owner'
+    if (level === 1) return '🏆 Executive'
+    if (level === 2) return '🎯 HO Staff'
+    if (level === 3) return '🏢 Site Leader'
+    if (level === 4) return '👷 Team Leader'
+    return '👤 Karyawan'
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-20">
+        <div className="text-4xl mb-3 animate-pulse">📋</div>
+        <div className="text-slate-400 text-sm">Memuat template...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-20 px-6">
+        <div className="text-4xl mb-3">⚠️</div>
+        <div className="text-rose-500 font-bold text-sm mb-3">{error}</div>
+        <button onClick={loadTemplates}
+          className="px-4 py-2 bg-[#003D79] text-white text-sm font-bold rounded-full">
+          Coba Lagi
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-white text-sm font-bold shadow-lg
+          ${toast.type === 'ok' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Info bar */}
+      <div className="bg-blue-50 border border-blue-100 rounded-[1.2rem] p-3 text-xs text-blue-800 flex items-start gap-2">
+        <Info size={14} className="flex-shrink-0 mt-0.5" />
+        <div>
+          <strong>{templates.length} template</strong> tersedia.
+          Tap card untuk lihat detail permission. Klik &quot;Terapkan&quot; untuk assign role + permission ke karyawan sekaligus.
+        </div>
+      </div>
+
+      {/* Template Cards */}
+      {templates.map(tpl => (
+        <div key={tpl.role_key} className="bg-white rounded-[1.5rem] shadow-xl overflow-hidden">
+
+          {/* Card Header */}
+          <button
+            onClick={() => setExpanded(expanded === tpl.role_key ? null : tpl.role_key)}
+            className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50 transition-colors"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{getRoleIcon(tpl.role_key)}</span>
+                <div>
+                  <div className="font-black text-[#003D79] text-sm">{tpl.role_label}</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">{tpl.role_desc}</div>
+                </div>
+              </div>
+
+              <div className="flex gap-1.5 mt-2 flex-wrap">
+                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                  {getLevelLabel(tpl.level)}
+                </span>
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${getScopeColor(tpl.scope)}`}>
+                  {tpl.scope}
+                </span>
+                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                  🔐 {tpl.permissions_count} permission
+                </span>
+              </div>
+            </div>
+
+            <div className="ml-2 flex-shrink-0">
+              {expanded === tpl.role_key
+                ? <ChevronUp size={18} className="text-slate-400" />
+                : <ChevronDown size={18} className="text-slate-400" />
+              }
+            </div>
+          </button>
+
+          {/* Expanded Detail */}
+          {expanded === tpl.role_key && (
+            <div className="border-t border-slate-100 bg-slate-50/50 p-4 space-y-4">
+
+              {/* Permissions list */}
+              <div>
+                <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                  🔐 Permission Bawaan ({tpl.permissions_count})
+                </div>
+                {tpl.permissions.length === 0 ? (
+                  <div className="text-xs text-slate-400 italic">Template ini belum punya permission</div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-1 max-h-48 overflow-y-auto">
+                    {tpl.permissions.sort().map(p => (
+                      <div key={p} className="bg-white rounded-xl px-3 py-1.5 text-xs font-mono text-indigo-700">
+                        {p}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Apply button */}
+              <button
+                onClick={() => setApplyModal(tpl)}
+                className="w-full py-3 bg-[#003D79] text-white font-bold text-sm rounded-[1.2rem] hover:bg-[#002D5F] transition-colors flex items-center justify-center gap-2"
+              >
+                <UserCog size={16} /> Terapkan ke Karyawan
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Apply Modal */}
+      {applyModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
+            <h3 className="font-black text-[#003D79] text-lg mb-1">
+              📋 Terapkan Template
+            </h3>
+            <p className="text-xs text-slate-500 mb-1">
+              Template: <strong className="text-[#003D79]">{applyModal.role_label}</strong>
+            </p>
+            <p className="text-[10px] text-slate-400 mb-4">
+              Akan menambah role <strong>{applyModal.role_key}</strong> + {applyModal.permissions_count} permission.
+              Akses lama karyawan <strong>tidak akan dihapus</strong>.
+            </p>
+
+            {/* Search karyawan */}
+            <div className="relative mb-3">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={searchEmp}
+                onChange={e => { setSearchEmp(e.target.value); setSelectedEmp(null) }}
+                placeholder="Ketik nama atau NRP karyawan..."
+                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-[1.2rem] text-sm outline-none focus:border-[#003D79]"
+              />
+            </div>
+
+            {/* Selected indicator */}
+            {selectedEmp && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-[1.2rem] p-3 mb-3 flex items-center gap-2">
+                <CheckCircle size={16} className="text-emerald-600 flex-shrink-0" />
+                <div>
+                  <div className="text-sm font-bold text-emerald-800">{selectedEmp.nama}</div>
+                  <div className="text-[10px] text-emerald-600">NRP: {selectedEmp.nrp}</div>
+                </div>
+                <button onClick={() => setSelectedEmp(null)} className="ml-auto p-1">
+                  <X size={14} className="text-emerald-500" />
+                </button>
+              </div>
+            )}
+
+            {/* Search results */}
+            {!selectedEmp && searchEmp.length >= 2 && (
+              <div className="mb-4">
+                {searchingEmp ? (
+                  <div className="text-xs text-slate-400 text-center py-4">Mencari...</div>
+                ) : empResults.length === 0 ? (
+                  <div className="text-xs text-slate-400 text-center py-4">
+                    Tidak ditemukan karyawan &quot;{searchEmp}&quot;
+                  </div>
+                ) : (
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {empResults.map(e => (
+                      <button
+                        key={e.nrp}
+                        onClick={() => { setSelectedEmp({ nrp: e.nrp, nama: e.nama }); setSearchEmp('') }}
+                        className="w-full p-3 rounded-[1.2rem] text-left bg-slate-50 hover:bg-slate-100 transition-colors"
+                      >
+                        <div className="font-bold text-sm text-[#003D79]">{e.nama}</div>
+                        <div className="text-[10px] text-slate-400">
+                          {e.nrp} · {e.site || '—'} · {e.jabatan || '—'}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Buttons */}
+            <div className="flex gap-3 mt-4">
+              <button onClick={closeApplyModal}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+                Batal
+              </button>
+              <button
+                onClick={handleApply}
+                disabled={!selectedEmp || processing}
+                className={`flex-1 py-3 bg-[#003D79] text-white font-bold rounded-[1.2rem] transition-all
+                  ${(!selectedEmp || processing) ? 'opacity-50' : 'hover:bg-[#002D5F]'}`}
+              >
+                {processing ? 'Menerapkan...' : '✅ Terapkan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
