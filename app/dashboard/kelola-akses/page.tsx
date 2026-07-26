@@ -39,6 +39,52 @@ interface MasterPerm {
   deskripsi: string
 }
 
+// ─── Tab Site Types ───
+interface SiteDetail {
+  id: string
+  nama_site: string
+  kode_site: string | null
+  alamat: string
+  is_pusat: boolean
+  active: boolean
+  jam_kerja: {
+    siang_jam_masuk: string | null
+    siang_jam_pulang: string | null
+    siang_batas_telat: number | null
+    malam_jam_masuk: string | null
+    malam_jam_pulang: string | null
+    malam_batas_telat: number | null
+  }
+  gps: {
+    latitude: string | number | null
+    longitude: string | number | null
+    radius_meter: number | null
+  }
+  summary: {
+    total_karyawan: number
+    total_pjo: number
+    total_hr: number
+    total_she: number
+    total_gl_plant: number
+    total_gl_produksi: number
+  }
+  pics: {
+    pjo_site: PicItem[]
+    hr_site: PicItem[]
+    she_site: PicItem[]
+    gl_plant: PicItem[]
+    gl_produksi: PicItem[]
+  }
+}
+
+interface PicItem {
+  nrp: string
+  nama: string | null
+  jabatan: string | null
+  departemen: string | null
+  site: string | null
+}
+
 // ═══ HELPERS ═══
 function getAuthHeaders(): Record<string, string> {
   const token = typeof window !== 'undefined'
@@ -103,7 +149,7 @@ export default function KelolaAksesPage() {
 
       <div className="px-4 py-4">
         {activeTab === 'karyawan' && <TabKaryawan />}
-        {activeTab === 'site' && <TabPlaceholder label="Site" msg="🚧 Tab Site — Segera hadir di Batch 2 (Chat 24)" />}
+        {activeTab === 'site' && <TabSite />}
         {activeTab === 'role' && <TabPlaceholder label="Role" msg="🚧 Tab Role — Segera hadir di Batch 2 (Chat 24)" />}
         {activeTab === 'template' && <TabPlaceholder label="Template" msg="🚧 Tab Template — Segera hadir di Batch 2 (Chat 24)" />}
       </div>
@@ -567,6 +613,281 @@ function ModalAddPerm({ emp, masterPerms, onClose, onSubmit, processing }: Modal
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ═══ TAB 2: SITE ═══
+function TabSite() {
+  const [sites, setSites] = useState<SiteDetail[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  const load = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('btm_session_token_v1') : null
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
+      const res = await fetch('/api/kelola-akses/sites', { headers })
+      const json = await res.json()
+      if (json.ok) {
+        setSites(json.data || [])
+      } else {
+        setError(json.error || 'Gagal memuat data site')
+      }
+    } catch {
+      setError('Error jaringan')
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  const PIC_CONFIG = [
+    { key: 'pjo_site',    label: 'PJO / Site Leader', icon: '🏢', color: 'bg-blue-100 text-blue-700' },
+    { key: 'hr_site',     label: 'HRGA Site',          icon: '👥', color: 'bg-purple-100 text-purple-700' },
+    { key: 'she_site',    label: 'SHE Site',           icon: '⛑️', color: 'bg-amber-100 text-amber-700' },
+    { key: 'gl_plant',    label: 'GL Plant',           icon: '👷', color: 'bg-emerald-100 text-emerald-700' },
+    { key: 'gl_produksi', label: 'GL Produksi',        icon: '⚙️', color: 'bg-orange-100 text-orange-700' },
+  ] as const
+
+  if (loading) {
+    return (
+      <div className="text-center py-20">
+        <div className="text-4xl mb-3 animate-pulse">🏗️</div>
+        <div className="text-slate-400 text-sm">Memuat data site...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-20 px-6">
+        <div className="text-4xl mb-3">⚠️</div>
+        <div className="text-rose-500 font-bold text-sm mb-3">{error}</div>
+        <button onClick={load}
+          className="px-4 py-2 bg-[#003D79] text-white text-sm font-bold rounded-full">
+          Coba Lagi
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+
+      {/* Info bar */}
+      <div className="bg-blue-50 border border-blue-100 rounded-[1.2rem] p-3 text-xs text-blue-800 flex items-start gap-2">
+        <Info size={14} className="flex-shrink-0 mt-0.5" />
+        <div>
+          <strong>{sites.length} site aktif</strong> terdaftar.
+          Tap card untuk lihat detail jam kerja, GPS, dan PIC per role.
+        </div>
+      </div>
+
+      {/* Site Cards */}
+      {sites.map(site => (
+        <div key={site.id} className="bg-white rounded-[1.5rem] shadow-xl overflow-hidden">
+
+          {/* Card Header */}
+          <button
+            onClick={() => setExpanded(expanded === site.id ? null : site.id)}
+            className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50 transition-colors"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{site.is_pusat ? '🏛️' : '🏗️'}</span>
+                <div>
+                  <div className="font-black text-[#003D79] text-sm">{site.nama_site}</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">
+                    {site.kode_site || '—'} · {site.alamat || 'Alamat belum diisi'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Summary badges */}
+              <div className="flex gap-1.5 mt-2 flex-wrap">
+                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                  👤 {site.summary.total_karyawan} karyawan
+                </span>
+                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                  🏢 {site.summary.total_pjo} PJO
+                </span>
+                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                  👷 {site.summary.total_gl_plant + site.summary.total_gl_produksi} GL
+                </span>
+                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                  👥 {site.summary.total_hr} HR
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-1 ml-2 flex-shrink-0">
+              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full
+                ${site.active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                {site.active ? 'AKTIF' : 'NON-AKTIF'}
+              </span>
+              {expanded === site.id
+                ? <ChevronUp size={18} className="text-slate-400" />
+                : <ChevronDown size={18} className="text-slate-400" />
+              }
+            </div>
+          </button>
+
+          {/* Expanded Detail */}
+          {expanded === site.id && (
+            <div className="border-t border-slate-100 bg-slate-50/50 divide-y divide-slate-100">
+
+              {/* Jam Kerja */}
+              <div className="p-4">
+                <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-3">
+                  ⏰ Jam Kerja
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Siang */}
+                  <div className="bg-amber-50 rounded-[1.2rem] p-3">
+                    <div className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-2">
+                      ☀️ Siang
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Masuk</span>
+                        <span className="font-bold text-slate-700">
+                          {site.jam_kerja.siang_jam_masuk?.slice(0, 5) || '—'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Pulang</span>
+                        <span className="font-bold text-slate-700">
+                          {site.jam_kerja.siang_jam_pulang?.slice(0, 5) || '—'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Toleransi</span>
+                        <span className="font-bold text-amber-600">
+                          {site.jam_kerja.siang_batas_telat ?? '—'} menit
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Malam */}
+                  <div className="bg-indigo-50 rounded-[1.2rem] p-3">
+                    <div className="text-[9px] font-black text-indigo-700 uppercase tracking-widest mb-2">
+                      🌙 Malam
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Masuk</span>
+                        <span className="font-bold text-slate-700">
+                          {site.jam_kerja.malam_jam_masuk?.slice(0, 5) || '—'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Pulang</span>
+                        <span className="font-bold text-slate-700">
+                          {site.jam_kerja.malam_jam_pulang?.slice(0, 5) || '—'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Toleransi</span>
+                        <span className="font-bold text-indigo-600">
+                          {site.jam_kerja.malam_batas_telat ?? '—'} menit
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* GPS */}
+              <div className="p-4">
+                <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-3">
+                  📍 Lokasi GPS
+                </div>
+                {site.gps.latitude && site.gps.longitude ? (
+                  <div className="bg-white rounded-[1.2rem] p-3 space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500">Latitude</span>
+                      <span className="font-mono font-bold text-slate-700">{site.gps.latitude}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500">Longitude</span>
+                      <span className="font-mono font-bold text-slate-700">{site.gps.longitude}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500">Radius</span>
+                      <span className="font-bold text-emerald-600">{site.gps.radius_meter?.toLocaleString('id')} meter</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400 italic bg-white rounded-[1.2rem] p-3">
+                    📍 GPS belum dikonfigurasi untuk site ini
+                  </div>
+                )}
+              </div>
+
+              {/* PIC per Role */}
+              <div className="p-4">
+                <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-3">
+                  👤 PIC per Role
+                </div>
+                <div className="space-y-2">
+                  {PIC_CONFIG.map(pic => {
+                    const members = site.pics[pic.key] || []
+                    return (
+                      <div key={pic.key} className="bg-white rounded-[1.2rem] p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${pic.color}`}>
+                            {pic.icon} {pic.label}
+                          </span>
+                          <span className="text-[9px] text-slate-400 font-bold">
+                            {members.length} orang
+                          </span>
+                        </div>
+
+                        {members.length === 0 ? (
+                          <div className="text-xs text-slate-400 italic">Belum ada yang ditugaskan</div>
+                        ) : (
+                          <div className="space-y-1">
+                            {members.map(m => (
+                              <div key={m.nrp} className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 flex-shrink-0">
+                                  {(m.nama || '?')[0]}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs font-bold text-slate-700 truncate">{m.nama}</div>
+                                  <div className="text-[9px] text-slate-400">{m.nrp} · {m.jabatan || '—'}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Note */}
+      <div className="bg-amber-50 border border-amber-100 rounded-[1.2rem] p-3 text-xs text-amber-800 flex items-start gap-2">
+        <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
+        <div>
+          <strong>Mode Read-Only.</strong> Edit jam kerja, GPS, dan PIC akan tersedia di update berikutnya.
+          Untuk ubah PIC, gunakan Tab Karyawan → Add/Remove Role.
+        </div>
+      </div>
+
     </div>
   )
 }
