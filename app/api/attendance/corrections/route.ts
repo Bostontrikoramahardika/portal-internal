@@ -83,6 +83,9 @@ export async function POST(req: NextRequest) {
       sessionScopeSite:
         typeof session?.scope_site === 'string' ? session.scope_site : null,
       sessionIsSuperAdmin: Boolean(session?.is_super_admin),
+      approverTargetNrp: body?.approver_target_nrp ?? null,
+      approverTargetNama: body?.approver_target_nama ?? null,
+      approverTargetRole: body?.approver_target_role ?? null,
     })
 
     return NextResponse.json({ ok: true, data }, { status: 201 })

@@ -121,6 +121,9 @@ type CreateCorrectionInput = {
   sessionRoles: string[]
   sessionScopeSite?: string | null
   sessionIsSuperAdmin?: boolean
+    approverTargetNrp?: string | null
+  approverTargetNama?: string | null
+  approverTargetRole?: string | null
 }
 
 type ApproveInput = {
@@ -1005,6 +1008,9 @@ export async function createCorrectionRequest(input: CreateCorrectionInput) {
     approver_nrp: approver.approverNrp,
     approver_rule: approver.approverRule,
     attendance_before: snapshotAttendance(existingAttendance),
+    approver_target_nrp: normalizeText(input.approverTargetNrp) || null,
+    approver_target_nama: normalizeText(input.approverTargetNama) || null,
+    approver_target_role: normalizeText(input.approverTargetRole) || null,
   }
 
   const { data, error } = await supabaseAdmin

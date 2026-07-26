@@ -1,5 +1,6 @@
 'use client'
 
+// app/dashboard/koreksi-absensi/page.tsx — v2.0 (Revisi Waktu Absensi + Pilih Approver)
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
@@ -23,14 +24,24 @@ type CorrectionItem = {
   approved_by_nama: string | null
   approved_at: string | null
   approval_note: string | null
+  approver_target_nrp: string | null
+  approver_target_nama: string | null
+  approver_target_role: string | null
   is_hr_override: boolean
   created_at: string
+}
+
+type ApproverOption = {
+  nrp: string
+  nama: string
+  role: string
+  role_label: string
 }
 
 const TIPE_LABEL: Record<CorrectionType, string> = {
   LUPA_CLOCK_IN: 'Lupa Clock In',
   LUPA_CLOCK_OUT: 'Lupa Clock Out',
-  KOREKSI_JAM: 'Koreksi Jam',
+  KOREKSI_JAM: 'Revisi Jam Kerja',
 }
 
 function getAuthHeaders(): Record<string, string> {
@@ -92,6 +103,11 @@ export default function KoreksiAbsensiPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Approver
+  const [approvers, setApprovers] = useState<ApproverOption[]>([])
+  const [loadingApprovers, setLoadingApprovers] = useState(false)
+  const [selectedApprover, setSelectedApprover] = useState<string>('')
+
   const [items, setItems] = useState<CorrectionItem[]>([])
   const [loadingList, setLoadingList] = useState(false)
 
@@ -103,6 +119,26 @@ export default function KoreksiAbsensiPage() {
     () => tipe === 'LUPA_CLOCK_OUT' || tipe === 'KOREKSI_JAM',
     [tipe]
   )
+
+  // Load approvers on mount
+  useEffect(() => {
+    const loadApprovers = async () => {
+      setLoadingApprovers(true)
+      try {
+        const res = await fetch('/api/employees/approvers', { headers: getAuthHeaders() })
+        const json = await res.json()
+        if (json.ok && json.data) {
+          setApprovers(json.data)
+          // Auto-select first if only 1
+          if (json.data.length === 1) {
+            setSelectedApprover(json.data[0].nrp)
+          }
+        }
+      } catch { /* ignore */ }
+      setLoadingApprovers(false)
+    }
+    loadApprovers()
+  }, [])
 
   const fetchList = useCallback(async () => {
     setLoadingList(true)
@@ -148,6 +184,10 @@ export default function KoreksiAbsensiPage() {
       setMessage({ type: 'error', text: 'Alasan wajib diisi' })
       return
     }
+    if (!selectedApprover) {
+      setMessage({ type: 'error', text: 'Pilih approver terlebih dahulu' })
+      return
+    }
     if (tipe === 'LUPA_CLOCK_IN' && !clockIn) {
       setMessage({ type: 'error', text: 'Jam clock in wajib diisi' })
       return
@@ -157,9 +197,12 @@ export default function KoreksiAbsensiPage() {
       return
     }
     if (tipe === 'KOREKSI_JAM' && !clockIn && !clockOut) {
-      setMessage({ type: 'error', text: 'Isi minimal salah satu jam koreksi' })
+      setMessage({ type: 'error', text: 'Isi minimal salah satu jam revisi' })
       return
     }
+
+    // Find selected approver detail
+    const approverDetail = approvers.find(a => a.nrp === selectedApprover)
 
     setLoading(true)
     try {
@@ -174,12 +217,15 @@ export default function KoreksiAbsensiPage() {
           requested_shift: shift || null,
           alasan: alasan.trim(),
           bukti_url: buktiUrl.trim() || null,
+          approver_target_nrp: selectedApprover,
+          approver_target_nama: approverDetail?.nama || null,
+          approver_target_role: approverDetail?.role || null,
         }),
       })
       const data = await res.json()
 
       if (res.ok) {
-        setMessage({ type: 'success', text: '✅ Pengajuan koreksi berhasil dikirim' })
+        setMessage({ type: 'success', text: '✅ Pengajuan revisi berhasil dikirim' })
         setAlasan('')
         setClockIn('')
         setClockOut('')
@@ -213,10 +259,10 @@ export default function KoreksiAbsensiPage() {
           </Link>
           <div>
             <div className="text-white/60 text-[9px] font-black uppercase tracking-widest">
-              Absensi
+              Pengajuan
             </div>
-            <h1 className="text-white text-2xl font-black tracking-tight">
-              Koreksi Absensi
+            <h1 className="text-white text-xl font-black tracking-tight">
+              📝 Revisi Waktu Absensi
             </h1>
           </div>
         </div>
@@ -283,7 +329,7 @@ export default function KoreksiAbsensiPage() {
             {/* TIPE */}
             <div>
               <label className="block text-[9px] font-black uppercase tracking-widest text-slate-600 mb-2">
-                📝 Tipe Koreksi
+                📝 Tipe Revisi
               </label>
               <div className="grid grid-cols-1 gap-2">
                 {(['LUPA_CLOCK_IN', 'LUPA_CLOCK_OUT', 'KOREKSI_JAM'] as CorrectionType[]).map(
@@ -359,6 +405,60 @@ export default function KoreksiAbsensiPage() {
               </div>
             )}
 
+            {/* APPROVER */}
+            <div>
+              <label className="block text-[9px] font-black uppercase tracking-widest text-slate-600 mb-2">
+                👤 Ditujukan Kepada <span className="text-rose-600">*</span>
+              </label>
+              {loadingApprovers ? (
+                <div className="px-4 py-3 rounded-[1.2rem] border-2 border-slate-200 text-sm text-slate-400">
+                  Memuat daftar atasan...
+                </div>
+              ) : approvers.length === 0 ? (
+                <div className="px-4 py-3 rounded-[1.2rem] border-2 border-amber-200 bg-amber-50 text-sm text-amber-700">
+                  ⚠️ Belum ada approver terdaftar untuk departemen Anda. Hubungi HR.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {approvers.map((a) => (
+                    <button
+                      key={a.nrp}
+                      type="button"
+                      onClick={() => setSelectedApprover(a.nrp)}
+                      className={`w-full px-4 py-3 rounded-[1.2rem] text-left border-2 transition-all flex items-center gap-3 ${
+                        selectedApprover === a.nrp
+                          ? 'bg-[#003D79] text-white border-[#003D79] shadow-lg'
+                          : 'bg-white text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0 ${
+                        selectedApprover === a.nrp
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {(a.nama || '?')[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-bold text-sm truncate ${
+                          selectedApprover === a.nrp ? 'text-white' : 'text-[#003D79]'
+                        }`}>
+                          {a.nama}
+                        </div>
+                        <div className={`text-[10px] ${
+                          selectedApprover === a.nrp ? 'text-blue-200' : 'text-slate-400'
+                        }`}>
+                          {a.role_label} · {a.nrp}
+                        </div>
+                      </div>
+                      {selectedApprover === a.nrp && (
+                        <span className="text-white text-lg">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* ALASAN */}
             <div>
               <label className="block text-[9px] font-black uppercase tracking-widest text-slate-600 mb-2">
@@ -397,7 +497,7 @@ export default function KoreksiAbsensiPage() {
               disabled={loading}
               className="w-full py-4 bg-[#003D79] text-white rounded-[1.5rem] font-black uppercase tracking-widest text-sm shadow-xl disabled:opacity-50"
             >
-              {loading ? '⏳ Mengirim...' : '📤 Ajukan Koreksi'}
+              {loading ? '⏳ Mengirim...' : '📤 Ajukan Revisi'}
             </button>
           </form>
         )}
@@ -413,7 +513,7 @@ export default function KoreksiAbsensiPage() {
               <div className="bg-white rounded-[1.5rem] p-8 text-center">
                 <div className="text-5xl mb-3">📭</div>
                 <div className="text-slate-500 font-bold text-sm">
-                  Belum ada pengajuan koreksi
+                  Belum ada pengajuan revisi
                 </div>
               </div>
             )}
@@ -475,10 +575,23 @@ function CorrectionCard({ item }: { item: CorrectionItem }) {
             </span>
           </div>
         )}
-        {item.approver_nama && (
+        {/* Ditujukan kepada */}
+        {item.approver_target_nama && (
           <div className="flex justify-between">
-            <span className="text-slate-500">Approver:</span>
-            <span className="font-bold text-slate-700">{item.approver_nama}</span>
+            <span className="text-slate-500">Ditujukan ke:</span>
+            <span className="font-bold text-[#003D79]">
+              {item.approver_target_nama}
+              {item.approver_target_role && (
+                <span className="text-slate-400 font-normal"> ({item.approver_target_role})</span>
+              )}
+            </span>
+          </div>
+        )}
+        {/* Disetujui oleh */}
+        {item.approved_by_nama && (
+          <div className="flex justify-between">
+            <span className="text-slate-500">Diproses oleh:</span>
+            <span className="font-bold text-emerald-700">{item.approved_by_nama}</span>
           </div>
         )}
       </div>
