@@ -121,7 +121,7 @@ type CreateCorrectionInput = {
   sessionRoles: string[]
   sessionScopeSite?: string | null
   sessionIsSuperAdmin?: boolean
-    approverTargetNrp?: string | null
+  approverTargetNrp?: string | null
   approverTargetNama?: string | null
   approverTargetRole?: string | null
 }
@@ -995,23 +995,23 @@ export async function createCorrectionRequest(input: CreateCorrectionInput) {
   })
 
   const payload = {
-    employee_nrp: employeeNrp,
-    employee_site: employee.site || input.sessionScopeSite || null,
-    tanggal: validated.tanggal,
-    tipe: validated.tipe,
-    requested_clock_in: validated.requestedClockIn,
-    requested_clock_out: validated.requestedClockOut,
-    requested_shift: inferredShift,
-    alasan: validated.alasan,
-    bukti_url: normalizeText(input.buktiUrl) || null,
-    status: 'PENDING' as CorrectionStatus,
-    approver_nrp: approver.approverNrp,
-    approver_rule: approver.approverRule,
-    attendance_before: snapshotAttendance(existingAttendance),
-    approver_target_nrp: normalizeText(input.approverTargetNrp) || null,
-    approver_target_nama: normalizeText(input.approverTargetNama) || null,
-    approver_target_role: normalizeText(input.approverTargetRole) || null,
-  }
+  employee_nrp: employeeNrp,
+  employee_site: employee.site || input.sessionScopeSite || null,
+  tanggal: validated.tanggal,
+  tipe: validated.tipe,
+  requested_clock_in: validated.requestedClockIn,
+  requested_clock_out: validated.requestedClockOut,
+  requested_shift: inferredShift,
+  alasan: validated.alasan,
+  bukti_url: normalizeText(input.buktiUrl) || null,
+  status: 'PENDING' as CorrectionStatus,
+  approver_nrp: approver.approverNrp,
+  approver_rule: approver.approverRule,
+  attendance_before: snapshotAttendance(existingAttendance),
+  approver_target_nrp: normalizeText(input.approverTargetNrp) || null,
+  approver_target_nama: normalizeText(input.approverTargetNama) || null,
+  approver_target_role: normalizeText(input.approverTargetRole) || null,
+}
 
   const { data, error } = await supabaseAdmin
     .from('attendance_corrections')

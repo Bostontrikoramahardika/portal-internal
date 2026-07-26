@@ -71,22 +71,22 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
 
     const data = await createCorrectionRequest({
-      employeeNrp,
-      tanggal: String(body?.tanggal || ''),
-      tipe: String(body?.tipe || '') as 'LUPA_CLOCK_IN' | 'LUPA_CLOCK_OUT' | 'KOREKSI_JAM',
-      requestedClockIn: body?.requested_clock_in ?? body?.clock_in ?? null,
-      requestedClockOut: body?.requested_clock_out ?? body?.clock_out ?? null,
-      requestedShift: body?.requested_shift ?? body?.shift ?? null,
-      alasan: String(body?.alasan || ''),
-      buktiUrl: body?.bukti_url ?? null,
-      sessionRoles: roles,
-      sessionScopeSite:
-        typeof session?.scope_site === 'string' ? session.scope_site : null,
-      sessionIsSuperAdmin: Boolean(session?.is_super_admin),
-      approverTargetNrp: body?.approver_target_nrp ?? null,
-      approverTargetNama: body?.approver_target_nama ?? null,
-      approverTargetRole: body?.approver_target_role ?? null,
-    })
+  employeeNrp,
+  tanggal: String(body?.tanggal || ''),
+  tipe: String(body?.tipe || '') as 'LUPA_CLOCK_IN' | 'LUPA_CLOCK_OUT' | 'KOREKSI_JAM',
+  requestedClockIn: body?.requested_clock_in ?? body?.clock_in ?? null,
+  requestedClockOut: body?.requested_clock_out ?? body?.clock_out ?? null,
+  requestedShift: body?.requested_shift ?? body?.shift ?? null,
+  alasan: String(body?.alasan || ''),
+  buktiUrl: body?.bukti_url ?? null,
+  sessionRoles: roles,
+  sessionScopeSite:
+    typeof session?.scope_site === 'string' ? session.scope_site : null,
+  sessionIsSuperAdmin: Boolean(session?.is_super_admin),
+  approverTargetNrp: body?.approver_target_nrp ?? null,
+  approverTargetNama: body?.approver_target_nama ?? null,
+  approverTargetRole: body?.approver_target_role ?? null,
+})
 
     return NextResponse.json({ ok: true, data }, { status: 201 })
   } catch (error) {
