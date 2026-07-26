@@ -269,9 +269,9 @@ function IdentityView({ data }: { data: any }) {
           <InfoItem icon="💼" label="Jabatan" value={data.jabatan} />
           <InfoItem icon="🏢" label="Departemen" value={data.departemen} />
           <InfoItem icon="📍" label="Site" value={data.site} />
-          <InfoItem icon="📅" label="Tanggal Masuk" value={data.tgl_masuk} />
-          <InfoItem icon="🎂" label="Tempat Lahir" value={data.tmpt_lahir} />
-          <InfoItem icon="🗓️" label="Tanggal Lahir" value={data.tgl_lahir} />
+          <InfoItem icon="📅" label="Tanggal Masuk" value={data.tanggal_masuk ? new Date(data.tanggal_masuk).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'} />
+<InfoItem icon="🎂" label="Tempat Lahir" value={data.tempat_lahir || '-'} />
+<InfoItem icon="🗓️" label="Tanggal Lahir" value={data.tanggal_lahir ? new Date(data.tanggal_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'} />
           <InfoItem icon="🏠" label="Alamat" value={data.alamat} />
           <InfoItem icon="💍" label="Status Pernikahan" value={data.status_pernikahan} />
           <InfoItem icon="📄" label="Kontrak PKWT" value={data.pkwt_periode} color="text-blue-600" />
