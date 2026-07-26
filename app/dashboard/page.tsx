@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -2686,7 +2686,7 @@ function RoleManagerView({ title }: any) {
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">👥</div>
             <div>
-              <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">HR / Super Admin</p>
+              <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">HR</p>
               <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Kelola Role Karyawan</h1>
             </div>
           </div>
@@ -4739,7 +4739,7 @@ function GlobalConfigView() {
               <div className="text-3xl">⚙️</div>
               <div>
                 <p className="text-rose-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
-                  Super Admin Only
+                  Konfigurasi Sistem
                 </p>
                 <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">
                   Konfigurasi Global
@@ -5339,7 +5339,7 @@ function ResetPasswordAdminView() {
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🔧</div>
             <div>
-              <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Super Admin Only</p>
+             <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Manajemen Akses</p>
               <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Reset Password Karyawan</h1>
             </div>
           </div>
@@ -5693,7 +5693,7 @@ function SystemAuditView() {
         <div className="text-2xl lg:text-3xl shrink-0">📋</div>
         <div className="min-w-0">
           <p className="text-purple-400 font-black text-[9px] lg:text-[10px] uppercase tracking-[0.25em] lg:tracking-[0.3em] mb-0.5 lg:mb-1">
-            Super Admin Only
+            Audit Sistem
           </p>
           <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight truncate">Audit Log Sistem</h1>
         </div>
@@ -5707,7 +5707,7 @@ function SystemAuditView() {
       </button>
     </div>
     <p className="text-blue-200/70 text-[11px] lg:text-xs font-medium mt-2 lg:mt-3">
-      Jejak digital aktivitas Super Admin • Tidak bisa dihapus
+      Jejak digital aktivitas sistem • Tidak bisa dihapus
     </p>
   </div>
 </div>
@@ -6980,7 +6980,7 @@ function PermissionManagerView() {
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🔐</div>
             <div>
-              <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Super Admin Only</p>
+              <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Manajemen Akses</p>
               <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Kelola Permission</h1>
             </div>
           </div>
@@ -6991,7 +6991,7 @@ function PermissionManagerView() {
       </div>
 
       {/* STATS BAR */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-white p-4 rounded-2xl border-2 border-slate-50 shadow-sm">
           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Karyawan</p>
           <p className="text-xl font-black text-slate-900">{stats.total}</p>
@@ -6999,10 +6999,6 @@ function PermissionManagerView() {
         <div className="bg-white p-4 rounded-2xl border-2 border-blue-50 shadow-sm">
           <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1">Punya Akses</p>
           <p className="text-xl font-black text-blue-600">{stats.with_perms}</p>
-        </div>
-        <div className="bg-white p-4 rounded-2xl border-2 border-amber-50 shadow-sm">
-          <p className="text-[8px] font-black text-amber-400 uppercase tracking-widest mb-1">Super Admin</p>
-          <p className="text-xl font-black text-amber-600">{stats.super_admin}</p>
         </div>
         <div className="bg-white p-4 rounded-2xl border-2 border-emerald-50 shadow-sm">
           <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest mb-1">Total Perms</p>
@@ -7027,23 +7023,14 @@ function PermissionManagerView() {
           <button
             key={emp.nrp}
             onClick={() => openEmployeeModal(emp)}
-            className={`w-full text-left bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 shadow-sm hover:shadow-lg transition-all active:scale-98 flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 ${
-              emp.is_super_admin ? 'border-amber-200 bg-amber-50/30' : 'border-slate-50 hover:border-blue-200'
-            }`}
+            className="w-full text-left bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 shadow-sm hover:shadow-lg transition-all active:scale-98 flex items-center gap-2 lg:gap-4 border-slate-50 hover:border-blue-200"
           >
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-lg ${
-              emp.is_super_admin ? 'bg-amber-500' : 'bg-slate-900'
-            }`}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-lg bg-slate-900">
               {emp.nama[0]}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-black text-slate-900 text-sm truncate">{emp.nama}</h3>
-                {emp.is_super_admin && (
-                  <span className="bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
-                    Super
-                  </span>
-                )}
               </div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
                 {emp.nrp} • {emp.jabatan || '-'} • {emp.site || '-'}
@@ -7091,9 +7078,7 @@ function PermissionManagerView() {
             
             {/* Modal Header */}
             <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl ${
-                selectedEmp.is_super_admin ? 'bg-amber-500' : 'bg-white/10'
-              }`}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl bg-white/10">
                 {selectedEmp.nama[0]}
               </div>
               <div className="flex-1 min-w-0">
@@ -7400,7 +7385,7 @@ function KelolaHakCutiView() {
             <div className="text-3xl">🎫</div>
             <div>
               <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
-                {data?.is_view_only ? 'HR HO Read-Only' : 'HR Site / Super Admin'}
+                {data?.is_view_only ? 'HR HO Read-Only' : 'HR Site'}
               </p>
               <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Hak Tiket & Saldo Cuti</h1>
             </div>
