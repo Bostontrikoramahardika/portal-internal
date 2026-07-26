@@ -72,6 +72,10 @@ export async function GET(req: NextRequest) {
   }
 
   // ═══ MODE 2: List semua karyawan (aggregate) ═══
+  
+  // 🔒 CHAT 25: Cek viewer apakah super_admin (untuk filter role rahasia)
+  const isSuperAdmin = userRoles.includes('super_admin')
+
   let empQuery = supabaseAdmin
     .from('employees')
     .select('nrp, nama, jabatan, departemen, site, is_super_admin, tanggal_resign')
@@ -103,6 +107,8 @@ export async function GET(req: NextRequest) {
   // Build map
   const rolesMap: Record<string, string[]> = {}
   for (const r of allRoles || []) {
+    // 🔒 CHAT 25: Filter role super_admin kalau viewer bukan super_admin
+    if (!isSuperAdmin && r.role === 'super_admin') continue
     if (!rolesMap[r.nrp]) rolesMap[r.nrp] = []
     rolesMap[r.nrp].push(r.role)
   }
@@ -115,6 +121,8 @@ export async function GET(req: NextRequest) {
   // Enrich data
   const result = employees.map(e => ({
     ...e,
+    // 🔒 CHAT 25: Sembunyikan flag is_super_admin kalau viewer bukan super_admin
+    is_super_admin: isSuperAdmin ? e.is_super_admin : false,
     roles: rolesMap[e.nrp] || [],
     permissions_count: (permsMap[e.nrp] || []).length,
     permissions: permsMap[e.nrp] || []
@@ -127,7 +135,6 @@ export async function GET(req: NextRequest) {
 
   // ═══ Ambil daftar role & site & master permissions untuk dropdown ═══
   // 🔒 Guard: cuma super_admin yang boleh lihat/assign role 'super_admin'
-  const isSuperAdmin = userRoles.includes('super_admin')
 
   let roleQuery = supabaseAdmin
     .from('role_templates')
