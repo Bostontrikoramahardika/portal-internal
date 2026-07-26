@@ -3857,6 +3857,7 @@ function ChangePasswordView({ title }: any) {
 // ============ 🏢 SITES MANAGER (Master Site v2 - Card Mewah) ============
 function SitesManagerView() {
   const [sites, setSites] = useState<any[]>([])
+  const [employees, setEmployees] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [editingSite, setEditingSite] = useState<any>(null)
   const [saving, setSaving] = useState(false)
@@ -3866,6 +3867,8 @@ function SitesManagerView() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
   const [applyingTemplate, setApplyingTemplate] = useState(false)
   const [formData, setFormData] = useState<any>({})
+  const [pjoSearch, setPjoSearch] = useState('')
+  const [deputySearch, setDeputySearch] = useState('')
 
   useEffect(() => {
     loadData()
@@ -3887,7 +3890,10 @@ function SitesManagerView() {
     try {
       const res = await fetch('/api/sites-manager')
       const json = await res.json()
-      if (res.ok) setSites(json.sites || [])
+      if (res.ok) {
+        setSites(json.sites || [])
+        setEmployees(json.employees || [])
+      }
     } catch (err) {
       console.error('Load error:', err)
     } finally {
@@ -3918,8 +3924,12 @@ function SitesManagerView() {
       minus_cnc: site.minus_cnc || 5,
       active: site.active,
       is_active: site.is_active,
-      is_pusat: site.is_pusat
+      is_pusat: site.is_pusat,
+      pjo_nrp: site.pjo_nrp || '',
+      deputy_pjo_nrp: site.deputy_pjo_nrp || '',
     })
+    setPjoSearch('')
+    setDeputySearch('')
     setMsg(null)
   }
 
@@ -4053,6 +4063,22 @@ function SitesManagerView() {
               }`}>
                 {site.is_active ? '● Aktif' : '○ Nonaktif'}
               </span>
+            </div>
+
+                        {/* ═══ PJO INFO BAR ═══ */}
+            <div className="px-6 py-3 bg-blue-50/50 border-y border-blue-100/50 flex flex-wrap gap-4 text-[11px]">
+              <div className="flex items-center gap-2">
+                <span className="font-black text-blue-500 uppercase tracking-widest text-[9px]">👔 PJO:</span>
+                <span className="font-black text-[#003D79]">
+                  {site.pjo_info?.nama || <span className="text-rose-500 italic">Belum diset</span>}
+                </span>
+              </div>
+              {site.deputy_info && (
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-slate-400 uppercase tracking-widest text-[9px]">🎖️ Deputy:</span>
+                  <span className="font-bold text-slate-700">{site.deputy_info.nama}</span>
+                </div>
+              )}
             </div>
 
             {/* Card Body - Info Grid */}
@@ -4233,6 +4259,194 @@ function SitesManagerView() {
                   <FieldInput label="SP 2" type="number" value={formData.minus_sp2} onChange={(v: string) => setFormData({...formData, minus_sp2: parseInt(v) || 0})} />
                   <FieldInput label="SP 3" type="number" value={formData.minus_sp3} onChange={(v: string) => setFormData({...formData, minus_sp3: parseInt(v) || 0})} />
                   <FieldInput label="CNC" type="number" value={formData.minus_cnc} onChange={(v: string) => setFormData({...formData, minus_cnc: parseInt(v) || 0})} />
+                </div>
+              </div>
+
+              {/* SECTION 4.5: PJO & Deputy PJO */}
+              <div>
+                <h3 className="text-[10px] font-black text-[#003D79] uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
+                  <span className="w-4 h-[2px] bg-[#003D79]"></span>
+                  Penanggung Jawab (PJO)
+                </h3>
+                <div className="space-y-3">
+
+                  {/* PJO — WAJIB */}
+                  <div className="bg-white p-4 rounded-2xl border-2 border-blue-100">
+                    <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">
+                      👔 PJO (Wajib)
+                    </label>
+
+                    {/* Selected PJO */}
+                    {formData.pjo_nrp && (() => {
+                      const emp = employees.find(e => e.nrp === formData.pjo_nrp)
+                      return emp ? (
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-2 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-sm">
+                              {(emp.nama || '?')[0]}
+                            </div>
+                            <div>
+                              <div className="font-black text-sm text-[#003D79]">{emp.nama}</div>
+                              <div className="text-[10px] text-slate-500">{emp.nrp} · {emp.jabatan || '—'} · {emp.site || '—'}</div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, pjo_nrp: '' })
+                              setPjoSearch('')
+                            }}
+                            className="w-8 h-8 bg-rose-100 hover:bg-rose-200 text-rose-600 rounded-full flex items-center justify-center text-xs font-bold"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : null
+                    })()}
+
+                    {/* Search PJO */}
+                    {!formData.pjo_nrp && (
+                      <>
+                        <input
+                          type="text"
+                          value={pjoSearch}
+                          onChange={e => setPjoSearch(e.target.value)}
+                          placeholder="🔍 Ketik nama atau NRP karyawan..."
+                          className="w-full p-2.5 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none text-sm font-medium focus:border-[#003D79] focus:bg-white transition-all mb-2"
+                        />
+
+                        {pjoSearch.length >= 2 && (
+                          <div className="max-h-52 overflow-y-auto space-y-1 bg-slate-50 rounded-xl p-2">
+                            {employees
+                              .filter(e =>
+                                e.nrp !== formData.deputy_pjo_nrp &&
+                                (e.nama?.toLowerCase().includes(pjoSearch.toLowerCase()) ||
+                                 e.nrp?.toLowerCase().includes(pjoSearch.toLowerCase()))
+                              )
+                              .slice(0, 15)
+                              .map(e => (
+                                <button
+                                  key={e.nrp}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData({ ...formData, pjo_nrp: e.nrp })
+                                    setPjoSearch('')
+                                  }}
+                                  className="w-full p-2.5 rounded-xl text-left bg-white hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-all"
+                                >
+                                  <div className="font-bold text-sm text-[#003D79]">{e.nama}</div>
+                                  <div className="text-[10px] text-slate-400">
+                                    {e.nrp} · {e.site || '—'} · {e.jabatan || '—'}
+                                  </div>
+                                </button>
+                              ))}
+                            {employees.filter(e =>
+                              e.nama?.toLowerCase().includes(pjoSearch.toLowerCase()) ||
+                              e.nrp?.toLowerCase().includes(pjoSearch.toLowerCase())
+                            ).length === 0 && (
+                              <div className="text-center py-4 text-xs text-slate-400">
+                                Tidak ditemukan karyawan &quot;{pjoSearch}&quot;
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* DEPUTY PJO — OPSIONAL */}
+                  <div className="bg-white p-4 rounded-2xl border-2 border-slate-100">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                      🎖️ Deputy PJO (Opsional)
+                    </label>
+
+                    {/* Selected Deputy */}
+                    {formData.deputy_pjo_nrp && (() => {
+                      const emp = employees.find(e => e.nrp === formData.deputy_pjo_nrp)
+                      return emp ? (
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-2 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-slate-600 text-white flex items-center justify-center font-black text-sm">
+                              {(emp.nama || '?')[0]}
+                            </div>
+                            <div>
+                              <div className="font-black text-sm text-slate-800">{emp.nama}</div>
+                              <div className="text-[10px] text-slate-500">{emp.nrp} · {emp.jabatan || '—'} · {emp.site || '—'}</div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, deputy_pjo_nrp: '' })
+                              setDeputySearch('')
+                            }}
+                            className="w-8 h-8 bg-rose-100 hover:bg-rose-200 text-rose-600 rounded-full flex items-center justify-center text-xs font-bold"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : null
+                    })()}
+
+                    {/* Search Deputy */}
+                    {!formData.deputy_pjo_nrp && (
+                      <>
+                        <input
+                          type="text"
+                          value={deputySearch}
+                          onChange={e => setDeputySearch(e.target.value)}
+                          placeholder="🔍 Ketik nama atau NRP karyawan (opsional)..."
+                          className="w-full p-2.5 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none text-sm font-medium focus:border-slate-400 focus:bg-white transition-all mb-2"
+                        />
+
+                        {deputySearch.length >= 2 && (
+                          <div className="max-h-52 overflow-y-auto space-y-1 bg-slate-50 rounded-xl p-2">
+                            {employees
+                              .filter(e =>
+                                e.nrp !== formData.pjo_nrp &&
+                                (e.nama?.toLowerCase().includes(deputySearch.toLowerCase()) ||
+                                 e.nrp?.toLowerCase().includes(deputySearch.toLowerCase()))
+                              )
+                              .slice(0, 15)
+                              .map(e => (
+                                <button
+                                  key={e.nrp}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData({ ...formData, deputy_pjo_nrp: e.nrp })
+                                    setDeputySearch('')
+                                  }}
+                                  className="w-full p-2.5 rounded-xl text-left bg-white hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all"
+                                >
+                                  <div className="font-bold text-sm text-slate-800">{e.nama}</div>
+                                  <div className="text-[10px] text-slate-400">
+                                    {e.nrp} · {e.site || '—'} · {e.jabatan || '—'}
+                                  </div>
+                                </button>
+                              ))}
+                            {employees.filter(e =>
+                              e.nama?.toLowerCase().includes(deputySearch.toLowerCase()) ||
+                              e.nrp?.toLowerCase().includes(deputySearch.toLowerCase())
+                            ).length === 0 && (
+                              <div className="text-center py-4 text-xs text-slate-400">
+                                Tidak ditemukan karyawan &quot;{deputySearch}&quot;
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Info Box */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[10px] text-amber-800 flex items-start gap-2">
+                    <span className="text-base leading-none">💡</span>
+                    <div>
+                      <strong>Otomatis:</strong> Karyawan yang dipilih akan otomatis mendapat role <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono">pjo_site</code>.
+                      Yang lama akan dicopot rolenya.
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
