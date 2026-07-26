@@ -111,8 +111,7 @@ const TAB_CONFIG = [
         m.menu_key === 'import_roster' ||
         m.menu_key === 'export_absensi_matrix' ||
         m.menu_key === 'manajemen_absensi' ||
-m.menu_key === 'rekap_absensi' ||
-m.menu_key === 'koreksi_absensi'
+        m.menu_key === 'rekap_absensi'
       )
     }
   },
@@ -124,14 +123,15 @@ m.menu_key === 'koreksi_absensi'
     icon: '📋',
     roles: ALL_ROLES,
     customMatch: (m: MenuItem) => {
-      return (
-        m.menu_key === 'form_cuti' ||
-        m.menu_key === 'form_lembur' ||
-        m.menu_key === 'evident_sakit' ||
-        m.menu_key === 'kelola_cuti' ||
-        m.menu_key === 'kelola_lembur'
-      )
-    }
+  return (
+    m.menu_key === 'form_cuti' ||
+    m.menu_key === 'form_lembur' ||
+    m.menu_key === 'evident_sakit' ||
+    m.menu_key === 'kelola_cuti' ||
+    m.menu_key === 'kelola_lembur' ||
+    m.menu_key === 'koreksi_absensi'
+  )
+}
   },
 
   // TAB 3: DATA / MONITORING
