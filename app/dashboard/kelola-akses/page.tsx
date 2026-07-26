@@ -23,7 +23,8 @@ interface Employee {
 
 interface RoleTemplate {
   role_key: string
-  nama: string
+  role_label: string
+  role_desc: string
   level: number
   active: boolean
 }
@@ -224,7 +225,7 @@ function TabKaryawan() {
           <select value={filterRole} onChange={e => setFilterRole(e.target.value)}
             className="flex-1 px-3 py-2 bg-white rounded-[1.2rem] text-sm shadow border-0 outline-none">
             <option value="">Semua Role</option>
-            {roleList.map(r => <option key={r.role_key} value={r.role_key}>{r.nama || r.role_key}</option>)}
+            {roleList.map(r => <option key={r.role_key} value={r.role_key}>{r.role_label || r.role_key}</option>)}
           </select>
           <button onClick={load} className="p-2 bg-white rounded-[1.2rem] shadow">
             <RefreshCw size={14} className="text-slate-500" />
@@ -456,8 +457,13 @@ function ModalAddRole({ emp, roleList, onClose, onSubmit, processing }: ModalAdd
               >
                 <div>
                   <div className={`font-bold text-sm ${selectedRole === r.role_key ? 'text-white' : 'text-[#003D79]'}`}>
-                    {getRoleIcon(r.role_key)} {r.nama || r.role_key}
+                    {getRoleIcon(r.role_key)} {r.role_label || r.role_key}
                   </div>
+                  {r.role_desc && (
+                    <div className={`text-[10px] mt-0.5 ${selectedRole === r.role_key ? 'text-blue-100' : 'text-slate-500'}`}>
+                      {r.role_desc}
+                    </div>
+                  )}
                   <div className={`text-[10px] ${selectedRole === r.role_key ? 'text-blue-200' : 'text-slate-400'}`}>
                     {r.role_key} · Level {r.level}
                   </div>

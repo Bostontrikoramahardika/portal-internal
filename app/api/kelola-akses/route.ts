@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
 
   let roleQuery = supabaseAdmin
     .from('role_templates')
-    .select('role_key, nama, level, active')
+    .select('role_key, role_label, role_desc, level, active')
     .eq('active', true)
     .order('level')
 
