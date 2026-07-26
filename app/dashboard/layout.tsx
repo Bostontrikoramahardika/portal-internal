@@ -791,6 +791,12 @@ if (menuKey === 'rekap_absensi') {
       setBottomSheetOpen(false)
       return
     }
+        // Routing menu Kelola Akses (Batch 1 - Tab Karyawan)
+    if (menuKey === 'kelola_akses') {
+      router.push('/dashboard/kelola-akses')
+      setBottomSheetOpen(false)
+      return
+    }
 
     // 📊 Monitoring APD (Chat 22)
     if (menuKey === 'monitoring_apd') {

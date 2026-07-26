@@ -1,0 +1,566 @@
+'use client'
+
+// app/dashboard/kelola-akses/page.tsx — v1.1 Batch 1 (fix TypeScript)
+import { useState, useEffect, useCallback } from 'react'
+import {
+  Users, Shield, Search, ChevronDown, ChevronUp, Plus, X,
+  RefreshCw, Key, Building2, Filter, UserCog, AlertTriangle,
+  CheckCircle, Trash2, Info, Crown, Award
+} from 'lucide-react'
+
+// ═══ TYPES ═══
+interface Employee {
+  nrp: string
+  nama: string
+  jabatan: string
+  departemen: string
+  site: string
+  is_super_admin: boolean
+  roles: string[]
+  permissions_count: number
+  permissions: string[]
+}
+
+interface RoleTemplate {
+  role_key: string
+  nama: string
+  level: number
+  active: boolean
+}
+
+interface SiteInfo {
+  kode_site: string
+  nama_site: string
+}
+
+interface MasterPerm {
+  perm_key: string
+  deskripsi: string
+}
+
+// ═══ HELPERS ═══
+function getAuthHeaders(): Record<string, string> {
+  const token = typeof window !== 'undefined'
+    ? localStorage.getItem('btm_session_token_v1') : null
+  return token ? { 'Authorization': `Bearer ${token}` } : {}
+}
+
+function getRoleColor(role: string): string {
+  if (role === 'super_admin') return 'bg-rose-100 text-rose-700'
+  if (role.includes('director') || role.includes('_ho')) return 'bg-purple-100 text-purple-700'
+  if (role.includes('pjo') || role.includes('spv')) return 'bg-blue-100 text-blue-700'
+  if (role.includes('gl_')) return 'bg-emerald-100 text-emerald-700'
+  if (role === 'employee' || role === 'karyawan') return 'bg-slate-100 text-slate-600'
+  return 'bg-amber-100 text-amber-700'
+}
+
+function getRoleIcon(role: string): string {
+  if (role === 'super_admin') return '👑'
+  if (role.includes('director')) return '🏆'
+  if (role.includes('_ho')) return '🎯'
+  if (role.includes('pjo')) return '🏢'
+  if (role.includes('gl_')) return '👷'
+  if (role.includes('hr')) return '👥'
+  if (role.includes('she')) return '⛑️'
+  return '👤'
+}
+
+// ═══ MAIN COMPONENT ═══
+export default function KelolaAksesPage() {
+  const [activeTab, setActiveTab] = useState<'karyawan' | 'site' | 'role' | 'template'>('karyawan')
+
+  const tabs = [
+    { key: 'karyawan' as const, label: 'Karyawan', icon: <Users size={15} /> },
+    { key: 'site' as const, label: 'Site', icon: <Building2 size={15} /> },
+    { key: 'role' as const, label: 'Role', icon: <Award size={15} /> },
+    { key: 'template' as const, label: 'Template', icon: <Key size={15} /> },
+  ]
+
+  return (
+    <div className="min-h-screen bg-[#f4f7fa] pb-24">
+      {/* Header */}
+      <div className="bg-[#003D79] px-4 pt-8 pb-6">
+        <h1 className="text-white text-2xl font-black tracking-tight">🔑 Kelola Akses</h1>
+        <p className="text-blue-200 text-sm mt-1">Role & Permission Terpusat</p>
+
+        <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all
+                ${activeTab === t.key
+                  ? 'bg-white text-[#003D79] shadow-lg'
+                  : 'bg-white/20 text-white/80 hover:bg-white/30'
+                }`}
+            >
+              {t.icon}{t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="px-4 py-4">
+        {activeTab === 'karyawan' && <TabKaryawan />}
+        {activeTab === 'site' && <TabPlaceholder label="Site" msg="🚧 Tab Site — Segera hadir di Batch 2 (Chat 24)" />}
+        {activeTab === 'role' && <TabPlaceholder label="Role" msg="🚧 Tab Role — Segera hadir di Batch 2 (Chat 24)" />}
+        {activeTab === 'template' && <TabPlaceholder label="Template" msg="🚧 Tab Template — Segera hadir di Batch 2 (Chat 24)" />}
+      </div>
+    </div>
+  )
+}
+
+// ═══ PLACEHOLDER TAB ═══
+function TabPlaceholder({ label, msg }: { label: string; msg: string }) {
+  return (
+    <div className="text-center py-20 px-6">
+      <div className="text-6xl mb-4">🔧</div>
+      <div className="text-slate-500 text-lg font-bold">{msg}</div>
+      <div className="text-slate-400 text-sm mt-2">Fokus Chat 23: Tab Karyawan dulu</div>
+    </div>
+  )
+}
+
+// ═══ TAB 1: KARYAWAN ═══
+function TabKaryawan() {
+  const [data, setData] = useState<Employee[]>([])
+  const [roleList, setRoleList] = useState<RoleTemplate[]>([])
+  const [siteList, setSiteList] = useState<SiteInfo[]>([])
+  const [masterPerms, setMasterPerms] = useState<MasterPerm[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [filterSite, setFilterSite] = useState('')
+  const [filterRole, setFilterRole] = useState('')
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [modal, setModal] = useState<{ type: 'add_role' | 'add_perm'; emp: Employee } | null>(null)
+  const [processing, setProcessing] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
+  const [confirmRemove, setConfirmRemove] = useState<{ type: 'role' | 'perm'; emp: Employee; item: string } | null>(null)
+
+  const showToast = (msg: string, type: 'ok' | 'err') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (search) params.set('search', search)
+      if (filterSite) params.set('site', filterSite)
+      if (filterRole) params.set('role', filterRole)
+
+      const res = await fetch(`/api/kelola-akses?${params}`, { headers: getAuthHeaders() })
+      const json = await res.json()
+      if (json.ok) {
+        setData(json.data || [])
+        setRoleList(json.role_list || [])
+        setSiteList(json.site_list || [])
+        setMasterPerms(json.master_permissions || [])
+      } else {
+        showToast(json.error || 'Gagal load', 'err')
+      }
+    } catch {
+      showToast('Error jaringan', 'err')
+    }
+    setLoading(false)
+  }, [search, filterSite, filterRole])
+
+  useEffect(() => {
+    const t = setTimeout(load, 400)
+    return () => clearTimeout(t)
+  }, [load])
+
+  // ═══ Actions ═══
+  const handleAction = async (action: string, target_nrp: string, extra: Record<string, string> = {}) => {
+    setProcessing(true)
+    try {
+      const res = await fetch('/api/kelola-akses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ action, target_nrp, ...extra })
+      })
+      const json = await res.json()
+      if (json.ok) {
+        showToast('✅ ' + json.message, 'ok')
+        setModal(null)
+        setConfirmRemove(null)
+        load()
+      } else {
+        showToast(json.error || 'Gagal', 'err')
+      }
+    } catch {
+      showToast('Error jaringan', 'err')
+    }
+    setProcessing(false)
+  }
+
+  return (
+    <div className="space-y-4">
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-white text-sm font-bold shadow-lg
+          ${toast.type === 'ok' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Filter */}
+      <div className="space-y-2">
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="🔍 Cari nama atau NRP..."
+            className="w-full pl-9 pr-4 py-3 bg-white rounded-[1.2rem] text-sm shadow border-0 outline-none"
+          />
+        </div>
+        <div className="flex gap-2">
+          <select value={filterSite} onChange={e => setFilterSite(e.target.value)}
+            className="flex-1 px-3 py-2 bg-white rounded-[1.2rem] text-sm shadow border-0 outline-none">
+            <option value="">Semua Site</option>
+            {siteList.map(s => <option key={s.kode_site} value={s.kode_site}>{s.nama_site}</option>)}
+          </select>
+          <select value={filterRole} onChange={e => setFilterRole(e.target.value)}
+            className="flex-1 px-3 py-2 bg-white rounded-[1.2rem] text-sm shadow border-0 outline-none">
+            <option value="">Semua Role</option>
+            {roleList.map(r => <option key={r.role_key} value={r.role_key}>{r.nama || r.role_key}</option>)}
+          </select>
+          <button onClick={load} className="p-2 bg-white rounded-[1.2rem] shadow">
+            <RefreshCw size={14} className="text-slate-500" />
+          </button>
+        </div>
+      </div>
+
+      {/* Info bar */}
+      <div className="bg-blue-50 border border-blue-100 rounded-[1.2rem] p-3 text-xs text-blue-800 flex items-start gap-2">
+        <Info size={14} className="flex-shrink-0 mt-0.5" />
+        <div>
+          <strong>{data.length} karyawan</strong> ditemukan. Klik card untuk lihat detail role + permission dan kelola aksesnya.
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12 text-slate-400">Memuat data...</div>
+      ) : data.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-4xl mb-2">🔍</div>
+          <div className="text-slate-500 text-sm">Tidak ada karyawan ditemukan</div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {data.map(emp => (
+            <div key={emp.nrp} className="bg-white rounded-[1.5rem] shadow-xl overflow-hidden">
+              <button
+                onClick={() => setExpanded(expanded === emp.nrp ? null : emp.nrp)}
+                className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {emp.is_super_admin && <Crown size={14} className="text-amber-500 flex-shrink-0" />}
+                    <span className="font-black text-[#003D79] text-sm truncate">{emp.nama}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">
+                    {emp.nrp} · {emp.site} · {emp.departemen}
+                  </div>
+                  <div className="flex gap-1 mt-1.5 flex-wrap">
+                    {emp.roles.slice(0, 3).map(r => (
+                      <span key={r} className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${getRoleColor(r)}`}>
+                        {getRoleIcon(r)} {r}
+                      </span>
+                    ))}
+                    {emp.roles.length > 3 && (
+                      <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                        +{emp.roles.length - 3}
+                      </span>
+                    )}
+                    {emp.permissions_count > 0 && (
+                      <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                        🔐 {emp.permissions_count} perm
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {expanded === emp.nrp ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+              </button>
+
+              {/* Detail expand */}
+              {expanded === emp.nrp && (
+                <div className="border-t border-slate-100 p-4 bg-slate-50/50 space-y-4">
+                  {/* Section Roles */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
+                        <Award size={11} /> Roles ({emp.roles.length})
+                      </div>
+                      <button
+                        onClick={() => setModal({ type: 'add_role', emp })}
+                        className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full hover:bg-emerald-100"
+                      >
+                        <Plus size={10} className="inline" /> Tambah
+                      </button>
+                    </div>
+                    {emp.roles.length === 0 ? (
+                      <div className="text-xs text-slate-400 italic">Belum ada role</div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {emp.roles.map(r => (
+                          <div key={r} className="flex items-center justify-between bg-white rounded-xl px-3 py-2">
+                            <span className={`text-xs font-black px-2 py-1 rounded-full ${getRoleColor(r)}`}>
+                              {getRoleIcon(r)} {r}
+                            </span>
+                            <button
+                              onClick={() => setConfirmRemove({ type: 'role', emp, item: r })}
+                              className="p-1.5 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-100"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section Permissions */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
+                        <Key size={11} /> Permission Granular ({emp.permissions_count})
+                      </div>
+                      <button
+                        onClick={() => setModal({ type: 'add_perm', emp })}
+                        className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full hover:bg-indigo-100"
+                      >
+                        <Plus size={10} className="inline" /> Tambah
+                      </button>
+                    </div>
+                    {emp.permissions.length === 0 ? (
+                      <div className="text-xs text-slate-400 italic">Tidak ada permission tambahan</div>
+                    ) : (
+                      <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                        {emp.permissions.map(p => (
+                          <div key={p} className="flex items-center justify-between bg-white rounded-xl px-3 py-2">
+                            <span className="text-xs font-mono text-indigo-700">{p}</span>
+                            <button
+                              onClick={() => setConfirmRemove({ type: 'perm', emp, item: p })}
+                              className="p-1.5 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-100"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal Add Role */}
+      {modal?.type === 'add_role' && (
+        <ModalAddRole
+          emp={modal.emp}
+          roleList={roleList}
+          onClose={() => setModal(null)}
+          onSubmit={(role: string) => handleAction('ADD_ROLE', modal.emp.nrp, { role })}
+          processing={processing}
+        />
+      )}
+
+      {/* Modal Add Perm */}
+      {modal?.type === 'add_perm' && (
+        <ModalAddPerm
+          emp={modal.emp}
+          masterPerms={masterPerms}
+          onClose={() => setModal(null)}
+          onSubmit={(perm_key: string) => handleAction('ADD_PERM', modal.emp.nrp, { perm_key })}
+          processing={processing}
+        />
+      )}
+
+      {/* Confirm Remove */}
+      {confirmRemove && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-full max-w-sm p-6 shadow-2xl">
+            <div className="text-center mb-4">
+              <AlertTriangle size={40} className="text-amber-500 mx-auto mb-2" />
+              <h3 className="font-black text-[#003D79]">
+                Hapus {confirmRemove.type === 'role' ? 'Role' : 'Permission'}?
+              </h3>
+              <p className="text-sm text-slate-500 mt-2">
+                {confirmRemove.emp.nama} akan kehilangan{' '}
+                <strong className="text-rose-600">{confirmRemove.item}</strong>
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmRemove(null)}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+                Batal
+              </button>
+              <button
+                onClick={() => handleAction(
+                  confirmRemove.type === 'role' ? 'REMOVE_ROLE' : 'REMOVE_PERM',
+                  confirmRemove.emp.nrp,
+                  confirmRemove.type === 'role' ? { role: confirmRemove.item } : { perm_key: confirmRemove.item }
+                )}
+                disabled={processing}
+                className={`flex-1 py-3 bg-rose-600 text-white font-bold rounded-[1.2rem] ${processing ? 'opacity-50' : 'hover:bg-rose-700'}`}
+              >
+                {processing ? '...' : 'Hapus'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ═══ MODAL ADD ROLE ═══
+interface ModalAddRoleProps {
+  emp: Employee
+  roleList: RoleTemplate[]
+  onClose: () => void
+  onSubmit: (role: string) => void
+  processing: boolean
+}
+
+function ModalAddRole({ emp, roleList, onClose, onSubmit, processing }: ModalAddRoleProps) {
+  const [selectedRole, setSelectedRole] = useState('')
+  const existingRoles = emp.roles || []
+  const availableRoles = roleList.filter(r => !existingRoles.includes(r.role_key))
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
+      <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl">
+        <h3 className="font-black text-[#003D79] text-lg mb-1">➕ Tambah Role</h3>
+        <p className="text-xs text-slate-400 mb-4">{emp.nama} ({emp.nrp})</p>
+
+        {availableRoles.length === 0 ? (
+          <div className="text-center py-6 text-slate-400 text-sm">
+            Semua role sudah dimiliki karyawan ini
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
+            {availableRoles.map(r => (
+              <button
+                key={r.role_key}
+                onClick={() => setSelectedRole(r.role_key)}
+                className={`w-full p-3 rounded-[1.2rem] text-left flex items-center justify-between transition-all
+                  ${selectedRole === r.role_key
+                    ? 'bg-[#003D79] text-white ring-2 ring-[#003D79]'
+                    : 'bg-slate-50 hover:bg-slate-100'}`}
+              >
+                <div>
+                  <div className={`font-bold text-sm ${selectedRole === r.role_key ? 'text-white' : 'text-[#003D79]'}`}>
+                    {getRoleIcon(r.role_key)} {r.nama || r.role_key}
+                  </div>
+                  <div className={`text-[10px] ${selectedRole === r.role_key ? 'text-blue-200' : 'text-slate-400'}`}>
+                    {r.role_key} · Level {r.level}
+                  </div>
+                </div>
+                {selectedRole === r.role_key && <CheckCircle size={16} className="text-emerald-400" />}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button onClick={onClose}
+            className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+            Batal
+          </button>
+          <button
+            onClick={() => selectedRole && onSubmit(selectedRole)}
+            disabled={!selectedRole || processing}
+            className={`flex-1 py-3 bg-[#003D79] text-white font-bold rounded-[1.2rem] transition-all
+              ${(!selectedRole || processing) ? 'opacity-50' : 'hover:bg-[#002D5F]'}`}
+          >
+            {processing ? '...' : 'Simpan'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ═══ MODAL ADD PERM ═══
+interface ModalAddPermProps {
+  emp: Employee
+  masterPerms: MasterPerm[]
+  onClose: () => void
+  onSubmit: (perm_key: string) => void
+  processing: boolean
+}
+
+function ModalAddPerm({ emp, masterPerms, onClose, onSubmit, processing }: ModalAddPermProps) {
+  const [selectedPerm, setSelectedPerm] = useState('')
+  const [search, setSearch] = useState('')
+  const existing = emp.permissions || []
+  const available = masterPerms.filter(p =>
+    !existing.includes(p.perm_key) &&
+    (!search || p.perm_key.toLowerCase().includes(search.toLowerCase()) || (p.deskripsi || '').toLowerCase().includes(search.toLowerCase()))
+  )
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
+      <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl">
+        <h3 className="font-black text-[#003D79] text-lg mb-1">🔐 Tambah Permission</h3>
+        <p className="text-xs text-slate-400 mb-4">{emp.nama} ({emp.nrp})</p>
+
+        <div className="relative mb-3">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Cari permission..."
+            className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-[1.2rem] text-sm outline-none" />
+        </div>
+
+        {available.length === 0 ? (
+          <div className="text-center py-6 text-slate-400 text-sm">
+            {existing.length > 0 ? 'Tidak ada permission lain' : 'Master permission kosong'}
+          </div>
+        ) : (
+          <div className="space-y-1.5 max-h-72 overflow-y-auto mb-4">
+            {available.map(p => (
+              <button
+                key={p.perm_key}
+                onClick={() => setSelectedPerm(p.perm_key)}
+                className={`w-full p-2.5 rounded-xl text-left transition-all
+                  ${selectedPerm === p.perm_key
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-50 hover:bg-slate-100'}`}
+              >
+                <div className={`font-mono text-xs font-bold ${selectedPerm === p.perm_key ? 'text-white' : 'text-indigo-700'}`}>
+                  {p.perm_key}
+                </div>
+                {p.deskripsi && (
+                  <div className={`text-[10px] mt-0.5 ${selectedPerm === p.perm_key ? 'text-indigo-100' : 'text-slate-500'}`}>
+                    {p.deskripsi}
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button onClick={onClose}
+            className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-[1.2rem]">
+            Batal
+          </button>
+          <button
+            onClick={() => selectedPerm && onSubmit(selectedPerm)}
+            disabled={!selectedPerm || processing}
+            className={`flex-1 py-3 bg-indigo-600 text-white font-bold rounded-[1.2rem] transition-all
+              ${(!selectedPerm || processing) ? 'opacity-50' : 'hover:bg-indigo-700'}`}
+          >
+            {processing ? '...' : 'Simpan'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
