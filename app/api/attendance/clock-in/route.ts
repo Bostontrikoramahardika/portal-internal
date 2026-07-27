@@ -1,12 +1,13 @@
 // app/api/attendance/clock-in/route.ts
-// v2.0 - Chat 26: FIX shift malam lintas hari
-// - detectShiftAndDate: return shift + tanggal shift
-// - Shift MALAM jam 00:00 - 07:59 (malamPulang + 3 jam) = shift kemarin
+// v3.0 - Chat 27: LOGIKA BARU - Absen adalah INTI, bukan mengikuti roster
+// - Tanggal absen = tanggal kalender WITA saat clock-in
+// - Shift ditentukan dari JAM WITA (SIANG: 04-15, MALAM: 16-03)
+// - Tidak ada logika "shift kemarin" / "cutoff" / "lintas hari"
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
-import { toWitaDate, toWita } from '@/app/lib/timezone'
+import { toWita } from '@/app/lib/timezone'
 
 // Hitung jarak antar 2 koordinat (dalam meter)
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -21,65 +22,21 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c
 }
 
-// v2.1 - Chat 27: FIX auto-clockout bug shift pagi
-// Kalau shift malam kemarin sudah clock_out (auto/manual), anggap ini clock-in shift pagi hari ini
-async function detectShiftAndDate(
-  clockTime: Date,
-  siteConfig: any,
-  nrp: string
-): Promise<{ shift: 'SIANG' | 'MALAM'; shiftDate: string }> {
+// v3.0 - Chat 27: LOGIKA BARU YANG SEDERHANA
+// - Tanggal = kalender WITA saat clock-in
+// - Shift = ditentukan dari jam WITA:
+//     04:00 - 15:59 = SIANG
+//     16:00 - 03:59 = MALAM
+function detectShiftAndDate(clockTime: Date): { shift: 'SIANG' | 'MALAM'; shiftDate: string } {
   const witaTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
   const hour = witaTime.getUTCHours()
+  const witaDate = witaTime.toISOString().split('T')[0]
 
-  const siangStartH  = siteConfig?.siang_jam_masuk  ? parseInt(siteConfig.siang_jam_masuk.split(':')[0])  : 6
-  const malamStartH  = siteConfig?.malam_jam_masuk  ? parseInt(siteConfig.malam_jam_masuk.split(':')[0])  : 18
-  const malamPulangH = siteConfig?.malam_jam_pulang ? parseInt(siteConfig.malam_jam_pulang.split(':')[0]) : 5
+  const shift: 'SIANG' | 'MALAM' = (hour >= 4 && hour < 16) ? 'SIANG' : 'MALAM'
 
-  const malamCutoff = malamPulangH + 3
-  const todayWita = witaTime.toISOString().split('T')[0]
-
-  // Zone 1: Pagi buta (jam 00:00 - cutoff)
-  if (hour < malamCutoff) {
-    // ⚡ Cek apakah user PUNYA record shift MALAM kemarin yang BELUM clock-out
-    const yesterdayWita = new Date(witaTime)
-    yesterdayWita.setUTCDate(yesterdayWita.getUTCDate() - 1)
-    const yesterdayStr = yesterdayWita.toISOString().split('T')[0]
-
-    const { data: yesterdayRecord } = await supabase
-      .from('attendance')
-      .select('clock_in, clock_out, shift')
-      .eq('nrp', nrp)
-      .eq('tanggal', yesterdayStr)
-      .maybeSingle()
-
-    // Kalau ada record MALAM kemarin & BELUM clock-out → benar-benar shift malam kemarin
-    if (yesterdayRecord && yesterdayRecord.clock_in && !yesterdayRecord.clock_out) {
-      return {
-        shift: 'MALAM',
-        shiftDate: yesterdayStr
-      }
-    }
-
-    // Kalau sudah clock-out (termasuk auto-clockout) atau tidak ada record
-    // → anggap ini clock-in shift PAGI hari ini
-    return {
-      shift: 'SIANG',
-      shiftDate: todayWita
-    }
-  }
-
-  // Zone 2: Jam siangStart - malamStart = shift SIANG hari ini
-  if (hour >= siangStartH && hour < malamStartH) {
-    return {
-      shift: 'SIANG',
-      shiftDate: todayWita
-    }
-  }
-
-  // Zone 3: Jam malamStart - 23:59 = shift MALAM hari ini
   return {
-    shift: 'MALAM',
-    shiftDate: todayWita
+    shift,
+    shiftDate: witaDate
   }
 }
 
@@ -167,22 +124,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Deteksi shift & tanggal shift (v2.0 Chat 26: FIX shift malam lintas hari)
-    const { shift, shiftDate } = await detectShiftAndDate(clockTime, siteConfig, session.nrp)
-    const targetDate = shiftDate // ← pakai shiftDate, BUKAN toWitaDate(clockTime)!
+    // 4. Deteksi shift & tanggal shift (v3.0 Chat 27: LOGIKA BARU - berbasis jam WITA)
+    const { shift, shiftDate } = detectShiftAndDate(clockTime)
+    const targetDate = shiftDate
 
     // Jam & menit WITA untuk hitung telat
     const witaTime = toWita(clockTime)
     const jamSekarang = witaTime.getUTCHours()
     const menitSekarang = witaTime.getUTCMinutes()
 
-    // 5. Cek apakah sudah clock in di tanggal SHIFT tersebut
+    // 5. Cek apakah sudah clock in di tanggal SHIFT tersebut (dengan shift yang sama)
     const { data: existing } = await supabase
       .from('attendance')
       .select('*')
       .eq('nrp', session.nrp)
       .eq('tanggal', targetDate)
-      .single()
+      .eq('shift', shift)
+      .maybeSingle()
 
     if (existing && existing.clock_in) {
       // Kalau offline sync dan sudah ada clock_in, skip (idempotent)
@@ -196,7 +154,7 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json({
-        error: `Anda sudah clock in shift ini pada ${new Date(existing.clock_in).toLocaleTimeString('id-ID')}`
+        error: `Anda sudah clock in shift ${shift} tanggal ${targetDate} pada ${new Date(existing.clock_in).toLocaleTimeString('id-ID')}`
       }, { status: 400 })
     }
 

@@ -1,11 +1,11 @@
 // app/api/attendance/clock-out/route.ts
-// v2.0 - Chat 26: FIX shift malam lintas hari
-// - detectShiftDate: shift malam pagi buta = tanggal kemarin
+// v3.0 - Chat 27: LOGIKA BARU - Cari record aktif (clock_in ada, clock_out belum)
+// - Tidak peduli tanggal berapa, yang penting cari record yang belum di-clockout
+// - Menangani dengan mudah kasus shift malam lintas hari
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
-import { toWitaDate } from '@/app/lib/timezone'
 
 // Hitung jarak antar 2 koordinat (dalam meter)
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -18,26 +18,6 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
     Math.sin(dLng / 2) * Math.sin(dLng / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
-}
-
-// v2.0 - Chat 26: Deteksi tanggal shift untuk clock-out
-// Jam pagi buta (00:00 - cutoff) = shift malam dari HARI KEMARIN
-function detectShiftDate(clockTime: Date, siteConfig: any): string {
-  const witaTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
-  const hour = witaTime.getUTCHours()
-
-  const malamPulangH = siteConfig?.malam_jam_pulang ? parseInt(siteConfig.malam_jam_pulang.split(':')[0]) : 5
-  const malamCutoff = malamPulangH + 3
-
-  if (hour < malamCutoff) {
-    // Shift malam kemarin
-    const yesterdayWita = new Date(witaTime)
-    yesterdayWita.setUTCDate(yesterdayWita.getUTCDate() - 1)
-    return yesterdayWita.toISOString().split('T')[0]
-  }
-
-  // Selain itu = tanggal hari ini
-  return witaTime.toISOString().split('T')[0]
 }
 
 export async function POST(request: NextRequest) {
@@ -110,41 +90,46 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Cari attendance tanggal SHIFT tersebut (v2.0: support shift malam lintas hari)
-    const targetDate = detectShiftDate(clockTime, siteConfig)
+    // 4. Cari record AKTIF (clock_in ADA tapi clock_out BELUM)
+    // Logika baru v3.0: tidak peduli tanggal, cari yang masih aktif
+    // Ambil record terbaru dalam 2 hari terakhir yang belum clock_out
+    const witaTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
+    const today = witaTime.toISOString().split('T')[0]
+    const yesterday = new Date(witaTime)
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split('T')[0]
 
-    const { data: existing } = await supabase
+    const { data: activeRecords } = await supabase
       .from('attendance')
       .select('*')
       .eq('nrp', session.nrp)
-      .eq('tanggal', targetDate)
-      .single()
+      .in('tanggal', [yesterdayStr, today])
+      .not('clock_in', 'is', null)
+      .is('clock_out', null)
+      .order('clock_in', { ascending: false })
+      .limit(1)
+
+    const existing = activeRecords && activeRecords.length > 0 ? activeRecords[0] : null
 
     if (!existing) {
-      return NextResponse.json({
-        error: `Belum ada clock in di tanggal ${targetDate}. Harus clock in dulu.`
-      }, { status: 400 })
-    }
+      // Cek apakah karyawan sudah clock_out semua record hari ini/kemarin
+      const { data: recentRecords } = await supabase
+        .from('attendance')
+        .select('tanggal, shift, clock_in, clock_out')
+        .eq('nrp', session.nrp)
+        .in('tanggal', [yesterdayStr, today])
+        .order('clock_in', { ascending: false })
+        .limit(1)
 
-    if (!existing.clock_in) {
-      return NextResponse.json({
-        error: `Belum clock in di tanggal ${targetDate}.`
-      }, { status: 400 })
-    }
-
-    if (existing.clock_out) {
-      // Kalau offline sync dan sudah ada clock_out, skip
-      if (is_offline_sync) {
+      if (recentRecords && recentRecords.length > 0 && recentRecords[0].clock_out) {
+        const lastOut = new Date(recentRecords[0].clock_out).toLocaleString('id-ID')
         return NextResponse.json({
-          success: true,
-          message: `⏭️ Clock out tanggal ${targetDate} sudah ada, di-skip`,
-          data: existing,
-          skipped: true
-        })
+          error: `Anda sudah clock out sebelumnya pada ${lastOut}. Kalau ini shift baru, clock in dulu.`
+        }, { status: 400 })
       }
 
       return NextResponse.json({
-        error: `Sudah clock out pada ${new Date(existing.clock_out).toLocaleTimeString('id-ID')}`
+        error: `Belum ada clock in aktif. Harus clock in dulu.`
       }, { status: 400 })
     }
 
@@ -201,7 +186,8 @@ export async function POST(request: NextRequest) {
       message: successMsg,
       data: result,
       is_offline_sync: !!is_offline_sync,
-      shift_date_used: targetDate
+      record_date: existing.tanggal,
+      record_shift: existing.shift
     })
 
   } catch (err: any) {
