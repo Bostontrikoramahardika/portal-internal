@@ -21,9 +21,13 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c
 }
 
-// v2.0 - Chat 26: FIX shift malam lintas hari
-// Return shift + tanggal shift (bisa beda dari tanggal kalender untuk shift malam pagi buta)
-function detectShiftAndDate(clockTime: Date, siteConfig: any): { shift: 'SIANG' | 'MALAM'; shiftDate: string } {
+// v2.1 - Chat 27: FIX auto-clockout bug shift pagi
+// Kalau shift malam kemarin sudah clock_out (auto/manual), anggap ini clock-in shift pagi hari ini
+async function detectShiftAndDate(
+  clockTime: Date,
+  siteConfig: any,
+  nrp: string
+): Promise<{ shift: 'SIANG' | 'MALAM'; shiftDate: string }> {
   const witaTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
   const hour = witaTime.getUTCHours()
 
@@ -31,18 +35,36 @@ function detectShiftAndDate(clockTime: Date, siteConfig: any): { shift: 'SIANG' 
   const malamStartH  = siteConfig?.malam_jam_masuk  ? parseInt(siteConfig.malam_jam_masuk.split(':')[0])  : 18
   const malamPulangH = siteConfig?.malam_jam_pulang ? parseInt(siteConfig.malam_jam_pulang.split(':')[0]) : 5
 
-  // Toleransi 3 jam setelah jam pulang malam
-  // Contoh: malamPulang = 05:00, cutoff = 08:00
-  // Jam 00:00 - 07:59 = masih shift MALAM dari KEMARIN
   const malamCutoff = malamPulangH + 3
+  const todayWita = witaTime.toISOString().split('T')[0]
 
-  // Zone 1: Pagi buta (jam 00:00 - cutoff) = shift MALAM dari kemarin
+  // Zone 1: Pagi buta (jam 00:00 - cutoff)
   if (hour < malamCutoff) {
+    // ⚡ Cek apakah user PUNYA record shift MALAM kemarin yang BELUM clock-out
     const yesterdayWita = new Date(witaTime)
     yesterdayWita.setUTCDate(yesterdayWita.getUTCDate() - 1)
+    const yesterdayStr = yesterdayWita.toISOString().split('T')[0]
+
+    const { data: yesterdayRecord } = await supabase
+      .from('attendance')
+      .select('clock_in, clock_out, shift')
+      .eq('nrp', nrp)
+      .eq('tanggal', yesterdayStr)
+      .maybeSingle()
+
+    // Kalau ada record MALAM kemarin & BELUM clock-out → benar-benar shift malam kemarin
+    if (yesterdayRecord && yesterdayRecord.clock_in && !yesterdayRecord.clock_out) {
+      return {
+        shift: 'MALAM',
+        shiftDate: yesterdayStr
+      }
+    }
+
+    // Kalau sudah clock-out (termasuk auto-clockout) atau tidak ada record
+    // → anggap ini clock-in shift PAGI hari ini
     return {
-      shift: 'MALAM',
-      shiftDate: yesterdayWita.toISOString().split('T')[0]
+      shift: 'SIANG',
+      shiftDate: todayWita
     }
   }
 
@@ -50,14 +72,14 @@ function detectShiftAndDate(clockTime: Date, siteConfig: any): { shift: 'SIANG' 
   if (hour >= siangStartH && hour < malamStartH) {
     return {
       shift: 'SIANG',
-      shiftDate: witaTime.toISOString().split('T')[0]
+      shiftDate: todayWita
     }
   }
 
   // Zone 3: Jam malamStart - 23:59 = shift MALAM hari ini
   return {
     shift: 'MALAM',
-    shiftDate: witaTime.toISOString().split('T')[0]
+    shiftDate: todayWita
   }
 }
 
@@ -146,7 +168,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Deteksi shift & tanggal shift (v2.0 Chat 26: FIX shift malam lintas hari)
-    const { shift, shiftDate } = detectShiftAndDate(clockTime, siteConfig)
+    const { shift, shiftDate } = await detectShiftAndDate(clockTime, siteConfig, session.nrp)
     const targetDate = shiftDate // ← pakai shiftDate, BUKAN toWitaDate(clockTime)!
 
     // Jam & menit WITA untuk hitung telat
