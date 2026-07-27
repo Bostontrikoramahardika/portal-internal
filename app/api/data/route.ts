@@ -869,14 +869,14 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
     const atasanEmp = atasanNrp ? empMapNrp.get(String(atasanNrp)) : null
     const pjoEmp    = pjoNrp    ? empMapNrp.get(String(pjoNrp))    : null
     
-    return {
-      ...r,
-      _nama_karyawan: emp?.nama || r.nama_karyawan || r.nrp || '-',
-      _jabatan:       emp?.jabatan || '-',
-      _site:          emp?.site || '-',
-      _nama_atasan:   atasanEmp?.nama || (atasanNrp ? String(atasanNrp) : '-'),
-      _nama_pjo:      pjoEmp?.nama    || (pjoNrp    ? String(pjoNrp)    : '-')
-    }
+  return {
+  ...r,
+  _nama_karyawan: emp?.nama || r.nama_karyawan || r.nrp || '-',
+  _jabatan:       emp?.jabatan || '-',
+  _site:          emp?.site || '-',
+  _nama_atasan:   atasanEmp?.nama || (atasanNrp ? String(atasanNrp) : 'Belum diset'),
+  _nama_pjo:      pjoEmp?.nama    || (pjoNrp    ? String(pjoNrp)    : 'Belum diset')
+}
   })
 }
 
