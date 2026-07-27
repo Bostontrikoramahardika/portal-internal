@@ -13,7 +13,7 @@ export const maxDuration = 30
 
 // Konfigurasi toleransi
 const JAM_STANDAR_SHIFT = 11 // jam kerja standar
-const TOLERANSI_JAM = 2 // auto-clockout kalau sudah > 11+2 = 13 jam belum clock-out
+const TOLERANSI_JAM = 9 // toleransi lembur 8 jam + safety 1 jam = 9 jam. Total: 20 jam
 
 export async function GET(req: NextRequest) {
   // ── SECURITY: Hanya boleh dari Cron atau super admin ──
