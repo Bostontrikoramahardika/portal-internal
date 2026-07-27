@@ -3,12 +3,14 @@ import { getSession } from '@/app/lib/auth'
 import { supabaseAdmin as supabase } from '@/app/lib/supabase'
 
 export async function GET(request: NextRequest) {
+  // ─── Auth ───────────────────────────────────────────────────────────────
   const token = request.cookies.get('session_token')?.value
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const session = await getSession(token)
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
+  // ─── Data karyawan login ─────────────────────────────────────────────────
   const { data: emp } = await supabase
     .from('employees')
     .select('site, departemen, jabatan')
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
   const userDept = (emp?.departemen || '').toLowerCase()
   const userJabatan = (emp?.jabatan || '').toLowerCase()
 
-  // Deteksi direct-to-PJO
+  // ─── Deteksi direct-to-PJO ───────────────────────────────────────────────
   const isDirectPJO =
     userJabatan.includes('she') ||
     userJabatan.includes('hrga') ||
@@ -29,8 +31,9 @@ export async function GET(request: NextRequest) {
     userJabatan.includes('supervisor') ||
     userJabatan.includes('manager')
 
-  // Helper: cari PJO di site yang sama
-  async function getPjoSite() {
+  // ─── Helper: cari PJO aktif di site yang sama ────────────────────────────
+  async function getPjoSite(): Promise<{ nrp: string | null; nama: string }> {
+    // Step 1: Ambil semua NRP yang punya role pjo_site & active
     const { data: pjoRoles } = await supabase
       .from('roles')
       .select('nrp')
@@ -38,22 +41,32 @@ export async function GET(request: NextRequest) {
       .eq('active', true)
 
     const pjoNrps = (pjoRoles || []).map((r: any) => r.nrp)
-    if (pjoNrps.length === 0) return { nrp: null, nama: 'Belum ada PJO di Site ini' }
+    if (pjoNrps.length === 0) {
+      return { nrp: null, nama: 'Belum ada PJO di Site ini' }
+    }
 
-    const { data: sitePjo } = await supabase
+    // Step 2: Filter yang se-site, ambil SEMUA (bukan maybeSingle!)
+    // ✅ FIX: Pakai .limit(1) + tanpa maybeSingle → ambil PJO pertama
+    const { data: sitePjoList } = await supabase
       .from('employees')
       .select('nrp, nama, jabatan')
       .in('nrp', pjoNrps)
       .eq('site', userSite)
       .eq('status_karyawan', 'Aktif')
-      .maybeSingle()
+      .order('nama')          // ← konsisten: ambil berdasar nama
+      .limit(1)               // ← ambil 1 saja sebagai "primary PJO"
+
+    const sitePjo = sitePjoList?.[0] ?? null
 
     return {
       nrp: sitePjo?.nrp || null,
-      nama: sitePjo ? `${sitePjo.nama} (${sitePjo.jabatan})` : 'Belum ada PJO di Site ini'
+      nama: sitePjo
+        ? `${sitePjo.nama} (${sitePjo.jabatan})`
+        : 'Belum ada PJO di Site ini'
     }
   }
 
+  // ─── Kalau direct-to-PJO: langsung return PJO ───────────────────────────
   if (isDirectPJO) {
     const pjo = await getPjoSite()
     return NextResponse.json({
@@ -64,7 +77,7 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // Tentukan role atasan
+  // ─── Non-direct: cari atasan (GL/HR Site) ────────────────────────────────
   let targetRole = 'gl_produksi'
   if (userDept === 'plant') {
     targetRole = 'gl_plant'
