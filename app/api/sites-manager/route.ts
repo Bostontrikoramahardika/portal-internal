@@ -1,21 +1,22 @@
 // app/api/sites-manager/route.ts
-// API untuk Kelola Master Site (Super Admin + HRGA) — v2.0 dengan PJO & Deputy
+// v2.1 - Chat 26: FIX sync role pjo_site (scope_site + active + supabaseAdmin)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
-import { supabase } from '@/app/lib/supabase'
+import { supabaseAdmin as supabase } from '@/app/lib/supabase'
 import { logAudit, sessionToAuditActor } from '@/app/lib/auditLog'
 
 // ============================================
-// Helper: assign / copot role pjo_site
+// Helper: assign / copot role pjo_site (v2.1)
 // ============================================
 async function syncPjoRole(args: {
   oldPjoNrp: string | null
   oldDeputyNrp: string | null
   newPjoNrp: string | null
   newDeputyNrp: string | null
+  kodeSite: string  // ⭐ CHAT 26: WAJIB set scope_site
 }) {
-  const { oldPjoNrp, oldDeputyNrp, newPjoNrp, newDeputyNrp } = args
+  const { oldPjoNrp, oldDeputyNrp, newPjoNrp, newDeputyNrp, kodeSite } = args
 
   const oldNrps = new Set([oldPjoNrp, oldDeputyNrp].filter(Boolean) as string[])
   const newNrps = new Set([newPjoNrp, newDeputyNrp].filter(Boolean) as string[])
@@ -26,13 +27,13 @@ async function syncPjoRole(args: {
     if (!newNrps.has(nrp)) toRemove.push(nrp)
   }
 
-  // Tambah role pjo_site ke NRP baru yang belum punya
+  // Tambah/update role pjo_site untuk NRP baru
   const toAdd: string[] = []
   for (const nrp of newNrps) {
     if (!oldNrps.has(nrp)) toAdd.push(nrp)
   }
 
-  // Copot
+  // Copot (delete)
   for (const nrp of toRemove) {
     await supabase
       .from('roles')
@@ -41,17 +42,51 @@ async function syncPjoRole(args: {
       .eq('role', 'pjo_site')
   }
 
-  // Tambah (pakai upsert biar aman kalau sudah ada)
+  // ⭐ CHAT 26: Tambah/update dengan scope_site + active
+  // Strategi: delete dulu (kalau ada), lalu insert baru
+  // Ini lebih aman daripada upsert (yang bisa skip kalau conflict)
   for (const nrp of toAdd) {
+    // Delete existing dulu (biar clean)
     await supabase
       .from('roles')
-      .upsert(
-        { nrp, role: 'pjo_site' },
-        { onConflict: 'nrp,role', ignoreDuplicates: true }
-      )
+      .delete()
+      .eq('nrp', nrp)
+      .eq('role', 'pjo_site')
+
+    // Insert baru dengan scope_site & active
+    await supabase
+      .from('roles')
+      .insert({
+        nrp,
+        role: 'pjo_site',
+        active: true,
+        scope_site: kodeSite
+      })
   }
 
-  return { removed: toRemove, added: toAdd }
+  // ⭐ CHAT 26: Untuk NRP yang MASIH menjabat (di old & new), pastikan scope_site benar
+  const stillActive: string[] = []
+  for (const nrp of newNrps) {
+    if (oldNrps.has(nrp)) stillActive.push(nrp)
+  }
+
+  for (const nrp of stillActive) {
+    await supabase
+      .from('roles')
+      .update({
+        active: true,
+        scope_site: kodeSite
+      })
+      .eq('nrp', nrp)
+      .eq('role', 'pjo_site')
+  }
+
+  return { 
+    removed: toRemove, 
+    added: toAdd, 
+    updated: stillActive,
+    scope_site: kodeSite 
+  }
 }
 
 // ============================================
@@ -111,7 +146,6 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // 3. Return + list karyawan (buat dropdown)
     return NextResponse.json({
       sites: enrichedSites,
       employees: (employees || []).map(e => ({
@@ -152,7 +186,6 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'ID dan data update wajib diisi' }, { status: 400 })
     }
 
-    // Whitelist kolom yang boleh diupdate
     const allowedFields = [
       'nama_site', 'kode_site', 'alamat',
       'siang_jam_masuk', 'siang_jam_pulang', 'siang_batas_telat',
@@ -160,7 +193,7 @@ export async function PUT(request: NextRequest) {
       'latitude', 'longitude', 'radius_meter',
       'minus_terlambat', 'minus_mangkir', 'minus_sp1', 'minus_sp2', 'minus_sp3', 'minus_cnc',
       'active', 'is_active', 'is_pusat',
-      'pjo_nrp', 'deputy_pjo_nrp',  // ⭐ NEW
+      'pjo_nrp', 'deputy_pjo_nrp',
     ]
 
     const numericFields = [
@@ -197,14 +230,13 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // ═══ VALIDASI PJO & DEPUTY ═══
     const isChangingPjo = 'pjo_nrp' in safeUpdates
     const isChangingDeputy = 'deputy_pjo_nrp' in safeUpdates
 
     // Ambil data lama untuk sync role
     const { data: siteBeforeUpdate } = await supabase
       .from('sites_config')
-      .select('nama_site, pjo_nrp, deputy_pjo_nrp')
+      .select('nama_site, kode_site, pjo_nrp, deputy_pjo_nrp')
       .eq('id', id)
       .single()
 
@@ -212,9 +244,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Site tidak ditemukan' }, { status: 404 })
     }
 
-    // Tentukan nilai final PJO & Deputy
     const finalPjoNrp = isChangingPjo ? safeUpdates.pjo_nrp : siteBeforeUpdate.pjo_nrp
     const finalDeputyNrp = isChangingDeputy ? safeUpdates.deputy_pjo_nrp : siteBeforeUpdate.deputy_pjo_nrp
+    const finalKodeSite = safeUpdates.kode_site || siteBeforeUpdate.kode_site  // ⭐ CHAT 26
 
     // Validasi: PJO wajib (kalau field disentuh)
     if (isChangingPjo && !finalPjoNrp) {
@@ -255,7 +287,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // ═══ UPDATE SITE ═══
+    // UPDATE SITE
     const { error } = await supabase
       .from('sites_config')
       .update(safeUpdates)
@@ -265,7 +297,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // ═══ SYNC ROLE pjo_site ═══
+    // ⭐ CHAT 26: SYNC ROLE pjo_site dengan scope_site
     let roleSync = null
     if (isChangingPjo || isChangingDeputy) {
       roleSync = await syncPjoRole({
@@ -273,6 +305,7 @@ export async function PUT(request: NextRequest) {
         oldDeputyNrp: siteBeforeUpdate.deputy_pjo_nrp,
         newPjoNrp: finalPjoNrp,
         newDeputyNrp: finalDeputyNrp,
+        kodeSite: finalKodeSite,
       })
     }
 
