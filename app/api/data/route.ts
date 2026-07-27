@@ -309,7 +309,7 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
     // ==========================================
     // 🎯 CASE B.2: PENILAIAN BAWAHAN (v2.0 - Support role baru)
     // ==========================================
-    if (menuKey === 'penilaian_bawahan') {
+    if (menuKey === 'penilaian_bawahan' || menuKey === 'kpi_bawahan') {
       let finalEmps: any[] = [];
 
       // Role baru: cek berdasarkan hierarchy
