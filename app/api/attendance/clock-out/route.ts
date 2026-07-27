@@ -1,8 +1,13 @@
+// app/api/attendance/clock-out/route.ts
+// v2.0 - Chat 26: FIX shift malam lintas hari
+// - detectShiftDate: shift malam pagi buta = tanggal kemarin
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
 import { toWitaDate } from '@/app/lib/timezone'
 
+// Hitung jarak antar 2 koordinat (dalam meter)
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000
   const dLat = (lat2 - lat1) * Math.PI / 180
@@ -13,6 +18,26 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
     Math.sin(dLng / 2) * Math.sin(dLng / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
+}
+
+// v2.0 - Chat 26: Deteksi tanggal shift untuk clock-out
+// Jam pagi buta (00:00 - cutoff) = shift malam dari HARI KEMARIN
+function detectShiftDate(clockTime: Date, siteConfig: any): string {
+  const witaTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
+  const hour = witaTime.getUTCHours()
+
+  const malamPulangH = siteConfig?.malam_jam_pulang ? parseInt(siteConfig.malam_jam_pulang.split(':')[0]) : 5
+  const malamCutoff = malamPulangH + 3
+
+  if (hour < malamCutoff) {
+    // Shift malam kemarin
+    const yesterdayWita = new Date(witaTime)
+    yesterdayWita.setUTCDate(yesterdayWita.getUTCDate() - 1)
+    return yesterdayWita.toISOString().split('T')[0]
+  }
+
+  // Selain itu = tanggal hari ini
+  return witaTime.toISOString().split('T')[0]
 }
 
 export async function POST(request: NextRequest) {
@@ -61,7 +86,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Data karyawan tidak ditemukan' }, { status: 404 })
     }
 
-    // 2. Ambil config site (validasi GPS)
+    // 2. Ambil config site
     const { data: siteConfig } = await supabase
       .from('sites_config')
       .select('*')
@@ -85,8 +110,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Cari attendance tanggal tersebut (WITA UTC+8)
-    const targetDate = toWitaDate(clockTime)
+    // 4. Cari attendance tanggal SHIFT tersebut (v2.0: support shift malam lintas hari)
+    const targetDate = detectShiftDate(clockTime, siteConfig)
 
     const { data: existing } = await supabase
       .from('attendance')
@@ -175,7 +200,8 @@ export async function POST(request: NextRequest) {
       success: true,
       message: successMsg,
       data: result,
-      is_offline_sync: !!is_offline_sync
+      is_offline_sync: !!is_offline_sync,
+      shift_date_used: targetDate
     })
 
   } catch (err: any) {

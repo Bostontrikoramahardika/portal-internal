@@ -1,3 +1,8 @@
+// app/api/attendance/clock-in/route.ts
+// v2.0 - Chat 26: FIX shift malam lintas hari
+// - detectShiftAndDate: return shift + tanggal shift
+// - Shift MALAM jam 00:00 - 07:59 (malamPulang + 3 jam) = shift kemarin
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
@@ -16,18 +21,44 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c
 }
 
-// Tentukan shift berdasarkan waktu clock in & config site (v1.6.0 Dynamic)
-function detectShift(hour: number, siteConfig: any): 'SIANG' | 'MALAM' {
-  // Ambil jam siang dari DB, default jam 6 pagi
-  const siangStartH = siteConfig?.siang_jam_masuk ? parseInt(siteConfig.siang_jam_masuk.split(':')[0]) : 6
-  // Ambil jam malam dari DB, default jam 18 (6 sore)
-  const malamStartH = siteConfig?.malam_jam_masuk ? parseInt(siteConfig.malam_jam_masuk.split(':')[0]) : 18
+// v2.0 - Chat 26: FIX shift malam lintas hari
+// Return shift + tanggal shift (bisa beda dari tanggal kalender untuk shift malam pagi buta)
+function detectShiftAndDate(clockTime: Date, siteConfig: any): { shift: 'SIANG' | 'MALAM'; shiftDate: string } {
+  const witaTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
+  const hour = witaTime.getUTCHours()
 
-  // Jika jam clock in di antara jam masuk siang dan sebelum jam malam
-  if (hour >= siangStartH && hour < malamStartH) {
-    return 'SIANG'
+  const siangStartH  = siteConfig?.siang_jam_masuk  ? parseInt(siteConfig.siang_jam_masuk.split(':')[0])  : 6
+  const malamStartH  = siteConfig?.malam_jam_masuk  ? parseInt(siteConfig.malam_jam_masuk.split(':')[0])  : 18
+  const malamPulangH = siteConfig?.malam_jam_pulang ? parseInt(siteConfig.malam_jam_pulang.split(':')[0]) : 5
+
+  // Toleransi 3 jam setelah jam pulang malam
+  // Contoh: malamPulang = 05:00, cutoff = 08:00
+  // Jam 00:00 - 07:59 = masih shift MALAM dari KEMARIN
+  const malamCutoff = malamPulangH + 3
+
+  // Zone 1: Pagi buta (jam 00:00 - cutoff) = shift MALAM dari kemarin
+  if (hour < malamCutoff) {
+    const yesterdayWita = new Date(witaTime)
+    yesterdayWita.setUTCDate(yesterdayWita.getUTCDate() - 1)
+    return {
+      shift: 'MALAM',
+      shiftDate: yesterdayWita.toISOString().split('T')[0]
+    }
   }
-  return 'MALAM'
+
+  // Zone 2: Jam siangStart - malamStart = shift SIANG hari ini
+  if (hour >= siangStartH && hour < malamStartH) {
+    return {
+      shift: 'SIANG',
+      shiftDate: witaTime.toISOString().split('T')[0]
+    }
+  }
+
+  // Zone 3: Jam malamStart - 23:59 = shift MALAM hari ini
+  return {
+    shift: 'MALAM',
+    shiftDate: witaTime.toISOString().split('T')[0]
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -46,8 +77,6 @@ export async function POST(request: NextRequest) {
     }
 
     // ⚡ OFFLINE SYNC: Pakai waktu offline kalau ada
-    // Kalau dari offline sync → pakai waktu saat karyawan clock in offline
-    // Kalau online biasa → pakai waktu server sekarang
     const clockTime = is_offline_sync && offline_time
       ? new Date(offline_time)
       : new Date()
@@ -116,9 +145,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Cek apakah sudah clock in di tanggal tersebut (WITA UTC+8)
-    const targetDate = toWitaDate(clockTime)
+    // 4. Deteksi shift & tanggal shift (v2.0 Chat 26: FIX shift malam lintas hari)
+    const { shift, shiftDate } = detectShiftAndDate(clockTime, siteConfig)
+    const targetDate = shiftDate // ← pakai shiftDate, BUKAN toWitaDate(clockTime)!
 
+    // Jam & menit WITA untuk hitung telat
+    const witaTime = toWita(clockTime)
+    const jamSekarang = witaTime.getUTCHours()
+    const menitSekarang = witaTime.getUTCMinutes()
+
+    // 5. Cek apakah sudah clock in di tanggal SHIFT tersebut
     const { data: existing } = await supabase
       .from('attendance')
       .select('*')
@@ -138,19 +174,11 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json({
-        error: `Anda sudah clock in hari ini pada ${new Date(existing.clock_in).toLocaleTimeString('id-ID')}`
+        error: `Anda sudah clock in shift ini pada ${new Date(existing.clock_in).toLocaleTimeString('id-ID')}`
       }, { status: 400 })
     }
 
-    // 5. Detect shift & hitung telat (pakai clockTime, bukan now)
-    // Jam & menit WITA
-    const witaTime = toWita(clockTime)
-    const jamSekarang = witaTime.getUTCHours()
-    const menitSekarang = witaTime.getUTCMinutes()
-    
-    // v1.6.0: Deteksi shift pakai config dari DB
-    const shift = detectShift(jamSekarang, siteConfig)
-
+    // 6. Hitung status & terlambat
     let batasJamMasuk: string
     let batasTelatMenit: number
 
@@ -160,14 +188,6 @@ export async function POST(request: NextRequest) {
     } else {
       batasJamMasuk = siteConfig.malam_jam_masuk || "18:00"
       batasTelatMenit = Number(siteConfig.malam_batas_telat) || 0
-    }
-
-    if (shift === 'SIANG') {
-      batasJamMasuk = siteConfig.siang_jam_masuk
-      batasTelatMenit = siteConfig.siang_batas_telat || 15
-    } else {
-      batasJamMasuk = siteConfig.malam_jam_masuk
-      batasTelatMenit = siteConfig.malam_batas_telat || 15
     }
 
     const [batasH, batasM] = batasJamMasuk.split(':').map(Number)
@@ -192,14 +212,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. Siapkan keterangan (tandai kalau dari offline sync)
+    // 7. Siapkan keterangan
     let keteranganFinal = keterangan || null
     if (is_offline_sync) {
       const syncNote = `[OFFLINE SYNC] Clock in offline pada ${clockTime.toLocaleString('id-ID')}, di-upload ${new Date().toLocaleString('id-ID')}`
       keteranganFinal = keteranganFinal ? `${keteranganFinal} | ${syncNote}` : syncNote
     }
 
-    // 7. Insert atau Update attendance
+    // 8. Insert atau Update attendance
     const attendanceData: any = {
       nrp: session.nrp,
       tanggal: targetDate,
@@ -215,7 +235,6 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString()
     }
 
-    // Tambah flag offline sync kalau kolom-nya ada di database
     if (is_offline_sync) {
       attendanceData.is_offline_sync = true
       attendanceData.synced_at = new Date().toISOString()
@@ -251,7 +270,12 @@ export async function POST(request: NextRequest) {
       success: true,
       message: successMsg,
       data: result,
-      is_offline_sync: !!is_offline_sync
+      is_offline_sync: !!is_offline_sync,
+      shift_info: {
+        shift,
+        shift_date: shiftDate,
+        detected_hour_wita: jamSekarang
+      }
     })
 
   } catch (err: any) {
