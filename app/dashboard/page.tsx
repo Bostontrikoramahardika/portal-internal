@@ -4134,25 +4134,30 @@ function SitesManagerView() {
             {/* Card Body - Info Grid */}
             <div className="p-6 space-y-4">
               {/* Row 1: Total Karyawan + PJO */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-                  <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1">👥 Karyawan</p>
-                  <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-blue-700">{site.total_karyawan}</p>
-                  <p className="text-[9px] font-bold text-blue-400 uppercase mt-0.5">orang aktif</p>
-                </div>
-                <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
-                  <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">🎖️ PJO Site</p>
-                  {site.pjo_list?.length > 0 ? (
-                    site.pjo_list.slice(0, 2).map((pjo: any, i: number) => (
-                      <p key={i} className="text-xs font-black text-amber-700 leading-tight truncate">
-                        {pjo.nama}
-                      </p>
-                    ))
-                  ) : (
-                    <p className="text-xs font-black text-slate-400 italic">Belum ada PJO</p>
-                  )}
-                </div>
-              </div>
+<div className="grid grid-cols-2 gap-3">
+  <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+    <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1">👥 Karyawan</p>
+    <p className="text-2xl font-black text-blue-700">{site.total_karyawan}</p>
+    <p className="text-[9px] font-bold text-blue-400 uppercase mt-0.5">orang aktif</p>
+  </div>
+  <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
+    <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">🎖️ PJO Site</p>
+    {site.pjo_info?.nama ? (
+      <>
+        <p className="text-xs font-black text-amber-700 leading-tight truncate">
+          {site.pjo_info.nama}
+        </p>
+        {site.deputy_info?.nama && (
+          <p className="text-[10px] font-bold text-amber-600/70 leading-tight truncate mt-1">
+            Deputy: {site.deputy_info.nama}
+          </p>
+        )}
+      </>
+    ) : (
+      <p className="text-xs font-black text-slate-400 italic">Belum ada PJO</p>
+    )}
+  </div>
+</div>
 
               {/* Row 2: Shift */}
               <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-2">
