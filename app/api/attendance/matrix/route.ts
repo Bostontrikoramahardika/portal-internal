@@ -1,5 +1,5 @@
-// app/api/attendance/matrix/route.ts v2.1
-// Fix: TypeScript strict + tanggal future + resign + timezone WITA
+// app/api/attendance/matrix/route.ts v2.2
+// v2.2 - Chat 26: FIX bawahan filter (atasan_nrp bukan approver_nrp) + support PJO site
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
@@ -68,7 +68,6 @@ export async function GET(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status })
   const session: any = auth.session!
 
-  // 🆕 Ambil role & super admin flag dari array roles
   const userRoles: string[] = Array.isArray(session.roles) ? session.roles : []
   const role: string = userRoles[0] || 'employee'
   const isSuperAdmin = userRoles.includes('super_admin')
@@ -97,17 +96,37 @@ export async function GET(req: NextRequest) {
     .from('employees')
     .select('nrp, nama, jabatan, departemen, site, status_karyawan, tanggal_resign')
 
-  if (!isSuperAdmin && ['hr_site','pjo_site','she_site'].includes(role)) {
+  // HR Site / SHE Site → filter by site sendiri
+  if (!isSuperAdmin && ['hr_site','she_site'].includes(role)) {
     empQuery = empQuery.eq('site', session.site || '')
   }
-  if (!isSuperAdmin && ['gl_plant','gl_produksi'].includes(role)) {
+
+  // ⭐ CHAT 26: GL Plant / GL Produksi / Atasan → HANYA bawahan (approval_matrix.atasan_nrp)
+  if (!isSuperAdmin && ['gl_plant','gl_produksi','atasan'].includes(role)) {
     const { data: bawahan } = await supabaseAdmin
       .from('approval_matrix')
       .select('employee_nrp')
-      .eq('approver_nrp', session.nrp)
+      .eq('atasan_nrp', session.nrp)     // ✅ FIX: atasan_nrp (bukan approver_nrp)
+      .eq('active', true)
+    
     const nrpList = (bawahan || []).map((b: any) => b.employee_nrp)
     if (nrpList.length === 0) {
-      return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {} })
+      return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: true, role, isViewOnly: false } })
+    }
+    empQuery = empQuery.in('nrp', nrpList)
+  }
+
+  // ⭐ CHAT 26: PJO Site / PJO → semua karyawan yang PJO-nya dia
+  if (!isSuperAdmin && ['pjo_site','pjo'].includes(role)) {
+    const { data: bawahan } = await supabaseAdmin
+      .from('approval_matrix')
+      .select('employee_nrp')
+      .eq('pjo_nrp', session.nrp)
+      .eq('active', true)
+    
+    const nrpList = (bawahan || []).map((b: any) => b.employee_nrp)
+    if (nrpList.length === 0) {
+      return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: true, role, isViewOnly: false } })
     }
     empQuery = empQuery.in('nrp', nrpList)
   }
@@ -121,7 +140,7 @@ export async function GET(req: NextRequest) {
 
   const nrpList = (employees || []).map((e: any) => e.nrp)
   if (nrpList.length === 0) {
-    return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {} })
+    return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: false, role, isViewOnly: HO_VIEW_ONLY.includes(role) } })
   }
 
   // ── STEP 2: Ambil roster ──

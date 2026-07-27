@@ -84,6 +84,9 @@ export default function ManajemenAbsensiPage() {
   const [detailRow, setDetailRow] = useState<Row | null>(null)
   const [editCell,  setEditCell]  = useState<{ row: Row, day: Day } | null>(null)
   const [resignRow, setResignRow] = useState<Row | null>(null)
+  // ⭐ CHAT 26: Popup detail cell (klik quick view)
+  const [detailCell, setDetailCell] = useState<{ row: Row, day: Day } | null>(null)
+
   // Export state
   const [exporting, setExporting] = useState<'matrix' | 'detail' | null>(null)
 
@@ -313,6 +316,13 @@ export default function ManajemenAbsensiPage() {
                 <span className="text-slate-600 truncate text-[9px]">{s.label}</span>
               </div>
             ))}
+            {/* ⭐ CHAT 26: Tambah legenda TERLAMBAT */}
+            <div className="flex items-center gap-1">
+              <div className="w-6 h-5 bg-yellow-300 text-yellow-900 rounded flex items-center justify-center font-black text-[9px]">
+                DS
+              </div>
+              <span className="text-slate-600 truncate text-[9px]">Terlambat</span>
+            </div>
           </div>
         </div>
 
@@ -385,17 +395,48 @@ export default function ManajemenAbsensiPage() {
                           </td>
                           <td className="px-2 py-1.5 text-slate-600">{row.jabatan}</td>
                           {row.days.map(d => {
+                            // ⭐ CHAT 26: Logic warna baru
                             const s = CELL_STYLE[d.code] || CELL_STYLE['-']
-                            const canClick = canEdit
+                            const isDS = d.code === 'DS'
+                            const isNS = d.code === 'NS'
+                            const isHadir = isDS || isNS
+                            const isTerlambat = isHadir && (d.terlambat_menit || 0) > 0
+
+                            // Warna: HADIR TEPAT WAKTU = polos, TERLAMBAT = kuning
+                            let cellBg = s.bg
+                            let cellText = s.text
+                            if (isHadir) {
+                              if (isTerlambat) {
+                                cellBg = 'bg-yellow-300'
+                                cellText = 'text-yellow-900'
+                              } else {
+                                cellBg = 'bg-white border border-slate-200'
+                                cellText = 'text-slate-600'
+                              }
+                            }
+
+                            const displayCode = d.code === '-' ? '' : d.code
+                            const tooltipText = isTerlambat 
+                              ? `${fmtDate(d.tanggal)} — ⚠️ Terlambat ${d.terlambat_menit}m`
+                              : isHadir 
+                                ? `${fmtDate(d.tanggal)} — ✅ Tepat Waktu`
+                                : `${fmtDate(d.tanggal)} — ${s.label}`
+
                             return (
                               <td key={d.tanggal} className="p-0.5">
                                 <button
-                                  disabled={!canClick}
-                                  onClick={() => canClick && setEditCell({ row, day: d })}
-                                  className={`w-full py-1 rounded ${s.bg} ${s.text} font-black text-[9px] ${canClick ? 'cursor-pointer hover:ring-2 hover:ring-[#003D79] active:scale-95' : 'cursor-default'} transition-all`}
-                                  title={`${fmtDate(d.tanggal)} — ${s.label}`}
+                                  onClick={() => {
+                                    // Klik cell → popup detail (bukan langsung edit)
+                                    if (d.clock_in || d.code !== '-') {
+                                      setDetailCell({ row, day: d })
+                                    } else if (canEdit) {
+                                      setEditCell({ row, day: d })
+                                    }
+                                  }}
+                                  className={`w-full py-1 rounded ${cellBg} ${cellText} font-black text-[9px] cursor-pointer hover:ring-2 hover:ring-[#003D79] active:scale-95 transition-all`}
+                                  title={tooltipText}
                                 >
-                                  {d.code === '-' ? '' : d.code}
+                                  {displayCode}
                                 </button>
                               </td>
                             )
@@ -428,6 +469,140 @@ export default function ManajemenAbsensiPage() {
           </div>
         )}
       </div>
+
+      {/* ═══ MODAL POPUP DETAIL CELL (klik tanggal) ═══ CHAT 26 */}
+      {detailCell && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-[55] flex items-end lg:items-center justify-center p-0 lg:p-4"
+          onClick={() => setDetailCell(null)}
+        >
+          <div 
+            className="bg-white w-full lg:max-w-sm rounded-t-[2rem] lg:rounded-[2rem] overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            {(() => {
+              const { row, day } = detailCell
+              const isDS = day.code === 'DS'
+              const isNS = day.code === 'NS'
+              const isHadir = isDS || isNS
+              const isTerlambat = isHadir && (day.terlambat_menit || 0) > 0
+              const s = CELL_STYLE[day.code] || CELL_STYLE['-']
+
+              const headerBg = isTerlambat ? 'bg-yellow-500' : isHadir ? 'bg-emerald-600' : 'bg-[#003D79]'
+              const headerLabel = isTerlambat ? '⚠️ TERLAMBAT' : isHadir ? '✅ AMAN' : s.label
+
+              return (
+                <>
+                  {/* Header */}
+                  <div className={`${headerBg} text-white p-5`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest opacity-80">Detail Absensi</p>
+                      <button 
+                        onClick={() => setDetailCell(null)}
+                        className="w-8 h-8 bg-white/20 rounded-full font-bold hover:bg-white/30"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <h3 className="text-lg font-black leading-tight">{row.nama}</h3>
+                    <p className="text-white/80 text-xs mt-0.5">{fmtDate(day.tanggal)}</p>
+                    <p className="text-white text-xl font-black mt-3">{headerLabel}</p>
+                    {isTerlambat && day.terlambat_menit > 0 && (
+                      <p className="text-white/90 text-sm font-bold mt-0.5">
+                        Terlambat {day.terlambat_menit} menit
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Body */}
+                  <div className="p-5 space-y-3">
+                    {/* Shift Info */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Roster</p>
+                        <p className="text-sm font-black text-slate-800 mt-0.5">{day.roster || '-'}</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Aktual</p>
+                        <p className="text-sm font-black text-slate-800 mt-0.5">
+                          {isDS ? 'Day Shift' : isNS ? 'Night Shift' : s.label}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Clock In/Out */}
+                    {(day.clock_in || day.clock_out) && (
+                      <div className="bg-blue-50 rounded-xl p-4 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">🕐 Clock In</span>
+                          <span className="font-mono font-black text-emerald-700 text-sm">{fmtTime(day.clock_in)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">🕐 Clock Out</span>
+                          <span className="font-mono font-black text-slate-700 text-sm">{fmtTime(day.clock_out)}</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-2 border-t border-blue-200">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">⏱️ Jam Kerja</span>
+                          <span className="font-mono font-black text-[#003D79] text-sm">{fmtJam(day.jam_kerja_menit)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lokasi */}
+                    {day.clock_in_lat && (
+                      <a
+                        href={`https://maps.google.com/?q=${day.clock_in_lat},${day.clock_in_lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block bg-slate-50 rounded-xl p-3 hover:bg-slate-100 transition-all"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">📍 Lokasi Clock In</p>
+                            <p className="text-xs font-mono text-slate-700 mt-0.5">
+                              {Number(day.clock_in_lat).toFixed(4)}, {Number(day.clock_in_lng).toFixed(4)}
+                            </p>
+                          </div>
+                          <span className="text-blue-600 text-2xl">→</span>
+                        </div>
+                      </a>
+                    )}
+
+                    {/* Keterangan */}
+                    {day.keterangan && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">📝 Keterangan</p>
+                        <p className="text-xs text-amber-900 mt-1 italic">"{day.keterangan}"</p>
+                      </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="flex gap-2 pt-2">
+                      {canEdit && (
+                        <button
+                          onClick={() => {
+                            setEditCell({ row, day })
+                            setDetailCell(null)
+                          }}
+                          className="flex-1 bg-amber-500 text-white py-2.5 rounded-xl text-xs font-black hover:bg-amber-600"
+                        >
+                          ✏️ Edit
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setDetailCell(null)}
+                        className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl text-xs font-black hover:bg-slate-200"
+                      >
+                        Tutup
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* ═══ MODAL DETAIL KARYAWAN ═══ */}
       {detailRow && (
