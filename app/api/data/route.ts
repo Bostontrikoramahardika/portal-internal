@@ -815,31 +815,67 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
   if (!rows || rows.length === 0) return rows
   const isNameBased = NAME_BASED_TABLES.includes(table)
   const mainNrpField = table === 'approval_matrix' ? 'employee_nrp' : 'nrp'
-  const allNrps = new Set<string>()
-
+  
+  // Step 1: Collect NRP karyawan (row utama)
+  const employeeNrps = new Set<string>()
   rows.forEach((r: any) => {
-    if (!isNameBased && r[mainNrpField]) allNrps.add(String(r[mainNrpField]))
-    if (r.atasan_nrp) allNrps.add(String(r.atasan_nrp))
-    if (r.pjo_nrp) allNrps.add(String(r.pjo_nrp))
+    if (!isNameBased && r[mainNrpField]) employeeNrps.add(String(r[mainNrpField]))
+    // Kalau tabel-nya bukan employees, tetap ambil atasan_nrp/pjo_nrp dari row (kompatibel dgn tabel lain)
+    if (r.atasan_nrp) employeeNrps.add(String(r.atasan_nrp))
+    if (r.pjo_nrp) employeeNrps.add(String(r.pjo_nrp))
   })
 
+  // Step 2: 🌟 CHAT 26: Kalau tabel = employees, ambil atasan_nrp & pjo_nrp dari approval_matrix
+  const matrixMap = new Map<string, { atasan_nrp: string; pjo_nrp: string }>()
+  if (table === 'employees' && employeeNrps.size > 0) {
+    const { data: matrix } = await supabase
+      .from('approval_matrix')
+      .select('employee_nrp, atasan_nrp, pjo_nrp')
+      .in('employee_nrp', Array.from(employeeNrps))
+      .eq('active', true)
+
+    for (const m of (matrix || [])) {
+      matrixMap.set(String(m.employee_nrp), {
+        atasan_nrp: m.atasan_nrp,
+        pjo_nrp: m.pjo_nrp
+      })
+      // Tambah juga atasan/pjo NRP ke set → biar diambil datanya
+      if (m.atasan_nrp) employeeNrps.add(String(m.atasan_nrp))
+      if (m.pjo_nrp) employeeNrps.add(String(m.pjo_nrp))
+    }
+  }
+
+  // Step 3: Ambil semua data employees (untuk enrichment)
   let employees: any[] = []
-  if (allNrps.size > 0) {
-    const { data } = await supabase.from('employees').select('nrp, nama, jabatan, departemen, site').in('nrp', Array.from(allNrps))
+  if (employeeNrps.size > 0) {
+    const { data } = await supabase
+      .from('employees')
+      .select('nrp, nama, jabatan, departemen, site')
+      .in('nrp', Array.from(employeeNrps))
     employees = data || []
   }
 
   const empMapNrp = new Map(employees.map((e: any) => [String(e.nrp), e]))
 
+  // Step 4: Enrich rows
   return rows.map((r: any) => {
     const emp = empMapNrp.get(String(r[mainNrpField]))
+    
+    // 🌟 CHAT 26: Ambil atasan/PJO NRP - prioritas dari matrix, fallback dari kolom row
+    const matrixEntry = matrixMap.get(String(r[mainNrpField]))
+    const atasanNrp = matrixEntry?.atasan_nrp || r.atasan_nrp
+    const pjoNrp    = matrixEntry?.pjo_nrp    || r.pjo_nrp
+
+    const atasanEmp = atasanNrp ? empMapNrp.get(String(atasanNrp)) : null
+    const pjoEmp    = pjoNrp    ? empMapNrp.get(String(pjoNrp))    : null
+    
     return {
       ...r,
       _nama_karyawan: emp?.nama || r.nama_karyawan || r.nrp || '-',
-      _jabatan: emp?.jabatan || '-',
-      _site: emp?.site || '-',
-      _nama_atasan: empMapNrp.get(String(r.atasan_nrp))?.nama || r.atasan_nrp || '-',
-      _nama_pjo: empMapNrp.get(String(r.pjo_nrp))?.nama || r.pjo_nrp || '-'
+      _jabatan:       emp?.jabatan || '-',
+      _site:          emp?.site || '-',
+      _nama_atasan:   atasanEmp?.nama || (atasanNrp ? String(atasanNrp) : '-'),
+      _nama_pjo:      pjoEmp?.nama    || (pjoNrp    ? String(pjoNrp)    : '-')
     }
   })
 }
