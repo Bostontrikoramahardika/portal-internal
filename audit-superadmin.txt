@@ -1,0 +1,359 @@
+﻿app\api\announcements\list\route.ts : Line 12 : if (!session?.is_super_admin) {
+app\api\announcements\route.ts : Line 69 : if (!session?.is_super_admin) {
+app\api\apd\distribusi\route.ts : Line 15 : const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho', 'pjo_site', 'manager_ops']
+app\api\apd\distribusi\route.ts : Line 61 : const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho']
+app\api\apd\master\route.ts : Line 36 : // Hanya HR/SHE/Super Admin yang boleh
+app\api\apd\master\route.ts : Line 37 : const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho']
+app\api\apd\master\route.ts : Line 108 : const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho']
+app\api\apd\master\route.ts : Line 161 : const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho']
+app\api\apd\monitoring\route.ts : Line 9 : 'super_admin', 'director_ops', 'business_dev',
+app\api\apd\plan\route.ts : Line 15 : const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho', 'pjo_site', 'manager_ops']
+app\api\apd\plan\route.ts : Line 167 : const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho']
+app\api\apd\plan\route.ts : Line 213 : const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho']
+app\api\apd\stok\route.ts : Line 15 : const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho', 'manager_ops']
+app\api\apd\stok\route.ts : Line 89 : const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho']
+app\api\apd\stok\route.ts : Line 133 : // Hanya super_admin yang boleh hapus stok (prevent abuse)
+app\api\apd\stok\route.ts : Line 134 : if (!userRoles.includes('super_admin') && !userRoles.includes('hr_ho')) {
+app\api\apd\verify\route.ts : Line 9 : 'super_admin', 'hr_ho', 'hr_site', 'spv_she_ho', 'she_site',
+app\api\apd\verify\route.ts : Line 73 : const isHOScope = userRoles.some(r => ['super_admin', 'hr_ho', 'spv_she_ho', 'hrga'].includes(r))
+approval-center\route.ts : Line 28 : const isSuperAdmin = session.is_super_admin || false
+approval-center\route.ts : Line 49 : // Super Admin bypass semua
+approval-center\route.ts : Line 50 : const showAtasanTab = isSuperAdmin || isAtasanRole || pernahJadiAtasan
+approval-center\route.ts : Line 51 : const showPjoTab = isSuperAdmin || isPJO || pernahJadiPJO
+app\api\attendance\auto-clockout\route.ts : Line 17 : // ── SECURITY: Hanya boleh dari Cron atau super admin ──
+app\api\attendance\auto-clockout\route.ts : Line 29 : if (!session?.is_super_admin) {
+app\api\attendance\auto-clockout\route.ts : Line 30 : return NextResponse.json({ error: 'Forbidden - Cron atau Super Admin only' }, { status: 403 })
+app\api\attendance\corrections\override\route.ts : Line 31 : actorIsSuperAdmin: Boolean(session?.is_super_admin),
+app\api\attendance\corrections\[id]\route.ts : Line 37 : isSuperAdmin: Boolean(session?.is_super_admin),
+app\api\attendance\corrections\[id]\route.ts : Line 89 : isSuperAdmin: Boolean(session?.is_super_admin),
+app\api\attendance\corrections\[id]\route.ts : Line 101 : isSuperAdmin: Boolean(session?.is_super_admin),
+app\api\attendance\corrections\route.ts : Line 36 : isSuperAdmin: Boolean(session?.is_super_admin),
+app\api\attendance\corrections\route.ts : Line 85 : sessionIsSuperAdmin: Boolean(session?.is_super_admin),
+app\api\attendance\matrix\edit\route.ts : Line 5 : const EDIT_ROLES = ['super_admin','hr_site','pjo_site','gl_produksi','gl_plant']
+app\api\attendance\matrix\edit\route.ts : Line 12 : const canEdit = session.is_super_admin || EDIT_ROLES.includes(session.role)
+app\api\attendance\matrix\route.ts : Line 9 : const SITE_EDIT     = ['hr_site','pjo_site','super_admin']
+app\api\attendance\matrix\route.ts : Line 71 : // 🆕 Ambil role & super admin flag dari array roles
+app\api\attendance\matrix\route.ts : Line 74 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\attendance\matrix\route.ts : Line 76 : if (role === 'employee' && !isSuperAdmin) {
+app\api\attendance\matrix\route.ts : Line 100 : if (!isSuperAdmin && ['hr_site','pjo_site','she_site'].includes(role)) {
+app\api\attendance\matrix\route.ts : Line 103 : if (!isSuperAdmin && ['gl_plant','gl_produksi'].includes(role)) {
+app\api\attendance\matrix\route.ts : Line 255 : const canEdit = isSuperAdmin ||
+app\api\attendance\rekap\route.ts : Line 5 : const HO_ROLES    = ['super_admin','hr_ho','director_ops','business_dev','manager_ops','spv_she_ho']
+app\api\audit-logs\route.ts : Line 2 : // API untuk ambil riwayat audit logs (Khusus Super Admin)
+app\api\audit-logs\route.ts : Line 21 : // 🔒 Hanya Super Admin yang boleh lihat audit logs
+app\api\audit-logs\route.ts : Line 22 : if (!session.is_super_admin) {
+app\api\audit-logs\route.ts : Line 23 : return NextResponse.json({ error: 'Akses ditolak - hanya Super Admin' }, { status: 403 })
+app\api\audit-logs\route.ts : Line 101 : if (!session?.is_super_admin) {
+app\api\auth\me\route.ts : Line 27 : .select('nrp, nama, jabatan, departemen, site, is_super_admin')
+app\api\auth\me\route.ts : Line 38 : is_super_admin: Boolean(emp?.is_super_admin)
+app\api\auth\me\route.ts : Line 41 : is_super_admin: Boolean(emp?.is_super_admin),
+app\api\crud\route.ts : Line 39 : // Super admin bypass semua
+app\api\crud\route.ts : Line 40 : if (session.is_super_admin) return { allowed: true }
+app\api\data\route.ts : Line 49 : const isSuperAdmin = session.is_super_admin || false
+app\api\data\route.ts : Line 51 : const menuInfo = isSuperAdmin
+app\api\data\route.ts : Line 59 : const isHrgaAll = isSuperAdmin || rolesLower.some((r: string) => ['hr_ho', 'hrga_oprek', 'hrga_pusat', 'hrga', 'admin'].includes(r))
+app\api\data\route.ts : Line 304 : // ─── PRIORITAS 1: Super Admin / HR HO → semua karyawan ───
+app\api\data\route.ts : Line 305 : if (isSuperAdmin || isHRHO) {
+app\api\data\route.ts : Line 436 : // - Super Admin / HRGA HO → semua site
+app\api\data\route.ts : Line 442 : // HRGA HO / Super Admin → semua karyawan
+app\api\data\route.ts : Line 713 : // Skip jika SELF (data sendiri) atau Super Admin
+app\api\data\route.ts : Line 714 : if (access_mode !== 'SELF' && !isSuperAdmin) {
+app\api\data-karyawan\route.ts : Line 16 : 'super_admin', 'hr_ho', 'hr_site',
+app\api\data-karyawan\route.ts : Line 23 : if (session?.is_super_admin) return true
+app\api\employees\resign\route.ts : Line 5 : const RESIGN_ROLES = ['super_admin','hr_ho','hr_site','pjo_site']
+app\api\employees\resign\route.ts : Line 12 : const canResign = session.is_super_admin || RESIGN_ROLES.includes(session.role)
+app\api\employees\resign\route.ts : Line 58 : if (!session.is_super_admin && !['hr_ho','hr_site','pjo_site'].includes(session.role)) {
+app\api\employees\search\route.ts : Line 18 : const isSuperOrHO = Boolean(session.is_super_admin) ||
+app\api\employees\search\route.ts : Line 19 : userRoles.some(r => ['super_admin','hr_ho','director_ops','business_dev','manager_ops','spv_she_ho'].includes(r))
+app\api\employees\search\route.ts : Line 29 : // Non-super admin: scope ke site sendiri
+app\api\employees\route.ts : Line 12 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\employees\route.ts : Line 23 : const isHoRole = ['super_admin', 'director_ops', 'business_dev', 'hr_ho',
+app\api\employees\route.ts : Line 25 : const siteScope = (!isSuperAdmin && !isHoRole && session.site) ? session.site : null
+app\api\export-absensi\route.ts : Line 16 : session.is_super_admin ||
+app\api\export-absensi-matrix\route.ts : Line 13 : if (session.is_super_admin) return true
+app\api\gdrive\delete\route.ts : Line 2 : // Hapus file dari Google Drive - SUPER ADMIN ONLY
+app\api\gdrive\delete\route.ts : Line 9 : import { requireSuperAdmin } from '@/app/lib/auth';
+app\api\gdrive\delete\route.ts : Line 12 : const auth = await requireSuperAdmin(req);
+app\api\gdrive\delete\route.ts : Line 48 : const auth = await requireSuperAdmin(req);
+app\api\gdrive\upload\route.ts : Line 2 : // Upload file ke Google Drive - SUPER ADMIN ONLY
+app\api\gdrive\upload\route.ts : Line 9 : import { requireSuperAdmin } from '@/app/lib/auth';
+app\api\gdrive\upload\route.ts : Line 16 : const auth = await requireSuperAdmin(req);
+app\api\health-check\route.ts : Line 90 : await runCheck('DATA', 'Super Admin (Ricky) ada', async () => {
+app\api\health-check\route.ts : Line 91 : const { data, error } = await supabase.from('employees').select('nrp, nama, is_super_admin').eq('is_super_admin', true)
+app\api\health-check\route.ts : Line 93 : if (!data || data.length === 0) throw new Error('Tidak ada Super Admin!')
+app\api\health-check\route.ts : Line 94 : return { message: `✅ ${data.length} Super Admin`, detail: data.map((d: any) => d.nama) }
+app\api\health-check\route.ts : Line 196 : is_super_admin: session.is_super_admin,
+app\api\kelola-akses\sites\route.ts : Line 39 : 'super_admin',
+app\api\kelola-akses\templates\route.ts : Line 6 : 'super_admin', 'hr_ho', 'director_ops',
+app\api\kelola-akses\templates\route.ts : Line 22 : // Get all active templates (exclude super_admin from non-super_admin)
+app\api\kelola-akses\templates\route.ts : Line 23 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\kelola-akses\templates\route.ts : Line 30 : // 🔒 super_admin SELALU hidden dari UI (assign hanya via SQL)
+app\api\kelola-akses\templates\route.ts : Line 31 : tplQuery = tplQuery.neq('role_key', 'super_admin')
+app\api\kelola-akses\templates\route.ts : Line 86 : // Guard: super_admin template only by super_admin
+app\api\kelola-akses\templates\route.ts : Line 87 : if (role_key === 'super_admin' && !userRoles.includes('super_admin')) {
+app\api\kelola-akses\route.ts : Line 15 : const allowed = ['super_admin', 'hr_ho', 'director_ops', 'business_dev', 'manager_ops', 'spv_she_ho']
+app\api\kelola-akses\route.ts : Line 31 : .select('nrp, nama, jabatan, departemen, site, no_hp, email, tanggal_resign, is_super_admin')
+app\api\kelola-akses\route.ts : Line 77 : .select('nrp, nama, jabatan, departemen, site, is_super_admin, tanggal_resign')
+app\api\kelola-akses\route.ts : Line 129 : // 🔒 Guard: cuma super_admin yang boleh lihat/assign role 'super_admin'
+app\api\kelola-akses\route.ts : Line 130 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\kelola-akses\route.ts : Line 138 : // 🔒 super_admin selalu di-hide dari dropdown (assign manual via SQL)
+app\api\kelola-akses\route.ts : Line 139 : roleQuery = roleQuery.neq('role_key', 'super_admin')
+app\api\kelola-akses\route.ts : Line 172 : const allowed = ['super_admin', 'hr_ho', 'director_ops', 'business_dev', 'manager_ops', 'spv_she_ho']
+app\api\kelola-akses\route.ts : Line 185 : // 🔒 Extra guard: kalau target adalah super_admin dan user bukan super_admin → tolak
+app\api\kelola-akses\route.ts : Line 186 : const isTargetSuper = target_nrp === session.nrp && userRoles.includes('super_admin')
+app\api\kelola-akses\route.ts : Line 187 : if (action === 'REMOVE_ROLE' && role === 'super_admin' && !userRoles.includes('super_admin')) {
+app\api\kelola-akses\route.ts : Line 188 : return NextResponse.json({ error: 'Hanya super_admin yang boleh copot role super_admin' }, { status: 403 })
+app\api\kelola-akses\route.ts : Line 191 : // ═══ Guard: super_admin cuma boleh dikelola super_admin ═══
+app\api\kelola-akses\route.ts : Line 192 : if (role === 'super_admin' && !userRoles.includes('super_admin')) {
+app\api\kelola-akses\route.ts : Line 193 : return NextResponse.json({ error: 'Hanya super_admin yang boleh assign super_admin' }, { status: 403 })
+app\api\kelola-akses\route.ts : Line 196 : // ═══ Guard: tidak boleh copot super_admin dari diri sendiri ═══
+app\api\kelola-akses\route.ts : Line 197 : if (action === 'REMOVE_ROLE' && role === 'super_admin' && target_nrp === session.nrp) {
+app\api\kelola-akses\route.ts : Line 198 : return NextResponse.json({ error: 'Tidak boleh copot super_admin dari diri sendiri' }, { status: 400 })
+app\api\kelola-hak-cuti\route.ts : Line 15 : if (session.is_super_admin) return true
+app\api\kelola-hak-cuti\route.ts : Line 21 : if (session.is_super_admin) return true
+app\api\kelola-hak-cuti\route.ts : Line 49 : const isSuperAdmin = session.is_super_admin || false
+app\api\kelola-hak-cuti\route.ts : Line 66 : if (isHRSite && !isSuperAdmin && !isHRHO) {
+app\api\mcu\create\route.ts : Line 14 : const editRoles = ['super_admin','hr_site','she_site','pjo_site']
+app\api\mcu\import\commit\route.ts : Line 10 : const ALLOWED_ROLES = ['super_admin', 'hr_ho', 'hr_site']
+app\api\mcu\import\commit\route.ts : Line 19 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\mcu\import\commit\route.ts : Line 21 : if (!isSuperAdmin && !ALLOWED_ROLES.includes(role)) {
+app\api\mcu\import\preview\route.ts : Line 11 : const ALLOWED_ROLES = ['super_admin', 'hr_ho', 'hr_site']
+app\api\mcu\import\preview\route.ts : Line 41 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\mcu\import\preview\route.ts : Line 43 : if (!isSuperAdmin && !ALLOWED_ROLES.includes(role)) {
+app\api\mcu\import\preview\route.ts : Line 95 : if (!isSuperAdmin && role === 'hr_site' && emp && emp.site !== session.site) {
+app\api\mcu\import\template\route.ts : Line 9 : const ALLOWED_ROLES = ['super_admin', 'hr_ho', 'hr_site']
+app\api\mcu\import\template\route.ts : Line 26 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\mcu\import\template\route.ts : Line 28 : if (!isSuperAdmin && !ALLOWED_ROLES.includes(role)) {
+app\api\mcu\import\template\route.ts : Line 44 : if (!isSuperAdmin && role === 'hr_site') {
+app\api\mcu\karyawan\[nrp]\route.ts : Line 18 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\mcu\karyawan\[nrp]\route.ts : Line 30 : const HO_ROLES = ['super_admin', 'hr_ho', 'director_ops', 'business_dev', 'manager_ops', 'spv_she_ho']
+app\api\mcu\karyawan\[nrp]\route.ts : Line 31 : const isHO = isSuperAdmin || HO_ROLES.includes(role)
+app\api\mcu\matrix\export\route.ts : Line 9 : const HO_ROLES = ['super_admin', 'hr_ho', 'director_ops', 'business_dev', 'manager_ops', 'spv_she_ho']
+app\api\mcu\matrix\export\route.ts : Line 27 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\mcu\matrix\export\route.ts : Line 28 : const isHO = isSuperAdmin || HO_ROLES.includes(role)
+app\api\mcu\matrix\export\route.ts : Line 30 : if (role === 'employee' && !isSuperAdmin) {
+app\api\mcu\matrix\route.ts : Line 8 : const HO_ROLES = ['super_admin', 'hr_ho', 'director_ops', 'business_dev', 'manager_ops', 'spv_she_ho']
+app\api\mcu\matrix\route.ts : Line 19 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\mcu\matrix\route.ts : Line 20 : const isHO = isSuperAdmin || HO_ROLES.includes(role)
+app\api\mcu\matrix\route.ts : Line 22 : if (role === 'employee' && !isSuperAdmin) {
+app\api\mcu\matrix\route.ts : Line 166 : canEdit: isSuperAdmin || SITE_ROLES.includes(role) || role === 'hr_ho',
+app\api\mcu\monitoring\route.ts : Line 21 : const isSuperAdmin = Boolean(session.is_super_admin) || userRoles.includes('super_admin')
+app\api\mcu\monitoring\route.ts : Line 24 : 'super_admin','hr_site','she_site','hr_ho',
+app\api\mcu\monitoring\route.ts : Line 27 : const hasAccess = isSuperAdmin || userRoles.some(r => allowedRoles.includes(r))
+app\api\mcu\monitoring\route.ts : Line 33 : const isSuperOrHO = isSuperAdmin || userRoles.some(r =>
+app\api\mcu\monitoring\route.ts : Line 96 : // ─── STEP 4: Enrich MCU data + filter by site untuk non-superadmin ─────────
+app\api\mcu\[id]\findings\[findingId]\rujukan\route.ts : Line 11 : const HR_ROLES = ['super_admin', 'hr_ho', 'hr_site']
+app\api\mcu\[id]\findings\[findingId]\rujukan\route.ts : Line 27 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\mcu\[id]\findings\[findingId]\rujukan\route.ts : Line 29 : if (!isSuperAdmin && !HR_ROLES.includes(role)) {
+app\api\mcu\[id]\findings\[findingId]\rujukan\route.ts : Line 148 : const isSuperAdmin = userRoles.includes('super_admin')
+app\api\mcu\[id]\findings\[findingId]\rujukan\route.ts : Line 150 : if (!isSuperAdmin && !HR_ROLES.includes(role)) {
+app\api\mcu\[id]\findings\route.ts : Line 35 : const editRoles = ['super_admin','hr_site','she_site','pjo_site']
+app\api\mcu\[id]\findings\route.ts : Line 99 : const editRoles = ['super_admin','hr_site','she_site','pjo_site']
+app\api\mcu\[id]\route.ts : Line 46 : // ─── PUT: Edit MCU (HR/Super Admin) ──────────────────────────
+app\api\mcu\[id]\route.ts : Line 56 : const editRoles = ['super_admin','hr_site','she_site','pjo_site','hr_ho']
+app\api\mcu\[id]\route.ts : Line 184 : const editRoles = ['super_admin','hr_site','she_site','pjo_site']
+app\api\menus\route.ts : Line 12 : const isSuperAdmin = session.is_super_admin || false
+app\api\menus\route.ts : Line 20 : if (!isSuperAdmin) {
+app\api\monitoring-cuti\route.ts : Line 14 : if (session.is_super_admin) return true
+app\api\monitoring-cuti\route.ts : Line 54 : const isSuperAdmin = session.is_super_admin || false
+app\api\monitoring-cuti\route.ts : Line 55 : const isHOScope = isSuperAdmin || rolesLower.some((r: string) =>
+app\api\monitoring-expired\route.ts : Line 30 : // Cek permission: harus HRGA atau Super Admin
+app\api\monitoring-expired\route.ts : Line 32 : const isSuperAdmin = session.is_super_admin || false
+app\api\monitoring-expired\route.ts : Line 33 : const isHrga = isSuperAdmin || roles.some((r: string) => ['admin', 'hrga', 'hrga_site', 'hrga_pusat'].includes(r))
+app\api\monitoring-expired\route.ts : Line 114 : const isSuperAdmin = session.is_super_admin || false
+app\api\monitoring-expired\route.ts : Line 115 : const isHrga = isSuperAdmin || roles.some((r: string) => ['admin', 'hrga', 'hrga_site', 'hrga_pusat'].includes(r))
+app\api\monitoring-roster-cr\route.ts : Line 12 : if (session.is_super_admin) return true
+app\api\monitoring-roster-cr\route.ts : Line 167 : const isSuperAdmin = session.is_super_admin || false
+app\api\monitoring-roster-cr\route.ts : Line 169 : const isHOScope = isSuperAdmin || rolesLower.some((r: string) =>
+app\api\notifikasi\route.ts : Line 30 : const isSuperAdmin = session.is_super_admin || false
+app\api\notifikasi\route.ts : Line 31 : const isHrga = isSuperAdmin || roles.some((r: string) => ['admin', 'hrga', 'hrga_site', 'hrga_pusat'].includes(r))
+app\api\notifikasi\route.ts : Line 32 : const isApprover = isSuperAdmin || roles.some((r: string) => ['atasan', 'pjo', 'hrga_site', 'admin_site'].includes(r))
+app\api\part-orders\list\route.ts : Line 6 : const ADMIN_ROLES = ['super_admin', 'admin_plant', 'gl_plant', 'pjo_site', 'manager_ops', 'director_ops']
+app\api\part-orders\list\route.ts : Line 21 : const isAdmin = session.is_super_admin ||
+app\api\part-orders\update-status\route.ts : Line 5 : const ADMIN_ROLES = ['super_admin', 'admin_plant', 'gl_plant', 'pjo_site', 'manager_ops', 'director_ops']
+app\api\part-orders\update-status\route.ts : Line 12 : const isAdmin = session.is_super_admin ||
+app\api\partbook\assemblies\[id]\route.ts : Line 18 : const canEdit = session.is_super_admin ||
+app\api\partbook\assemblies\[id]\route.ts : Line 20 : ['super_admin', 'admin_plant', 'gl_plant'].includes(r)
+app\api\partbook\assemblies\[id]\route.ts : Line 65 : const canDelete = session.is_super_admin ||
+app\api\partbook\assemblies\[id]\route.ts : Line 67 : ['super_admin', 'admin_plant'].includes(r)
+app\api\partbook\assemblies\[id]\route.ts : Line 72 : error: 'Hanya Admin Plant atau Super Admin yang bisa menghapus assembly'
+app\api\partbook\process\route.ts : Line 20 : const canProcess = session.is_super_admin ||
+app\api\partbook\process\route.ts : Line 22 : ['super_admin', 'admin_plant', 'gl_plant'].includes(r)
+app\api\partbook\units\route.ts : Line 52 : const canAdd = session.is_super_admin ||
+app\api\partbook\units\route.ts : Line 54 : ['super_admin', 'admin_plant', 'gl_plant'].includes(r)
+app\api\partbook\upload-file\route.ts : Line 24 : session.is_super_admin ||
+app\api\partbook\upload-file\route.ts : Line 26 : ['super_admin', 'admin_plant', 'gl_plant'].includes(r)
+app\api\partbook\uploads\[id]\route.ts : Line 6 : 'super_admin', 'admin_plant', 'gl_plant',
+app\api\partbook\uploads\[id]\route.ts : Line 22 : const isAdmin = session.is_super_admin ||
+app\api\partbook\uploads\[id]\route.ts : Line 90 : const canEdit = session.is_super_admin ||
+app\api\partbook\uploads\[id]\route.ts : Line 91 : session.roles?.some((r: string) => ['super_admin', 'admin_plant', 'gl_plant'].includes(r))
+app\api\partbook\uploads\[id]\route.ts : Line 148 : const canDelete = session.is_super_admin ||
+app\api\partbook\uploads\[id]\route.ts : Line 149 : session.roles?.some((r: string) => ['super_admin', 'admin_plant'].includes(r))
+app\api\partbook\uploads\[id]\route.ts : Line 153 : error: 'Hanya Admin Plant atau Super Admin yang bisa menghapus upload'
+app\api\partbook\uploads\route.ts : Line 7 : 'super_admin', 'admin_plant', 'gl_plant',
+app\api\partbook\uploads\route.ts : Line 20 : const isAdmin = session.is_super_admin ||
+app\api\partbook\uploads\route.ts : Line 65 : const canUpload = session.is_super_admin ||
+app\api\partbook\uploads\route.ts : Line 66 : session.roles?.some((r: string) => ['super_admin', 'admin_plant', 'gl_plant'].includes(r))
+app\api\parts-book\delete\route.ts : Line 2 : import { requireSuperAdmin } from '@/app/lib/auth'
+app\api\parts-book\delete\route.ts : Line 7 : // Auth guard — hanya Super Admin
+app\api\parts-book\delete\route.ts : Line 8 : const auth = await requireSuperAdmin(request)
+app\api\parts-book\upload\route.ts : Line 2 : import { requireSuperAdmin } from '@/app/lib/auth'
+app\api\parts-book\upload\route.ts : Line 7 : // Auth guard — hanya Super Admin
+app\api\parts-book\upload\route.ts : Line 8 : const auth = await requireSuperAdmin(request)
+app\api\parts-catalog\import-excel\route.ts : Line 3 : import { requireSuperAdmin } from '@/app/lib/auth'
+app\api\parts-catalog\import-excel\route.ts : Line 169 : const auth = await requireSuperAdmin(req)
+app\api\permission-manager\route.ts : Line 2 : // API untuk kelola permission karyawan (Khusus Super Admin)
+app\api\permission-manager\route.ts : Line 20 : // 🔒 KEAMANAN: Hanya Super Admin yang boleh akses
+app\api\permission-manager\route.ts : Line 21 : if (!session.is_super_admin) {
+app\api\permission-manager\route.ts : Line 22 : return NextResponse.json({ error: 'Akses ditolak - hanya Super Admin' }, { status: 403 })
+app\api\permission-manager\route.ts : Line 47 : .select('nrp, nama, jabatan, site, departemen, is_super_admin')
+app\api\permission-manager\route.ts : Line 98 : if (!session.is_super_admin) {
+app\api\permission-manager\route.ts : Line 174 : if (!session.is_super_admin) {
+app\api\reset-password\route.ts : Line 11 : if (!session?.is_super_admin) {
+app\api\reset-password\route.ts : Line 12 : return NextResponse.json({ error: 'Akses ditolak. Hanya Super Admin.' }, { status: 403 })
+app\api\role-manager\route.ts : Line 11 : 'super_admin',
+app\api\role-manager\route.ts : Line 19 : if (session?.is_super_admin) return true
+app\api\role-templates\route.ts : Line 71 : // Hanya Super Admin atau HR HO yang bisa apply template
+app\api\role-templates\route.ts : Line 72 : const allowedRoles = ['super_admin', 'hr_ho']
+app\api\role-templates\route.ts : Line 74 : const isAllowed = session.is_super_admin ||
+app\api\sites-manager\route.ts : Line 2 : // API untuk Kelola Master Site (Super Admin + HRGA) — v2.0 dengan PJO & Deputy
+app\api\sites-manager\route.ts : Line 69 : const isAllowed = session.is_super_admin ||
+app\api\sites-manager\route.ts : Line 142 : const isAllowed = session.is_super_admin ||
+app\api\sites-manager\route.ts : Line 315 : if (!session.is_super_admin) {
+app\api\sites-manager\route.ts : Line 316 : return NextResponse.json({ error: 'Hanya Super Admin yang boleh menghapus site' }, { status: 403 })
+app\api\system-config\route.ts : Line 15 : if (!session?.is_super_admin) {
+app\api\system-config\route.ts : Line 109 : if (!session?.is_super_admin) {
+app\api\system-config\route.ts : Line 180 : target_label: 'Semua User (kecuali Super Admin)',
+app\dashboard\kelola-akses\page.tsx : Line 18 : is_super_admin: boolean
+app\dashboard\kelola-akses\page.tsx : Line 107 : if (role === 'super_admin') return 'bg-rose-100 text-rose-700'
+app\dashboard\kelola-akses\page.tsx : Line 116 : if (role === 'super_admin') return '👑'
+app\dashboard\kelola-akses\page.tsx : Line 318 : {emp.is_super_admin && <Crown size={14} className="text-amber-500 flex-shrink-0" />}
+app\dashboard\rekap-absensi\page.tsx : Line 25 : { value: 'super_admin',    label: 'Super Admin'   },
+app\dashboard\layout.tsx : Line 40 : 'super_admin', 'director_ops', 'business_dev', 'manager_ops',
+app\dashboard\layout.tsx : Line 50 : 'super_admin', 'director_ops', 'manager_ops', 'business_dev',
+app\dashboard\layout.tsx : Line 59 : 'super_admin', 'hr_ho', 'pjo_site', 'hr_site',
+app\dashboard\layout.tsx : Line 72 : 'super_admin', 'hr_ho', 'hr_site',
+app\dashboard\layout.tsx : Line 79 : 'super_admin', 'hr_ho', 'hr_site',
+app\dashboard\layout.tsx : Line 86 : 'super_admin', 'director_ops', 'business_dev', 'manager_ops',
+app\dashboard\layout.tsx : Line 95 : 'super_admin','admin_plant','gl_plant','pjo_site',
+app\dashboard\layout.tsx : Line 255 : // TAB 9: SYSTEM (Super Admin only)
+app\dashboard\layout.tsx : Line 304 : const [isSuperAdmin, setIsSuperAdmin] = useState(false) // State baru
+app\dashboard\layout.tsx : Line 378 : // Bandingkan super admin status
+app\dashboard\layout.tsx : Line 380 : Boolean(cachedUser.is_super_admin) !== Boolean(fresh.user.is_super_admin)
+app\dashboard\layout.tsx : Line 409 : if (fresh.user?.is_super_admin) return true
+app\dashboard\layout.tsx : Line 478 : setIsSuperAdmin(cachedUser.is_super_admin || false)
+app\dashboard\layout.tsx : Line 553 : setIsSuperAdmin(retryData.user?.is_super_admin || false)
+app\dashboard\layout.tsx : Line 569 : if (retryData.user?.is_super_admin) return true
+app\dashboard\layout.tsx : Line 608 : setIsSuperAdmin(data.user?.is_super_admin || false)
+app\dashboard\layout.tsx : Line 617 : if (data.user?.is_super_admin) return true
+app\dashboard\layout.tsx : Line 823 : // Jika tab adalah system_config, HANYA tampil jika isSuperAdmin true
+app\dashboard\layout.tsx : Line 824 : if (tab.key === 'system_config') return isSuperAdmin;
+app\dashboard\layout.tsx : Line 827 : if (isSuperAdmin) return true;
+app\dashboard\layout.tsx : Line 930 : <AuthProvider user={{ ...user, is_super_admin: isSuperAdmin }} permissions={userPermissions}>
+app\dashboard\page.tsx : Line 2062 : const { can, isSuperAdmin } = useAuth()
+app\dashboard\page.tsx : Line 2073 : const canCreate = isSuperAdmin || (hasSchema && (
+app\dashboard\page.tsx : Line 2077 : const canEdit = isSuperAdmin || (hasSchema && (
+app\dashboard\page.tsx : Line 2083 : tablePerms?.delete ? can(tablePerms.delete) : (access_mode === 'CRUD' || isSuperAdmin)
+app\dashboard\page.tsx : Line 2088 : if (isSuperAdmin) return true
+app\dashboard\page.tsx : Line 2689 : <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">HR / Super Admin</p>
+app\dashboard\page.tsx : Line 4742 : Super Admin Only
+app\dashboard\page.tsx : Line 5342 : <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Super Admin Only</p>
+app\dashboard\page.tsx : Line 5696 : Super Admin Only
+app\dashboard\page.tsx : Line 5710 : Jejak digital aktivitas Super Admin • Tidak bisa dihapus
+app\dashboard\page.tsx : Line 6970 : super_admin: data.employees.filter((e: any) => e.is_super_admin).length,
+app\dashboard\page.tsx : Line 6983 : <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Super Admin Only</p>
+app\dashboard\page.tsx : Line 7004 : <p className="text-[8px] font-black text-amber-400 uppercase tracking-widest mb-1">Super Admin</p>
+app\dashboard\page.tsx : Line 7005 : <p className="text-xl font-black text-amber-600">{stats.super_admin}</p>
+app\dashboard\page.tsx : Line 7031 : emp.is_super_admin ? 'border-amber-200 bg-amber-50/30' : 'border-slate-50 hover:border-blue-200'
+app\dashboard\page.tsx : Line 7035 : emp.is_super_admin ? 'bg-amber-500' : 'bg-slate-900'
+app\dashboard\page.tsx : Line 7042 : {emp.is_super_admin && (
+app\dashboard\page.tsx : Line 7095 : selectedEmp.is_super_admin ? 'bg-amber-500' : 'bg-white/10'
+app\dashboard\page.tsx : Line 7129 : .filter(t => t.role_key !== 'super_admin')
+app\dashboard\page.tsx : Line 7403 : {data?.is_view_only ? 'HR HO Read-Only' : 'HR Site / Super Admin'}
+app\lib\attendance-corrections.ts : Line 3 : const SUPER_ADMIN_NRP = '0530224'
+app\lib\attendance-corrections.ts : Line 27 : | 'SUPER_ADMIN'
+app\lib\attendance-corrections.ts : Line 35 : is_super_admin?: boolean
+app\lib\attendance-corrections.ts : Line 123 : sessionIsSuperAdmin?: boolean
+app\lib\attendance-corrections.ts : Line 134 : isSuperAdmin?: boolean
+app\lib\attendance-corrections.ts : Line 142 : isSuperAdmin?: boolean
+app\lib\attendance-corrections.ts : Line 148 : actorIsSuperAdmin?: boolean
+app\lib\attendance-corrections.ts : Line 513 : requesterIsSuperAdmin?: boolean
+app\lib\attendance-corrections.ts : Line 525 : if (args.requesterIsSuperAdmin || requesterNrp === SUPER_ADMIN_NRP) {
+app\lib\attendance-corrections.ts : Line 527 : approverNrp: SUPER_ADMIN_NRP,
+app\lib\attendance-corrections.ts : Line 528 : approverRule: 'SUPER_ADMIN' as ApproverRule,
+app\lib\attendance-corrections.ts : Line 535 : approverNrp: SUPER_ADMIN_NRP,
+app\lib\attendance-corrections.ts : Line 536 : approverRule: 'SUPER_ADMIN' as ApproverRule,
+app\lib\attendance-corrections.ts : Line 573 : approverNrp: SUPER_ADMIN_NRP,
+app\lib\attendance-corrections.ts : Line 574 : approverRule: 'SUPER_ADMIN' as ApproverRule,
+app\lib\attendance-corrections.ts : Line 614 : approverNrp: SUPER_ADMIN_NRP,
+app\lib\attendance-corrections.ts : Line 615 : approverRule: 'SUPER_ADMIN' as ApproverRule,
+app\lib\attendance-corrections.ts : Line 655 : approverNrp: SUPER_ADMIN_NRP,
+app\lib\attendance-corrections.ts : Line 656 : approverRule: 'SUPER_ADMIN' as ApproverRule,
+app\lib\attendance-corrections.ts : Line 662 : approverNrp: SUPER_ADMIN_NRP,
+app\lib\attendance-corrections.ts : Line 711 : async function enrichCorrections(rows: CorrectionRow[], viewerNrp: string, viewerRoles: string[], isSuperAdmin: boolean) {
+app\lib\attendance-corrections.ts : Line 739 : (isSuperAdmin || normalizeText(row.approver_nrp) === normalizeText(viewerNrp))
+app\lib\attendance-corrections.ts : Line 742 : isSuperAdmin ||
+app\lib\attendance-corrections.ts : Line 763 : isSuperAdmin: boolean
+app\lib\attendance-corrections.ts : Line 765 : if (args.isSuperAdmin) return true
+app\lib\attendance-corrections.ts : Line 779 : function canOverrideByRole(roles: string[], isSuperAdmin: boolean) {
+app\lib\attendance-corrections.ts : Line 780 : if (isSuperAdmin) return true
+app\lib\attendance-corrections.ts : Line 994 : requesterIsSuperAdmin: input.sessionIsSuperAdmin,
+app\lib\attendance-corrections.ts : Line 1035 : !!input.sessionIsSuperAdmin
+app\lib\attendance-corrections.ts : Line 1044 : isSuperAdmin: boolean
+app\lib\attendance-corrections.ts : Line 1060 : } else if (!args.isSuperAdmin) {
+app\lib\attendance-corrections.ts : Line 1085 : if (args.isSuperAdmin) {
+app\lib\attendance-corrections.ts : Line 1108 : args.isSuperAdmin
+app\lib\attendance-corrections.ts : Line 1126 : isSuperAdmin: boolean
+app\lib\attendance-corrections.ts : Line 1149 : isSuperAdmin: args.isSuperAdmin,
+app\lib\attendance-corrections.ts : Line 1159 : args.isSuperAdmin
+app\lib\attendance-corrections.ts : Line 1187 : input.isSuperAdmin ||
+app\lib\attendance-corrections.ts : Line 1219 : !!input.isSuperAdmin
+app\lib\attendance-corrections.ts : Line 1250 : input.isSuperAdmin ||
+app\lib\attendance-corrections.ts : Line 1278 : !!input.isSuperAdmin
+app\lib\attendance-corrections.ts : Line 1285 : if (!canOverrideByRole(input.actorRoles, !!input.actorIsSuperAdmin)) {
+app\lib\attendance-corrections.ts : Line 1286 : throw new Error('Hanya HR / super admin yang bisa override absensi')
+app\lib\attendance-corrections.ts : Line 1320 : const approverRule: ApproverRule = input.actorIsSuperAdmin
+app\lib\attendance-corrections.ts : Line 1321 : ? 'SUPER_ADMIN'
+app\lib\attendance-corrections.ts : Line 1391 : !!input.actorIsSuperAdmin
+app\lib\auditLog.ts : Line 87 : actor_role: session.is_super_admin ? 'super_admin' : (session.roles?.[0] || 'user')
+app\lib\auth-cache.ts : Line 18 : is_super_admin: boolean
+app\lib\auth.ts : Line 9 : // ── Level 0: Super Admin ──
+app\lib\auth.ts : Line 10 : 'super_admin',
+app\lib\auth.ts : Line 60 : const isSuperAdmin = Boolean(employee.is_super_admin)
+app\lib\auth.ts : Line 61 : const permissions = await getUserPermissions(realNrp, isSuperAdmin)
+app\lib\auth.ts : Line 106 : is_super_admin: isSuperAdmin,
+app\lib\auth.ts : Line 123 : .select('id, nama, site, jabatan, departemen, is_super_admin')
+app\lib\auth.ts : Line 158 : const isSuperAdmin = Boolean(emp?.is_super_admin)
+app\lib\auth.ts : Line 159 : const permissions = await getUserPermissions(data.nrp, isSuperAdmin)
+app\lib\auth.ts : Line 171 : is_super_admin: isSuperAdmin,
+app\lib\auth.ts : Line 183 : isSuperAdmin: boolean
+app\lib\auth.ts : Line 186 : // Kalau super admin, langsung ambil semua permission yang ada
+app\lib\auth.ts : Line 187 : if (isSuperAdmin) {
+app\lib\auth.ts : Line 197 : // Kalau bukan super admin, ambil dari user_permissions by NRP
+app\lib\auth.ts : Line 237 : * Guard untuk API route yang khusus super admin.
+app\lib\auth.ts : Line 240 : export async function requireSuperAdmin(req: NextRequest) {
+app\lib\auth.ts : Line 245 : if (!session.is_super_admin) {
+app\lib\auth.ts : Line 246 : return { ok: false as const, status: 403, message: 'Forbidden - Super Admin only' }
+app\lib\AuthContext.tsx : Line 4 : import { hasPermission, hasAnyPermission, hasAllPermissions, isSuperAdmin, UserContext } from './permissions'
+app\lib\AuthContext.tsx : Line 9 : isSuperAdmin: boolean
+app\lib\AuthContext.tsx : Line 27 : is_super_admin: user?.is_super_admin,
+app\lib\AuthContext.tsx : Line 35 : isSuperAdmin: isSuperAdmin(ctx),
+app\lib\AuthContext.tsx : Line 48 : * const { can, isSuperAdmin } = useAuth()
+app\lib\AuthContext.tsx : Line 58 : isSuperAdmin: false,
+app\lib\permissions.ts : Line 7 : * - Super Admin (Ricky) SELALU return true (bypass semua permission)
+app\lib\permissions.ts : Line 12 : is_super_admin?: boolean
+app\lib\permissions.ts : Line 23 : if (user.is_super_admin) return true
+app\lib\permissions.ts : Line 33 : if (user.is_super_admin) return true
+app\lib\permissions.ts : Line 43 : if (user.is_super_admin) return true
+app\lib\permissions.ts : Line 48 : * Shortcut untuk cek Super Admin
+app\lib\permissions.ts : Line 50 : export function isSuperAdmin(user: UserContext | null | undefined): boolean {
+app\lib\permissions.ts : Line 51 : return !!user?.is_super_admin
+app\parts-book\page.tsx : Line 22 : const [isSuperAdmin, setIsSuperAdmin] = useState(false)
+app\parts-book\page.tsx : Line 50 : // Dummy super admin checker (sementara)
+app\parts-book\page.tsx : Line 53 : setIsSuperAdmin(true)
+app\parts-book\page.tsx : Line 132 : {isSuperAdmin && (
+app\parts-book\page.tsx : Line 194 : {isSuperAdmin && <th>Aksi</th>}
+app\parts-book\page.tsx : Line 212 : {isSuperAdmin && (
+app\parts-catalog\page.tsx : Line 205 : const [isSuperAdmin, setIsSuperAdmin] = useState(true)
+app\parts-catalog\page.tsx : Line 526 : {isSuperAdmin && 'Klik Import untuk mulai.'}
+app\parts-catalog\page.tsx : Line 615 : {isSuperAdmin && (

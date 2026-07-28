@@ -1,0 +1,20 @@
+﻿Line 2062: const { can, isSuperAdmin } = useAuth()
+Line 2073: const canCreate = isSuperAdmin || (hasSchema && (
+Line 2077: const canEdit = isSuperAdmin || (hasSchema && (
+Line 2083: tablePerms?.delete ? can(tablePerms.delete) : (access_mode === 'CRUD' || isSuperAdmin)
+Line 2088: if (isSuperAdmin) return true
+Line 2689: <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">HR / Super Admin</p>
+Line 4742: Super Admin Only
+Line 5342: <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Super Admin Only</p>
+Line 5696: Super Admin Only
+Line 5710: Jejak digital aktivitas Super Admin • Tidak bisa dihapus
+Line 6970: super_admin: data.employees.filter((e: any) => e.is_super_admin).length,
+Line 6983: <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Super Admin Only</p>
+Line 7004: <p className="text-[8px] font-black text-amber-400 uppercase tracking-widest mb-1">Super Admin</p>
+Line 7005: <p className="text-xl font-black text-amber-600">{stats.super_admin}</p>
+Line 7031: emp.is_super_admin ? 'border-amber-200 bg-amber-50/30' : 'border-slate-50 hover:border-blue-200'
+Line 7035: emp.is_super_admin ? 'bg-amber-500' : 'bg-slate-900'
+Line 7042: {emp.is_super_admin && (
+Line 7095: selectedEmp.is_super_admin ? 'bg-amber-500' : 'bg-white/10'
+Line 7129: .filter(t => t.role_key !== 'super_admin')
+Line 7403: {data?.is_view_only ? 'HR HO Read-Only' : 'HR Site / Super Admin'}
