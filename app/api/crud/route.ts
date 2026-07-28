@@ -94,6 +94,12 @@ const isStaff = !HRGA_ROLES.some(r => rolesLower.includes(r))
 
     if (table === 'announcements') dataToSave.created_by = session.nrp
 
+    // 🎯 v3.0 Chat 27: Auto-set penilai_nrp saat CREATE KPI
+    if (table === 'kpi') {
+      dataToSave.penilai_nrp = session.nrp
+      dataToSave.created_by = session.nrp
+    }
+
     const { data, error } = await supabase.from(table).insert(dataToSave).select()
     if (error) throw error
 
@@ -120,10 +126,29 @@ export async function PUT(req: NextRequest) {
     }
 
     const dataToUpdate = cleanData({ ...values })
-    
+
+    // 🎯 v3.0 Chat 27: Untuk KPI, cegah user edit nilai orang lain
+    // Super admin bypass, selain itu wajib penilai_nrp = session.nrp
+    if (table === 'kpi' && !session.is_super_admin) {
+      const { data: existingKpi } = await supabase
+        .from('kpi')
+        .select('penilai_nrp')
+        .eq('id', id)
+        .single()
+
+      if (existingKpi && existingKpi.penilai_nrp && existingKpi.penilai_nrp !== session.nrp) {
+        return NextResponse.json({
+          error: 'Anda hanya bisa mengedit penilaian yang Anda buat sendiri.'
+        }, { status: 403 })
+      }
+
+      // Jangan biarkan penilai_nrp diubah dari client
+      delete dataToUpdate.penilai_nrp
+    }
+
     // Gunakan update berdasarkan ID (integer) atau Kode (string) jika ID tidak ada
     const query = supabase.from(table).update(dataToUpdate)
-    
+
     if (id) {
         query.eq('id', id)
     } else if (values.kode) {

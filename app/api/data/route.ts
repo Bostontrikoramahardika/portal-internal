@@ -307,23 +307,41 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
 
 
     // ==========================================
-    // 🎯 CASE B.2: PENILAIAN BAWAHAN (v2.0 - Support role baru)
+    // 🎯 CASE B.2: KPI & PENILAIAN BAWAHAN (v3.0 Chat 27)
+    // - Multi-penilai support (rata-rata nilai)
+    // - Filter kategori: Plant / Operator / All
+    // - Filter periode: bulan & tahun
+    // - HR HO = view-only
     // ==========================================
     if (menuKey === 'penilaian_bawahan' || menuKey === 'kpi_bawahan') {
       let finalEmps: any[] = [];
 
-      // Role baru: cek berdasarkan hierarchy
       const isPJO = rolesLower.some((r: string) => ['pjo_site', 'pjo'].includes(r));
-      const isGL = rolesLower.some((r: string) => ['gl_produksi', 'gl_plant', 'atasan'].includes(r));
+      const isGLPlant = rolesLower.some((r: string) => ['gl_plant'].includes(r));
+      const isGLProduksi = rolesLower.some((r: string) => ['gl_produksi'].includes(r));
+      const isGL = isGLPlant || isGLProduksi || rolesLower.includes('atasan');
       const isHRSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site'].includes(r));
       const isHRHO = rolesLower.some((r: string) => ['hr_ho', 'hrga', 'hrga_pusat', 'admin'].includes(r));
+
+      // ─── Filter periode dari query param ───
+      const now = new Date();
+      const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+      const currentYear = String(now.getFullYear());
+      const bulan = searchParams.get('bulan') || currentMonth;
+      const tahun = searchParams.get('tahun') || currentYear;
+
+      // Format periode standar: "JULI 2026"
+      const bulanNama = ['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI',
+                         'JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
+      const periodeFilter = `${bulanNama[parseInt(bulan) - 1]} ${tahun}`;
 
       // ─── PRIORITAS 1: Super Admin / HR HO → semua karyawan ───
       if (isSuperAdmin || isHRHO) {
         const { data } = await supabase
           .from('employees')
           .select('nrp, nama, jabatan, site, departemen')
-          .eq('status_karyawan', 'Aktif');
+          .eq('status_karyawan', 'Aktif')
+          .order('nama');
         finalEmps = data || [];
       }
       // ─── PRIORITAS 2: HR Site → semua di site sendiri ───
@@ -332,7 +350,8 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
           .from('employees')
           .select('nrp, nama, jabatan, site, departemen')
           .eq('status_karyawan', 'Aktif')
-          .eq('site', userSite);
+          .eq('site', userSite)
+          .order('nama');
         finalEmps = data || [];
       }
       // ─── PRIORITAS 3: PJO → semua bawahan via pjo_nrp ───
@@ -348,7 +367,8 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
             .from('employees')
             .select('nrp, nama, jabatan, site, departemen')
             .in('nrp', nrps)
-            .eq('status_karyawan', 'Aktif');
+            .eq('status_karyawan', 'Aktif')
+            .order('nama');
           finalEmps = data || [];
         }
       }
@@ -365,11 +385,12 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
             .from('employees')
             .select('nrp, nama, jabatan, site, departemen')
             .in('nrp', nrps)
-            .eq('status_karyawan', 'Aktif');
+            .eq('status_karyawan', 'Aktif')
+            .order('nama');
           finalEmps = data || [];
         }
       }
-      // ─── FALLBACK: Cek matrix apapun ───
+      // ─── FALLBACK ───
       else {
         const { data: matrix } = await supabase
           .from('approval_matrix')
@@ -382,18 +403,102 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
             .from('employees')
             .select('nrp, nama, jabatan, site, departemen')
             .in('nrp', nrps)
-            .eq('status_karyawan', 'Aktif');
+            .eq('status_karyawan', 'Aktif')
+            .order('nama');
           finalEmps = data || [];
         }
       }
 
-      const { data: kpiLast } = await supabase.from('kpi').select('nrp, periode, nilai_akhir').order('created_at', { ascending: false });
+      // ─── Ambil semua KPI di periode tsb untuk bawahan yg ada ───
+      const bawahaNrps = finalEmps.map(e => e.nrp);
+      let allKpi: any[] = [];
+      if (bawahaNrps.length > 0) {
+        const { data } = await supabase
+          .from('kpi')
+          .select('nrp, periode, penilai_nrp, cat_kinerja, cat_sikap, cat_disiplin, nilai_performa, nilai_otomatis, catatan, created_at, id')
+          .in('nrp', bawahaNrps)
+          .eq('periode', periodeFilter);
+        allKpi = data || [];
+      }
+
+      // ─── Ambil nama penilai untuk transparansi ───
+      const penilaiNrps = [...new Set(allKpi.map(k => k.penilai_nrp).filter(Boolean))];
+      let penilaiMap = new Map();
+      if (penilaiNrps.length > 0) {
+        const { data: penilaiEmps } = await supabase
+          .from('employees')
+          .select('nrp, nama')
+          .in('nrp', penilaiNrps);
+        penilaiMap = new Map((penilaiEmps || []).map((p: any) => [p.nrp, p.nama]));
+      }
+
+      // ─── Enrich per bawahan ───
       const rows = finalEmps.map((e: any) => {
-        const lastKpi = kpiLast?.find((k: any) => k.nrp === e.nrp);
-        return { ...e, last_periode: lastKpi?.periode || '-', last_score: lastKpi?.nilai_akhir || 0 };
+        const empKpi = allKpi.filter(k => k.nrp === e.nrp);
+        const kpiSaya = empKpi.find(k => k.penilai_nrp === session.nrp);
+
+        // Hitung nilai per record (kinerja + sikap + disiplin = performa, out of 30)
+        const listPenilai = empKpi.map(k => {
+          const totalPerforma = (Number(k.cat_kinerja) || 0) + (Number(k.cat_sikap) || 0) + (Number(k.cat_disiplin) || 0);
+          return {
+            id: k.id,
+            penilai_nrp: k.penilai_nrp,
+            penilai_nama: penilaiMap.get(k.penilai_nrp) || k.penilai_nrp || 'Unknown',
+            nilai_performa: totalPerforma,
+            nilai_otomatis: Number(k.nilai_otomatis) || 0,
+            nilai_total: totalPerforma + (Number(k.nilai_otomatis) || 0),
+            catatan: k.catatan,
+            is_saya: k.penilai_nrp === session.nrp,
+            created_at: k.created_at
+          };
+        });
+
+        // Rata-rata nilai (kalau multi penilai)
+        const nilaiRataRata = listPenilai.length > 0
+          ? listPenilai.reduce((sum, p) => sum + p.nilai_total, 0) / listPenilai.length
+          : 0;
+
+        // Nilai saya (kalau sudah nilai)
+        let nilaiSaya = null;
+        if (kpiSaya) {
+          const totalPerforma = (Number(kpiSaya.cat_kinerja) || 0) + (Number(kpiSaya.cat_sikap) || 0) + (Number(kpiSaya.cat_disiplin) || 0);
+          nilaiSaya = totalPerforma + (Number(kpiSaya.nilai_otomatis) || 0);
+        }
+
+        return {
+          ...e,
+          dinilai_oleh_saya: !!kpiSaya,
+          kpi_saya_id: kpiSaya?.id || null,
+          nilai_saya: nilaiSaya,
+          nilai_rata_rata: Math.round(nilaiRataRata * 10) / 10,
+          total_penilai: listPenilai.length,
+          list_penilai: listPenilai
+        };
       });
 
-      return NextResponse.json({ type: 'penilaian_tim', title: menu_label, rows });
+      // ─── Summary stats ───
+      const totalSudahDinilai = rows.filter(r => r.total_penilai > 0).length;
+      const totalBelumDinilai = rows.length - totalSudahDinilai;
+      const avgNilai = totalSudahDinilai > 0
+        ? Math.round((rows.filter(r => r.total_penilai > 0).reduce((sum, r) => sum + r.nilai_rata_rata, 0) / totalSudahDinilai) * 10) / 10
+        : 0;
+
+      return NextResponse.json({
+        type: 'penilaian_tim',
+        title: menu_label,
+        rows,
+        periode: periodeFilter,
+        bulan,
+        tahun,
+        view_only: isHRHO && !isSuperAdmin,
+        can_edit: isSuperAdmin || isPJO || isGL || isHRSite,
+        summary: {
+          total: rows.length,
+          sudah_dinilai: totalSudahDinilai,
+          belum_dinilai: totalBelumDinilai,
+          nilai_rata_rata: avgNilai
+        }
+      });
     }
 
     // ==========================================
