@@ -25,7 +25,7 @@ function hitungSummary(rows: any[]) {
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status })
-  const session = auth.session
+   const session: any = auth.session
 
   // Employee biasa tidak boleh akses rekap
   if (session.role === 'employee') {
@@ -51,15 +51,16 @@ export async function GET(req: NextRequest) {
       .from('employees')
       .select('nrp')
       .eq('site', session.site || '')
-      .eq('status', 'aktif')
+      .eq('status_karyawan', 'Aktif')
     allowedNrps = (emp || []).map((e: any) => e.nrp)
 
   } else if (LEADER_ROLES.includes(session.role)) {
-    // GL hanya lihat bawahan
+    // GL / PJO Site → lihat bawahan (via atasan_nrp atau pjo_nrp)
     const { data: bawahan } = await supabaseAdmin
       .from('approval_matrix')
       .select('employee_nrp')
-      .eq('approver_nrp', session.nrp)
+      .or(`atasan_nrp.eq.${session.nrp},pjo_nrp.eq.${session.nrp}`)
+      .eq('active', true)
     allowedNrps = (bawahan || []).map((b: any) => b.employee_nrp)
     if (allowedNrps.length === 0) {
       return NextResponse.json({

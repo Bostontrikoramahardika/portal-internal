@@ -7,7 +7,7 @@ const EDIT_ROLES = ['super_admin','hr_site','pjo_site','gl_produksi','gl_plant']
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req)
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status })
-  const session = auth.session
+  const session: any = auth.session
 
   const canEdit = session.is_super_admin || EDIT_ROLES.includes(session.role)
   if (!canEdit) {
@@ -33,7 +33,10 @@ export async function POST(req: NextRequest) {
   if (['gl_plant','gl_produksi'].includes(session.role)) {
     const { data: bawahan } = await supabaseAdmin
       .from('approval_matrix').select('employee_nrp')
-      .eq('approver_nrp', session.nrp).eq('employee_nrp', nrp).limit(1)
+      .eq('atasan_nrp', session.nrp)
+      .eq('employee_nrp', nrp)
+      .eq('active', true)
+      .limit(1)
     if (!bawahan || bawahan.length === 0) {
       return NextResponse.json({ error: 'Karyawan bukan bawahan Anda' }, { status: 403 })
     }

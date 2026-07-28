@@ -9,7 +9,7 @@ const LEADER_ROLES = ['gl_produksi','gl_plant']
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status })
-  const session = auth.session
+  const session: any = auth.session
 
   if (session.role === 'employee') {
     return NextResponse.json({ error: 'Tidak punya akses' }, { status: 403 })
@@ -27,12 +27,14 @@ export async function GET(req: NextRequest) {
   if (SITE_ROLES.includes(session.role)) {
     const { data: emp } = await supabaseAdmin
       .from('employees').select('nrp')
-      .eq('site', session.site || '').eq('status', 'aktif')
+      .eq('site', session.site || '')
+      .eq('status_karyawan', 'Aktif')
     allowedNrps = (emp || []).map((e: any) => e.nrp)
   } else if (LEADER_ROLES.includes(session.role)) {
     const { data: bawahan } = await supabaseAdmin
       .from('approval_matrix').select('employee_nrp')
-      .eq('approver_nrp', session.nrp)
+      .or(`atasan_nrp.eq.${session.nrp},pjo_nrp.eq.${session.nrp}`)
+      .eq('active', true)
     allowedNrps = (bawahan || []).map((b: any) => b.employee_nrp)
   }
 
@@ -241,7 +243,7 @@ export async function GET(req: NextRequest) {
     : 'Semua'
   const filename = `Rekap_Absensi_${fileLabel}.xlsx`
 
-  return new NextResponse(buffer as Buffer, {
+  return new NextResponse(buffer as any, {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': `attachment; filename="${filename}"`,
