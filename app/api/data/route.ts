@@ -884,43 +884,94 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
       else query = query.eq('nrp', session.nrp)
     } 
     else if (access_mode === 'TEAM_ATASAN' || access_mode === 'APPROVAL_ATASAN') {
-      const approvalTables = ['overtime_requests', 'leave_requests', 'attendance_evidences'];
-      
-      if (isSiteScoped) {
-        if (target_table === 'employees') {
-          query = query.eq('site', userSite)
-          if (isAdminPlant) query = query.ilike('departemen', '%plant%')
-        } 
-        else if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
-          query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
-        }
-        else {
-          let empQ = supabase.from('employees').select('nrp, nama').eq('site', userSite)
-          if (isAdminPlant) empQ = empQ.ilike('departemen', '%plant%')
-          const { data: emps } = await empQ
-          if (!emps || emps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
+  const approvalTables = ['overtime_requests', 'leave_requests', 'attendance_evidences'];
+  const isGLPlant = rolesLower.includes('gl_plant');
+  const isGLProduksi = rolesLower.includes('gl_produksi');
+  
+  if (isSiteScoped) {
+    if (target_table === 'employees') {
+      query = query.eq('site', userSite)
+      if (isAdminPlant) query = query.ilike('departemen', '%plant%')
+    } 
+    else if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
+      query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
+    }
+    else {
+      let empQ = supabase.from('employees').select('nrp, nama').eq('site', userSite)
+      if (isAdminPlant) empQ = empQ.ilike('departemen', '%plant%')
+      const { data: emps } = await empQ
+      if (!emps || emps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
 
-          // 🌟 FIX: Handle tabel yg pakai nama_karyawan (BPJS, APD, dll)
-          if (NAME_BASED_TABLES.includes(target_table)) {
-            const names = emps.map((e: any) => e.nama).filter(Boolean)
-            if (names.length === 0) return NextResponse.json({ type: 'table', rows: [] })
-            query = query.in('nama_karyawan', names)
-          } else {
-            const nrps = emps.map((e: any) => e.nrp)
-            query = query.in('nrp', nrps)
-          }
-        }
+      if (NAME_BASED_TABLES.includes(target_table)) {
+        const names = emps.map((e: any) => e.nama).filter(Boolean)
+        if (names.length === 0) return NextResponse.json({ type: 'table', rows: [] })
+        query = query.in('nama_karyawan', names)
       } else {
-        if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
-          query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
-        } else {
-          const { data: matrix } = await supabase.from('approval_matrix').select('employee_nrp').eq('atasan_nrp', session.nrp).eq('active', true)
-          const nrps = (matrix || []).map((m: any) => m.employee_nrp)
-          if (nrps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
-          query = query.in('nrp', nrps)
-        }
+        const nrps = emps.map((e: any) => e.nrp)
+        query = query.in('nrp', nrps)
       }
     }
+  } 
+  // 🌟 GL PLANT / GL PRODUKSI → FLAT: semua crew di site sendiri
+  else if (isGLPlant || isGLProduksi) {
+    const scopeSite = (session as any).scope_site || session.site;
+    let empQ = supabase
+      .from('employees')
+      .select('nrp, nama')
+      .eq('site', scopeSite)
+      .eq('status_karyawan', 'Aktif')
+      .is('tanggal_resign', null);
+    
+    if (isGLPlant) {
+      empQ = empQ.or([
+        'jabatan.ilike.%mekanik%',
+        'jabatan.ilike.%mechanic%',
+        'jabatan.ilike.%welder%',
+        'jabatan.ilike.%tyreman%',
+        'jabatan.ilike.%electric%',
+        'jabatan.ilike.%helper plant%',
+        'jabatan.ilike.%admin plant%',
+        'departemen.ilike.%plant%'
+      ].join(','));
+    } else {
+      empQ = empQ.or([
+        'jabatan.ilike.%operator%',
+        'jabatan.ilike.%driver%',
+        'jabatan.ilike.%huler%'
+      ].join(','));
+    }
+    
+    const { data: emps } = await empQ;
+    if (!emps || emps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
+    
+    if (target_table === 'employees') {
+      const nrps = emps.map((e: any) => e.nrp)
+      query = query.in('nrp', nrps)
+    }
+    else if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
+      query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
+    }
+    else {
+      if (NAME_BASED_TABLES.includes(target_table)) {
+        const names = emps.map((e: any) => e.nama).filter(Boolean)
+        query = query.in('nama_karyawan', names)
+      } else {
+        const nrps = emps.map((e: any) => e.nrp)
+        query = query.in('nrp', nrps)
+      }
+    }
+  }
+  else {
+    if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
+      query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
+    } else {
+      const { data: matrix } = await supabase.from('approval_matrix').select('employee_nrp').eq('atasan_nrp', session.nrp).eq('active', true)
+      const nrps = (matrix || []).map((m: any) => m.employee_nrp)
+      if (nrps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
+      query = query.in('nrp', nrps)
+    }
+  }
+}
 
     const { data: rows, error: qErr } = await query.order('created_at', { ascending: false }).limit(2000)
     if (qErr) return NextResponse.json({ error: qErr.message }, { status: 500 })
