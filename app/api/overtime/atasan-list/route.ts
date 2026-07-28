@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabaseAdmin as supabase } from '@/app/lib/supabase'
-import { getWitaToday } from '@/app/lib/timezone'
 
 export async function GET(request: NextRequest) {
   // ─── Auth ──────────────────────────────────────────────────────────────────
@@ -16,7 +15,7 @@ export async function GET(request: NextRequest) {
     .from('employees')
     .select('site, departemen, jabatan')
     .eq('nrp', session.nrp)
-    .single()
+    .maybeSingle()
 
   const userSite    = emp?.site     || ''
   const userDept    = (emp?.departemen || '').toLowerCase()
@@ -30,27 +29,32 @@ export async function GET(request: NextRequest) {
     .eq('active', true)
     .maybeSingle()
 
-  const kodeSite     = siteConfig?.kode_site      || ''
-  const primaryPjoNrp = siteConfig?.pjo_nrp       || null
+  const kodeSite      = siteConfig?.kode_site      || ''
+  const primaryPjoNrp = siteConfig?.pjo_nrp        || null
   const deputyPjoNrp  = siteConfig?.deputy_pjo_nrp || null
 
-  // ─── Helper: PJO dari sites_config ────────────────────────────────────────
+  // ─── Helper: PJO dari sites_config (TANPA filter status_karyawan) ─────────
   async function getPjoData() {
     if (!primaryPjoNrp) {
       return { nrp: null, nama: 'Belum ada PJO di Site ini' }
     }
+    // ⭐ FIX: hapus filter status_karyawan (banyak yg pakai case beda / null)
     const { data: pjoEmp } = await supabase
       .from('employees')
-      .select('nrp, nama, jabatan')
+      .select('nrp, nama, jabatan, status_karyawan, tanggal_resign')
       .eq('nrp', primaryPjoNrp)
-      .eq('status_karyawan', 'Aktif')
-      .single()
+      .maybeSingle()
+
+    // Cek manual: bukan resigned & bukan status Nonaktif
+    if (!pjoEmp) return { nrp: null, nama: 'Belum ada PJO di Site ini' }
+    if (pjoEmp.tanggal_resign) return { nrp: null, nama: 'PJO sudah resign, hubungi HR' }
+    if (pjoEmp.status_karyawan === 'Nonaktif' || pjoEmp.status_karyawan === 'Resign') {
+      return { nrp: null, nama: 'PJO tidak aktif, hubungi HR' }
+    }
 
     return {
-      nrp:  pjoEmp?.nrp  || null,
-      nama: pjoEmp
-        ? `${pjoEmp.nama} (${pjoEmp.jabatan})`
-        : 'Belum ada PJO di Site ini'
+      nrp:  pjoEmp.nrp,
+      nama: `${pjoEmp.nama} (${pjoEmp.jabatan || 'PJO'})`
     }
   }
 
@@ -59,25 +63,29 @@ export async function GET(request: NextRequest) {
     if (!deputyPjoNrp) return null
     const { data: depEmp } = await supabase
       .from('employees')
-      .select('nrp, nama, jabatan')
+      .select('nrp, nama, jabatan, status_karyawan, tanggal_resign')
       .eq('nrp', deputyPjoNrp)
-      .eq('status_karyawan', 'Aktif')
-      .single()
+      .maybeSingle()
 
-    return depEmp
-      ? { nrp: depEmp.nrp, nama: `${depEmp.nama} (${depEmp.jabatan})` }
-      : null
+    if (!depEmp) return null
+    if (depEmp.tanggal_resign) return null
+    if (depEmp.status_karyawan === 'Nonaktif' || depEmp.status_karyawan === 'Resign') return null
+
+    return {
+      nrp: depEmp.nrp,
+      nama: `${depEmp.nama} (${depEmp.jabatan || 'Deputy PJO'})`
+    }
   }
 
   // ─── Helper: NRP by role scoped ke site ini ────────────────────────────────
   async function getRoleNrps(role: string): Promise<string[]> {
-    // Ambil yang scope_site = kode site ini
+    // Ambil yang scope_site = kode site ini ATAU nama site
     const { data: scoped } = await supabase
       .from('roles')
       .select('nrp')
       .eq('role', role)
       .eq('active', true)
-      .eq('scope_site', kodeSite)
+      .or(`scope_site.eq.${kodeSite},scope_site.eq.${userSite}`)
 
     const scopedNrps = (scoped || []).map((r: any) => r.nrp)
 
@@ -98,7 +106,6 @@ export async function GET(request: NextRequest) {
         .select('nrp')
         .in('nrp', legacyNrps)
         .eq('site', userSite)
-        .eq('status_karyawan', 'Aktif')
 
       legacySiteNrps = (legacyEmps || []).map((e: any) => e.nrp)
     }
@@ -107,16 +114,26 @@ export async function GET(request: NextRequest) {
   }
 
   // ─── Deteksi direct-to-PJO ────────────────────────────────────────────────
+  // ⭐ FIX: Perhatikan word boundary — pakai regex biar akurat
   const isDirectPJO =
-    userJabatan.includes('she')        ||
-    userJabatan.includes('hrga')       ||
-    userJabatan.includes('hr ')        ||
-    userJabatan.includes('admin')      ||
-    userJabatan.includes('gl ')        ||
-    userJabatan.includes('supervisor') ||
-    userJabatan.includes('manager')
+    /\bshe\b/.test(userJabatan)       ||
+    /\bhrga\b/.test(userJabatan)      ||
+    /\bhr\b/.test(userJabatan)        ||
+    /\badmin\b/.test(userJabatan)     ||
+    /\bgl\b/.test(userJabatan)        ||   // Group Leader
+    /\bgroup leader\b/.test(userJabatan) ||
+    /\bsupervisor\b/.test(userJabatan) ||
+    /\bmanager\b/.test(userJabatan)   ||
+    userJabatan.includes('production gl') ||
+    userJabatan.includes('plant gl')
 
-  if (isDirectPJO) {
+  // ⭐ FIX: Deteksi role user juga (bukan cuma jabatan)
+  const userRoles: string[] = Array.isArray((session as any).roles) ? (session as any).roles : []
+  const isGLRole = userRoles.some(r => ['gl_plant', 'gl_produksi', 'hr_site', 'she_site', 'admin_site'].includes(r))
+
+  const shouldDirectPJO = isDirectPJO || isGLRole
+
+  if (shouldDirectPJO) {
     const pjo    = await getPjoData()
     const deputy = await getDeputyData()
 
@@ -145,10 +162,13 @@ export async function GET(request: NextRequest) {
       .select('nrp, nama, jabatan, departemen, site')
       .in('nrp', atasanNrps)
       .eq('site', userSite)
-      .eq('status_karyawan', 'Aktif')
+      .is('tanggal_resign', null)
       .order('nama')
 
-    atasanList = (employees || []).filter((e: any) => e.nrp !== session.nrp)
+    // ⭐ Filter status_karyawan manual (lebih fleksibel)
+    atasanList = (employees || []).filter((e: any) => 
+      e.nrp !== session.nrp
+    )
   }
 
   const pjo    = await getPjoData()
