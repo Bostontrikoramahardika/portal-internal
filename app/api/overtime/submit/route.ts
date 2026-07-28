@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
-import { supabase } from '@/app/lib/supabase'
+import { supabaseAdmin as supabase } from '@/app/lib/supabase'
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get('session_token')?.value
@@ -17,41 +17,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Semua field wajib diisi (termasuk atasan)' }, { status: 400 })
     }
 
-     const { data: empInfo } = await supabase
+    // ─── Data karyawan pengaju ─────────────────────────────────────────
+    const { data: empInfo } = await supabase
       .from('employees')
       .select('site, departemen, jabatan')
       .eq('nrp', session.nrp)
-      .single()
+      .maybeSingle()
 
+    const userSite    = empInfo?.site || ''
     const userJabatan = (empInfo?.jabatan || '').toLowerCase()
-    const isDirectPJO =
-      userJabatan.includes('she') ||
-      userJabatan.includes('hrga') ||
-      userJabatan.includes('hr ') ||
-      userJabatan.includes('admin') ||
-      userJabatan.includes('gl ') ||
-      userJabatan.includes('supervisor') ||
-      userJabatan.includes('manager')
 
+    // ─── Deteksi direct-to-PJO (sesuai atasan-list) ──────────────────
+    const userRoles: string[] = Array.isArray((session as any).roles) ? (session as any).roles : []
+    const isGLRole = userRoles.some(r => 
+      ['gl_plant', 'gl_produksi', 'hr_site', 'she_site', 'admin_site'].includes(r)
+    )
+    const isDirectPJOByJabatan =
+      /\bshe\b/.test(userJabatan)       ||
+      /\bhrga\b/.test(userJabatan)      ||
+      /\bhr\b/.test(userJabatan)        ||
+      /\badmin\b/.test(userJabatan)     ||
+      /\bgl\b/.test(userJabatan)        ||
+      /\bgroup leader\b/.test(userJabatan) ||
+      /\bsupervisor\b/.test(userJabatan) ||
+      /\bmanager\b/.test(userJabatan)   ||
+      userJabatan.includes('production gl') ||
+      userJabatan.includes('plant gl')
+
+    const isDirectPJO = isDirectPJOByJabatan || isGLRole
+
+    // ─── Validasi atasan (kalau bukan direct PJO) ────────────────────
     let atasanCheck: any = null
     if (!isDirectPJO) {
-      if (!atasan_nrp) {
-        return NextResponse.json({ error: 'Atasan wajib dipilih' }, { status: 400 })
-      }
       const { data: ac } = await supabase
         .from('employees')
         .select('nrp, nama')
         .eq('nrp', atasan_nrp)
-        .single()
+        .maybeSingle()
       if (!ac) {
         return NextResponse.json({ error: 'Atasan yang dipilih tidak ditemukan' }, { status: 400 })
       }
       atasanCheck = ac
     }
 
-    // Hitung total jam
+    // ─── Hitung total jam ─────────────────────────────────────────────
     const [startH, startM] = jam_mulai.split(':').map(Number)
-    const [endH, endM] = jam_selesai.split(':').map(Number)
+    const [endH, endM]     = jam_selesai.split(':').map(Number)
     let totalMenit = (endH * 60 + endM) - (startH * 60 + startM)
     if (totalMenit < 0) totalMenit += 1440
     const totalJam = Math.round((totalMenit / 60) * 100) / 100
@@ -60,38 +71,89 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Jam selesai harus lebih besar dari jam mulai' }, { status: 400 })
     }
 
-    // AUTO-DETECT PJO
-    const { data: karyawan } = await supabase
-      .from('employees')
-      .select('site')
-      .eq('nrp', session.nrp)
-      .single()
-
-    const { data: pjoRoles } = await supabase
-      .from('roles')
-      .select('nrp')
-      .eq('role', 'pjo')
+    // ─── AUTO-DETECT PJO — PATOKAN UTAMA: sites_config ───────────────
+    // ✅ FIX: baca dari sites_config, bukan cari role 'pjo' (nama lama)
+    const { data: siteConfig } = await supabase
+      .from('sites_config')
+      .select('pjo_nrp, deputy_pjo_nrp')
+      .eq('nama_site', userSite)
       .eq('active', true)
+      .maybeSingle()
 
-    const pjoNrps = (pjoRoles || []).map(r => r.nrp)
+    let chosenPjoNrp: string | null = siteConfig?.pjo_nrp || null
+    let chosenPjoNama: string | null = null
 
-    if (pjoNrps.length === 0) {
-      return NextResponse.json({ error: 'Belum ada PJO yang di-set. Hubungi HRGA.' }, { status: 400 })
+    // ─── FALLBACK 1: kalau primary PJO null, coba Deputy ─────────────
+    if (!chosenPjoNrp && siteConfig?.deputy_pjo_nrp) {
+      chosenPjoNrp = siteConfig.deputy_pjo_nrp
     }
 
-    const { data: allPjo } = await supabase
-      .from('employees')
-      .select('nrp, nama, site')
-      .in('nrp', pjoNrps)
-      .eq('status_karyawan', 'Aktif')
+    // ─── FALLBACK 2: kalau sites_config kosong, cari role 'pjo_site' scoped ke site ini ─
+    if (!chosenPjoNrp) {
+      const { data: pjoRoles } = await supabase
+        .from('roles')
+        .select('nrp')
+        .eq('role', 'pjo_site')       // ✅ FIX: pjo_site (nama baru)
+        .eq('active', true)
 
-    if (!allPjo || allPjo.length === 0) {
-      return NextResponse.json({ error: 'PJO aktif tidak ditemukan' }, { status: 400 })
+      const pjoNrps = (pjoRoles || []).map(r => r.nrp)
+      if (pjoNrps.length > 0) {
+        const { data: pjoEmps } = await supabase
+          .from('employees')
+          .select('nrp, nama, site')
+          .in('nrp', pjoNrps)
+          .eq('site', userSite)
+          .is('tanggal_resign', null)
+
+        if (pjoEmps && pjoEmps.length > 0) {
+          chosenPjoNrp = pjoEmps[0].nrp
+          chosenPjoNama = pjoEmps[0].nama
+        }
+      }
     }
 
-    const samePjo = allPjo.find((p: any) => p.site === karyawan?.site)
-    const chosenPjo = samePjo || allPjo[0]
+    // ─── FALLBACK 3: cari role legacy 'pjo' (backward compat) ────────
+    if (!chosenPjoNrp) {
+      const { data: pjoLegacyRoles } = await supabase
+        .from('roles')
+        .select('nrp')
+        .eq('role', 'pjo')
+        .eq('active', true)
 
+      const pjoLegacyNrps = (pjoLegacyRoles || []).map(r => r.nrp)
+      if (pjoLegacyNrps.length > 0) {
+        const { data: pjoLegacyEmps } = await supabase
+          .from('employees')
+          .select('nrp, nama, site')
+          .in('nrp', pjoLegacyNrps)
+          .eq('site', userSite)
+          .is('tanggal_resign', null)
+
+        if (pjoLegacyEmps && pjoLegacyEmps.length > 0) {
+          chosenPjoNrp = pjoLegacyEmps[0].nrp
+          chosenPjoNama = pjoLegacyEmps[0].nama
+        }
+      }
+    }
+
+    // ─── Kalau tetap kosong → tolak dengan pesan jelas ──────────────
+    if (!chosenPjoNrp) {
+      return NextResponse.json({ 
+        error: `Belum ada PJO/Deputy untuk site "${userSite}". Hubungi HR untuk set PJO Site.` 
+      }, { status: 400 })
+    }
+
+    // ─── Ambil nama PJO (kalau belum ke-set dari fallback) ──────────
+    if (!chosenPjoNama) {
+      const { data: pjoData } = await supabase
+        .from('employees')
+        .select('nama')
+        .eq('nrp', chosenPjoNrp)
+        .maybeSingle()
+      chosenPjoNama = pjoData?.nama || 'PJO'
+    }
+
+    // ─── Insert overtime request ─────────────────────────────────────
     const { data: newOvertime, error: insertError } = await supabase
       .from('overtime_requests')
       .insert({
@@ -102,8 +164,8 @@ export async function POST(request: NextRequest) {
         total_jam: totalJam,
         alasan,
         jenis_lembur: jenis_lembur || 'BIASA',
-        atasan_nrp: isDirectPJO ? chosenPjo.nrp : atasan_nrp,
-        pjo_nrp: chosenPjo.nrp,
+        atasan_nrp: isDirectPJO ? chosenPjoNrp : atasan_nrp,
+        pjo_nrp: chosenPjoNrp,
         status_atasan: isDirectPJO ? 'APPROVED' : 'PENDING',
         status_pjo: isDirectPJO ? 'PENDING' : 'WAITING',
         status_final: isDirectPJO ? 'MENUNGGU_PJO' : 'MENUNGGU_ATASAN'
@@ -118,8 +180,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: isDirectPJO
-        ? `✅ Pengajuan lembur ${totalJam} jam berhasil dibuat. Langsung menunggu approval PJO (${chosenPjo.nama}).`
-        : `✅ Pengajuan lembur ${totalJam} jam berhasil dibuat. Menunggu approval atasan (${atasanCheck?.nama}), lalu final ke PJO (${chosenPjo.nama}).`,
+        ? `✅ Pengajuan lembur ${totalJam} jam berhasil dibuat. Langsung menunggu approval PJO (${chosenPjoNama}).`
+        : `✅ Pengajuan lembur ${totalJam} jam berhasil dibuat. Menunggu approval atasan (${atasanCheck?.nama}), lalu final ke PJO (${chosenPjoNama}).`,
       data: newOvertime
     })
 
