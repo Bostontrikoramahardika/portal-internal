@@ -101,20 +101,57 @@ export async function GET(req: NextRequest) {
     empQuery = empQuery.eq('site', session.site || '')
   }
 
-  // ⭐ CHAT 26: GL Plant / GL Produksi / Atasan → HANYA bawahan (approval_matrix.atasan_nrp)
-  if (!isSuperAdmin && ['gl_plant','gl_produksi','atasan'].includes(role)) {
-    const { data: bawahan } = await supabaseAdmin
-      .from('approval_matrix')
-      .select('employee_nrp')
-      .eq('atasan_nrp', session.nrp)     // ✅ FIX: atasan_nrp (bukan approver_nrp)
-      .eq('active', true)
-    
-    const nrpList = (bawahan || []).map((b: any) => b.employee_nrp)
-    if (nrpList.length === 0) {
-      return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: true, role, isViewOnly: false } })
-    }
-    empQuery = empQuery.in('nrp', nrpList)
+  // ⭐ CHAT 28: GL Plant → semua Plant crew di site sendiri (FLAT, tidak via approval_matrix)
+if (!isSuperAdmin && role === 'gl_plant') {
+  const scopeSite = session.scope_site || session.site || ''
+  if (!scopeSite) {
+    return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: true, role, isViewOnly: false } })
   }
+  empQuery = empQuery
+    .eq('site', scopeSite)
+    .is('tanggal_resign', null)
+    .or([
+      'jabatan.ilike.%mekanik%',
+      'jabatan.ilike.%mechanic%',
+      'jabatan.ilike.%welder%',
+      'jabatan.ilike.%tyreman%',
+      'jabatan.ilike.%electric%',
+      'jabatan.ilike.%helper plant%',
+      'jabatan.ilike.%admin plant%',
+      'departemen.ilike.%plant%'
+    ].join(','))
+}
+
+// ⭐ CHAT 28: GL Produksi → semua Operator di site sendiri (FLAT)
+if (!isSuperAdmin && role === 'gl_produksi') {
+  const scopeSite = session.scope_site || session.site || ''
+  if (!scopeSite) {
+    return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: true, role, isViewOnly: false } })
+  }
+  empQuery = empQuery
+    .eq('site', scopeSite)
+    .is('tanggal_resign', null)
+    .or([
+      'jabatan.ilike.%operator%',
+      'jabatan.ilike.%driver%',
+      'jabatan.ilike.%huler%'
+    ].join(','))
+}
+
+// ⭐ Legacy 'atasan' → tetap pakai approval_matrix (backward compat)
+if (!isSuperAdmin && role === 'atasan') {
+  const { data: bawahan } = await supabaseAdmin
+    .from('approval_matrix')
+    .select('employee_nrp')
+    .eq('atasan_nrp', session.nrp)
+    .eq('active', true)
+  
+  const nrpList = (bawahan || []).map((b: any) => b.employee_nrp)
+  if (nrpList.length === 0) {
+    return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: true, role, isViewOnly: false } })
+  }
+  empQuery = empQuery.in('nrp', nrpList)
+}
 
   // ⭐ CHAT 26: PJO Site / PJO → semua karyawan yang PJO-nya dia
   if (!isSuperAdmin && ['pjo_site','pjo'].includes(role)) {

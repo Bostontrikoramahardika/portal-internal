@@ -377,24 +377,63 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
           finalEmps = data || [];
         }
       }
-      // ─── PRIORITAS 4: GL (Plant/Produksi) → bawahan via atasan_nrp ───
-      else if (isGL) {
-        const { data: matrix } = await supabase
-          .from('approval_matrix')
-          .select('employee_nrp')
-          .eq('atasan_nrp', session.nrp)
-          .eq('active', true);
-        const nrps = (matrix || []).map((m: any) => m.employee_nrp);
-        if (nrps.length > 0) {
-          const { data } = await supabase
-            .from('employees')
-            .select('nrp, nama, jabatan, site, departemen')
-            .in('nrp', nrps)
-            .eq('status_karyawan', 'Aktif')
-            .order('nama');
-          finalEmps = data || [];
-        }
-      }
+// ─── PRIORITAS 4a: GL PLANT → semua Plant crew di site sendiri (FLAT) ───
+else if (isGLPlant) {
+  const scopeSite = (session as any).scope_site || session.site;
+  const { data } = await supabase
+    .from('employees')
+    .select('nrp, nama, jabatan, site, departemen')
+    .eq('site', scopeSite)
+    .eq('status_karyawan', 'Aktif')
+    .is('tanggal_resign', null)
+    .or([
+      'jabatan.ilike.%mekanik%',
+      'jabatan.ilike.%mechanic%',
+      'jabatan.ilike.%welder%',
+      'jabatan.ilike.%tyreman%',
+      'jabatan.ilike.%electric%',
+      'jabatan.ilike.%helper plant%',
+      'jabatan.ilike.%admin plant%',
+      'departemen.ilike.%plant%'
+    ].join(','))
+    .order('nama');
+  finalEmps = data || [];
+}
+// ─── PRIORITAS 4b: GL PRODUKSI → semua Operator di site sendiri (FLAT) ───
+else if (isGLProduksi) {
+  const scopeSite = (session as any).scope_site || session.site;
+  const { data } = await supabase
+    .from('employees')
+    .select('nrp, nama, jabatan, site, departemen')
+    .eq('site', scopeSite)
+    .eq('status_karyawan', 'Aktif')
+    .is('tanggal_resign', null)
+    .or([
+      'jabatan.ilike.%operator%',
+      'jabatan.ilike.%driver%',
+      'jabatan.ilike.%huler%'
+    ].join(','))
+    .order('nama');
+  finalEmps = data || [];
+}
+// ─── PRIORITAS 4c: Legacy 'atasan' → tetap via approval_matrix ───
+else if (isGL) {
+  const { data: matrix } = await supabase
+    .from('approval_matrix')
+    .select('employee_nrp')
+    .eq('atasan_nrp', session.nrp)
+    .eq('active', true);
+  const nrps = (matrix || []).map((m: any) => m.employee_nrp);
+  if (nrps.length > 0) {
+    const { data } = await supabase
+      .from('employees')
+      .select('nrp, nama, jabatan, site, departemen')
+      .in('nrp', nrps)
+      .eq('status_karyawan', 'Aktif')
+      .order('nama');
+    finalEmps = data || [];
+  }
+}
       // ─── FALLBACK ───
       else {
         const { data: matrix } = await supabase
