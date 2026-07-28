@@ -3723,7 +3723,7 @@ function KPISayaRaportView({ data }: any) {
   )
 }
 
-// ============ 👥 KPI & PENILAIAN BAWAHAN (v3.0 Chat 27) ============
+// ============ 👥 KPI & PENILAIAN BAWAHAN (v3.1 Chat 27) ============
 function PenilaianBawahanView({ data, onReload }: any) {
   const [selectedEmp, setSelectedEmp] = useState<any>(null)
   const [selectedKpiId, setSelectedKpiId] = useState<string | null>(null)
@@ -3731,12 +3731,14 @@ function PenilaianBawahanView({ data, onReload }: any) {
   const [searchTim, setSearchTim] = useState('')
   const [showPenilaiDetail, setShowPenilaiDetail] = useState<any>(null)
 
-  // Filter periode dari server response
   const [bulan, setBulan] = useState(data.bulan || String(new Date().getMonth() + 1).padStart(2, '0'))
   const [tahun, setTahun] = useState(data.tahun || String(new Date().getFullYear()))
+  const [filterSite, setFilterSite] = useState(data.filter_site || 'ALL')
 
   const viewOnly = data.view_only === true
   const canEdit = data.can_edit === true
+  const canFilterSite = data.can_filter_site === true
+  const sitesList = data.sites_list || []
   const summary = data.summary || { total: 0, sudah_dinilai: 0, belum_dinilai: 0, nilai_rata_rata: 0 }
   const periode = data.periode || 'PERIODE INI'
 
@@ -3748,24 +3750,27 @@ function PenilaianBawahanView({ data, onReload }: any) {
   ]
   const tahunOptions = ['2025', '2026', '2027']
 
-  const handlePeriodeChange = (newBulan: string, newTahun: string) => {
+  const handleFilterChange = (newBulan: string, newTahun: string, newSite: string) => {
     setBulan(newBulan)
     setTahun(newTahun)
-    // Reload dengan periode baru
+    setFilterSite(newSite)
     const url = new URL(window.location.href)
     url.searchParams.set('bulan', newBulan)
     url.searchParams.set('tahun', newTahun)
+    if (newSite !== 'ALL') {
+      url.searchParams.set('filter_site', newSite)
+    } else {
+      url.searchParams.delete('filter_site')
+    }
     window.history.pushState({}, '', url)
     onReload?.()
   }
 
-  // Filter search
   const filteredBySearch = (data.rows || []).filter((e: any) =>
     e.nama.toLowerCase().includes(searchTim.toLowerCase()) ||
     e.nrp.toLowerCase().includes(searchTim.toLowerCase())
   )
 
-  // Kategorisasi jabatan
   const operators = filteredBySearch.filter((e: any) =>
     /operator|driver|huler|dt|exca|dozer|grader|compactor/i.test(e.jabatan)
   )
@@ -3792,31 +3797,46 @@ function PenilaianBawahanView({ data, onReload }: any) {
 
   return (
     <div className="animate-in fade-in duration-500 pb-20">
-      {/* HEADER + PERIODE FILTER */}
+      {/* HEADER + FILTER */}
       <div className="mb-6 bg-white rounded-3xl p-6 border-2 border-slate-100 shadow-sm">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">
               📊 KPI & Penilaian
             </h2>
             <p className="text-sm text-slate-500 font-medium mt-1">
               Periode: <span className="text-blue-600 font-bold">{periode}</span>
-              {viewOnly && <span className="ml-3 text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-500 px-3 py-1 rounded-full">👁️ View Only</span>}
+              {canFilterSite && filterSite !== 'ALL' && (
+                <span className="ml-2"> • Site: <span className="text-purple-600 font-bold">{filterSite}</span></span>
+              )}
             </p>
           </div>
 
-          {/* Filter Bulan & Tahun */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+            {/* Filter Site (untuk HR HO & Super Admin) */}
+            {canFilterSite && sitesList.length > 0 && (
+              <select
+                value={filterSite}
+                onChange={(e) => handleFilterChange(bulan, tahun, e.target.value)}
+                className="px-4 py-2 bg-purple-50 border-2 border-purple-100 rounded-xl text-sm font-bold focus:border-purple-500 outline-none"
+              >
+                <option value="ALL">🌐 Semua Site</option>
+                {sitesList.map((s: string) => (
+                  <option key={s} value={s}>📍 {s}</option>
+                ))}
+              </select>
+            )}
+
             <select
               value={bulan}
-              onChange={(e) => handlePeriodeChange(e.target.value, tahun)}
+              onChange={(e) => handleFilterChange(e.target.value, tahun, filterSite)}
               className="px-4 py-2 bg-slate-50 border-2 border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none"
             >
               {bulanOptions.map(b => <option key={b.val} value={b.val}>{b.label}</option>)}
             </select>
             <select
               value={tahun}
-              onChange={(e) => handlePeriodeChange(bulan, e.target.value)}
+              onChange={(e) => handleFilterChange(bulan, e.target.value, filterSite)}
               className="px-4 py-2 bg-slate-50 border-2 border-slate-100 rounded-xl text-sm font-bold focus:border-blue-500 outline-none"
             >
               {tahunOptions.map(t => <option key={t} value={t}>{t}</option>)}
@@ -3906,23 +3926,81 @@ function PenilaianBawahanView({ data, onReload }: any) {
             const nilaiSaya = emp.nilai_saya
             const nilaiRataRata = emp.nilai_rata_rata || 0
             const label = getNilaiLabel(nilaiRataRata)
+            const sudahDinilaiOrang = totalPenilai > 0
 
+            // ══════════════════════════════════
+            // VIEW-ONLY MODE (HR HO): Card simpel
+            // ══════════════════════════════════
+            if (viewOnly) {
+              return (
+                <div
+                  key={emp.nrp}
+                  className={`bg-white rounded-3xl border-2 p-5 shadow-md transition-all ${
+                    sudahDinilaiOrang ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-100'
+                  }`}
+                >
+                  {/* Header karyawan */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl text-white shadow-md ${
+                      sudahDinilaiOrang ? 'bg-emerald-600' : 'bg-slate-800'
+                    }`}>
+                      {emp.nama[0]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-slate-900 leading-tight truncate">{emp.nama}</h3>
+                      <p className="text-[11px] font-bold text-slate-600 truncate">{emp.jabatan}</p>
+                      <p className="text-[10px] font-medium text-slate-400 italic">📍 {emp.site} • {emp.nrp}</p>
+                    </div>
+                  </div>
+
+                  {/* Nilai display */}
+                  {sudahDinilaiOrang ? (
+                    <div className="bg-gradient-to-br from-slate-50 to-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nilai Rata-Rata</p>
+                      <p className={`text-4xl font-black ${label.color}`}>{nilaiRataRata}</p>
+                      <p className={`text-xs font-black mt-1 ${label.color}`}>{label.label}</p>
+                      <div className="mt-3 pt-3 border-t border-emerald-100">
+                        <p className="text-[10px] font-bold text-slate-500">
+                          Dinilai oleh <span className="text-slate-900 font-black">{totalPenilai}</span> orang
+                        </p>
+                        {emp.list_penilai && emp.list_penilai.length > 0 && (
+                          <button
+                            onClick={() => setShowPenilaiDetail(emp)}
+                            className="mt-2 text-[10px] font-bold text-blue-600 hover:text-blue-800"
+                          >
+                            📋 Lihat detail →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 rounded-2xl p-4 text-center">
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Belum ada penilaian</p>
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            // ══════════════════════════════════
+            // ATASAN/PJO/SUPER ADMIN MODE: Full card
+            // ══════════════════════════════════
             return (
               <div
                 key={emp.nrp}
                 className={`bg-white rounded-3xl border-2 p-5 shadow-md transition-all group relative overflow-hidden ${
                   dinilaiSaya ? 'border-emerald-200 bg-emerald-50/30' :
-                  totalPenilai > 0 ? 'border-blue-200 bg-blue-50/20' :
+                  sudahDinilaiOrang ? 'border-blue-200 bg-blue-50/20' :
                   'border-slate-100 hover:border-slate-300'
                 }`}
               >
                 {/* Badge status */}
                 <div className={`absolute top-0 right-0 px-3 py-1.5 rounded-bl-2xl text-[9px] font-black uppercase text-white tracking-wider ${
                   dinilaiSaya ? 'bg-emerald-500' :
-                  totalPenilai > 0 ? 'bg-blue-500' :
+                  sudahDinilaiOrang ? 'bg-blue-500' :
                   'bg-slate-400'
                 }`}>
-                  {dinilaiSaya ? '✅ Dinilai Anda' : totalPenilai > 0 ? `👥 Dinilai ${totalPenilai} lain` : '⏳ Belum Dinilai'}
+                  {dinilaiSaya ? '✅ Dinilai Anda' : sudahDinilaiOrang ? `👥 Dinilai ${totalPenilai} lain` : '⏳ Belum Dinilai'}
                 </div>
 
                 {/* Header karyawan */}
@@ -3940,7 +4018,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
                 </div>
 
                 {/* Nilai display */}
-                {totalPenilai > 0 && (
+                {sudahDinilaiOrang && (
                   <div className="bg-white border border-slate-100 rounded-2xl p-3 mb-3">
                     <div className="grid grid-cols-2 gap-2 text-center">
                       <div>
@@ -3957,7 +4035,6 @@ function PenilaianBawahanView({ data, onReload }: any) {
                       </div>
                     </div>
 
-                    {/* Detail penilai (klik untuk buka) */}
                     {emp.list_penilai && emp.list_penilai.length > 0 && (
                       <button
                         onClick={() => setShowPenilaiDetail(emp)}
@@ -3970,11 +4047,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
                 )}
 
                 {/* Tombol Aksi */}
-                {viewOnly ? (
-                  <div className="w-full py-3 rounded-xl text-center text-[10px] font-black tracking-widest uppercase bg-slate-100 text-slate-400">
-                    👁️ Read Only
-                  </div>
-                ) : canEdit ? (
+                {canEdit && (
                   <button
                     onClick={() => {
                       setSelectedEmp(emp)
@@ -3988,7 +4061,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
                   >
                     {dinilaiSaya ? '🔄 Edit Nilai Anda' : '⭐ Beri Penilaian'}
                   </button>
-                ) : null}
+                )}
               </div>
             )
           })}

@@ -335,13 +335,18 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
                          'JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
       const periodeFilter = `${bulanNama[parseInt(bulan) - 1]} ${tahun}`;
 
-      // ─── PRIORITAS 1: Super Admin / HR HO → semua karyawan ───
+      // ─── PRIORITAS 1: Super Admin / HR HO → semua karyawan (bisa filter site) ───
       if (isSuperAdmin || isHRHO) {
-        const { data } = await supabase
+        const filterSite = searchParams.get('filter_site') || ''
+        let q = supabase
           .from('employees')
           .select('nrp, nama, jabatan, site, departemen')
           .eq('status_karyawan', 'Aktif')
           .order('nama');
+        if (filterSite && filterSite !== 'ALL') {
+          q = q.eq('site', filterSite)
+        }
+        const { data } = await q;
         finalEmps = data || [];
       }
       // ─── PRIORITAS 2: HR Site → semua di site sendiri ───
@@ -483,6 +488,17 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
         ? Math.round((rows.filter(r => r.total_penilai > 0).reduce((sum, r) => sum + r.nilai_rata_rata, 0) / totalSudahDinilai) * 10) / 10
         : 0;
 
+      // Ambil daftar site untuk filter (hanya untuk HR HO / Super Admin)
+      let sitesList: string[] = []
+      if (isSuperAdmin || isHRHO) {
+        const { data: siteData } = await supabase
+          .from('sites_config')
+          .select('nama_site')
+          .eq('active', true)
+          .order('nama_site')
+        sitesList = (siteData || []).map((s: any) => s.nama_site)
+      }
+
       return NextResponse.json({
         type: 'penilaian_tim',
         title: menu_label,
@@ -492,6 +508,9 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
         tahun,
         view_only: isHRHO && !isSuperAdmin,
         can_edit: isSuperAdmin || isPJO || isGL || isHRSite,
+        can_filter_site: isSuperAdmin || isHRHO,
+        sites_list: sitesList,
+        filter_site: searchParams.get('filter_site') || 'ALL',
         summary: {
           total: rows.length,
           sudah_dinilai: totalSudahDinilai,
