@@ -37,3 +37,188 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
+
+
+/* ═══════════════════════════════════════════════════════════
+   🎨 BTM PORTAL — COMPACT DESIGN SYSTEM v1.0
+   Author: AI untuk Pak Ricky Wahyu Kurniawan
+   Tanggal: 28 Juli 2026 — Chat 28
+   
+   ⚠️ Global override: HP compact, PC tetap lega
+   ⚠️ Tidak menyentuh fungsi/fitur apapun
+   ═══════════════════════════════════════════════════════════ */
+
+/* ═══ DESIGN TOKENS ═══ */
+:root {
+  --btm-primary: #003D79;
+  --btm-primary-dark: #002855;
+  --btm-primary-light: #1e40af;
+  --btm-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --btm-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   📱 MOBILE COMPACT MODE (< 1024px)
+   Kecilkan padding, font, radius — biar muat banyak di HP
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 1023px) {
+
+  /* ─── PADDING ─── */
+  .p-10 { padding: 14px !important; }
+  .p-8  { padding: 12px !important; }
+  .p-6  { padding: 10px !important; }
+  .p-5  { padding: 10px !important; }
+  .p-4  { padding: 10px !important; }
+
+  .py-8 { padding-top: 12px !important; padding-bottom: 12px !important; }
+  .py-6 { padding-top: 10px !important; padding-bottom: 10px !important; }
+  .py-5 { padding-top: 10px !important; padding-bottom: 10px !important; }
+  .py-4 { padding-top: 8px  !important; padding-bottom: 8px  !important; }
+
+  .px-8 { padding-left: 12px !important; padding-right: 12px !important; }
+  .px-6 { padding-left: 12px !important; padding-right: 12px !important; }
+  .px-5 { padding-left: 12px !important; padding-right: 12px !important; }
+
+  .pb-32 { padding-bottom: 90px !important; }
+  .pb-28 { padding-bottom: 90px !important; }
+  .pb-24 { padding-bottom: 90px !important; }
+  .pb-20 { padding-bottom: 90px !important; }
+
+  .pt-16 { padding-top: 60px !important; }
+
+  /* ─── BORDER RADIUS (bracket notation) ─── */
+  .rounded-\[3rem\]    { border-radius: 20px !important; }
+  .rounded-\[2\.5rem\] { border-radius: 18px !important; }
+  .rounded-\[2\.2rem\] { border-radius: 16px !important; }
+  .rounded-\[2rem\]    { border-radius: 16px !important; }
+  .rounded-\[1\.5rem\] { border-radius: 14px !important; }
+  .rounded-\[1\.2rem\] { border-radius: 12px !important; }
+
+  /* ─── FONT SIZE (jangan terlalu kecil, tetap terbaca) ─── */
+  .text-4xl { font-size: 22px !important; line-height: 1.2 !important; }
+  .text-3xl { font-size: 20px !important; line-height: 1.2 !important; }
+  .text-2xl { font-size: 17px !important; line-height: 1.3 !important; }
+  .text-xl  { font-size: 15px !important; line-height: 1.3 !important; }
+  .text-lg  { font-size: 14px !important; line-height: 1.4 !important; }
+
+  /* ─── SPACING ─── */
+  .space-y-8 > * + * { margin-top: 12px !important; }
+  .space-y-6 > * + * { margin-top: 10px !important; }
+  .space-y-5 > * + * { margin-top: 10px !important; }
+
+  .gap-8 { gap: 8px !important; }
+  .gap-6 { gap: 8px !important; }
+  .gap-5 { gap: 8px !important; }
+  .gap-4 { gap: 8px !important; }
+
+  /* ─── MARGIN ─── */
+  .mb-12 { margin-bottom: 12px !important; }
+  .mb-10 { margin-bottom: 12px !important; }
+  .mb-8  { margin-bottom: 10px !important; }
+  .mb-6  { margin-bottom: 10px !important; }
+
+  /* ─── AVATAR / ICON BOX ─── */
+  .w-14 { width: 44px !important; }
+  .h-14 { height: 44px !important; }
+  .w-12 { width: 38px !important; }
+  .h-12 { height: 38px !important; }
+  .w-11 { width: 36px !important; }
+  .h-11 { height: 36px !important; }
+
+  /* ─── INPUT / TEXTAREA (biar konsisten) ─── */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    min-height: 38px !important;
+  }
+
+  textarea {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  /* ─── BUTTON (min height untuk touch target) ─── */
+  button {
+    min-height: 34px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   💻 DESKTOP MODE (>= 1024px)
+   Tidak ada override — pakai default Tailwind (lega)
+   ═══════════════════════════════════════════════════════════ */
+
+/* PC pakai default, tidak perlu override apapun */
+
+/* ═══════════════════════════════════════════════════════════
+   🎨 UTILITY BARU (untuk fitur/halaman baru nanti)
+   Ini component reusable — Pak Ricky bisa pakai di masa depan
+   ═══════════════════════════════════════════════════════════ */
+
+.btm-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: var(--btm-shadow-sm);
+}
+
+@media (min-width: 1024px) {
+  .btm-card {
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: var(--btm-shadow-md);
+  }
+}
+
+.btm-btn-primary {
+  background: var(--btm-primary);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.btm-btn-primary:hover {
+  background: var(--btm-primary-dark);
+}
+
+.btm-btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btm-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.btm-input:focus {
+  border-color: var(--btm-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   📱 SCROLLBAR HIDE (untuk chip horizontal & bottom nav)
+   ═══════════════════════════════════════════════════════════ */
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🐛 BUG FIX — Class typo repetitif tidak masalah
+   Contoh: lg:text-base lg:text-base lg:text-base...
+   Browser abaikan duplikat class secara otomatis
+   ═══════════════════════════════════════════════════════════ */
