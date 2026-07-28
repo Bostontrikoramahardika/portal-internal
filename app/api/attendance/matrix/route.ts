@@ -1,5 +1,10 @@
-// app/api/attendance/matrix/route.ts v2.2
-// v2.2 - Chat 26: FIX bawahan filter (atasan_nrp bukan approver_nrp) + support PJO site
+// app/api/attendance/matrix/route.ts v2.3
+// v2.3 - Chat 28: FLAT access untuk GL Plant & GL Produksi
+//        - GL Plant   → semua Plant crew di site sendiri (via jabatan)
+//        - GL Produksi → semua Operator di site sendiri (via jabatan)
+//        - Legacy 'atasan' → tetap via approval_matrix.atasan_nrp
+//        - PJO Site   → tetap via approval_matrix.pjo_nrp
+//        - HR Site    → filter site sendiri (via employees.site)
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
@@ -63,24 +68,34 @@ function konversiCell(
   return { code: '-', type: 'empty' }
 }
 
+// ═══════════════════════════════════════════════════
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status })
   const session: any = auth.session!
 
   const userRoles: string[] = Array.isArray(session.roles) ? session.roles : []
-  const role: string = userRoles[0] || 'employee'
   const isSuperAdmin = userRoles.includes('super_admin')
 
+  // ⭐ CHAT 28: Cari role PRIORITAS (bukan role[0] karena bisa 'employee')
+  // Prioritas: super_admin > hr_ho > pjo_site > gl_plant > gl_produksi > hr_site > atasan > employee
+  const PRIORITY_ROLES = [
+    'super_admin', 'hr_ho', 'director_ops', 'business_dev', 'manager_ops', 'spv_she_ho',
+    'pjo_site', 'pjo', 'gl_plant', 'gl_produksi', 'hr_site', 'she_site',
+    'admin_site', 'admin_plant', 'atasan', 'employee'
+  ]
+  const role: string = PRIORITY_ROLES.find(r => userRoles.includes(r)) || 'employee'
+
+  // Employee murni (tanpa role lain) → tolak akses
   if (role === 'employee' && !isSuperAdmin) {
     return NextResponse.json({ error: 'Tidak punya akses' }, { status: 403 })
   }
 
   const { searchParams } = new URL(req.url)
-  const bulan    = searchParams.get('bulan') || ''
-  const site     = searchParams.get('site')  || ''
+  const bulan      = searchParams.get('bulan') || ''
+  const site       = searchParams.get('site')  || ''
   const departemen = searchParams.get('departemen') || ''
-  const nama     = searchParams.get('nama')  || ''
+  const nama       = searchParams.get('nama')  || ''
 
   if (!bulan) return NextResponse.json({ error: 'Bulan wajib' }, { status: 400 })
 
@@ -91,83 +106,106 @@ export async function GET(req: NextRequest) {
 
   const todayWita = getWitaToday()
 
-  // ── STEP 1: Ambil karyawan ──
+  // ── STEP 1: Ambil karyawan berdasarkan role ──
   let empQuery = supabaseAdmin
     .from('employees')
     .select('nrp, nama, jabatan, departemen, site, status_karyawan, tanggal_resign')
 
-  // HR Site / SHE Site → filter by site sendiri
-  if (!isSuperAdmin && ['hr_site','she_site'].includes(role)) {
+  // ─────────────────────────────────────────────────────
+  // 🎯 ROLE-BASED FILTERING (priority: dari yang paling spesifik)
+  // ─────────────────────────────────────────────────────
+
+  if (isSuperAdmin) {
+    // Super Admin → lihat semua (tidak filter apapun)
+  }
+  // ⭐ HR Site / SHE Site → filter site sendiri
+  else if (['hr_site','she_site'].includes(role)) {
     empQuery = empQuery.eq('site', session.site || '')
   }
-
-  // ⭐ CHAT 28: GL Plant → semua Plant crew di site sendiri (FLAT, tidak via approval_matrix)
-if (!isSuperAdmin && role === 'gl_plant') {
-  const scopeSite = session.scope_site || session.site || ''
-  if (!scopeSite) {
-    return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: true, role, isViewOnly: false } })
+  // ⭐ CHAT 28: GL Plant → semua Plant crew di site sendiri (FLAT)
+  else if (role === 'gl_plant') {
+    const scopeSite = session.scope_site || session.site || ''
+    if (!scopeSite) {
+      return NextResponse.json({
+        ok: true, jmlHari, groups: [], summary: {},
+        permission: { canEdit: true, role, isViewOnly: false }
+      })
+    }
+    empQuery = empQuery
+      .eq('site', scopeSite)
+      .is('tanggal_resign', null)
+      .or([
+        'jabatan.ilike.%mekanik%',
+        'jabatan.ilike.%mechanic%',
+        'jabatan.ilike.%welder%',
+        'jabatan.ilike.%tyreman%',
+        'jabatan.ilike.%electric%',
+        'jabatan.ilike.%helper plant%',
+        'jabatan.ilike.%admin plant%',
+        'departemen.ilike.%plant%'
+      ].join(','))
   }
-  empQuery = empQuery
-    .eq('site', scopeSite)
-    .is('tanggal_resign', null)
-    .or([
-      'jabatan.ilike.%mekanik%',
-      'jabatan.ilike.%mechanic%',
-      'jabatan.ilike.%welder%',
-      'jabatan.ilike.%tyreman%',
-      'jabatan.ilike.%electric%',
-      'jabatan.ilike.%helper plant%',
-      'jabatan.ilike.%admin plant%',
-      'departemen.ilike.%plant%'
-    ].join(','))
-}
-
-// ⭐ CHAT 28: GL Produksi → semua Operator di site sendiri (FLAT)
-if (!isSuperAdmin && role === 'gl_produksi') {
-  const scopeSite = session.scope_site || session.site || ''
-  if (!scopeSite) {
-    return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: true, role, isViewOnly: false } })
+  // ⭐ CHAT 28: GL Produksi → semua Operator di site sendiri (FLAT)
+  else if (role === 'gl_produksi') {
+    const scopeSite = session.scope_site || session.site || ''
+    if (!scopeSite) {
+      return NextResponse.json({
+        ok: true, jmlHari, groups: [], summary: {},
+        permission: { canEdit: true, role, isViewOnly: false }
+      })
+    }
+    empQuery = empQuery
+      .eq('site', scopeSite)
+      .is('tanggal_resign', null)
+      .or([
+        'jabatan.ilike.%operator%',
+        'jabatan.ilike.%driver%',
+        'jabatan.ilike.%huler%'
+      ].join(','))
   }
-  empQuery = empQuery
-    .eq('site', scopeSite)
-    .is('tanggal_resign', null)
-    .or([
-      'jabatan.ilike.%operator%',
-      'jabatan.ilike.%driver%',
-      'jabatan.ilike.%huler%'
-    ].join(','))
-}
-
-// ⭐ Legacy 'atasan' → tetap pakai approval_matrix (backward compat)
-if (!isSuperAdmin && role === 'atasan') {
-  const { data: bawahan } = await supabaseAdmin
-    .from('approval_matrix')
-    .select('employee_nrp')
-    .eq('atasan_nrp', session.nrp)
-    .eq('active', true)
-  
-  const nrpList = (bawahan || []).map((b: any) => b.employee_nrp)
-  if (nrpList.length === 0) {
-    return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: true, role, isViewOnly: false } })
-  }
-  empQuery = empQuery.in('nrp', nrpList)
-}
-
-  // ⭐ CHAT 26: PJO Site / PJO → semua karyawan yang PJO-nya dia
-  if (!isSuperAdmin && ['pjo_site','pjo'].includes(role)) {
+  // ⭐ PJO Site / PJO → semua karyawan yang PJO-nya dia (via approval_matrix)
+  else if (['pjo_site','pjo'].includes(role)) {
     const { data: bawahan } = await supabaseAdmin
       .from('approval_matrix')
       .select('employee_nrp')
       .eq('pjo_nrp', session.nrp)
       .eq('active', true)
-    
+
     const nrpList = (bawahan || []).map((b: any) => b.employee_nrp)
     if (nrpList.length === 0) {
-      return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: true, role, isViewOnly: false } })
+      return NextResponse.json({
+        ok: true, jmlHari, groups: [], summary: {},
+        permission: { canEdit: true, role, isViewOnly: false }
+      })
     }
     empQuery = empQuery.in('nrp', nrpList)
   }
+  // ⭐ Legacy 'atasan' → tetap via approval_matrix (backward compat)
+  else if (role === 'atasan') {
+    const { data: bawahan } = await supabaseAdmin
+      .from('approval_matrix')
+      .select('employee_nrp')
+      .eq('atasan_nrp', session.nrp)
+      .eq('active', true)
 
+    const nrpList = (bawahan || []).map((b: any) => b.employee_nrp)
+    if (nrpList.length === 0) {
+      return NextResponse.json({
+        ok: true, jmlHari, groups: [], summary: {},
+        permission: { canEdit: true, role, isViewOnly: false }
+      })
+    }
+    empQuery = empQuery.in('nrp', nrpList)
+  }
+  // ⭐ Admin Site / Admin Plant → filter site
+  else if (['admin_site','admin_plant'].includes(role)) {
+    empQuery = empQuery.eq('site', session.site || '')
+    if (role === 'admin_plant') {
+      empQuery = empQuery.ilike('departemen', '%plant%')
+    }
+  }
+
+  // ── Filter tambahan dari user (kalau ada) ──
   if (site) empQuery = empQuery.eq('site', site)
   if (departemen) empQuery = empQuery.eq('departemen', departemen)
   if (nama) empQuery = empQuery.ilike('nama', `%${nama}%`)
@@ -177,7 +215,14 @@ if (!isSuperAdmin && role === 'atasan') {
 
   const nrpList = (employees || []).map((e: any) => e.nrp)
   if (nrpList.length === 0) {
-    return NextResponse.json({ ok: true, jmlHari, groups: [], summary: {}, permission: { canEdit: false, role, isViewOnly: HO_VIEW_ONLY.includes(role) } })
+    return NextResponse.json({
+      ok: true, jmlHari, groups: [], summary: {},
+      permission: {
+        canEdit: isSuperAdmin || SITE_EDIT.includes(role) || LEADER_EDIT.includes(role),
+        role,
+        isViewOnly: HO_VIEW_ONLY.includes(role)
+      }
+    })
   }
 
   // ── STEP 2: Ambil roster ──
@@ -196,7 +241,7 @@ if (!isSuperAdmin && role === 'atasan') {
     .gte('tanggal', startDate)
     .lte('tanggal', endDate)
 
-  // ── STEP 4: Map ──
+  // ── STEP 4: Mapping ──
   const rosterMap: Record<string, string> = {}
   ;(rosters || []).forEach((r: any) => {
     rosterMap[`${r.nrp}_${r.tanggal}`] = r.shift_code
@@ -207,7 +252,7 @@ if (!isSuperAdmin && role === 'atasan') {
     attMap[`${a.nrp}_${a.tanggal}`] = a
   })
 
-  // ── STEP 5: Matrix per karyawan ──
+  // ── STEP 5: Bangun matrix per karyawan ──
   const rows = (employees || []).map((emp: any) => {
     const days: any[] = []
     let hariKerja = 0, hariHadir = 0, shiftS = 0, shiftM = 0
@@ -289,7 +334,7 @@ if (!isSuperAdmin && role === 'atasan') {
     }
   })
 
-  // ── STEP 6: Group by dept ──
+  // ── STEP 6: Group by departemen ──
   const DEPT_ORDER = ['Staff','Plant','Operator','Lainnya']
   const grouped: Record<string, any[]> = {}
   rows.forEach(r => {
