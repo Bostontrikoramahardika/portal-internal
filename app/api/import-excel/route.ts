@@ -29,10 +29,12 @@ export async function POST(request: NextRequest) {
 
     if (!file) return NextResponse.json({ error: 'File tidak ditemukan' }, { status: 400 })
 
-    // 3. Jalankan Handler Khusus Roster (Support plural/singular)
+    // 3. Roster tidak lagi di-handle di sini
+    // Gunakan endpoint khusus: /api/roster/import-preview + /api/roster/import-confirm
     if (table === 'roster' || table === 'rosters' || table === 'import_roster') {
-      console.log("--- [DEBUG] Menggunakan Handler Roster Khusus ---");
-      return await handleRosterImport(file)
+      return NextResponse.json({ 
+        error: 'Import roster sudah dipindah ke menu "Import Roster Bulanan". Silakan gunakan menu tersebut.' 
+      }, { status: 400 })
     }
 
     // 4. Handler Generic untuk tabel lain
