@@ -1600,6 +1600,11 @@ function AbsensiClockView({ title }: any) {
   const [riwayat7Hari, setRiwayat7Hari] = useState<any[]>([])
   const [dokumenExpired, setDokumenExpired] = useState<any[]>([])
 
+  // ⭐ CHAT 30: Anti double-click + optimistic UI
+  const [processing, setProcessing] = useState(false)
+  const [lastClickTime, setLastClickTime] = useState(0)
+  const [optimisticAction, setOptimisticAction] = useState<'in' | 'out' | null>(null)
+
   useEffect(() => {
     setIsOnline(navigator.onLine)
     const interval = setInterval(() => setCurrentTime(new Date()), 1000)
@@ -1609,7 +1614,7 @@ function AbsensiClockView({ title }: any) {
     // Berguna kalau admin hapus/update data → UI auto sync
     const statusInterval = setInterval(() => {
       loadStatus()
-    }, 30000) // 30 detik
+    }, 30000)
     
     fetch('/api/announcements').then(r => r.json()).then(d => setAnnouncement(d.announcement)).catch(() => {})
     
@@ -1669,10 +1674,10 @@ function AbsensiClockView({ title }: any) {
     
     return () => {
       clearInterval(interval)
-      clearInterval(statusInterval)  // ⭐ Cleanup
+      clearInterval(statusInterval)
       window.removeEventListener('btm:offline-attendance-saved', handleRefreshStatus)
       window.removeEventListener('btm:sync-completed', handleRefreshStatus)
-      window.removeEventListener('focus', handleFocus)  // ⭐ Cleanup
+      window.removeEventListener('focus', handleFocus)
     }
   }, [])
 
@@ -1742,111 +1747,170 @@ function AbsensiClockView({ title }: any) {
   }
 
   async function handleClock(type: 'in' | 'out') {
-    // ============================================
-    // 🆕 CEK OFFLINE DULU — SKIP GPS, LANGSUNG SAVE
-    // ============================================
-    if (!navigator.onLine) {
-      // Ambil GPS terakhir yang ter-cache (kalau ada), atau 0,0 kalau tidak ada
-      const lastGps = gps || { lat: 0, lng: 0 }
-      
-      try {
-        const record = await saveOfflineAttendance(
-          type === 'in' ? 'clock_in' : 'clock_out',
-          lastGps.lat,
-          lastGps.lng
-        )
-        
-        const gpsInfo = (lastGps.lat === 0 && lastGps.lng === 0)
-          ? '⚠️ GPS tidak tersedia (offline)'
-          : `📍 GPS: ${lastGps.lat.toFixed(4)}, ${lastGps.lng.toFixed(4)}`
-        
-        alert(
-          `📴 ${type === 'in' ? 'CLOCK IN' : 'CLOCK OUT'} berhasil disimpan OFFLINE\n\n` +
-          `⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n` +
-          `${gpsInfo}\n\n` +
-          `📶 Akan otomatis terkirim saat online.`
-        )
-        window.dispatchEvent(new CustomEvent('btm:offline-attendance-saved'))
-        await loadStatus()
-      } catch (e: any) {
-        alert('❌ Gagal simpan offline: ' + (e?.message || 'Unknown error'))
-      }
+    // ═══════════════════════════════════════════════
+    // 🛡️ CHAT 30: 5-LAYER ANTI DOUBLE-CLICK PROTECTION
+    // ═══════════════════════════════════════════════
+    
+    // Lapis 1: Kalau sedang proses, tolak
+    if (processing) {
+      console.log('[handleClock] Sedang proses, ignore click')
       return
     }
-
-    // ============================================
-    // ONLINE — GPS SMART FETCH (tidak bikin user nunggu manual)
-    // ============================================
-    let gpsCoords = gps
     
-    if (!gpsCoords) {
-      // 🚀 GPS belum ada → fetch smart sekarang juga
-      try {
-        const { getSmartGps } = await import('@/app/lib/gps-cache')
-        const coords = await getSmartGps({
-          onProgress: (msg) => console.log('[GPS handleClock]', msg)
-        })
-        gpsCoords = { lat: coords.lat, lng: coords.lng, accuracy: coords.accuracy }
-        setGps(gpsCoords) // update state buat next click
-      } catch (gpsErr: any) {
-        // GPS benar-benar gagal → tawarkan opsi ke user
-        const useFallback = confirm(
-          `⚠️ GPS tidak bisa didapat.\n\n` +
-          `Kemungkinan penyebab:\n` +
-          `• Lokasi HP belum aktif\n` +
-          `• Sinyal GPS lemah (indoor?)\n` +
-          `• Pertama kali buka setelah HP restart\n\n` +
-          `Coba: keluar sebentar / restart lokasi HP.\n\n` +
-          `Klik OK untuk COBA LAGI, atau Cancel untuk batal.`
-        )
-        if (useFallback) {
-          // User klik OK → coba sekali lagi dengan progress alert
-          alert('🔄 Mencoba GPS sekali lagi... Tunggu maksimal 25 detik ya.')
-          try {
-            const { getSmartGps } = await import('@/app/lib/gps-cache')
-            const coords = await getSmartGps({ allowFallback: true })
-            gpsCoords = { lat: coords.lat, lng: coords.lng, accuracy: coords.accuracy }
-            setGps(gpsCoords)
-          } catch {
-            alert('❌ GPS masih gagal. Silakan cek pengaturan lokasi HP lalu buka ulang app.')
-            return
-          }
-        } else {
-          return
-        }
-      }
+    // Lapis 4: Debounce 3 detik antar click
+    const now = Date.now()
+    if (now - lastClickTime < 3000) {
+      console.log('[handleClock] Debounce: click terlalu cepat')
+      return
     }
     
-    // Kirim ke server
+    // Lock + Optimistic UI update
+    setProcessing(true)
+    setLastClickTime(now)
+    setOptimisticAction(type)
+    
+    // Lapis 5: Haptic feedback (getar HP kalau support)
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(50)
+    }
+    
     try {
-      const res = await fetch(`/api/attendance/clock-${type}`, {
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latitude: gps.lat, longitude: gps.lng })
-      })
-      const d = await res.json()
-      alert(d.message || d.error)
-      loadStatus()
-    } catch (err: any) {
-      // FALLBACK: online tapi request gagal
-      console.log('⚠️ Server unreachable, saving offline...', err)
-      try {
-        const record = await saveOfflineAttendance(
-          type === 'in' ? 'clock_in' : 'clock_out',
-          gps.lat,
-          gps.lng
-        )
-        alert(
-          `⚠️ Server tidak merespons, data DISIMPAN OFFLINE\n\n` +
-          `⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n` +
-          `📍 GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}\n\n` +
-          `📶 Akan otomatis terkirim saat server pulih.`
-        )
-        window.dispatchEvent(new CustomEvent('btm:offline-attendance-saved'))
-        await loadStatus()
-      } catch (saveErr: any) {
-        alert("❌ Gagal simpan: " + (saveErr?.message || 'Unknown error'))
+      // ============================================
+      // 🆕 CEK OFFLINE DULU — SKIP GPS, LANGSUNG SAVE
+      // ============================================
+      if (!navigator.onLine) {
+        const lastGps = gps || { lat: 0, lng: 0 }
+        
+        try {
+          const record = await saveOfflineAttendance(
+            type === 'in' ? 'clock_in' : 'clock_out',
+            lastGps.lat,
+            lastGps.lng
+          )
+          
+          const gpsInfo = (lastGps.lat === 0 && lastGps.lng === 0)
+            ? '⚠️ GPS tidak tersedia (offline)'
+            : `📍 GPS: ${lastGps.lat.toFixed(4)}, ${lastGps.lng.toFixed(4)}`
+          
+          if (navigator.vibrate) navigator.vibrate([50, 50, 100])
+          
+          alert(
+            `📴 ${type === 'in' ? 'CLOCK IN' : 'CLOCK OUT'} berhasil disimpan OFFLINE\n\n` +
+            `⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n` +
+            `${gpsInfo}\n\n` +
+            `📶 Akan otomatis terkirim saat online.`
+          )
+          window.dispatchEvent(new CustomEvent('btm:offline-attendance-saved'))
+          await loadStatus()
+        } catch (e: any) {
+          if (navigator.vibrate) navigator.vibrate(200)
+          alert('❌ Gagal simpan offline: ' + (e?.message || 'Unknown error'))
+          setOptimisticAction(null)
+        }
+        return
       }
+
+      // ============================================
+      // ONLINE — GPS SMART FETCH
+      // ============================================
+      let gpsCoords = gps
+      
+      if (!gpsCoords) {
+        try {
+          const { getSmartGps } = await import('@/app/lib/gps-cache')
+          const coords = await getSmartGps({
+            onProgress: (msg) => console.log('[GPS handleClock]', msg)
+          })
+          gpsCoords = { lat: coords.lat, lng: coords.lng, accuracy: coords.accuracy }
+          setGps(gpsCoords)
+        } catch (gpsErr: any) {
+          const useFallback = confirm(
+            `⚠️ GPS tidak bisa didapat.\n\n` +
+            `Kemungkinan penyebab:\n` +
+            `• Lokasi HP belum aktif\n` +
+            `• Sinyal GPS lemah (indoor?)\n` +
+            `• Pertama kali buka setelah HP restart\n\n` +
+            `Coba: keluar sebentar / restart lokasi HP.\n\n` +
+            `Klik OK untuk COBA LAGI, atau Cancel untuk batal.`
+          )
+          if (useFallback) {
+            alert('🔄 Mencoba GPS sekali lagi... Tunggu maksimal 25 detik ya.')
+            try {
+              const { getSmartGps } = await import('@/app/lib/gps-cache')
+              const coords = await getSmartGps({ allowFallback: true })
+              gpsCoords = { lat: coords.lat, lng: coords.lng, accuracy: coords.accuracy }
+              setGps(gpsCoords)
+            } catch {
+              alert('❌ GPS masih gagal. Silakan cek pengaturan lokasi HP lalu buka ulang app.')
+              setOptimisticAction(null)
+              return
+            }
+          } else {
+            setOptimisticAction(null)
+            return
+          }
+        }
+      }
+      
+      // ============================================
+      // KIRIM KE SERVER (dengan timeout 15 detik)
+      // ============================================
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 15000)
+        
+        const res = await fetch(`/api/attendance/clock-${type}`, {
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latitude: gpsCoords!.lat, longitude: gpsCoords!.lng }),
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        const d = await res.json()
+        
+        if (res.ok) {
+          // Sukses → haptic sukses (double vibrate)
+          if (navigator.vibrate) navigator.vibrate([50, 50, 100])
+          alert(d.message || '✅ Berhasil')
+        } else {
+          // Error → rollback optimistic UI
+          setOptimisticAction(null)
+          if (navigator.vibrate) navigator.vibrate(200)
+          alert(d.error || '❌ Gagal')
+        }
+        
+        loadStatus()
+      } catch (err: any) {
+        // FALLBACK: online tapi request gagal → save offline
+        console.log('⚠️ Server unreachable, saving offline...', err)
+        try {
+          const record = await saveOfflineAttendance(
+            type === 'in' ? 'clock_in' : 'clock_out',
+            gpsCoords!.lat,
+            gpsCoords!.lng
+          )
+          if (navigator.vibrate) navigator.vibrate([50, 50, 100])
+          alert(
+            `⚠️ Server tidak merespons, data DISIMPAN OFFLINE\n\n` +
+            `⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n` +
+            `📍 GPS: ${gpsCoords!.lat.toFixed(4)}, ${gpsCoords!.lng.toFixed(4)}\n\n` +
+            `📶 Akan otomatis terkirim saat server pulih.`
+          )
+          window.dispatchEvent(new CustomEvent('btm:offline-attendance-saved'))
+          await loadStatus()
+        } catch (saveErr: any) {
+          if (navigator.vibrate) navigator.vibrate(200)
+          alert("❌ Gagal simpan: " + (saveErr?.message || 'Unknown error'))
+          setOptimisticAction(null)
+        }
+      }
+    } finally {
+      // Selalu unlock tombol setelah selesai (delay 1 detik biar smooth)
+      setTimeout(() => {
+        setProcessing(false)
+        setOptimisticAction(null)
+      }, 1000)
     }
   }
 
@@ -1936,13 +2000,41 @@ function AbsensiClockView({ title }: any) {
           </div>
         )}
         
+        {/* ⭐ CHAT 30: Button dengan 5-layer anti double-click protection */}
         <div className="flex justify-center gap-2 md:gap-4 relative z-10">
-          {!hasIn ? (
-            <button onClick={() => handleClock('in')} className="bg-emerald-500/90 hover:bg-emerald-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-emerald-500/20 active:scale-90 transition-all">🟢 CLOCK IN</button>
+          {(processing || optimisticAction) ? (
+            // Sedang proses → tombol locked + loading indicator
+            <button 
+              disabled
+              className="bg-slate-500/50 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl cursor-not-allowed opacity-70 flex items-center gap-2"
+            >
+              <span className="inline-block animate-spin">⏳</span>
+              <span>
+                {optimisticAction === 'in' ? 'CLOCK IN...' : 
+                 optimisticAction === 'out' ? 'CLOCK OUT...' : 
+                 'MEMPROSES...'}
+              </span>
+            </button>
+          ) : !hasIn ? (
+            <button 
+              onClick={() => handleClock('in')} 
+              disabled={processing}
+              className="bg-emerald-500/90 hover:bg-emerald-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-emerald-500/20 active:scale-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              🟢 CLOCK IN
+            </button>
           ) : !hasOut ? (
-            <button onClick={() => handleClock('out')} className="bg-rose-500/90 hover:bg-rose-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-rose-500/20 active:scale-90 transition-all">🔴 CLOCK OUT</button>
+            <button 
+              onClick={() => handleClock('out')} 
+              disabled={processing}
+              className="bg-rose-500/90 hover:bg-rose-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-rose-500/20 active:scale-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              🔴 CLOCK OUT
+            </button>
           ) : (
-            <div className="bg-white/10 backdrop-blur px-4 md:px-10 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] border border-white/10 font-black text-[10px] md:text-xl tracking-tight text-slate-200">✅ SHIFT SELESAI</div>
+            <div className="bg-white/10 backdrop-blur px-4 md:px-10 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] border border-white/10 font-black text-[10px] md:text-xl tracking-tight text-slate-200">
+              ✅ SHIFT SELESAI
+            </div>
           )}
         </div>
         <div className="mt-3 md:mt-10 text-[7px] md:text-[9px] text-white/40 flex items-center justify-center gap-2 md:gap-3 font-black tracking-widest relative z-10">
