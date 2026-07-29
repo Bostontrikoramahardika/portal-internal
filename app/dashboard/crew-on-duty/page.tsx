@@ -1,8 +1,5 @@
 // app/dashboard/crew-on-duty/page.tsx
-// Chat 30 - Crew On Duty Plant
-// - Filter: Tanggal + Shift (auto/manual) + Site
-// - Layout B: List grouped by role (Pengawas, Mekanik, Welder, dll)
-// - Download PNG (html2canvas-pro)
+// Chat 30 - Crew On Duty Plant (patokan dari attendance)
 
 'use client'
 
@@ -14,15 +11,13 @@ interface Member {
   nama: string
   jabatan: string
   group: string
-  status: 'HADIR' | 'BELUM_HADIR'
+  status: string
 }
 
 interface Group {
   group: string
   icon: string
   total: number
-  hadir: number
-  belum_hadir: number
   members: Member[]
 }
 
@@ -38,9 +33,7 @@ interface CrewData {
     gl_plant?: { nrp: string; nama: string; jabatan: string } | null
   } | null
   groups: Group[]
-  total_dijadwalkan: number
   total_hadir: number
-  total_belum_hadir: number
   generated_at: string
 }
 
@@ -50,7 +43,6 @@ export default function CrewOnDutyPage() {
   const [data, setData] = useState<CrewData | null>(null)
   const [downloading, setDownloading] = useState(false)
   
-  // Filter states
   const [filterTanggal, setFilterTanggal] = useState('')
   const [filterShift, setFilterShift] = useState<'AUTO' | 'SIANG' | 'MALAM'>('AUTO')
   const [filterSite, setFilterSite] = useState('')
@@ -59,7 +51,6 @@ export default function CrewOnDutyPage() {
 
   const posterRef = useRef<HTMLDivElement>(null)
 
-  // Load sites list on mount
   useEffect(() => {
     fetch('/api/public/sites')
       .then(r => r.json())
@@ -71,7 +62,6 @@ export default function CrewOnDutyPage() {
       .catch(() => setSites(['PPA-MLP']))
   }, [])
 
-  // Update current time every second
   useEffect(() => {
     const updateTime = () => {
       const now = new Date()
@@ -88,7 +78,6 @@ export default function CrewOnDutyPage() {
     return () => clearInterval(timer)
   }, [])
 
-  // Load data when filter changes
   useEffect(() => {
     if (filterSite) loadData()
   }, [filterSite, filterShift, filterTanggal])
@@ -119,7 +108,10 @@ export default function CrewOnDutyPage() {
   }
 
   async function handleDownload() {
-    if (!posterRef.current || !data) return
+    if (!posterRef.current || !data) {
+      alert('Data belum siap. Tunggu sebentar.')
+      return
+    }
     
     setDownloading(true)
     try {
@@ -142,7 +134,6 @@ export default function CrewOnDutyPage() {
     }
   }
 
-  // Format tanggal Indonesia
   function formatTanggalID(dateStr: string): string {
     if (!dateStr) return ''
     try {
@@ -162,7 +153,7 @@ export default function CrewOnDutyPage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
       
-      {/* ═══════════ HEADER ═══════════ */}
+      {/* HEADER */}
       <div className="bg-[#003D79] text-white p-4 lg:p-6 shadow-lg">
         <div className="flex items-center gap-3">
           <div className="text-3xl lg:text-4xl">👷</div>
@@ -175,12 +166,11 @@ export default function CrewOnDutyPage() {
         </div>
       </div>
 
-      {/* ═══════════ FILTER BAR ═══════════ */}
+      {/* FILTER BAR */}
       <div className="p-3 lg:p-6">
         <div className="bg-white rounded-2xl p-3 lg:p-5 shadow-sm border border-slate-100">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             
-            {/* Site */}
             <div>
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5 block">
                 🏢 Site
@@ -194,7 +184,6 @@ export default function CrewOnDutyPage() {
               </select>
             </div>
 
-            {/* Tanggal */}
             <div>
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5 block">
                 📅 Tanggal
@@ -207,7 +196,6 @@ export default function CrewOnDutyPage() {
               />
             </div>
 
-            {/* Shift */}
             <div>
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5 block">
                 ⏰ Shift
@@ -230,7 +218,6 @@ export default function CrewOnDutyPage() {
             </div>
           </div>
 
-          {/* Info current time & tombol download */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4 pt-4 border-t border-slate-100">
             <p className="text-[10px] lg:text-xs text-slate-500 font-bold">
               🕐 Waktu sekarang: <span className="text-[#003D79] font-black">{currentTime} WITA</span>
@@ -249,7 +236,7 @@ export default function CrewOnDutyPage() {
               </button>
               <button
                 onClick={handleDownload}
-                disabled={downloading || !data || data.total_dijadwalkan === 0}
+                disabled={downloading || !data || data.total_hadir === 0}
                 className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-xs font-black uppercase hover:bg-emerald-600 transition-colors disabled:opacity-50 shadow-md"
               >
                 {downloading ? '⏳ Downloading...' : '📸 Download PNG'}
@@ -259,7 +246,7 @@ export default function CrewOnDutyPage() {
         </div>
       </div>
 
-      {/* ═══════════ CONTENT ═══════════ */}
+      {/* CONTENT */}
       <div className="px-3 lg:px-6 pb-6">
         
         {loading && (
@@ -276,18 +263,18 @@ export default function CrewOnDutyPage() {
         )}
 
         {!loading && !error && data && data.total_hadir === 0 && (
-  <div className="bg-yellow-50 border-2 border-yellow-100 text-yellow-800 p-8 rounded-2xl text-center">
-    <p className="text-4xl mb-3">📭</p>
-    <p className="font-black text-sm mb-1">Belum ada crew Plant yang absen</p>
-    <p className="text-xs">Untuk shift {data.shift} tanggal {data.tanggal}</p>
-    <p className="text-[10px] text-slate-500 mt-3">
-      Data akan muncul setelah karyawan Plant melakukan Clock In
-    </p>
-  </div>
-)}
+          <div className="bg-yellow-50 border-2 border-yellow-100 text-yellow-800 p-8 rounded-2xl text-center">
+            <p className="text-4xl mb-3">📭</p>
+            <p className="font-black text-sm mb-1">Belum ada crew Plant yang absen</p>
+            <p className="text-xs">Untuk shift {data.shift} tanggal {data.tanggal}</p>
+            <p className="text-[10px] text-slate-500 mt-3">
+              Data akan muncul setelah karyawan Plant melakukan Clock In
+            </p>
+          </div>
+        )}
 
-        {/* ═══════════ POSTER (untuk screenshot) ═══════════ */}
-        {!loading && !error && data && data.total_dijadwalkan > 0 && (
+        {/* POSTER */}
+        {!loading && !error && data && data.total_hadir > 0 && (
           <div ref={posterRef} className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
             
             {/* POSTER HEADER */}
@@ -323,11 +310,11 @@ export default function CrewOnDutyPage() {
                     </p>
                   </div>
                   <div className="bg-emerald-500/30 backdrop-blur-sm rounded-xl p-2.5 lg:p-3 border border-emerald-400/30">
-  <p className="text-emerald-200 text-[8px] lg:text-[10px] font-black uppercase tracking-wider mb-0.5">Total Hadir</p>
-  <p className="text-xs lg:text-sm font-black">
-    {data.total_hadir} Orang
-  </p>
-</div>
+                    <p className="text-emerald-200 text-[8px] lg:text-[10px] font-black uppercase tracking-wider mb-0.5">Total Hadir</p>
+                    <p className="text-xs lg:text-sm font-black">
+                      {data.total_hadir} Orang
+                    </p>
+                  </div>
                   <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 lg:p-3">
                     <p className="text-blue-200 text-[8px] lg:text-[10px] font-black uppercase tracking-wider mb-0.5">Update</p>
                     <p className="text-xs lg:text-sm font-black">{currentTime} WITA</p>
@@ -364,45 +351,43 @@ export default function CrewOnDutyPage() {
             <div className="p-4 lg:p-6 space-y-3 lg:space-y-4 bg-slate-50">
               {data.groups.map(g => (
                 <div key={g.group} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
-                  {/* Group Header */}
                   <div className="bg-gradient-to-r from-[#003D79] to-[#004a8f] text-white px-4 py-2.5 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <span className="text-xl lg:text-2xl">{g.icon}</span>
                       <div>
                         <p className="font-black text-sm lg:text-base tracking-wide uppercase">{g.group}</p>
                         <p className="text-[9px] lg:text-[10px] font-bold text-blue-200">
-                          {g.hadir}/{g.total} Personel
+                          {g.total} Personel
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
-  <span className="bg-emerald-500/30 text-emerald-100 px-2 py-0.5 rounded-lg text-[10px] font-black">
-    ✅ {g.total} Hadir
-  </span>
-</div>
+                      <span className="bg-emerald-500/30 text-emerald-100 px-2 py-0.5 rounded-lg text-[10px] font-black">
+                        ✅ {g.total} Hadir
+                      </span>
+                    </div>
                   </div>
 
-                 {/* Members List */}
-<div className="divide-y divide-slate-100">
-  {g.members.map((m, idx) => (
-    <div 
-      key={m.nrp}
-      className="flex items-center justify-between px-4 py-3 bg-white hover:bg-slate-50 transition-colors"
-    >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <span className="text-slate-400 text-xs font-black w-6">{idx + 1}.</span>
-        <p className="font-black text-sm lg:text-base truncate text-slate-800">
-          {m.nama}
-        </p>
-      </div>
-      <div className="shrink-0">
-        <span className="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg text-[10px] lg:text-xs font-black uppercase">
-          ✅ HADIR
-        </span>
-      </div>
-    </div>
-  ))}
-</div>
+                  <div className="divide-y divide-slate-100">
+                    {g.members.map((m, idx) => (
+                      <div 
+                        key={m.nrp}
+                        className="flex items-center justify-between px-4 py-3 bg-white hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <span className="text-slate-400 text-xs font-black w-6">{idx + 1}.</span>
+                          <p className="font-black text-sm lg:text-base truncate text-slate-800">
+                            {m.nama}
+                          </p>
+                        </div>
+                        <div className="shrink-0">
+                          <span className="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg text-[10px] lg:text-xs font-black uppercase">
+                            ✅ HADIR
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
