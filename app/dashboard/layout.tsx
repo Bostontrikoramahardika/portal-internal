@@ -229,8 +229,9 @@ const TAB_CONFIG = [
         m.menu_key === 'import_sp' ||
         m.menu_key === 'import_bpjs' ||
         m.menu_key === 'import_mcu' ||
-        m.menu_key === 'import_mcu_bulk' ||  // 🆕 Bulk import auto-fill
-        m.menu_key === 'import_simper'
+        m.menu_key === 'import_mcu_bulk' ||
+        m.menu_key === 'import_simper' ||
+        m.menu_key === 'import_roster_bulk'  // 🆕 Chat 29: Import Roster Bulanan
       )
     }
   },
