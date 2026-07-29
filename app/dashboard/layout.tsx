@@ -209,6 +209,7 @@ const TAB_CONFIG = [
         m.menu_key === 'data_sakit' ||
         m.menu_key === 'hr_override_absensi' ||
         m.menu_key === 'monitoring_mcu' ||
+        m.menu_key === 'kelola_unit' ||
         m.menu_key === 'monitoring_apd'
       )
     }
@@ -819,6 +820,13 @@ if (menuKey === 'import_roster_bulk') {
   setBottomSheetOpen(false)
   return
 }
+
+    // 🚜 Kelola Unit (Chat 29)
+    if (menuKey === 'kelola_unit') {
+      router.push('/dashboard/kelola-unit')
+      setBottomSheetOpen(false)
+      return
+    }
 
     // Default: menu dashboard biasa
     router.push(`/dashboard?menu=${menuKey}`)

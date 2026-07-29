@@ -4577,13 +4577,21 @@ function SitesManagerView() {
                 </div>
               </div>
 
-              {/* Tombol EDIT */}
-              <button 
-                onClick={() => openEditModal(site)}
-                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-[#003D79] active:scale-95 transition-all"
-              >
-                ✏️ EDIT KONFIGURASI SITE
-              </button>
+              {/* Tombol Aksi */}
+              <div className="grid grid-cols-2 gap-2">
+                <button 
+                  onClick={() => openEditModal(site)}
+                  className="py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-[#003D79] active:scale-95 transition-all"
+                >
+                  ✏️ EDIT SITE
+                </button>
+                <button 
+                  onClick={() => window.location.href = `/dashboard/kelola-unit?site=${encodeURIComponent(site.nama_site)}`}
+                  className="py-4 bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-amber-700 active:scale-95 transition-all"
+                >
+                  🚜 KELOLA UNIT
+                </button>
+              </div>
             </div>
           </div>
         ))}
