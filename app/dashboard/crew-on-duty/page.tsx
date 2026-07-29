@@ -275,16 +275,16 @@ export default function CrewOnDutyPage() {
           </div>
         )}
 
-        {!loading && !error && data && data.total_dijadwalkan === 0 && (
-          <div className="bg-yellow-50 border-2 border-yellow-100 text-yellow-800 p-8 rounded-2xl text-center">
-            <p className="text-4xl mb-3">📭</p>
-            <p className="font-black text-sm mb-1">Tidak ada crew Plant dijadwalkan</p>
-            <p className="text-xs">Untuk shift {data.shift} tanggal {data.tanggal}</p>
-            <p className="text-[10px] text-slate-500 mt-3">
-              Pastikan roster sudah di-upload untuk tanggal & shift ini
-            </p>
-          </div>
-        )}
+        {!loading && !error && data && data.total_hadir === 0 && (
+  <div className="bg-yellow-50 border-2 border-yellow-100 text-yellow-800 p-8 rounded-2xl text-center">
+    <p className="text-4xl mb-3">📭</p>
+    <p className="font-black text-sm mb-1">Belum ada crew Plant yang absen</p>
+    <p className="text-xs">Untuk shift {data.shift} tanggal {data.tanggal}</p>
+    <p className="text-[10px] text-slate-500 mt-3">
+      Data akan muncul setelah karyawan Plant melakukan Clock In
+    </p>
+  </div>
+)}
 
         {/* ═══════════ POSTER (untuk screenshot) ═══════════ */}
         {!loading && !error && data && data.total_dijadwalkan > 0 && (
@@ -323,11 +323,11 @@ export default function CrewOnDutyPage() {
                     </p>
                   </div>
                   <div className="bg-emerald-500/30 backdrop-blur-sm rounded-xl p-2.5 lg:p-3 border border-emerald-400/30">
-                    <p className="text-emerald-200 text-[8px] lg:text-[10px] font-black uppercase tracking-wider mb-0.5">Hadir</p>
-                    <p className="text-xs lg:text-sm font-black">
-                      {data.total_hadir} / {data.total_dijadwalkan}
-                    </p>
-                  </div>
+  <p className="text-emerald-200 text-[8px] lg:text-[10px] font-black uppercase tracking-wider mb-0.5">Total Hadir</p>
+  <p className="text-xs lg:text-sm font-black">
+    {data.total_hadir} Orang
+  </p>
+</div>
                   <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 lg:p-3">
                     <p className="text-blue-200 text-[8px] lg:text-[10px] font-black uppercase tracking-wider mb-0.5">Update</p>
                     <p className="text-xs lg:text-sm font-black">{currentTime} WITA</p>
@@ -376,48 +376,33 @@ export default function CrewOnDutyPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="bg-emerald-500/30 text-emerald-100 px-2 py-0.5 rounded-lg text-[10px] font-black">
-                        ✅ {g.hadir}
-                      </span>
-                      {g.belum_hadir > 0 && (
-                        <span className="bg-rose-500/30 text-rose-100 px-2 py-0.5 rounded-lg text-[10px] font-black">
-                          ❌ {g.belum_hadir}
-                        </span>
-                      )}
-                    </div>
+  <span className="bg-emerald-500/30 text-emerald-100 px-2 py-0.5 rounded-lg text-[10px] font-black">
+    ✅ {g.total} Hadir
+  </span>
+</div>
                   </div>
 
-                  {/* Members List */}
-                  <div className="divide-y divide-slate-100">
-                    {g.members.map((m, idx) => (
-                      <div 
-                        key={m.nrp}
-                        className={`flex items-center justify-between px-4 py-2.5 ${
-                          m.status === 'HADIR' ? 'bg-white' : 'bg-rose-50/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <span className="text-slate-400 text-xs font-black w-6">{idx + 1}.</span>
-                          <p className={`font-black text-sm lg:text-base truncate ${
-                            m.status === 'HADIR' ? 'text-slate-800' : 'text-slate-500'
-                          }`}>
-                            {m.nama}
-                          </p>
-                        </div>
-                        <div className="shrink-0">
-                          {m.status === 'HADIR' ? (
-                            <span className="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg text-[10px] lg:text-xs font-black uppercase">
-                              ✅ HADIR
-                            </span>
-                          ) : (
-                            <span className="bg-rose-100 text-rose-600 px-2.5 py-1 rounded-lg text-[10px] lg:text-xs font-black uppercase">
-                              ❌ Belum
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                 {/* Members List */}
+<div className="divide-y divide-slate-100">
+  {g.members.map((m, idx) => (
+    <div 
+      key={m.nrp}
+      className="flex items-center justify-between px-4 py-3 bg-white hover:bg-slate-50 transition-colors"
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <span className="text-slate-400 text-xs font-black w-6">{idx + 1}.</span>
+        <p className="font-black text-sm lg:text-base truncate text-slate-800">
+          {m.nama}
+        </p>
+      </div>
+      <div className="shrink-0">
+        <span className="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg text-[10px] lg:text-xs font-black uppercase">
+          ✅ HADIR
+        </span>
+      </div>
+    </div>
+  ))}
+</div>
                 </div>
               ))}
             </div>

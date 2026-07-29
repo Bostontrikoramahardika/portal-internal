@@ -1,7 +1,7 @@
 // app/api/crew-on-duty/route.ts
-// Chat 30 - Fitur baru: Crew On Duty Plant
-// Menampilkan crew Plant yang bertugas pada shift hari ini (auto/manual pick)
-// Skema C: Yang ada di jadwal shift + status HADIR / BELUM ABSEN
+// Chat 30 - Crew On Duty Plant
+// Patokan: DATA ABSENSI (attendance) - bukan roster
+// Menampilkan personel Plant yang SUDAH ABSEN pada shift + tanggal ini
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
@@ -20,7 +20,6 @@ export async function GET(req: NextRequest) {
   const isGLPlant = userRoles.includes('gl_plant')
   const isHRSite = userRoles.some((r: string) => ['hr_site','hrga_site','admin_site'].includes(r))
 
-  // Akses: Super Admin, HR HO, PJO, GL Plant, HR Site
   const canAccess = isSuperAdmin || isHRHO || isPJO || isGLPlant || isHRSite
   if (!canAccess) {
     return NextResponse.json({ error: 'Tidak punya akses ke Crew On Duty' }, { status: 403 })
@@ -29,14 +28,14 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const siteParam = searchParams.get('site') || session.scope_site || session.site || ''
-    const shiftParam = searchParams.get('shift') || '' // 'SIANG' | 'MALAM' | ''
+    const shiftParam = searchParams.get('shift') || ''
     const tanggalParam = searchParams.get('tanggal') || ''
 
     if (!siteParam) {
       return NextResponse.json({ error: 'Site tidak ditemukan' }, { status: 400 })
     }
 
-    // Site access control: non-HRHO harus di site sendiri
+    // Site access control
     if (!isSuperAdmin && !isHRHO) {
       const userSite = session.scope_site || session.site || ''
       if (siteParam !== userSite) {
@@ -46,7 +45,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // ⭐ Get timezone site
+    // Get site config & timezone
     const { data: siteConfig } = await supabaseAdmin
       .from('sites_config')
       .select('*')
@@ -59,23 +58,48 @@ export async function GET(req: NextRequest) {
 
     const siteTz: Timezone = (siteConfig.timezone || DEFAULT_TIMEZONE) as Timezone
 
-    // ⭐ Auto-detect tanggal & shift kalau tidak di-input
+    // Auto-detect tanggal & shift
     const tanggal = tanggalParam || getSiteDate(null, siteTz)
     const currentHour = getSiteHour(null, siteTz)
     const shift = shiftParam || (currentHour >= 4 && currentHour < 16 ? 'SIANG' : 'MALAM')
 
-    // Roster code untuk shift
-    const rosterCode = shift === 'SIANG' ? 'S' : 'M'
+    // ─────────────────────────────────────────────────
+    // ⭐ STEP 1: Ambil ATTENDANCE tanggal + shift + site tsb
+    // (Ini patokannya - siapa yang sudah absen)
+    // ─────────────────────────────────────────────────
+    const { data: attendances, error: attErr } = await supabaseAdmin
+      .from('attendance')
+      .select('nrp, clock_in, status')
+      .eq('site', siteParam)
+      .eq('tanggal', tanggal)
+      .eq('shift', shift)
+      .not('clock_in', 'is', null)
+
+    if (attErr) return NextResponse.json({ error: attErr.message }, { status: 500 })
+
+    const attendanceNrps = (attendances || []).map((a: any) => a.nrp)
+
+    if (attendanceNrps.length === 0) {
+      return NextResponse.json({
+        ok: true,
+        tanggal,
+        shift,
+        site: siteParam,
+        site_tz: siteTz,
+        pjo_gl_info: null,
+        groups: [],
+        total_hadir: 0,
+        generated_at: new Date().toISOString()
+      })
+    }
 
     // ─────────────────────────────────────────────────
-    // 1. Ambil karyawan Plant di site tsb (aktif)
+    // ⭐ STEP 2: Ambil data karyawan (filter Plant)
     // ─────────────────────────────────────────────────
     const { data: plantEmps, error: empErr } = await supabaseAdmin
       .from('employees')
       .select('nrp, nama, jabatan, departemen, site')
-      .eq('site', siteParam)
-      .eq('status_karyawan', 'Aktif')
-      .is('tanggal_resign', null)
+      .in('nrp', attendanceNrps)
       .or([
         'jabatan.ilike.%mekanik%',
         'jabatan.ilike.%mechanic%',
@@ -93,9 +117,7 @@ export async function GET(req: NextRequest) {
 
     if (empErr) return NextResponse.json({ error: empErr.message }, { status: 500 })
 
-    const nrpList = (plantEmps || []).map((e: any) => e.nrp)
-
-    if (nrpList.length === 0) {
+    if (!plantEmps || plantEmps.length === 0) {
       return NextResponse.json({
         ok: true,
         tanggal,
@@ -104,47 +126,13 @@ export async function GET(req: NextRequest) {
         site_tz: siteTz,
         pjo_gl_info: null,
         groups: [],
-        total_dijadwalkan: 0,
         total_hadir: 0,
-        total_belum_hadir: 0
+        generated_at: new Date().toISOString()
       })
     }
 
     // ─────────────────────────────────────────────────
-    // 2. Ambil roster tanggal & shift tsb
-    // ─────────────────────────────────────────────────
-    const { data: rosters } = await supabaseAdmin
-      .from('rosters')
-      .select('nrp, shift_code')
-      .in('nrp', nrpList)
-      .eq('tanggal', tanggal)
-
-    // Filter hanya yang di-schedule shift ini
-    const scheduledNrps = new Set(
-      (rosters || [])
-        .filter((r: any) => r.shift_code === rosterCode)
-        .map((r: any) => r.nrp)
-    )
-
-    // Filter employees yang dijadwalkan
-    const scheduledEmps = (plantEmps || []).filter((e: any) => scheduledNrps.has(e.nrp))
-
-    // ─────────────────────────────────────────────────
-    // 3. Ambil attendance tanggal & shift tsb
-    // ─────────────────────────────────────────────────
-    const { data: attendances } = await supabaseAdmin
-      .from('attendance')
-      .select('nrp, clock_in, status, shift')
-      .in('nrp', Array.from(scheduledNrps))
-      .eq('tanggal', tanggal)
-      .eq('shift', shift)
-
-    const attMap = new Map(
-      (attendances || []).map((a: any) => [String(a.nrp), a])
-    )
-
-    // ─────────────────────────────────────────────────
-    // 4. Ambil PJO & GL Plant info dari sites_config
+    // STEP 3: PJO & GL Info
     // ─────────────────────────────────────────────────
     let pjoGLInfo: any = null
     const pjoNrp = siteConfig.pjo_nrp
@@ -154,9 +142,9 @@ export async function GET(req: NextRequest) {
     if (pjoNrp) infoNrps.push(pjoNrp)
     if (deputyPjoNrp) infoNrps.push(deputyPjoNrp)
 
-    // Cari GL Plant di scheduled emps (biasanya Plant GL)
-    const glPlantInSchedule = scheduledEmps.filter((e: any) => 
-      /plant gl|gl plant|pengawas plant/i.test(e.jabatan || '')
+    // GL Plant di antara yang sudah absen
+    const glPlantHadir = plantEmps.filter((e: any) => 
+      /plant gl|gl plant|pengawas plant|gl ws/i.test(e.jabatan || '')
     )
 
     if (infoNrps.length > 0) {
@@ -168,12 +156,12 @@ export async function GET(req: NextRequest) {
       pjoGLInfo = {
         pjo: pjoData?.find((p: any) => p.nrp === pjoNrp) || null,
         deputy_pjo: pjoData?.find((p: any) => p.nrp === deputyPjoNrp) || null,
-        gl_plant: glPlantInSchedule[0] || null
+        gl_plant: glPlantHadir[0] || null
       }
     }
 
     // ─────────────────────────────────────────────────
-    // 5. Grouping by jabatan (normalized)
+    // STEP 4: Grouping by jabatan
     // ─────────────────────────────────────────────────
     function normalizeJabatanToGroup(jabatan: string): string {
       const j = (jabatan || '').toLowerCase()
@@ -189,7 +177,6 @@ export async function GET(req: NextRequest) {
       return 'Lainnya'
     }
 
-    // Icon per group
     const GROUP_ICONS: Record<string, string> = {
       'Pengawas': '👷',
       'Service': '🛠️',
@@ -202,26 +189,19 @@ export async function GET(req: NextRequest) {
       'Lainnya': '👤'
     }
 
-    // Group order (Pengawas first, Lainnya last)
     const GROUP_ORDER = [
       'Pengawas', 'Service', 'Mekanik', 'Welder', 'Tyreman', 
       'Electric', 'Helper Plant', 'Admin Plant', 'Lainnya'
     ]
 
-    // Enrich each employee with status
-    const enrichedEmps = scheduledEmps.map((e: any) => {
-      const att = attMap.get(String(e.nrp))
-      const isHadir = !!att?.clock_in
-      const group = normalizeJabatanToGroup(e.jabatan || '')
-      
-      return {
-        nrp: e.nrp,
-        nama: e.nama,
-        jabatan: e.jabatan,
-        group,
-        status: isHadir ? 'HADIR' : 'BELUM_HADIR'
-      }
-    })
+    // Semua karyawan Plant yang sudah absen = HADIR (patokannya absensi)
+    const enrichedEmps = plantEmps.map((e: any) => ({
+      nrp: e.nrp,
+      nama: e.nama,
+      jabatan: e.jabatan,
+      group: normalizeJabatanToGroup(e.jabatan || ''),
+      status: 'HADIR'
+    }))
 
     // Group by
     const grouped: Record<string, any[]> = {}
@@ -235,22 +215,15 @@ export async function GET(req: NextRequest) {
       grouped[g].sort((a: any, b: any) => a.nama.localeCompare(b.nama))
     })
 
-    // Build final groups (urut)
+    // Build final groups
     const groups = GROUP_ORDER
       .filter(g => grouped[g]?.length > 0)
       .map(g => ({
         group: g,
         icon: GROUP_ICONS[g] || '👤',
         total: grouped[g].length,
-        hadir: grouped[g].filter((e: any) => e.status === 'HADIR').length,
-        belum_hadir: grouped[g].filter((e: any) => e.status === 'BELUM_HADIR').length,
         members: grouped[g]
       }))
-
-    // Summary
-    const totalDijadwalkan = enrichedEmps.length
-    const totalHadir = enrichedEmps.filter((e: any) => e.status === 'HADIR').length
-    const totalBelumHadir = totalDijadwalkan - totalHadir
 
     return NextResponse.json({
       ok: true,
@@ -260,9 +233,7 @@ export async function GET(req: NextRequest) {
       site_tz: siteTz,
       pjo_gl_info: pjoGLInfo,
       groups,
-      total_dijadwalkan: totalDijadwalkan,
-      total_hadir: totalHadir,
-      total_belum_hadir: totalBelumHadir,
+      total_hadir: enrichedEmps.length,
       generated_at: new Date().toISOString()
     })
 
