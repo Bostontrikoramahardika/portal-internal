@@ -211,6 +211,7 @@ const TAB_CONFIG = [
         m.menu_key === 'monitoring_mcu' ||
         m.menu_key === 'kelola_unit' ||
         m.menu_key === 'setting_unit' ||
+        m.menu_key === 'crew_on_duty' ||
         m.menu_key === 'monitoring_apd'
       )
     }
@@ -835,6 +836,12 @@ if (menuKey === 'import_roster_bulk') {
       setBottomSheetOpen(false)
       return
     }
+
+    if (menuKey === 'crew_on_duty') {
+  router.push('/dashboard/crew-on-duty')
+  setBottomSheetOpen(false)
+  return
+}
 
     // Default: menu dashboard biasa
     router.push(`/dashboard?menu=${menuKey}`)
