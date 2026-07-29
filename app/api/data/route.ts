@@ -1,46 +1,71 @@
-// app/api/data/route.ts (v1.5.1 - Fix TypeScript warnings)
+// app/api/data/route.ts
+// v2.0 - Chat 30 FINAL: Multi-timezone support
+// - Semua timestamp display pakai timezone SITE (dari sites_config)
+// - Zero manual offset math
+// - Backward compatible dengan semua menu existing
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
 import { hasPermission } from '@/app/lib/permissions'
 import { getTablePermissions } from '@/app/lib/tablePermissions'
-import { getWitaToday } from '@/app/lib/timezone'
+import { 
+  getSiteDate,
+  getSiteMonth,
+  getSiteYear,
+  formatSiteTime,
+  formatSiteMonthYear,
+  detectShiftFromClockIn,
+  Timezone,
+  DEFAULT_TIMEZONE
+} from '@/app/lib/timezone'
 
 const NAME_BASED_TABLES = ['bpjs', 'apd_history', 'attendance_evidences']
 const HIDDEN_COLUMNS = [
-  // System columns
   'created_at', 'updated_at', 'id',
-  // Foreign key IDs (not for display)
   'nrp', 'atasan_nrp', 'pjo_nrp', 'employee_nrp', 'uploaded_by', 'nrp_login',
-  // 🔒 CHAT 25: Security (SUPER SENSITIVE - JANGAN PERNAH TAMPIL)
   'password', 'password_last_changed', 'is_super_admin',
-  // 🔒 CHAT 25: Sensitive personal data (BPJS, keluarga)
   'nama_istri', 'nama_anak', 'no_darurat', 'no_kk',
   'bpjs_tk', 'bpjs_kes', 'bpjs_istri', 'bpjs_anak1', 'bpjs_anak2', 'bpjs_anak3',
-  // 🔒 CHAT 25: Detail dokumen (tampil di halaman khusus MCU/SIMPER)
   'no_simpol', 'exp_simpol', 'exp_simper', 'exp_mcu',
-  // 🔒 CHAT 25: Detail personal (tampil di halaman detail)
   'tempat_lahir', 'tmpt_lahir', 'tanggal_lahir', 'status_pernikahan', 'alamat',
-  // 🔒 CHAT 25: Meta & legacy
   'foto_url', 'tgl_masuk', 'eligible_tiket_pesawat',
   'alasan_resign', 'resign_by',
 ]
 const PRIORITY_COLUMNS = ['_nama_karyawan', '_jabatan', '_site', '_departemen']
 const SECONDARY_COLUMNS = ['_nama_atasan', '_nama_pjo']
 
-
-// ========================================================
-// 🕐 HELPER: Deteksi Shift dari Jam Clock In
-// ========================================================
-function detectShiftFromClockIn(clockInTime: string, siteConfig?: any): string {
-  if (!clockInTime || clockInTime === '00:00' || clockInTime === '--:--') return 'HADIR'
+// ═══════════════════════════════════════════════════════════
+// HELPER: Ambil timezone site (cached per request)
+// ═══════════════════════════════════════════════════════════
+async function getSiteTimezone(siteName: string): Promise<Timezone> {
+  if (!siteName) return DEFAULT_TIMEZONE
   
-  const jam = parseInt(clockInTime.split(':')[0])
+  const { data } = await supabase
+    .from('sites_config')
+    .select('timezone')
+    .eq('nama_site', siteName)
+    .eq('active', true)
+    .maybeSingle()
+  
+  return (data?.timezone || DEFAULT_TIMEZONE) as Timezone
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPER: Deteksi shift (SIANG/MALAM) dari jam WITA/WIB/WIT
+// ═══════════════════════════════════════════════════════════
+function detectShiftFromLocalHour(jamStr: string, siteConfig?: any): string {
+  if (!jamStr || jamStr === '00:00' || jamStr === '--:--') return 'HADIR'
+  
+  const jam = parseInt(jamStr.split(':')[0])
   if (isNaN(jam)) return 'HADIR'
 
-  const siangStart = siteConfig?.siang_jam_masuk ? parseInt(siteConfig.siang_jam_masuk.split(':')[0]) : 6
-  const malamStart = siteConfig?.malam_jam_masuk ? parseInt(siteConfig.malam_jam_masuk.split(':')[0]) : 18
+  const siangStart = siteConfig?.siang_jam_masuk 
+    ? parseInt(siteConfig.siang_jam_masuk.split(':')[0]) 
+    : 6
+  const malamStart = siteConfig?.malam_jam_masuk 
+    ? parseInt(siteConfig.malam_jam_masuk.split(':')[0]) 
+    : 18
 
   if (jam >= siangStart && jam < malamStart) {
     return 'SIANG'
@@ -73,14 +98,17 @@ export async function GET(request: NextRequest) {
 
     const { target_table, access_mode, menu_label } = menuInfo
     
-  const isHrgaAll = isSuperAdmin || rolesLower.some((r: string) => ['hr_ho', 'hrga_oprek', 'hrga_pusat', 'hrga', 'admin'].includes(r))
-const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admin_site'].includes(r))
+    const isHrgaAll = isSuperAdmin || rolesLower.some((r: string) => ['hr_ho', 'hrga_oprek', 'hrga_pusat', 'hrga', 'admin'].includes(r))
+    const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admin_site'].includes(r))
     const isAdminPlant = rolesLower.includes('admin_plant')
     const isSiteScoped = isHrgaSite || isAdminPlant
     const userSite = session.scope_site || session.site || '_'
 
+    // ⭐ CHAT 30: Ambil timezone site user
+    const userSiteTz = await getSiteTimezone(session.site || userSite)
+
     // ==========================================
-    // 🎯 CASE A: RIWAYAT ABSENSI SAYA
+    // 🎯 CASE A: RIWAYAT ABSENSI SAYA (✅ FIXED Chat 30 - Multi-TZ)
     // ==========================================
     if (menuKey === 'riwayat_absensi' || menuKey === 'roster_saya') {
       const nrpString = String(session.nrp).trim()
@@ -92,9 +120,11 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
 
       const { data: siteConfig } = await supabase
         .from('sites_config')
-        .select('siang_jam_masuk, malam_jam_masuk')
+        .select('siang_jam_masuk, malam_jam_masuk, timezone')
         .eq('nama_site', session.site)
         .single()
+
+      const siteTz = (siteConfig?.timezone || DEFAULT_TIMEZONE) as Timezone
 
       const finalRows = (rosters || []).map((r: any) => {
         const absensi = attendance?.find((a: any) => String(a.tanggal) === String(r.tanggal))
@@ -102,9 +132,10 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
         let actual = "-"; let evident = "-"; let keterangan = ""
 
         if (absensi) {
-          const jamMasuk = absensi.clock_in?.split('T')[1]?.slice(0,5) || '--:--'
-          const jamPulang = absensi.clock_out?.split('T')[1]?.slice(0,5) || '--:--'
-          actual = detectShiftFromClockIn(jamMasuk, siteConfig)
+          // ⭐ CHAT 30: Convert UTC → site timezone
+          const jamMasuk = absensi.clock_in ? formatSiteTime(absensi.clock_in, siteTz) : '--:--'
+          const jamPulang = absensi.clock_out ? formatSiteTime(absensi.clock_out, siteTz) : '--:--'
+          actual = detectShiftFromLocalHour(jamMasuk, siteConfig)
           evident = `${jamMasuk} / ${jamPulang}`
           keterangan = absensi.status === 'TERLAMBAT' ? '⚠️ TERLAMBAT' : '✅ SUKSES'
         } 
@@ -167,11 +198,13 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
     }
 
     // ==========================================
-    // 🎯 CASE: RIWAYAT APPROVAL SAYA
+    // 🎯 CASE: RIWAYAT APPROVAL SAYA (✅ FIXED Chat 30 - TZ Aware)
     // ==========================================
     if (menuKey === 'riwayat_approval') {
-      const bulan = searchParams.get('bulan') || String(new Date().getMonth() + 1).padStart(2, '0')
-      const tahun = searchParams.get('tahun') || String(new Date().getFullYear())
+      const witaMonth = getSiteMonth(null, userSiteTz)
+      const witaYear = getSiteYear(null, userSiteTz)
+      const bulan = searchParams.get('bulan') || String(witaMonth).padStart(2, '0')
+      const tahun = searchParams.get('tahun') || String(witaYear)
       
       const firstDay = `${tahun}-${bulan}-01`
       const lastDay = `${tahun}-${bulan}-31`
@@ -305,13 +338,8 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
       })
     }
 
-
     // ==========================================
-    // 🎯 CASE B.2: KPI & PENILAIAN BAWAHAN (v3.0 Chat 27)
-    // - Multi-penilai support (rata-rata nilai)
-    // - Filter kategori: Plant / Operator / All
-    // - Filter periode: bulan & tahun
-    // - HR HO = view-only
+    // 🎯 CASE B.2: KPI & PENILAIAN BAWAHAN (✅ FIXED Chat 30 - TZ Aware)
     // ==========================================
     if (menuKey === 'penilaian_bawahan' || menuKey === 'kpi_bawahan') {
       let finalEmps: any[] = [];
@@ -323,19 +351,17 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
       const isHRSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site'].includes(r));
       const isHRHO = rolesLower.some((r: string) => ['hr_ho', 'hrga', 'hrga_pusat', 'admin'].includes(r));
 
-      // ─── Filter periode dari query param ───
-      const now = new Date();
-      const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
-      const currentYear = String(now.getFullYear());
+      const witaMonth = getSiteMonth(null, userSiteTz)
+      const witaYear = getSiteYear(null, userSiteTz)
+      const currentMonth = String(witaMonth).padStart(2, '0');
+      const currentYear = String(witaYear);
       const bulan = searchParams.get('bulan') || currentMonth;
       const tahun = searchParams.get('tahun') || currentYear;
 
-      // Format periode standar: "JULI 2026"
       const bulanNama = ['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI',
                          'JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
       const periodeFilter = `${bulanNama[parseInt(bulan) - 1]} ${tahun}`;
 
-      // ─── PRIORITAS 1: Super Admin / HR HO → semua karyawan (bisa filter site) ───
       if (isSuperAdmin || isHRHO) {
         const filterSite = searchParams.get('filter_site') || ''
         let q = supabase
@@ -349,7 +375,6 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
         const { data } = await q;
         finalEmps = data || [];
       }
-      // ─── PRIORITAS 2: HR Site → semua di site sendiri ───
       else if (isHRSite) {
         const { data } = await supabase
           .from('employees')
@@ -359,7 +384,6 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
           .order('nama');
         finalEmps = data || [];
       }
-      // ─── PRIORITAS 3: PJO → semua bawahan via pjo_nrp ───
       else if (isPJO) {
         const { data: matrix } = await supabase
           .from('approval_matrix')
@@ -377,64 +401,60 @@ const isHrgaSite = rolesLower.some((r: string) => ['hr_site', 'hrga_site', 'admi
           finalEmps = data || [];
         }
       }
-// ─── PRIORITAS 4a: GL PLANT → semua Plant crew di site sendiri (FLAT) ───
-else if (isGLPlant) {
-  const scopeSite = (session as any).scope_site || session.site;
-  const { data } = await supabase
-    .from('employees')
-    .select('nrp, nama, jabatan, site, departemen')
-    .eq('site', scopeSite)
-    .eq('status_karyawan', 'Aktif')
-    .is('tanggal_resign', null)
-    .or([
-      'jabatan.ilike.%mekanik%',
-      'jabatan.ilike.%mechanic%',
-      'jabatan.ilike.%welder%',
-      'jabatan.ilike.%tyreman%',
-      'jabatan.ilike.%electric%',
-      'jabatan.ilike.%helper plant%',
-      'jabatan.ilike.%admin plant%',
-      'departemen.ilike.%plant%'
-    ].join(','))
-    .order('nama');
-  finalEmps = data || [];
-}
-// ─── PRIORITAS 4b: GL PRODUKSI → semua Operator di site sendiri (FLAT) ───
-else if (isGLProduksi) {
-  const scopeSite = (session as any).scope_site || session.site;
-  const { data } = await supabase
-    .from('employees')
-    .select('nrp, nama, jabatan, site, departemen')
-    .eq('site', scopeSite)
-    .eq('status_karyawan', 'Aktif')
-    .is('tanggal_resign', null)
-    .or([
-      'jabatan.ilike.%operator%',
-      'jabatan.ilike.%driver%',
-      'jabatan.ilike.%huler%'
-    ].join(','))
-    .order('nama');
-  finalEmps = data || [];
-}
-// ─── PRIORITAS 4c: Legacy 'atasan' → tetap via approval_matrix ───
-else if (isGL) {
-  const { data: matrix } = await supabase
-    .from('approval_matrix')
-    .select('employee_nrp')
-    .eq('atasan_nrp', session.nrp)
-    .eq('active', true);
-  const nrps = (matrix || []).map((m: any) => m.employee_nrp);
-  if (nrps.length > 0) {
-    const { data } = await supabase
-      .from('employees')
-      .select('nrp, nama, jabatan, site, departemen')
-      .in('nrp', nrps)
-      .eq('status_karyawan', 'Aktif')
-      .order('nama');
-    finalEmps = data || [];
-  }
-}
-      // ─── FALLBACK ───
+      else if (isGLPlant) {
+        const scopeSite = (session as any).scope_site || session.site;
+        const { data } = await supabase
+          .from('employees')
+          .select('nrp, nama, jabatan, site, departemen')
+          .eq('site', scopeSite)
+          .eq('status_karyawan', 'Aktif')
+          .is('tanggal_resign', null)
+          .or([
+            'jabatan.ilike.%mekanik%',
+            'jabatan.ilike.%mechanic%',
+            'jabatan.ilike.%welder%',
+            'jabatan.ilike.%tyreman%',
+            'jabatan.ilike.%electric%',
+            'jabatan.ilike.%helper plant%',
+            'jabatan.ilike.%admin plant%',
+            'departemen.ilike.%plant%'
+          ].join(','))
+          .order('nama');
+        finalEmps = data || [];
+      }
+      else if (isGLProduksi) {
+        const scopeSite = (session as any).scope_site || session.site;
+        const { data } = await supabase
+          .from('employees')
+          .select('nrp, nama, jabatan, site, departemen')
+          .eq('site', scopeSite)
+          .eq('status_karyawan', 'Aktif')
+          .is('tanggal_resign', null)
+          .or([
+            'jabatan.ilike.%operator%',
+            'jabatan.ilike.%driver%',
+            'jabatan.ilike.%huler%'
+          ].join(','))
+          .order('nama');
+        finalEmps = data || [];
+      }
+      else if (isGL) {
+        const { data: matrix } = await supabase
+          .from('approval_matrix')
+          .select('employee_nrp')
+          .eq('atasan_nrp', session.nrp)
+          .eq('active', true);
+        const nrps = (matrix || []).map((m: any) => m.employee_nrp);
+        if (nrps.length > 0) {
+          const { data } = await supabase
+            .from('employees')
+            .select('nrp, nama, jabatan, site, departemen')
+            .in('nrp', nrps)
+            .eq('status_karyawan', 'Aktif')
+            .order('nama');
+          finalEmps = data || [];
+        }
+      }
       else {
         const { data: matrix } = await supabase
           .from('approval_matrix')
@@ -453,7 +473,6 @@ else if (isGL) {
         }
       }
 
-      // ─── Ambil semua KPI di periode tsb untuk bawahan yg ada ───
       const bawahaNrps = finalEmps.map(e => e.nrp);
       let allKpi: any[] = [];
       if (bawahaNrps.length > 0) {
@@ -465,7 +484,6 @@ else if (isGL) {
         allKpi = data || [];
       }
 
-      // ─── Ambil nama penilai untuk transparansi ───
       const penilaiNrps = [...new Set(allKpi.map(k => k.penilai_nrp).filter(Boolean))];
       let penilaiMap = new Map();
       if (penilaiNrps.length > 0) {
@@ -476,12 +494,10 @@ else if (isGL) {
         penilaiMap = new Map((penilaiEmps || []).map((p: any) => [p.nrp, p.nama]));
       }
 
-      // ─── Enrich per bawahan ───
       const rows = finalEmps.map((e: any) => {
         const empKpi = allKpi.filter(k => k.nrp === e.nrp);
         const kpiSaya = empKpi.find(k => k.penilai_nrp === session.nrp);
 
-        // Hitung nilai per record (kinerja + sikap + disiplin = performa, out of 30)
         const listPenilai = empKpi.map(k => {
           const totalPerforma = (Number(k.cat_kinerja) || 0) + (Number(k.cat_sikap) || 0) + (Number(k.cat_disiplin) || 0);
           return {
@@ -497,12 +513,10 @@ else if (isGL) {
           };
         });
 
-        // Rata-rata nilai (kalau multi penilai)
         const nilaiRataRata = listPenilai.length > 0
           ? listPenilai.reduce((sum, p) => sum + p.nilai_total, 0) / listPenilai.length
           : 0;
 
-        // Nilai saya (kalau sudah nilai)
         let nilaiSaya = null;
         if (kpiSaya) {
           const totalPerforma = (Number(kpiSaya.cat_kinerja) || 0) + (Number(kpiSaya.cat_sikap) || 0) + (Number(kpiSaya.cat_disiplin) || 0);
@@ -520,14 +534,12 @@ else if (isGL) {
         };
       });
 
-      // ─── Summary stats ───
       const totalSudahDinilai = rows.filter(r => r.total_penilai > 0).length;
       const totalBelumDinilai = rows.length - totalSudahDinilai;
       const avgNilai = totalSudahDinilai > 0
         ? Math.round((rows.filter(r => r.total_penilai > 0).reduce((sum, r) => sum + r.nilai_rata_rata, 0) / totalSudahDinilai) * 10) / 10
         : 0;
 
-      // Ambil daftar site untuk filter (hanya untuk HR HO / Super Admin)
       let sitesList: string[] = []
       if (isSuperAdmin || isHRHO) {
         const { data: siteData } = await supabase
@@ -560,7 +572,7 @@ else if (isGL) {
     }
 
     // ==========================================
-    // 🎯 CASE C: DASHBOARD & SPECIAL
+    // 🎯 CASE C: DASHBOARD & SPECIAL (✅ FIXED Chat 30 - TZ Aware)
     // ==========================================
     const specialModes: Record<string, string> = {
       'DASHBOARD': 'dashboard', 'FORM_CUTI': 'form_cuti', 'FORM_LEMBUR': 'form_lembur',
@@ -571,14 +583,12 @@ else if (isGL) {
     }
 
     if (access_mode === 'DASHBOARD') {
-      const now = new Date();
-      const offset = now.getTimezoneOffset() * 60000;
-      const today = new Date(now.getTime() - offset).toISOString().split('T')[0];
-      
-      const nextMonth = new Date();
-      nextMonth.setDate(nextMonth.getDate() + 30);
-      const dateLimit = nextMonth.toISOString().split('T')[0];
-      const currentMonth = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase();
+      // ⭐ CHAT 30: Pakai timezone site user
+      const today = getSiteDate(null, userSiteTz)
+      const now = new Date()
+      const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+      const dateLimit = getSiteDate(nextMonth, userSiteTz)
+      const currentMonth = formatSiteMonthYear(null, userSiteTz)
 
       let qTotal = supabase.from('employees').select('nrp', { count: 'exact', head: true }).eq('status_karyawan', 'Aktif')
       if (isHrgaSite || isAdminPlant) {
@@ -612,24 +622,17 @@ else if (isGL) {
         name, count, percent: totalKaryawan ? Math.round((count / totalKaryawan) * 100) : 0
       })).sort((a: any, b: any) => b.count - a.count).slice(0, 5);
 
-      // 🌟 v2.4: Tentukan scope berdasarkan role
-      // - Super Admin / HRGA HO → semua site
-      // - HRGA Site / PJO / Admin → semua karyawan di site sendiri
-      // - Karyawan biasa → HANYA dirinya sendiri
       let nrpsForExp: string[] = []
 
       if (isHrgaAll) {
-        // HRGA HO / Super Admin → semua karyawan
         const { data: allEmps } = await supabase.from('employees').select('nrp').eq('status_karyawan', 'Aktif')
         nrpsForExp = (allEmps || []).map((e: any) => String(e.nrp))
       } 
       else if (isHrgaSite || isAdminPlant) {
-        // HRGA Site / Admin Plant → semua karyawan di site sendiri
         const { data: siteEmpsForExp } = await supabase.from('employees').select('nrp').eq('site', userSite)
         nrpsForExp = (siteEmpsForExp || []).map((e: any) => String(e.nrp))
       } 
       else {
-        // Karyawan biasa → hanya dirinya sendiri
         const nrpStr = String(session.nrp).trim()
         const nrpWithZero = nrpStr.startsWith('0') ? nrpStr : '0' + nrpStr
         nrpsForExp = [nrpStr, nrpWithZero]
@@ -668,11 +671,11 @@ else if (isGL) {
     }
 
     // ==========================================
-    // 🎯 CASE FORM PENGAJUAN + RIWAYAT PER BULAN
+    // 🎯 CASE FORM PENGAJUAN (✅ FIXED Chat 30 - TZ Aware)
     // ==========================================
     if (['FORM_CUTI', 'FORM_LEMBUR'].includes(access_mode)) {
-      const currentMonth = new Date().getMonth() + 1
-      const currentYear = new Date().getFullYear()
+      const currentMonth = getSiteMonth(null, userSiteTz)
+      const currentYear = getSiteYear(null, userSiteTz)
       const firstDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
       const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`
 
@@ -687,7 +690,6 @@ else if (isGL) {
         .lte(dateField, lastDay)
         .order(dateField, { ascending: false })
 
-      // Enrich khusus FORM_CUTI: eligible tiket & sisa cuti tahunan
       let eligibleTiket = false
       let sisaCutiTahunan = 0
       let tahunCuti = currentYear
@@ -723,7 +725,7 @@ else if (isGL) {
         title: menu_label, 
         table: target_table,
         riwayat: riwayat || [],
-        periode: new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase(),
+        periode: formatSiteMonthYear(null, userSiteTz),
         eligible_tiket_pesawat: eligibleTiket,
         sisa_cuti_tahunan: sisaCutiTahunan,
         tahun_cuti: tahunCuti
@@ -731,8 +733,8 @@ else if (isGL) {
     }
     
     if (menuKey === 'evident_sakit') {
-      const currentMonth = new Date().getMonth() + 1
-      const currentYear = new Date().getFullYear()
+      const currentMonth = getSiteMonth(null, userSiteTz)
+      const currentYear = getSiteYear(null, userSiteTz)
       const firstDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
       const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`
 
@@ -749,7 +751,7 @@ else if (isGL) {
         title: menu_label, 
         rows: rows || [], 
         table: 'attendance_evidences',
-        periode: new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase()
+        periode: formatSiteMonthYear(null, userSiteTz)
       })
     }
 
@@ -759,10 +761,10 @@ else if (isGL) {
     // ==========================================
     // 🎯 CASE: DATA SAYA (My Identity)
     // ==========================================
-        if (menuKey === 'data_saya') {
+    if (menuKey === 'data_saya') {
       const nrpStr = String(session.nrp).trim();
       const nrpWithZero = nrpStr.startsWith('0') ? nrpStr : '0' + nrpStr;
-      const today = getWitaToday();
+      const today = getSiteDate(null, userSiteTz);
 
       const { data: employeeData } = await supabase.from('employees').select('*').in('nrp', [nrpStr, nrpWithZero]).single()
       if (!employeeData) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
@@ -778,7 +780,6 @@ else if (isGL) {
         .gte('berlaku_sampai', today)
         .order('created_at', { ascending: false })
 
-      // ═══ CHAT 25: Ambil MCU terbaru (tanggal_expired paling akhir) ═══
       const { data: mcuLatest } = await supabase
         .from('mcu')
         .select('tanggal_expired, tanggal_mcu, status_mcu, rumah_sakit')
@@ -788,7 +789,6 @@ else if (isGL) {
         .limit(1)
         .maybeSingle()
 
-      // ═══ CHAT 25: Ambil SIMPER terbaru (tanggal_expired paling akhir) ═══
       const { data: simperLatest } = await supabase
         .from('simper')
         .select('tanggal_expired, jenis_simper, nomor_simper')
@@ -800,10 +800,8 @@ else if (isGL) {
 
       const finalData = {
         ...employeeData,
-        // ═══ CHAT 25: Override kolom expired dengan data terbaru dari tabel MCU/SIMPER ═══
         exp_mcu: mcuLatest?.tanggal_expired || employeeData.exp_mcu || null,
         exp_simper: simperLatest?.tanggal_expired || employeeData.exp_simper || null,
-        // === END CHAT 25 ===
         pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-',
         punishments: spData || [],
         bpjs_tk_no: bpjsTable?.bpjs_ketenagakerjaan || '-',
@@ -824,13 +822,12 @@ else if (isGL) {
     }
 
     // ==========================================
-    // 🎯 CASE: MONITORING EXPIRED
+    // 🎯 CASE: MONITORING EXPIRED (✅ FIXED Chat 30 - TZ Aware)
     // ==========================================
     if (menuKey === 'monitoring_expired') {
-      const today = new Date();
-      const nextMonth = new Date();
-      nextMonth.setDate(nextMonth.getDate() + 30);
-      const limitDate = nextMonth.toISOString().split('T')[0];
+      const now = new Date()
+      const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+      const limitDate = getSiteDate(nextMonth, userSiteTz)
 
       const { data: emps } = await supabase.from('employees').select('nrp, nama, site, jabatan, exp_simpol')
       
@@ -889,14 +886,10 @@ else if (isGL) {
     // ==========================================
     if (!target_table) return NextResponse.json({ error: 'Tabel target tidak terdefinisi' }, { status: 400 })
 
-    // 🔐 Cek permission VIEW untuk tabel generik
-    // Skip jika SELF (data sendiri) atau Super Admin
     if (access_mode !== 'SELF' && !isSuperAdmin) {
       const tablePerm = getTablePermissions(target_table)
       if (tablePerm?.view_all) {
-        // 🌟 FIX: Cascade permission check
-        // HRGA Site cukup punya view_site / view_team, tidak wajib view_all_sites
-        const viewAllPerm = tablePerm.view_all  // ex: 'karyawan_view_all_sites'
+        const viewAllPerm = tablePerm.view_all
         const viewSitePerm = viewAllPerm.replace('_all_sites', '_site').replace('_all', '_site')
         const viewTeamPerm = viewAllPerm.replace('_all_sites', '_team').replace('_all', '_team')
         const viewOwnSitePerm = viewAllPerm.replace('_all_sites', '_own_site').replace('_all', '_own_site')
@@ -923,94 +916,93 @@ else if (isGL) {
       else query = query.eq('nrp', session.nrp)
     } 
     else if (access_mode === 'TEAM_ATASAN' || access_mode === 'APPROVAL_ATASAN') {
-  const approvalTables = ['overtime_requests', 'leave_requests', 'attendance_evidences'];
-  const isGLPlant = rolesLower.includes('gl_plant');
-  const isGLProduksi = rolesLower.includes('gl_produksi');
-  
-  if (isSiteScoped) {
-    if (target_table === 'employees') {
-      query = query.eq('site', userSite)
-      if (isAdminPlant) query = query.ilike('departemen', '%plant%')
-    } 
-    else if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
-      query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
-    }
-    else {
-      let empQ = supabase.from('employees').select('nrp, nama').eq('site', userSite)
-      if (isAdminPlant) empQ = empQ.ilike('departemen', '%plant%')
-      const { data: emps } = await empQ
-      if (!emps || emps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
+      const approvalTables = ['overtime_requests', 'leave_requests', 'attendance_evidences'];
+      const isGLPlant = rolesLower.includes('gl_plant');
+      const isGLProduksi = rolesLower.includes('gl_produksi');
+      
+      if (isSiteScoped) {
+        if (target_table === 'employees') {
+          query = query.eq('site', userSite)
+          if (isAdminPlant) query = query.ilike('departemen', '%plant%')
+        } 
+        else if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
+          query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
+        }
+        else {
+          let empQ = supabase.from('employees').select('nrp, nama').eq('site', userSite)
+          if (isAdminPlant) empQ = empQ.ilike('departemen', '%plant%')
+          const { data: emps } = await empQ
+          if (!emps || emps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
 
-      if (NAME_BASED_TABLES.includes(target_table)) {
-        const names = emps.map((e: any) => e.nama).filter(Boolean)
-        if (names.length === 0) return NextResponse.json({ type: 'table', rows: [] })
-        query = query.in('nama_karyawan', names)
-      } else {
-        const nrps = emps.map((e: any) => e.nrp)
-        query = query.in('nrp', nrps)
+          if (NAME_BASED_TABLES.includes(target_table)) {
+            const names = emps.map((e: any) => e.nama).filter(Boolean)
+            if (names.length === 0) return NextResponse.json({ type: 'table', rows: [] })
+            query = query.in('nama_karyawan', names)
+          } else {
+            const nrps = emps.map((e: any) => e.nrp)
+            query = query.in('nrp', nrps)
+          }
+        }
+      } 
+      else if (isGLPlant || isGLProduksi) {
+        const scopeSite = (session as any).scope_site || session.site;
+        let empQ = supabase
+          .from('employees')
+          .select('nrp, nama')
+          .eq('site', scopeSite)
+          .eq('status_karyawan', 'Aktif')
+          .is('tanggal_resign', null);
+        
+        if (isGLPlant) {
+          empQ = empQ.or([
+            'jabatan.ilike.%mekanik%',
+            'jabatan.ilike.%mechanic%',
+            'jabatan.ilike.%welder%',
+            'jabatan.ilike.%tyreman%',
+            'jabatan.ilike.%electric%',
+            'jabatan.ilike.%helper plant%',
+            'jabatan.ilike.%admin plant%',
+            'departemen.ilike.%plant%'
+          ].join(','));
+        } else {
+          empQ = empQ.or([
+            'jabatan.ilike.%operator%',
+            'jabatan.ilike.%driver%',
+            'jabatan.ilike.%huler%'
+          ].join(','));
+        }
+        
+        const { data: emps } = await empQ;
+        if (!emps || emps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
+        
+        if (target_table === 'employees') {
+          const nrps = emps.map((e: any) => e.nrp)
+          query = query.in('nrp', nrps)
+        }
+        else if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
+          query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
+        }
+        else {
+          if (NAME_BASED_TABLES.includes(target_table)) {
+            const names = emps.map((e: any) => e.nama).filter(Boolean)
+            query = query.in('nama_karyawan', names)
+          } else {
+            const nrps = emps.map((e: any) => e.nrp)
+            query = query.in('nrp', nrps)
+          }
+        }
+      }
+      else {
+        if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
+          query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
+        } else {
+          const { data: matrix } = await supabase.from('approval_matrix').select('employee_nrp').eq('atasan_nrp', session.nrp).eq('active', true)
+          const nrps = (matrix || []).map((m: any) => m.employee_nrp)
+          if (nrps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
+          query = query.in('nrp', nrps)
+        }
       }
     }
-  } 
-  // 🌟 GL PLANT / GL PRODUKSI → FLAT: semua crew di site sendiri
-  else if (isGLPlant || isGLProduksi) {
-    const scopeSite = (session as any).scope_site || session.site;
-    let empQ = supabase
-      .from('employees')
-      .select('nrp, nama')
-      .eq('site', scopeSite)
-      .eq('status_karyawan', 'Aktif')
-      .is('tanggal_resign', null);
-    
-    if (isGLPlant) {
-      empQ = empQ.or([
-        'jabatan.ilike.%mekanik%',
-        'jabatan.ilike.%mechanic%',
-        'jabatan.ilike.%welder%',
-        'jabatan.ilike.%tyreman%',
-        'jabatan.ilike.%electric%',
-        'jabatan.ilike.%helper plant%',
-        'jabatan.ilike.%admin plant%',
-        'departemen.ilike.%plant%'
-      ].join(','));
-    } else {
-      empQ = empQ.or([
-        'jabatan.ilike.%operator%',
-        'jabatan.ilike.%driver%',
-        'jabatan.ilike.%huler%'
-      ].join(','));
-    }
-    
-    const { data: emps } = await empQ;
-    if (!emps || emps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
-    
-    if (target_table === 'employees') {
-      const nrps = emps.map((e: any) => e.nrp)
-      query = query.in('nrp', nrps)
-    }
-    else if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
-      query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
-    }
-    else {
-      if (NAME_BASED_TABLES.includes(target_table)) {
-        const names = emps.map((e: any) => e.nama).filter(Boolean)
-        query = query.in('nama_karyawan', names)
-      } else {
-        const nrps = emps.map((e: any) => e.nrp)
-        query = query.in('nrp', nrps)
-      }
-    }
-  }
-  else {
-    if (approvalTables.includes(target_table) && access_mode === 'APPROVAL_ATASAN') {
-      query = query.eq('atasan_nrp', session.nrp).eq('status_atasan', 'PENDING')
-    } else {
-      const { data: matrix } = await supabase.from('approval_matrix').select('employee_nrp').eq('atasan_nrp', session.nrp).eq('active', true)
-      const nrps = (matrix || []).map((m: any) => m.employee_nrp)
-      if (nrps.length === 0) return NextResponse.json({ type: 'table', rows: [] })
-      query = query.in('nrp', nrps)
-    }
-  }
-}
 
     const { data: rows, error: qErr } = await query.order('created_at', { ascending: false }).limit(2000)
     if (qErr) return NextResponse.json({ error: qErr.message }, { status: 500 })
@@ -1030,16 +1022,13 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
   const isNameBased = NAME_BASED_TABLES.includes(table)
   const mainNrpField = table === 'approval_matrix' ? 'employee_nrp' : 'nrp'
   
-  // Step 1: Collect NRP karyawan (row utama)
   const employeeNrps = new Set<string>()
   rows.forEach((r: any) => {
     if (!isNameBased && r[mainNrpField]) employeeNrps.add(String(r[mainNrpField]))
-    // Kalau tabel-nya bukan employees, tetap ambil atasan_nrp/pjo_nrp dari row (kompatibel dgn tabel lain)
     if (r.atasan_nrp) employeeNrps.add(String(r.atasan_nrp))
     if (r.pjo_nrp) employeeNrps.add(String(r.pjo_nrp))
   })
 
-  // Step 2: 🌟 CHAT 26: Kalau tabel = employees, ambil atasan_nrp & pjo_nrp dari approval_matrix
   const matrixMap = new Map<string, { atasan_nrp: string; pjo_nrp: string }>()
   if (table === 'employees' && employeeNrps.size > 0) {
     const { data: matrix } = await supabase
@@ -1053,13 +1042,11 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
         atasan_nrp: m.atasan_nrp,
         pjo_nrp: m.pjo_nrp
       })
-      // Tambah juga atasan/pjo NRP ke set → biar diambil datanya
       if (m.atasan_nrp) employeeNrps.add(String(m.atasan_nrp))
       if (m.pjo_nrp) employeeNrps.add(String(m.pjo_nrp))
     }
   }
 
-  // Step 3: Ambil semua data employees (untuk enrichment)
   let employees: any[] = []
   if (employeeNrps.size > 0) {
     const { data } = await supabase
@@ -1071,11 +1058,9 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
 
   const empMapNrp = new Map(employees.map((e: any) => [String(e.nrp), e]))
 
-  // Step 4: Enrich rows
   return rows.map((r: any) => {
     const emp = empMapNrp.get(String(r[mainNrpField]))
     
-    // 🌟 CHAT 26: Ambil atasan/PJO NRP - prioritas dari matrix, fallback dari kolom row
     const matrixEntry = matrixMap.get(String(r[mainNrpField]))
     const atasanNrp = matrixEntry?.atasan_nrp || r.atasan_nrp
     const pjoNrp    = matrixEntry?.pjo_nrp    || r.pjo_nrp
@@ -1083,14 +1068,14 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
     const atasanEmp = atasanNrp ? empMapNrp.get(String(atasanNrp)) : null
     const pjoEmp    = pjoNrp    ? empMapNrp.get(String(pjoNrp))    : null
     
-  return {
-  ...r,
-  _nama_karyawan: emp?.nama || r.nama_karyawan || r.nrp || '-',
-  _jabatan:       emp?.jabatan || '-',
-  _site:          emp?.site || '-',
-  _nama_atasan:   atasanEmp?.nama || (atasanNrp ? String(atasanNrp) : 'Belum diset'),
-  _nama_pjo:      pjoEmp?.nama    || (pjoNrp    ? String(pjoNrp)    : 'Belum diset')
-}
+    return {
+      ...r,
+      _nama_karyawan: emp?.nama || r.nama_karyawan || r.nrp || '-',
+      _jabatan:       emp?.jabatan || '-',
+      _site:          emp?.site || '-',
+      _nama_atasan:   atasanEmp?.nama || (atasanNrp ? String(atasanNrp) : 'Belum diset'),
+      _nama_pjo:      pjoEmp?.nama    || (pjoNrp    ? String(pjoNrp)    : 'Belum diset')
+    }
   })
 }
 

@@ -1,11 +1,17 @@
 // app/api/attendance/clock-out/route.ts
-// v3.0 - Chat 27: LOGIKA BARU - Cari record aktif (clock_in ada, clock_out belum)
-// - Tidak peduli tanggal berapa, yang penting cari record yang belum di-clockout
-// - Menangani dengan mudah kasus shift malam lintas hari
+// v4.0 - Chat 30 FINAL: Multi-timezone support (WIB/WITA/WIT)
+// - Cari record aktif (clock_in ada, clock_out belum)
+// - Timezone-aware date range (kemarin & hari ini)
+// - Store UTC, display via timezone site
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
+import { 
+  getSiteDate, 
+  formatSiteTime,
+  Timezone
+} from '@/app/lib/timezone'
 
 // Hitung jarak antar 2 koordinat (dalam meter)
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -35,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Lokasi GPS wajib diisi.' }, { status: 400 })
     }
 
-    // ⚡ OFFLINE SYNC: Pakai waktu offline kalau ada
+    // 🎯 CRITICAL: clockTime SELALU UTC
     const clockTime = is_offline_sync && offline_time
       ? new Date(offline_time)
       : new Date()
@@ -66,13 +72,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Data karyawan tidak ditemukan' }, { status: 404 })
     }
 
-    // 2. Ambil config site
+    // 2. Ambil config site (WAJIB include timezone)
     const { data: siteConfig } = await supabase
       .from('sites_config')
       .select('*')
       .eq('nama_site', emp.site)
       .eq('active', true)
       .single()
+
+    // ⭐ CHAT 30: Timezone site (fallback Asia/Makassar)
+    const siteTz: Timezone = (siteConfig?.timezone || 'Asia/Makassar') as Timezone
 
     // 3. Validasi jarak GPS
     if (siteConfig && siteConfig.latitude && siteConfig.longitude) {
@@ -90,14 +99,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Cari record AKTIF (clock_in ADA tapi clock_out BELUM)
-    // Logika baru v3.0: tidak peduli tanggal, cari yang masih aktif
-    // Ambil record terbaru dalam 2 hari terakhir yang belum clock_out
-    const witaTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
-    const today = witaTime.toISOString().split('T')[0]
-    const yesterday = new Date(witaTime)
-    yesterday.setUTCDate(yesterday.getUTCDate() - 1)
-    const yesterdayStr = yesterday.toISOString().split('T')[0]
+    // 4. ⭐ CHAT 30: Cari record AKTIF (clock_in ada, clock_out belum)
+    // Berdasarkan tanggal di TIMEZONE SITE (hari ini & kemarin)
+    const today = getSiteDate(clockTime, siteTz)
+    
+    // Kemarin: kurangi 1 hari dari today (string manipulation)
+    const todayDate = new Date(today + 'T00:00:00Z')
+    todayDate.setUTCDate(todayDate.getUTCDate() - 1)
+    const yesterdayStr = todayDate.toISOString().split('T')[0]
 
     const { data: activeRecords } = await supabase
       .from('attendance')
@@ -112,7 +121,7 @@ export async function POST(request: NextRequest) {
     const existing = activeRecords && activeRecords.length > 0 ? activeRecords[0] : null
 
     if (!existing) {
-      // Cek apakah karyawan sudah clock_out semua record hari ini/kemarin
+      // Cek apakah karyawan sudah clock_out semua record
       const { data: recentRecords } = await supabase
         .from('attendance')
         .select('tanggal, shift, clock_in, clock_out')
@@ -122,7 +131,7 @@ export async function POST(request: NextRequest) {
         .limit(1)
 
       if (recentRecords && recentRecords.length > 0 && recentRecords[0].clock_out) {
-        const lastOut = new Date(recentRecords[0].clock_out).toLocaleString('id-ID')
+        const lastOut = formatSiteTime(recentRecords[0].clock_out, siteTz, 'datetime')
         return NextResponse.json({
           error: `Anda sudah clock out sebelumnya pada ${lastOut}. Kalau ini shift baru, clock in dulu.`
         }, { status: 400 })
@@ -147,7 +156,9 @@ export async function POST(request: NextRequest) {
     // 6. Siapkan keterangan
     let keteranganFinal = existing.keterangan || null
     if (is_offline_sync) {
-      const syncNote = `[OFFLINE SYNC] Clock out offline pada ${clockTime.toLocaleString('id-ID')}, di-upload ${new Date().toLocaleString('id-ID')}`
+      const jamOffline = formatSiteTime(clockTime, siteTz)
+      const jamSync = formatSiteTime(new Date(), siteTz)
+      const syncNote = `[OFFLINE SYNC] Clock out offline: ${today} ${jamOffline} ${siteTz}, sync: ${jamSync}`
       keteranganFinal = keteranganFinal ? `${keteranganFinal} | ${syncNote}` : syncNote
     }
     if (keterangan) {
@@ -155,6 +166,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 7. Update attendance dengan clock out
+    // ⭐ CRITICAL: SIMPAN clockTime.toISOString() (SELALU UTC)
     const updateData: any = {
       clock_out: clockTime.toISOString(),
       clock_out_lat: latitude,
@@ -176,10 +188,11 @@ export async function POST(request: NextRequest) {
 
     const jam = Math.floor(jamKerjaMenit / 60)
     const menit = jamKerjaMenit % 60
+    const jamDisplay = formatSiteTime(clockTime, siteTz)
 
     const successMsg = is_offline_sync
-      ? `✅ Clock Out offline berhasil di-sync (${clockTime.toLocaleString('id-ID')}) - Total kerja: ${jam}j ${menit}m`
-      : `✅ Clock Out berhasil pada ${clockTime.toLocaleTimeString('id-ID')}. Total kerja: ${jam}j ${menit}m`
+      ? `✅ Clock Out offline berhasil di-sync (${today} ${jamDisplay}) - Total kerja: ${jam}j ${menit}m`
+      : `✅ Clock Out berhasil pada ${jamDisplay}. Total kerja: ${jam}j ${menit}m`
 
     return NextResponse.json({
       success: true,
@@ -187,7 +200,8 @@ export async function POST(request: NextRequest) {
       data: result,
       is_offline_sync: !!is_offline_sync,
       record_date: existing.tanggal,
-      record_shift: existing.shift
+      record_shift: existing.shift,
+      site_timezone: siteTz
     })
 
   } catch (err: any) {

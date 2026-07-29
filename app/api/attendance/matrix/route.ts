@@ -1,14 +1,12 @@
-// app/api/attendance/matrix/route.ts v2.3
-// v2.3 - Chat 28: FLAT access untuk GL Plant & GL Produksi
-//        - GL Plant   → semua Plant crew di site sendiri (via jabatan)
-//        - GL Produksi → semua Operator di site sendiri (via jabatan)
-//        - Legacy 'atasan' → tetap via approval_matrix.atasan_nrp
-//        - PJO Site   → tetap via approval_matrix.pjo_nrp
-//        - HR Site    → filter site sendiri (via employees.site)
+// app/api/attendance/matrix/route.ts v3.0
+// v3.0 - Chat 30 FINAL: Multi-timezone aware
+// - todayWita → todaySite (berdasarkan timezone site user)
+// - Backward compatible dengan semua logic role-based
+
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
-import { getWitaToday } from '@/app/lib/timezone'
+import { getSiteDate, Timezone, DEFAULT_TIMEZONE } from '@/app/lib/timezone'
 
 const HO_VIEW_ONLY  = ['hr_ho','director_ops','business_dev','manager_ops','spv_she_ho','she_site']
 const SITE_EDIT     = ['hr_site','pjo_site','super_admin']
@@ -77,8 +75,6 @@ export async function GET(req: NextRequest) {
   const userRoles: string[] = Array.isArray(session.roles) ? session.roles : []
   const isSuperAdmin = userRoles.includes('super_admin')
 
-  // ⭐ CHAT 28: Cari role PRIORITAS (bukan role[0] karena bisa 'employee')
-  // Prioritas: super_admin > hr_ho > pjo_site > gl_plant > gl_produksi > hr_site > atasan > employee
   const PRIORITY_ROLES = [
     'super_admin', 'hr_ho', 'director_ops', 'business_dev', 'manager_ops', 'spv_she_ho',
     'pjo_site', 'pjo', 'gl_plant', 'gl_produksi', 'hr_site', 'she_site',
@@ -86,7 +82,6 @@ export async function GET(req: NextRequest) {
   ]
   const role: string = PRIORITY_ROLES.find(r => userRoles.includes(r)) || 'employee'
 
-  // Employee murni (tanpa role lain) → tolak akses
   if (role === 'employee' && !isSuperAdmin) {
     return NextResponse.json({ error: 'Tidak punya akses' }, { status: 403 })
   }
@@ -104,25 +99,30 @@ export async function GET(req: NextRequest) {
   const jmlHari   = new Date(tahun, bln, 0).getDate()
   const endDate   = `${tahun}-${String(bln).padStart(2,'0')}-${String(jmlHari).padStart(2,'0')}`
 
-  const todayWita = getWitaToday()
+  // ⭐ CHAT 30: Get today berdasarkan timezone site user
+  // Ambil timezone dari site user (fallback WITA)
+  let siteTz: Timezone = DEFAULT_TIMEZONE
+  if (session.site) {
+    const { data: siteConfig } = await supabaseAdmin
+      .from('sites_config')
+      .select('timezone')
+      .eq('nama_site', session.site)
+      .maybeSingle()
+    if (siteConfig?.timezone) siteTz = siteConfig.timezone as Timezone
+  }
+  const todaySite = getSiteDate(null, siteTz)
 
   // ── STEP 1: Ambil karyawan berdasarkan role ──
   let empQuery = supabaseAdmin
     .from('employees')
     .select('nrp, nama, jabatan, departemen, site, status_karyawan, tanggal_resign')
 
-  // ─────────────────────────────────────────────────────
-  // 🎯 ROLE-BASED FILTERING (priority: dari yang paling spesifik)
-  // ─────────────────────────────────────────────────────
-
   if (isSuperAdmin) {
-    // Super Admin → lihat semua (tidak filter apapun)
+    // Super Admin → lihat semua
   }
-  // ⭐ HR Site / SHE Site → filter site sendiri
   else if (['hr_site','she_site'].includes(role)) {
     empQuery = empQuery.eq('site', session.site || '')
   }
-  // ⭐ CHAT 28: GL Plant → semua Plant crew di site sendiri (FLAT)
   else if (role === 'gl_plant') {
     const scopeSite = session.scope_site || session.site || ''
     if (!scopeSite) {
@@ -145,7 +145,6 @@ export async function GET(req: NextRequest) {
         'departemen.ilike.%plant%'
       ].join(','))
   }
-  // ⭐ CHAT 28: GL Produksi → semua Operator di site sendiri (FLAT)
   else if (role === 'gl_produksi') {
     const scopeSite = session.scope_site || session.site || ''
     if (!scopeSite) {
@@ -163,7 +162,6 @@ export async function GET(req: NextRequest) {
         'jabatan.ilike.%huler%'
       ].join(','))
   }
-  // ⭐ PJO Site / PJO → semua karyawan yang PJO-nya dia (via approval_matrix)
   else if (['pjo_site','pjo'].includes(role)) {
     const { data: bawahan } = await supabaseAdmin
       .from('approval_matrix')
@@ -180,7 +178,6 @@ export async function GET(req: NextRequest) {
     }
     empQuery = empQuery.in('nrp', nrpList)
   }
-  // ⭐ Legacy 'atasan' → tetap via approval_matrix (backward compat)
   else if (role === 'atasan') {
     const { data: bawahan } = await supabaseAdmin
       .from('approval_matrix')
@@ -197,7 +194,6 @@ export async function GET(req: NextRequest) {
     }
     empQuery = empQuery.in('nrp', nrpList)
   }
-  // ⭐ Admin Site / Admin Plant → filter site
   else if (['admin_site','admin_plant'].includes(role)) {
     empQuery = empQuery.eq('site', session.site || '')
     if (role === 'admin_plant') {
@@ -205,7 +201,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── Filter tambahan dari user (kalau ada) ──
   if (site) empQuery = empQuery.eq('site', site)
   if (departemen) empQuery = empQuery.eq('departemen', departemen)
   if (nama) empQuery = empQuery.ilike('nama', `%${nama}%`)
@@ -225,7 +220,6 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  // ── STEP 2: Ambil roster ──
   const { data: rosters } = await supabaseAdmin
     .from('rosters')
     .select('nrp, tanggal, shift_code')
@@ -233,7 +227,6 @@ export async function GET(req: NextRequest) {
     .gte('tanggal', startDate)
     .lte('tanggal', endDate)
 
-  // ── STEP 3: Ambil attendance ──
   const { data: attendances } = await supabaseAdmin
     .from('attendance')
     .select('nrp, tanggal, shift, clock_in, clock_out, status, jam_kerja_menit, terlambat_menit, clock_in_lokasi, clock_out_lokasi, clock_in_lat, clock_in_lng, clock_out_lat, clock_out_lng, keterangan')
@@ -241,7 +234,6 @@ export async function GET(req: NextRequest) {
     .gte('tanggal', startDate)
     .lte('tanggal', endDate)
 
-  // ── STEP 4: Mapping ──
   const rosterMap: Record<string, string> = {}
   ;(rosters || []).forEach((r: any) => {
     rosterMap[`${r.nrp}_${r.tanggal}`] = r.shift_code
@@ -252,7 +244,6 @@ export async function GET(req: NextRequest) {
     attMap[`${a.nrp}_${a.tanggal}`] = a
   })
 
-  // ── STEP 5: Bangun matrix per karyawan ──
   const rows = (employees || []).map((emp: any) => {
     const days: any[] = []
     let hariKerja = 0, hariHadir = 0, shiftS = 0, shiftM = 0
@@ -265,7 +256,8 @@ export async function GET(req: NextRequest) {
       const roster = rosterMap[`${emp.nrp}_${tgl}`] || null
       const att    = attMap[`${emp.nrp}_${tgl}`] || null
 
-      const isFuture = tgl > todayWita
+      // ⭐ CHAT 30: Compare vs todaySite (bukan hardcode WITA)
+      const isFuture = tgl > todaySite
       const isAfterResign = !!(resignDate && tgl > resignDate)
 
       const cell = konversiCell(roster, att, isFuture, isAfterResign)
@@ -334,7 +326,6 @@ export async function GET(req: NextRequest) {
     }
   })
 
-  // ── STEP 6: Group by departemen ──
   const DEPT_ORDER = ['Staff','Plant','Operator','Lainnya']
   const grouped: Record<string, any[]> = {}
   rows.forEach(r => {
@@ -352,7 +343,6 @@ export async function GET(req: NextRequest) {
     rows: grouped[d]
   }))
 
-  // ── STEP 7: Permission ──
   const canEdit = isSuperAdmin ||
                   SITE_EDIT.includes(role) ||
                   LEADER_EDIT.includes(role)
@@ -361,7 +351,9 @@ export async function GET(req: NextRequest) {
     ok: true,
     bulan,
     jmlHari,
-    todayWita,
+    todayWita: todaySite,  // Keep old field name for backward compat with frontend
+    todaySite,             // New field name
+    siteTimezone: siteTz,
     groups,
     permission: {
       canEdit,

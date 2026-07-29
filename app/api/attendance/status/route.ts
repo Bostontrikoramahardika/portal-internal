@@ -1,7 +1,11 @@
+// app/api/attendance/status/route.ts
+// v2.0 - Chat 30 FINAL: Multi-timezone aware
+// - Today & first day of month berdasarkan timezone SITE user
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
-import { getWitaToday, getWitaFirstDayOfMonth } from '@/app/lib/timezone'
+import { getSiteDate, getSiteFirstDayOfMonth, Timezone, DEFAULT_TIMEZONE } from '@/app/lib/timezone'
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get('session_token')?.value
@@ -11,8 +15,6 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
   try {
-    const today = getWitaToday()
-
     // Ambil data karyawan
     const { data: emp } = await supabase
       .from('employees')
@@ -24,12 +26,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Data karyawan tidak ditemukan' }, { status: 404 })
     }
 
-    // Ambil config site
+    // Ambil config site (WAJIB include timezone)
     const { data: siteConfig } = await supabase
       .from('sites_config')
       .select('*')
       .eq('nama_site', emp.site)
       .single()
+
+    // ⭐ CHAT 30: Timezone site user
+    const siteTz: Timezone = (siteConfig?.timezone || DEFAULT_TIMEZONE) as Timezone
+
+    // ⭐ CHAT 30: Today & first day of month berdasarkan timezone site
+    const today = getSiteDate(null, siteTz)
+    const firstDayStr = getSiteFirstDayOfMonth(siteTz)
 
     // Ambil absensi hari ini
     const { data: todayAttendance } = await supabase
@@ -37,12 +46,9 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('nrp', session.nrp)
       .eq('tanggal', today)
-      .single()
+      .maybeSingle()
 
-    // Hitung statistik bulan ini
-    // WITA untuk hitung stats bulan ini
-    const firstDayStr = getWitaFirstDayOfMonth()
-
+    // Ambil absensi bulan ini
     const { data: monthAttendance } = await supabase
       .from('attendance')
       .select('status')
@@ -77,7 +83,8 @@ export async function GET(request: NextRequest) {
       site_config: siteConfig,
       today: todayAttendance || null,
       stats,
-      server_time: new Date().toISOString()
+      server_time: new Date().toISOString(),
+      site_timezone: siteTz
     })
 
   } catch (err: any) {

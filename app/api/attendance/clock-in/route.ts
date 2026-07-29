@@ -1,15 +1,22 @@
 // app/api/attendance/clock-in/route.ts
-// v3.0 - Chat 27: LOGIKA BARU - Absen adalah INTI, bukan mengikuti roster
-// - Tanggal absen = tanggal kalender WITA saat clock-in
-// - Shift ditentukan dari JAM WITA (SIANG: 04-15, MALAM: 16-03)
-// - Tidak ada logika "shift kemarin" / "cutoff" / "lintas hari"
+// v4.0 - Chat 30 FINAL: Multi-timezone support (WIB/WITA/WIT)
+// - Store UTC, detect shift & tanggal dari timezone SITE
+// - Backward compatible dengan offline sync
+// - Zero manual offset math (pakai Intl API)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
-import { toWita } from '@/app/lib/timezone'
+import { 
+  getSiteDate, 
+  getSiteHour, 
+  getSiteMinute, 
+  detectShiftFromClockIn,
+  formatSiteTime,
+  Timezone
+} from '@/app/lib/timezone'
 
-// Hitung jarak antar 2 koordinat (dalam meter)
+// Hitung jarak antar 2 koordinat (dalam meter) - Haversine formula
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000
   const dLat = (lat2 - lat1) * Math.PI / 180
@@ -20,24 +27,6 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
     Math.sin(dLng / 2) * Math.sin(dLng / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
-}
-
-// v3.0 - Chat 27: LOGIKA BARU YANG SEDERHANA
-// - Tanggal = kalender WITA saat clock-in
-// - Shift = ditentukan dari jam WITA:
-//     04:00 - 15:59 = SIANG
-//     16:00 - 03:59 = MALAM
-function detectShiftAndDate(clockTime: Date): { shift: 'SIANG' | 'MALAM'; shiftDate: string } {
-  const witaTime = new Date(clockTime.getTime() + 8 * 60 * 60 * 1000)
-  const hour = witaTime.getUTCHours()
-  const witaDate = witaTime.toISOString().split('T')[0]
-
-  const shift: 'SIANG' | 'MALAM' = (hour >= 4 && hour < 16) ? 'SIANG' : 'MALAM'
-
-  return {
-    shift,
-    shiftDate: witaDate
-  }
 }
 
 export async function POST(request: NextRequest) {
@@ -52,15 +41,18 @@ export async function POST(request: NextRequest) {
     const { latitude, longitude, keterangan, offline_time, is_offline_sync } = body
 
     if (!latitude || !longitude) {
-      return NextResponse.json({ error: 'Lokasi GPS wajib diisi. Aktifkan GPS di HP Anda.' }, { status: 400 })
+      return NextResponse.json({ 
+        error: 'Lokasi GPS wajib diisi. Aktifkan GPS di HP Anda.' 
+      }, { status: 400 })
     }
 
-    // ⚡ OFFLINE SYNC: Pakai waktu offline kalau ada
+    // 🎯 CRITICAL: clockTime SELALU UTC
+    // Node.js Date() default UTC, offline_time dari client kirim ISO string (UTC)
     const clockTime = is_offline_sync && offline_time
       ? new Date(offline_time)
       : new Date()
 
-    // Validasi: waktu offline tidak boleh di masa depan atau > 7 hari yang lalu
+    // Validasi waktu offline
     if (is_offline_sync) {
       const now = new Date()
       const diffMs = now.getTime() - clockTime.getTime()
@@ -91,10 +83,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (!emp.site) {
-      return NextResponse.json({ error: 'Site karyawan belum diatur. Hubungi HRGA.' }, { status: 400 })
+      return NextResponse.json({ 
+        error: 'Site karyawan belum diatur. Hubungi HRGA.' 
+      }, { status: 400 })
     }
 
-    // 2. Ambil config site
+    // 2. Ambil config site (WAJIB include timezone)
     const { data: siteConfig } = await supabase
       .from('sites_config')
       .select('*')
@@ -107,6 +101,9 @@ export async function POST(request: NextRequest) {
         error: `Setting site "${emp.site}" belum ada. Hubungi HRGA untuk setup.`
       }, { status: 400 })
     }
+
+    // ⭐ CHAT 30: Timezone site (dari sites_config, fallback Asia/Makassar)
+    const siteTz: Timezone = (siteConfig.timezone || 'Asia/Makassar') as Timezone
 
     // 3. Validasi jarak GPS
     if (siteConfig.latitude && siteConfig.longitude) {
@@ -124,16 +121,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Deteksi shift & tanggal shift (v3.0 Chat 27: LOGIKA BARU - berbasis jam WITA)
-    const { shift, shiftDate } = detectShiftAndDate(clockTime)
-    const targetDate = shiftDate
+    // 4. ⭐ CHAT 30: Deteksi shift & tanggal BERDASARKAN TIMEZONE SITE
+    const shift = detectShiftFromClockIn(clockTime, siteTz)
+    const targetDate = getSiteDate(clockTime, siteTz)
 
-    // Jam & menit WITA untuk hitung telat
-    const witaTime = toWita(clockTime)
-    const jamSekarang = witaTime.getUTCHours()
-    const menitSekarang = witaTime.getUTCMinutes()
+    // Jam & menit di timezone site (untuk hitung telat)
+    const jamSekarang = getSiteHour(clockTime, siteTz)
+    const menitSekarang = getSiteMinute(clockTime, siteTz)
 
-    // 5. Cek apakah sudah clock in di tanggal SHIFT tersebut (dengan shift yang sama)
+    // 5. Cek apakah sudah clock in di tanggal SHIFT tersebut
     const { data: existing } = await supabase
       .from('attendance')
       .select('*')
@@ -143,7 +139,6 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (existing && existing.clock_in) {
-      // Kalau offline sync dan sudah ada clock_in, skip (idempotent)
       if (is_offline_sync) {
         return NextResponse.json({
           success: true,
@@ -153,8 +148,9 @@ export async function POST(request: NextRequest) {
         })
       }
 
+      const jamExisting = formatSiteTime(existing.clock_in, siteTz)
       return NextResponse.json({
-        error: `Anda sudah clock in shift ${shift} tanggal ${targetDate} pada ${new Date(existing.clock_in).toLocaleTimeString('id-ID')}`
+        error: `Anda sudah clock in shift ${shift} tanggal ${targetDate} pada ${jamExisting}`
       }, { status: 400 })
     }
 
@@ -183,6 +179,7 @@ export async function POST(request: NextRequest) {
         terlambatMenit = sekarangTotalMenit - (batasH * 60 + batasM)
       }
     } else {
+      // Shift malam: handle lintas hari
       const batasSekarangMalam = batasH >= 12 ? batasTotalMenit : batasTotalMenit + 1440
       const sekarangMalam = jamSekarang >= 12 ? sekarangTotalMenit : sekarangTotalMenit + 1440
 
@@ -195,11 +192,14 @@ export async function POST(request: NextRequest) {
     // 7. Siapkan keterangan
     let keteranganFinal = keterangan || null
     if (is_offline_sync) {
-      const syncNote = `[OFFLINE SYNC] Clock in offline pada ${clockTime.toLocaleString('id-ID')}, di-upload ${new Date().toLocaleString('id-ID')}`
+      const jamOffline = formatSiteTime(clockTime, siteTz)
+      const jamSync = formatSiteTime(new Date(), siteTz)
+      const syncNote = `[OFFLINE SYNC] Absen offline: ${targetDate} ${jamOffline} ${siteTz}, sync: ${jamSync}`
       keteranganFinal = keteranganFinal ? `${keteranganFinal} | ${syncNote}` : syncNote
     }
 
     // 8. Insert atau Update attendance
+    // ⭐ CRITICAL: SIMPAN clockTime.toISOString() (SELALU UTC)
     const attendanceData: any = {
       nrp: session.nrp,
       tanggal: targetDate,
@@ -242,9 +242,11 @@ export async function POST(request: NextRequest) {
       result = data
     }
 
+    // 9. Response
+    const jamDisplay = formatSiteTime(clockTime, siteTz)
     const successMsg = is_offline_sync
-      ? `✅ Clock In offline berhasil di-sync (${clockTime.toLocaleString('id-ID')}) - ${status}`
-      : `✅ Clock In berhasil pada ${clockTime.toLocaleTimeString('id-ID')} (${status})`
+      ? `✅ Clock In offline berhasil di-sync (${targetDate} ${jamDisplay}) - ${status}`
+      : `✅ Clock In berhasil pada ${jamDisplay} (${status})`
 
     return NextResponse.json({
       success: true,
@@ -253,8 +255,10 @@ export async function POST(request: NextRequest) {
       is_offline_sync: !!is_offline_sync,
       shift_info: {
         shift,
-        shift_date: shiftDate,
-        detected_hour_wita: jamSekarang
+        shift_date: targetDate,
+        site_timezone: siteTz,
+        clock_hour: jamSekarang,
+        clock_display: jamDisplay
       }
     })
 
