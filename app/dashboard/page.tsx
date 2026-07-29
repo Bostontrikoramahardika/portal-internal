@@ -1604,6 +1604,13 @@ function AbsensiClockView({ title }: any) {
     setIsOnline(navigator.onLine)
     const interval = setInterval(() => setCurrentTime(new Date()), 1000)
     loadStatus()
+    
+    // ⭐ CHAT 30: Auto-refresh status tiap 30 detik
+    // Berguna kalau admin hapus/update data → UI auto sync
+    const statusInterval = setInterval(() => {
+      loadStatus()
+    }, 30000) // 30 detik
+    
     fetch('/api/announcements').then(r => r.json()).then(d => setAnnouncement(d.announcement)).catch(() => {})
     
     // 🌟 Fetch dokumen expired milik user sendiri
@@ -1633,7 +1640,7 @@ function AbsensiClockView({ title }: any) {
       setRiwayat7Hari(filtered)
     }).catch(() => {})
     
-        // 🚀 Smart GPS dengan 3-layer strategy (cache → fast → accurate)
+    // 🚀 Smart GPS dengan 3-layer strategy (cache → fast → accurate)
     import('@/app/lib/gps-cache').then(({ getSmartGps }) => {
       getSmartGps({
         onProgress: (msg) => console.log('[GPS]', msg)
@@ -1653,10 +1660,19 @@ function AbsensiClockView({ title }: any) {
     window.addEventListener('btm:offline-attendance-saved', handleRefreshStatus)
     window.addEventListener('btm:sync-completed', handleRefreshStatus)
     
+    // ⭐ CHAT 30: Refresh saat window focused kembali (user buka app lagi)
+    const handleFocus = () => {
+      console.log('[Dashboard] Window focused, refresh status')
+      loadStatus()
+    }
+    window.addEventListener('focus', handleFocus)
+    
     return () => {
       clearInterval(interval)
+      clearInterval(statusInterval)  // ⭐ Cleanup
       window.removeEventListener('btm:offline-attendance-saved', handleRefreshStatus)
       window.removeEventListener('btm:sync-completed', handleRefreshStatus)
+      window.removeEventListener('focus', handleFocus)  // ⭐ Cleanup
     }
   }, [])
 

@@ -1,11 +1,19 @@
 // app/api/attendance/status/route.ts
-// v2.0 - Chat 30 FINAL: Multi-timezone aware
-// - Today & first day of month berdasarkan timezone SITE user
+// v3.0 - Chat 30 FINAL: Smart shift detection
+// - Cari record ACTIVE (belum clock-out) dulu, prioritas ini
+// - Fallback: record shift SAAT INI (auto-detect)
+// - Fallback: record terbaru hari ini
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
-import { getSiteDate, getSiteFirstDayOfMonth, Timezone, DEFAULT_TIMEZONE } from '@/app/lib/timezone'
+import { 
+  getSiteDate, 
+  getSiteFirstDayOfMonth, 
+  getSiteHour,
+  Timezone, 
+  DEFAULT_TIMEZONE 
+} from '@/app/lib/timezone'
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get('session_token')?.value
@@ -33,22 +41,54 @@ export async function GET(request: NextRequest) {
       .eq('nama_site', emp.site)
       .single()
 
-    // ⭐ CHAT 30: Timezone site user
     const siteTz: Timezone = (siteConfig?.timezone || DEFAULT_TIMEZONE) as Timezone
-
-    // ⭐ CHAT 30: Today & first day of month berdasarkan timezone site
     const today = getSiteDate(null, siteTz)
     const firstDayStr = getSiteFirstDayOfMonth(siteTz)
+    const currentHour = getSiteHour(null, siteTz)
+    
+    // ⭐ Auto-detect shift SAAT INI
+    const currentShift = (currentHour >= 4 && currentHour < 16) ? 'SIANG' : 'MALAM'
 
-    // Ambil absensi hari ini
-    const { data: todayAttendance } = await supabase
+    // ⭐ CHAT 30 v3.0 — SMART DETECTION
+    // Step 1: Ambil SEMUA record hari ini (kemungkinan SIANG + MALAM)
+    const { data: allTodayRecords } = await supabase
       .from('attendance')
       .select('*')
       .eq('nrp', session.nrp)
       .eq('tanggal', today)
-      .maybeSingle()
+      .order('clock_in', { ascending: false })
 
-    // Ambil absensi bulan ini
+    // Step 2: Cari record AKTIF (clock_in ADA, clock_out BELUM)
+    const activeRecord = (allTodayRecords || []).find(
+      (r: any) => r.clock_in && !r.clock_out
+    )
+
+    // Step 3: Kalau ada record aktif → itu prioritas (belum clock-out)
+    // Step 4: Kalau tidak ada aktif → cari record shift SAAT INI
+    // Step 5: Kalau shift saat ini belum ada → return null (biar bisa clock-in fresh)
+    let todayAttendance: any = null
+    
+    if (activeRecord) {
+      // Ada record aktif = user sedang di dalam shift, tinggal clock-out
+      todayAttendance = activeRecord
+    } else {
+      // Tidak ada record aktif → cek record shift saat ini
+      const currentShiftRecord = (allTodayRecords || []).find(
+        (r: any) => r.shift === currentShift
+      )
+      
+      if (currentShiftRecord) {
+        // Ada record shift saat ini (biasanya sudah clock-out) 
+        todayAttendance = currentShiftRecord
+      } else {
+        // Cek juga: apakah semua record hari ini sudah clock-out?
+        // Kalau ada record shift lain yang sudah clock-out, return null (biar bisa clock-in shift baru)
+        // Kalau tidak ada record apapun → return null
+        todayAttendance = null
+      }
+    }
+
+    // Ambil absensi bulan ini untuk stats
     const { data: monthAttendance } = await supabase
       .from('attendance')
       .select('status')
@@ -82,6 +122,8 @@ export async function GET(request: NextRequest) {
       employee: emp,
       site_config: siteConfig,
       today: todayAttendance || null,
+      current_shift: currentShift,  // ⭐ Info untuk frontend
+      all_today_records: allTodayRecords || [],  // ⭐ Bonus info
       stats,
       server_time: new Date().toISOString(),
       site_timezone: siteTz
