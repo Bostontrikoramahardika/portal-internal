@@ -210,6 +210,7 @@ const TAB_CONFIG = [
         m.menu_key === 'hr_override_absensi' ||
         m.menu_key === 'monitoring_mcu' ||
         m.menu_key === 'kelola_unit' ||
+        m.menu_key === 'setting_unit' ||
         m.menu_key === 'monitoring_apd'
       )
     }
