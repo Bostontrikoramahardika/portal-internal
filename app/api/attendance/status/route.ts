@@ -1,8 +1,8 @@
 // app/api/attendance/status/route.ts
-// v4.0 - Chat 30 FINAL: Cross-day active record detection
-// - Prioritas: record ACTIVE (clock_in ada, clock_out NULL) dari kemarin/hari ini
-// - Fallback: record shift saat ini
-// - Fallback: null (biar Clock In fresh)
+// v5.0 - Chat 30 FINAL: Smart differentiation
+// - MALAM lintas hari (< 12 siang) → return sebagai "today"
+// - SIANG lupa clock-out → return today=null, biar popup handle
+// - Record aktif hari ini → return sebagai "today"
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
 
   try {
-    // Ambil data karyawan
     const { data: emp } = await supabase
       .from('employees')
       .select('site, nama, jabatan, departemen')
@@ -34,7 +33,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Data karyawan tidak ditemukan' }, { status: 404 })
     }
 
-    // Ambil config site (WAJIB include timezone)
     const { data: siteConfig } = await supabase
       .from('sites_config')
       .select('*')
@@ -46,59 +44,50 @@ export async function GET(request: NextRequest) {
     const firstDayStr = getSiteFirstDayOfMonth(siteTz)
     const currentHour = getSiteHour(null, siteTz)
     
-    // Auto-detect shift SAAT INI
     const currentShift = (currentHour >= 4 && currentHour < 16) ? 'SIANG' : 'MALAM'
 
-    // ⭐ CHAT 30 v4.0: CROSS-DAY ACTIVE RECORD DETECTION
-    // Hitung tanggal kemarin (untuk MALAM lintas hari)
+    // Get yesterday
     const yesterdayDate = new Date(today + 'T00:00:00Z')
     yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1)
     const yesterday = yesterdayDate.toISOString().split('T')[0]
 
-    // STEP 1: Cari record AKTIF (clock_in ADA, clock_out NULL) dari kemarin & hari ini
-    // Ini yang paling penting - kalau ada record aktif, user tinggal clock-out
-    const { data: activeRecords } = await supabase
+    // ⭐ CHAT 30 v5.0: Get ALL records dari kemarin & hari ini
+    const { data: allRecords } = await supabase
       .from('attendance')
       .select('*')
       .eq('nrp', session.nrp)
       .in('tanggal', [yesterday, today])
-      .not('clock_in', 'is', null)
-      .is('clock_out', null)
       .order('clock_in', { ascending: false })
-      .limit(1)
 
+    const records = allRecords || []
+
+    // ⭐ SMART DETECTION untuk "today"
     let todayAttendance: any = null
     
-    if (activeRecords && activeRecords.length > 0) {
-      // ⭐ Ada record aktif → itu prioritas (belum clock-out)
-      // Bisa dari kemarin (MALAM lintas hari) atau hari ini
-      todayAttendance = activeRecords[0]
+    // Cari record hari ini dulu (prioritas tertinggi)
+    const todayRecord = records.find((r: any) => r.tanggal === today)
+    
+    if (todayRecord) {
+      // Ada record hari ini → pakai ini
+      todayAttendance = todayRecord
     } else {
-      // STEP 2: Tidak ada record aktif → ambil record shift SAAT INI
-      const { data: currentShiftRecords } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('nrp', session.nrp)
-        .eq('tanggal', today)
-        .eq('shift', currentShift)
-        .order('clock_in', { ascending: false })
-        .limit(1)
+      // Tidak ada record hari ini → cek record kemarin yang belum clock-out
+      const yesterdayActive = records.find((r: any) => 
+        r.tanggal === yesterday && r.clock_in && !r.clock_out
+      )
       
-      if (currentShiftRecords && currentShiftRecords.length > 0) {
-        todayAttendance = currentShiftRecords[0]
+      if (yesterdayActive) {
+        // Ada record kemarin belum clock-out → cek shift-nya
+        if (yesterdayActive.shift === 'MALAM' && currentHour < 12) {
+          // ⭐ MALAM lintas hari — masih dalam shift (jam < 12 siang) → return sebagai "today"
+          todayAttendance = yesterdayActive
+        }
+        // ⭐ SIANG kemarin lupa clock-out → todayAttendance tetap null
+        // ⭐ MALAM tapi jam sudah > 12 → todayAttendance tetap null (biar popup handle)
       }
-      // Kalau tidak ada juga → todayAttendance tetap null (Clock In fresh)
     }
 
-    // Bonus: ambil semua record hari ini untuk info
-    const { data: allTodayRecords } = await supabase
-      .from('attendance')
-      .select('*')
-      .eq('nrp', session.nrp)
-      .in('tanggal', [yesterday, today])
-      .order('clock_in', { ascending: false })
-
-    // Ambil absensi bulan ini untuk stats
+    // Stats
     const { data: monthAttendance } = await supabase
       .from('attendance')
       .select('status')
@@ -134,7 +123,7 @@ export async function GET(request: NextRequest) {
       today: todayAttendance || null,
       current_shift: currentShift,
       site_date_today: today,
-      all_recent_records: allTodayRecords || [],
+      all_recent_records: records,
       stats,
       server_time: new Date().toISOString(),
       site_timezone: siteTz
