@@ -812,6 +812,13 @@ if (menuKey === 'rekap_absensi') {
       return
     }
 
+    // 📤 Import Roster Bulanan (Chat 28)
+if (menuKey === 'import_roster_bulk') {
+  router.push('/dashboard/import-roster')
+  setBottomSheetOpen(false)
+  return
+}
+
     // Default: menu dashboard biasa
     router.push(`/dashboard?menu=${menuKey}`)
     setBottomSheetOpen(false)
