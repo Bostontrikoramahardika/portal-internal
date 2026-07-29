@@ -828,6 +828,13 @@ if (menuKey === 'import_roster_bulk') {
       return
     }
 
+        // 🎯 Setting Unit per Shift (Chat 29)
+    if (menuKey === 'setting_unit') {
+      router.push('/dashboard/setting-unit')
+      setBottomSheetOpen(false)
+      return
+    }
+
     // Default: menu dashboard biasa
     router.push(`/dashboard?menu=${menuKey}`)
     setBottomSheetOpen(false)
