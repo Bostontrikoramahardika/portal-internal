@@ -1600,25 +1600,29 @@ function AbsensiClockView({ title }: any) {
   const [riwayat7Hari, setRiwayat7Hari] = useState<any[]>([])
   const [dokumenExpired, setDokumenExpired] = useState<any[]>([])
 
-  // ⭐ CHAT 30: Anti double-click + optimistic UI
+  // Anti double-click states (Chat 30)
   const [processing, setProcessing] = useState(false)
   const [lastClickTime, setLastClickTime] = useState(0)
   const [optimisticAction, setOptimisticAction] = useState<'in' | 'out' | null>(null)
+
+  // ⭐ CHAT 30: Popup Close Previous
+  const [showClosePopup, setShowClosePopup] = useState(false)
+  const [pendingRecord, setPendingRecord] = useState<any>(null)
+  const [showManualTime, setShowManualTime] = useState(false)
+  const [manualTime, setManualTime] = useState('')
+  const [closingRecord, setClosingRecord] = useState(false)
 
   useEffect(() => {
     setIsOnline(navigator.onLine)
     const interval = setInterval(() => setCurrentTime(new Date()), 1000)
     loadStatus()
     
-    // ⭐ CHAT 30: Auto-refresh status tiap 30 detik
-    // Berguna kalau admin hapus/update data → UI auto sync
     const statusInterval = setInterval(() => {
       loadStatus()
     }, 30000)
     
     fetch('/api/announcements').then(r => r.json()).then(d => setAnnouncement(d.announcement)).catch(() => {})
     
-    // 🌟 Fetch dokumen expired milik user sendiri
     fetch('/api/data?menu=monitoring_expired')
       .then(r => r.json())
       .then(d => {
@@ -1645,7 +1649,6 @@ function AbsensiClockView({ title }: any) {
       setRiwayat7Hari(filtered)
     }).catch(() => {})
     
-    // 🚀 Smart GPS dengan 3-layer strategy (cache → fast → accurate)
     import('@/app/lib/gps-cache').then(({ getSmartGps }) => {
       getSmartGps({
         onProgress: (msg) => console.log('[GPS]', msg)
@@ -1657,7 +1660,6 @@ function AbsensiClockView({ title }: any) {
         .catch(err => console.warn('[GPS] Initial fetch failed:', err.message))
     })
     
-    // 🆕 Listener: refresh status saat offline attendance saved atau sync selesai
     const handleRefreshStatus = () => {
       console.log('[Dashboard] Refresh status triggered')
       loadStatus()
@@ -1665,7 +1667,6 @@ function AbsensiClockView({ title }: any) {
     window.addEventListener('btm:offline-attendance-saved', handleRefreshStatus)
     window.addEventListener('btm:sync-completed', handleRefreshStatus)
     
-    // ⭐ CHAT 30: Refresh saat window focused kembali (user buka app lagi)
     const handleFocus = () => {
       console.log('[Dashboard] Window focused, refresh status')
       loadStatus()
@@ -1683,7 +1684,6 @@ function AbsensiClockView({ title }: any) {
 
   async function loadStatus() {
     try {
-      // 1. AMBIL DATA OFFLINE (IndexedDB) DULU
       let offlineClockIn: any = null
       let offlineClockOut: any = null
       try {
@@ -1695,7 +1695,6 @@ function AbsensiClockView({ title }: any) {
         console.warn('[loadStatus] Gagal baca offline DB:', e)
       }
 
-      // 2. FETCH DARI SERVER (kalau online)
       let serverStatus: any = null
       try {
         const res = await fetch('/api/attendance/status', { cache: 'no-store' })
@@ -1713,7 +1712,6 @@ function AbsensiClockView({ title }: any) {
         } catch {}
       }
 
-      // 3. MERGE: Server + Offline
       const merged: any = serverStatus || { today: null, site: null }
       
       if (offlineClockIn && !merged.today?.clock_in) {
@@ -1746,60 +1744,78 @@ function AbsensiClockView({ title }: any) {
     }
   }
 
-  async function handleClock(type: 'in' | 'out') {
-    // ═══════════════════════════════════════════════
-    // 🛡️ CHAT 30: 5-LAYER ANTI DOUBLE-CLICK PROTECTION
-    // ═══════════════════════════════════════════════
+  // ⭐ CHAT 30: Cek apakah ada record LAMA belum clock-out (kemarin/sebelumnya)
+  function checkPreviousUnfinished(): any {
+    const allRecords = status?.all_recent_records || []
+    const today = status?.site_date_today || ''
     
-    // Lapis 1: Kalau sedang proses, tolak
-    if (processing) {
-      console.log('[handleClock] Sedang proses, ignore click')
-      return
+    // Cari record dengan tanggal < today yang belum clock-out
+    const previousUnfinished = allRecords.find((r: any) => {
+      return r.tanggal < today && r.clock_in && !r.clock_out
+    })
+    
+    return previousUnfinished || null
+  }
+
+  // ⭐ CHAT 30: Handle klik "Sesuai Jadwal" atau setelah pilih jam manual
+  async function handleClosePrevious(jamPulang: string, isDefault: boolean) {
+    if (!pendingRecord) return
+    
+    setClosingRecord(true)
+    try {
+      const res = await fetch('/api/attendance/close-previous', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attendance_id: pendingRecord.id,
+          jam_pulang: jamPulang,
+          is_default_time: isDefault
+        })
+      })
+      
+      const data = await res.json()
+      
+      if (res.ok) {
+        if (navigator.vibrate) navigator.vibrate([50, 50, 100])
+        alert(data.message || '✅ Berhasil')
+        setShowClosePopup(false)
+        setShowManualTime(false)
+        setManualTime('')
+        setPendingRecord(null)
+        await loadStatus()
+        // Setelah close previous, otomatis clock-in
+        setTimeout(() => {
+          doClockIn()
+        }, 500)
+      } else {
+        if (navigator.vibrate) navigator.vibrate(200)
+        alert(data.error || '❌ Gagal menutup absen kemarin')
+      }
+    } catch (err: any) {
+      alert('❌ Error: ' + err.message)
+    } finally {
+      setClosingRecord(false)
     }
-    
-    // Lapis 4: Debounce 3 detik antar click
-    const now = Date.now()
-    if (now - lastClickTime < 3000) {
-      console.log('[handleClock] Debounce: click terlalu cepat')
-      return
-    }
-    
-    // Lock + Optimistic UI update
+  }
+
+  // ⭐ CHAT 30: Function terpisah untuk Clock In beneran (setelah popup handled)
+  async function doClockIn() {
     setProcessing(true)
-    setLastClickTime(now)
-    setOptimisticAction(type)
+    setOptimisticAction('in')
     
-    // Lapis 5: Haptic feedback (getar HP kalau support)
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(50)
-    }
+    if (navigator.vibrate) navigator.vibrate(50)
     
     try {
-      // ============================================
-      // 🆕 CEK OFFLINE DULU — SKIP GPS, LANGSUNG SAVE
-      // ============================================
+      // Offline path
       if (!navigator.onLine) {
         const lastGps = gps || { lat: 0, lng: 0 }
-        
         try {
-          const record = await saveOfflineAttendance(
-            type === 'in' ? 'clock_in' : 'clock_out',
-            lastGps.lat,
-            lastGps.lng
-          )
-          
+          const record = await saveOfflineAttendance('clock_in', lastGps.lat, lastGps.lng)
           const gpsInfo = (lastGps.lat === 0 && lastGps.lng === 0)
             ? '⚠️ GPS tidak tersedia (offline)'
             : `📍 GPS: ${lastGps.lat.toFixed(4)}, ${lastGps.lng.toFixed(4)}`
-          
           if (navigator.vibrate) navigator.vibrate([50, 50, 100])
-          
-          alert(
-            `📴 ${type === 'in' ? 'CLOCK IN' : 'CLOCK OUT'} berhasil disimpan OFFLINE\n\n` +
-            `⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n` +
-            `${gpsInfo}\n\n` +
-            `📶 Akan otomatis terkirim saat online.`
-          )
+          alert(`📴 CLOCK IN berhasil disimpan OFFLINE\n\n⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n${gpsInfo}\n\n📶 Akan otomatis terkirim saat online.`)
           window.dispatchEvent(new CustomEvent('btm:offline-attendance-saved'))
           await loadStatus()
         } catch (e: any) {
@@ -1810,11 +1826,118 @@ function AbsensiClockView({ title }: any) {
         return
       }
 
-      // ============================================
-      // ONLINE — GPS SMART FETCH
-      // ============================================
+      // Online path - GPS
       let gpsCoords = gps
+      if (!gpsCoords) {
+        try {
+          const { getSmartGps } = await import('@/app/lib/gps-cache')
+          const coords = await getSmartGps({
+            onProgress: (msg) => console.log('[GPS handleClock]', msg)
+          })
+          gpsCoords = { lat: coords.lat, lng: coords.lng, accuracy: coords.accuracy }
+          setGps(gpsCoords)
+        } catch (gpsErr: any) {
+          alert('❌ GPS tidak bisa didapat. Silakan cek pengaturan lokasi HP.')
+          setOptimisticAction(null)
+          return
+        }
+      }
       
+      // Send to server
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 15000)
+        
+        const res = await fetch(`/api/attendance/clock-in`, {
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latitude: gpsCoords!.lat, longitude: gpsCoords!.lng }),
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+        const d = await res.json()
+        
+        if (res.ok) {
+          if (navigator.vibrate) navigator.vibrate([50, 50, 100])
+          alert(d.message || '✅ Berhasil')
+        } else {
+          setOptimisticAction(null)
+          if (navigator.vibrate) navigator.vibrate(200)
+          alert(d.error || '❌ Gagal')
+        }
+        loadStatus()
+      } catch (err: any) {
+        // Fallback offline
+        try {
+          const record = await saveOfflineAttendance('clock_in', gpsCoords!.lat, gpsCoords!.lng)
+          if (navigator.vibrate) navigator.vibrate([50, 50, 100])
+          alert(`⚠️ Server tidak merespons, data DISIMPAN OFFLINE\n\n⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n📍 GPS: ${gpsCoords!.lat.toFixed(4)}, ${gpsCoords!.lng.toFixed(4)}\n\n📶 Akan otomatis terkirim saat server pulih.`)
+          window.dispatchEvent(new CustomEvent('btm:offline-attendance-saved'))
+          await loadStatus()
+        } catch (saveErr: any) {
+          if (navigator.vibrate) navigator.vibrate(200)
+          alert("❌ Gagal simpan: " + (saveErr?.message || 'Unknown error'))
+          setOptimisticAction(null)
+        }
+      }
+    } finally {
+      setTimeout(() => {
+        setProcessing(false)
+        setOptimisticAction(null)
+      }, 1000)
+    }
+  }
+
+  async function handleClock(type: 'in' | 'out') {
+    // Anti double-click
+    if (processing) return
+    const now = Date.now()
+    if (now - lastClickTime < 3000) return
+    setLastClickTime(now)
+    
+    // ⭐ CHAT 30: Kalau Clock In, cek dulu ada record lama yang belum clock-out
+    if (type === 'in') {
+      const previous = checkPreviousUnfinished()
+      if (previous) {
+        // Ada record lama → tampilkan popup, JANGAN clock-in dulu
+        if (navigator.vibrate) navigator.vibrate(50)
+        setPendingRecord(previous)
+        setShowClosePopup(true)
+        return
+      }
+    }
+    
+    // Normal flow (clock-in tanpa previous, atau clock-out)
+    setProcessing(true)
+    setOptimisticAction(type)
+    if (navigator.vibrate) navigator.vibrate(50)
+    
+    try {
+      // Offline path
+      if (!navigator.onLine) {
+        const lastGps = gps || { lat: 0, lng: 0 }
+        try {
+          const record = await saveOfflineAttendance(
+            type === 'in' ? 'clock_in' : 'clock_out',
+            lastGps.lat, lastGps.lng
+          )
+          const gpsInfo = (lastGps.lat === 0 && lastGps.lng === 0)
+            ? '⚠️ GPS tidak tersedia (offline)'
+            : `📍 GPS: ${lastGps.lat.toFixed(4)}, ${lastGps.lng.toFixed(4)}`
+          if (navigator.vibrate) navigator.vibrate([50, 50, 100])
+          alert(`📴 ${type === 'in' ? 'CLOCK IN' : 'CLOCK OUT'} berhasil disimpan OFFLINE\n\n⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n${gpsInfo}\n\n📶 Akan otomatis terkirim saat online.`)
+          window.dispatchEvent(new CustomEvent('btm:offline-attendance-saved'))
+          await loadStatus()
+        } catch (e: any) {
+          if (navigator.vibrate) navigator.vibrate(200)
+          alert('❌ Gagal simpan offline: ' + (e?.message || 'Unknown error'))
+          setOptimisticAction(null)
+        }
+        return
+      }
+
+      // Online path - GPS
+      let gpsCoords = gps
       if (!gpsCoords) {
         try {
           const { getSmartGps } = await import('@/app/lib/gps-cache')
@@ -1825,23 +1948,17 @@ function AbsensiClockView({ title }: any) {
           setGps(gpsCoords)
         } catch (gpsErr: any) {
           const useFallback = confirm(
-            `⚠️ GPS tidak bisa didapat.\n\n` +
-            `Kemungkinan penyebab:\n` +
-            `• Lokasi HP belum aktif\n` +
-            `• Sinyal GPS lemah (indoor?)\n` +
-            `• Pertama kali buka setelah HP restart\n\n` +
-            `Coba: keluar sebentar / restart lokasi HP.\n\n` +
-            `Klik OK untuk COBA LAGI, atau Cancel untuk batal.`
+            `⚠️ GPS tidak bisa didapat.\n\nKlik OK untuk COBA LAGI, atau Cancel untuk batal.`
           )
           if (useFallback) {
-            alert('🔄 Mencoba GPS sekali lagi... Tunggu maksimal 25 detik ya.')
+            alert('🔄 Mencoba GPS sekali lagi...')
             try {
               const { getSmartGps } = await import('@/app/lib/gps-cache')
               const coords = await getSmartGps({ allowFallback: true })
               gpsCoords = { lat: coords.lat, lng: coords.lng, accuracy: coords.accuracy }
               setGps(gpsCoords)
             } catch {
-              alert('❌ GPS masih gagal. Silakan cek pengaturan lokasi HP lalu buka ulang app.')
+              alert('❌ GPS masih gagal.')
               setOptimisticAction(null)
               return
             }
@@ -1852,9 +1969,7 @@ function AbsensiClockView({ title }: any) {
         }
       }
       
-      // ============================================
-      // KIRIM KE SERVER (dengan timeout 15 detik)
-      // ============================================
+      // Send to server
       try {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 15000)
@@ -1865,38 +1980,27 @@ function AbsensiClockView({ title }: any) {
           body: JSON.stringify({ latitude: gpsCoords!.lat, longitude: gpsCoords!.lng }),
           signal: controller.signal
         })
-        
         clearTimeout(timeoutId)
         const d = await res.json()
         
         if (res.ok) {
-          // Sukses → haptic sukses (double vibrate)
           if (navigator.vibrate) navigator.vibrate([50, 50, 100])
           alert(d.message || '✅ Berhasil')
         } else {
-          // Error → rollback optimistic UI
           setOptimisticAction(null)
           if (navigator.vibrate) navigator.vibrate(200)
           alert(d.error || '❌ Gagal')
         }
-        
         loadStatus()
       } catch (err: any) {
-        // FALLBACK: online tapi request gagal → save offline
-        console.log('⚠️ Server unreachable, saving offline...', err)
+        // Fallback offline
         try {
           const record = await saveOfflineAttendance(
             type === 'in' ? 'clock_in' : 'clock_out',
-            gpsCoords!.lat,
-            gpsCoords!.lng
+            gpsCoords!.lat, gpsCoords!.lng
           )
           if (navigator.vibrate) navigator.vibrate([50, 50, 100])
-          alert(
-            `⚠️ Server tidak merespons, data DISIMPAN OFFLINE\n\n` +
-            `⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n` +
-            `📍 GPS: ${gpsCoords!.lat.toFixed(4)}, ${gpsCoords!.lng.toFixed(4)}\n\n` +
-            `📶 Akan otomatis terkirim saat server pulih.`
-          )
+          alert(`⚠️ Server tidak merespons, data DISIMPAN OFFLINE\n\n⏰ Waktu: ${new Date(record.timestamp).toLocaleString('id-ID')}\n📍 GPS: ${gpsCoords!.lat.toFixed(4)}, ${gpsCoords!.lng.toFixed(4)}\n\n📶 Akan otomatis terkirim saat server pulih.`)
           window.dispatchEvent(new CustomEvent('btm:offline-attendance-saved'))
           await loadStatus()
         } catch (saveErr: any) {
@@ -1906,7 +2010,6 @@ function AbsensiClockView({ title }: any) {
         }
       }
     } finally {
-      // Selalu unlock tombol setelah selesai (delay 1 detik biar smooth)
       setTimeout(() => {
         setProcessing(false)
         setOptimisticAction(null)
@@ -1918,6 +2021,46 @@ function AbsensiClockView({ title }: any) {
   
   const hasIn = status?.today?.clock_in
   const hasOut = status?.today?.clock_out
+
+  // Get jam default berdasarkan shift dari pendingRecord
+  function getDefaultJamPulang(): string {
+    if (!pendingRecord) return '17:00'
+    if (pendingRecord.shift === 'MALAM') return '05:00'
+    return '17:00'  // SIANG default
+  }
+
+  function formatShiftLabel(shift: string): string {
+    return shift === 'MALAM' ? '🌙 Shift Malam' : '☀️ Shift Siang'
+  }
+
+  function formatTanggalIndo(dateStr: string): string {
+    try {
+      const d = new Date(dateStr + 'T00:00:00Z')
+      return new Intl.DateTimeFormat('id-ID', {
+        timeZone: 'UTC',
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }).format(d)
+    } catch {
+      return dateStr
+    }
+  }
+
+  function formatJamClockIn(clockInStr: string): string {
+    try {
+      const d = new Date(clockInStr)
+      return new Intl.DateTimeFormat('id-ID', {
+        timeZone: 'Asia/Makassar',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(d)
+    } catch {
+      return '--:--'
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-700">
@@ -1942,36 +2085,21 @@ function AbsensiClockView({ title }: any) {
               const today = new Date()
               const diffDays = Math.ceil((tglExp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
               const isCritical = diffDays <= 7
-              
               return (
                 <div key={i} className="px-4 py-2.5 flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${isCritical ? 'bg-rose-500 animate-pulse' : 'bg-amber-500'}`}></div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-black text-slate-800 truncate">
-                      {item.jenis_dokumen || 'Dokumen'}
-                    </p>
+                    <p className="text-[11px] font-black text-slate-800 truncate">{item.jenis_dokumen || 'Dokumen'}</p>
                     <p className="text-[9px] font-bold text-slate-500">
-                      {diffDays > 0 
-                        ? `${diffDays} hari lagi (${tglExp.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })})`
-                        : diffDays === 0
-                        ? `Expired HARI INI!`
-                        : `Sudah expired ${Math.abs(diffDays)} hari lalu`
-                      }
+                      {diffDays > 0 ? `${diffDays} hari lagi (${tglExp.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })})` : diffDays === 0 ? `Expired HARI INI!` : `Sudah expired ${Math.abs(diffDays)} hari lalu`}
                     </p>
                   </div>
-                  {isCritical && (
-                    <span className="bg-rose-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase">
-                      Kritis
-                    </span>
-                  )}
+                  {isCritical && <span className="bg-rose-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase">Kritis</span>}
                 </div>
               )
             })}
             {dokumenExpired.length > 3 && (
-              <a 
-                href="/dashboard?menu=monitoring_expired" 
-                className="block px-4 py-2 text-center text-[9px] font-black text-amber-600 hover:bg-amber-50 uppercase tracking-widest transition-colors"
-              >
+              <a href="/dashboard?menu=monitoring_expired" className="block px-4 py-2 text-center text-[9px] font-black text-amber-600 hover:bg-amber-50 uppercase tracking-widest transition-colors">
                 +{dokumenExpired.length - 3} lainnya • Lihat Semua →
               </a>
             )}
@@ -1990,7 +2118,6 @@ function AbsensiClockView({ title }: any) {
           {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
         
-        {/* 🆕 BADGE OFFLINE PENDING */}
         {(status?.today?.is_offline_pending || status?.today?.is_offline_pending_out) && (
           <div className="mb-4 mx-auto max-w-sm px-4 py-2 bg-amber-400/20 border-2 border-amber-400/60 backdrop-blur rounded-full flex items-center justify-center gap-2 animate-pulse relative z-10">
             <span className="w-2 h-2 bg-amber-300 rounded-full"></span>
@@ -2000,41 +2127,22 @@ function AbsensiClockView({ title }: any) {
           </div>
         )}
         
-        {/* ⭐ CHAT 30: Button dengan 5-layer anti double-click protection */}
         <div className="flex justify-center gap-2 md:gap-4 relative z-10">
           {(processing || optimisticAction) ? (
-            // Sedang proses → tombol locked + loading indicator
-            <button 
-              disabled
-              className="bg-slate-500/50 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl cursor-not-allowed opacity-70 flex items-center gap-2"
-            >
+            <button disabled className="bg-slate-500/50 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl cursor-not-allowed opacity-70 flex items-center gap-2">
               <span className="inline-block animate-spin">⏳</span>
-              <span>
-                {optimisticAction === 'in' ? 'CLOCK IN...' : 
-                 optimisticAction === 'out' ? 'CLOCK OUT...' : 
-                 'MEMPROSES...'}
-              </span>
+              <span>{optimisticAction === 'in' ? 'CLOCK IN...' : optimisticAction === 'out' ? 'CLOCK OUT...' : 'MEMPROSES...'}</span>
             </button>
           ) : !hasIn ? (
-            <button 
-              onClick={() => handleClock('in')} 
-              disabled={processing}
-              className="bg-emerald-500/90 hover:bg-emerald-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-emerald-500/20 active:scale-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <button onClick={() => handleClock('in')} disabled={processing} className="bg-emerald-500/90 hover:bg-emerald-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-emerald-500/20 active:scale-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
               🟢 CLOCK IN
             </button>
           ) : !hasOut ? (
-            <button 
-              onClick={() => handleClock('out')} 
-              disabled={processing}
-              className="bg-rose-500/90 hover:bg-rose-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-rose-500/20 active:scale-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <button onClick={() => handleClock('out')} disabled={processing} className="bg-rose-500/90 hover:bg-rose-600 backdrop-blur text-white px-5 md:px-12 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] font-black text-xs md:text-2xl shadow-xl shadow-rose-500/20 active:scale-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
               🔴 CLOCK OUT
             </button>
           ) : (
-            <div className="bg-white/10 backdrop-blur px-4 md:px-10 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] border border-white/10 font-black text-[10px] md:text-xl tracking-tight text-slate-200">
-              ✅ SHIFT SELESAI
-            </div>
+            <div className="bg-white/10 backdrop-blur px-4 md:px-10 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] border border-white/10 font-black text-[10px] md:text-xl tracking-tight text-slate-200">✅ SHIFT SELESAI</div>
           )}
         </div>
         <div className="mt-3 md:mt-10 text-[7px] md:text-[9px] text-white/40 flex items-center justify-center gap-2 md:gap-3 font-black tracking-widest relative z-10">
@@ -2060,9 +2168,7 @@ function AbsensiClockView({ title }: any) {
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">History</p>
             <h4 className="text-sm font-black text-[#003D79] tracking-tight">Riwayat 7 Hari Terakhir</h4>
           </div>
-          <a href="/dashboard?menu=riwayat_absensi" className="text-[9px] font-black text-slate-400 hover:text-[#003D79] uppercase tracking-widest transition-colors">
-            Lihat Semua →
-          </a>
+          <a href="/dashboard?menu=riwayat_absensi" className="text-[9px] font-black text-slate-400 hover:text-[#003D79] uppercase tracking-widest transition-colors">Lihat Semua →</a>
         </div>
 
         <div className="divide-y divide-slate-50">
@@ -2076,31 +2182,13 @@ function AbsensiClockView({ title }: any) {
               const ket = String(item.keterangan || '').toUpperCase();
               let statusLabel = 'HADIR';
               let statusColor = { dot: 'bg-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50' };
-              
-              if (ket.includes('TERLAMBAT')) {
-                statusLabel = 'TERLAMBAT';
-                statusColor = { dot: 'bg-amber-500', text: 'text-amber-600', bg: 'bg-amber-50' };
-              } else if (ket.includes('MANGKIR') || ket.includes('TIDAK ADA')) {
-                statusLabel = 'MANGKIR';
-                statusColor = { dot: 'bg-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' };
-              } else if (item.actual === 'OFF' || item.actual === 'MASUK OFF') {
-                statusLabel = 'OFF';
-                statusColor = { dot: 'bg-slate-300', text: 'text-slate-400', bg: 'bg-slate-50' };
-              } else if (item.actual === 'SAKIT') {
-                statusLabel = 'SAKIT';
-                statusColor = { dot: 'bg-blue-500', text: 'text-blue-600', bg: 'bg-blue-50' };
-              } else if (ket.includes('IZIN') || ket.includes('CUTI')) {
-                statusLabel = 'IZIN';
-                statusColor = { dot: 'bg-purple-500', text: 'text-purple-600', bg: 'bg-purple-50' };
-              }
-              
+              if (ket.includes('TERLAMBAT')) { statusLabel = 'TERLAMBAT'; statusColor = { dot: 'bg-amber-500', text: 'text-amber-600', bg: 'bg-amber-50' }; }
+              else if (ket.includes('MANGKIR') || ket.includes('TIDAK ADA')) { statusLabel = 'MANGKIR'; statusColor = { dot: 'bg-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' }; }
+              else if (item.actual === 'OFF' || item.actual === 'MASUK OFF') { statusLabel = 'OFF'; statusColor = { dot: 'bg-slate-300', text: 'text-slate-400', bg: 'bg-slate-50' }; }
+              else if (item.actual === 'SAKIT') { statusLabel = 'SAKIT'; statusColor = { dot: 'bg-blue-500', text: 'text-blue-600', bg: 'bg-blue-50' }; }
+              else if (ket.includes('IZIN') || ket.includes('CUTI')) { statusLabel = 'IZIN'; statusColor = { dot: 'bg-purple-500', text: 'text-purple-600', bg: 'bg-purple-50' }; }
               const tglObj = new Date(item.tanggal);
-              const tglFormatted = tglObj.toLocaleDateString('id-ID', { 
-                weekday: 'long', 
-                day: '2-digit', 
-                month: 'short' 
-              });
-              
+              const tglFormatted = tglObj.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'short' });
               return (
                 <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
                   <div className={`w-2.5 h-2.5 rounded-full ${statusColor.dot} shadow-sm flex-shrink-0`}></div>
@@ -2110,15 +2198,168 @@ function AbsensiClockView({ title }: any) {
                       {jamMasuk?.trim() || '--:--'} <span className="text-slate-300 mx-1">→</span> {jamPulang?.trim() || '--:--'}
                     </p>
                   </div>
-                  <div className={`${statusColor.bg} ${statusColor.text} px-3 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase`}>
-                    {statusLabel}
-                  </div>
+                  <div className={`${statusColor.bg} ${statusColor.text} px-3 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase`}>{statusLabel}</div>
                 </div>
               );
             })
           )}
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* ⭐ CHAT 30: POPUP CLOSE PREVIOUS ATTENDANCE                 */}
+      {/* Style: Simple & Clean (Versi A)                             */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {showClosePopup && pendingRecord && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[998] animate-in fade-in duration-200"
+            onClick={() => {
+              // Skip = tutup popup (Clock In BATAL)
+              if (!closingRecord) {
+                setShowClosePopup(false)
+                setShowManualTime(false)
+                setManualTime('')
+                setPendingRecord(null)
+              }
+            }}
+          />
+
+          {/* Popup */}
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.4)] z-[999] overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+            
+            {/* Header */}
+            <div className="bg-amber-50 border-b-2 border-amber-100 p-6 text-center">
+              <div className="text-5xl mb-2 animate-bounce">⚠️</div>
+              <h3 className="font-black text-[#003D79] text-sm tracking-tight uppercase">
+                Absen Kemarin Belum Ditutup
+              </h3>
+              <div className="w-16 h-0.5 bg-amber-300 mx-auto mt-2"></div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              
+              {/* Info Record */}
+              <div className="bg-slate-50 rounded-2xl p-4 space-y-2">
+                <div className="flex items-center gap-2 text-slate-700">
+                  <span className="text-lg">📅</span>
+                  <span className="text-xs font-black">{formatTanggalIndo(pendingRecord.tanggal)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <span className="text-lg"></span>
+                  <span className="text-xs font-black">{formatShiftLabel(pendingRecord.shift)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <span className="text-lg">🕐</span>
+                  <span className="text-xs font-black">
+                    Clock In: <span className="text-emerald-600">{formatJamClockIn(pendingRecord.clock_in)} WITA</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Question */}
+              <div className="text-center py-2">
+                <p className="text-sm font-black text-slate-700">
+                  Kamu pulang jam berapa?
+                </p>
+              </div>
+
+              {/* Manual Time Input (kalau user pilih "Jam Lain") */}
+              {showManualTime ? (
+                <div className="bg-blue-50 rounded-2xl p-4 space-y-3 border-2 border-blue-100">
+                  <label className="block text-[10px] font-black text-blue-700 uppercase tracking-widest text-center">
+                    Pilih Jam Pulang Manual
+                  </label>
+                  <input
+                    type="time"
+                    value={manualTime}
+                    onChange={(e) => setManualTime(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-blue-200 text-lg font-black text-center focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 bg-white"
+                    disabled={closingRecord}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowManualTime(false)
+                        setManualTime('')
+                      }}
+                      disabled={closingRecord}
+                      className="flex-1 py-3 rounded-xl bg-slate-200 text-slate-700 text-xs font-black uppercase hover:bg-slate-300 transition-colors disabled:opacity-50"
+                    >
+                      ← Kembali
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!manualTime) {
+                          alert('Silakan pilih jam dulu')
+                          return
+                        }
+                        handleClosePrevious(manualTime, false)
+                      }}
+                      disabled={closingRecord || !manualTime}
+                      className="flex-1 py-3 rounded-xl bg-emerald-500 text-white text-xs font-black uppercase hover:bg-emerald-600 transition-colors disabled:opacity-50 shadow-md"
+                    >
+                      {closingRecord ? '⏳ Menyimpan...' : '✅ Simpan'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Tombol Sesuai Jadwal */}
+                  <button
+                    onClick={() => handleClosePrevious(getDefaultJamPulang(), true)}
+                    disabled={closingRecord}
+                    className="w-full py-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black shadow-lg shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-xl">🕐</span>
+                      <div className="text-left">
+                        <div className="text-sm">{getDefaultJamPulang()}</div>
+                        <div className="text-[9px] font-bold opacity-90 uppercase tracking-widest">Sesuai Jadwal</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Tombol Jam Lain */}
+                  <button
+                    onClick={() => {
+                      setShowManualTime(true)
+                      setManualTime(getDefaultJamPulang())
+                    }}
+                    disabled={closingRecord}
+                    className="w-full py-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-xl">⏰</span>
+                      <div className="text-left">
+                        <div className="text-sm">Jam Lain</div>
+                        <div className="text-[9px] font-bold opacity-70 uppercase tracking-widest">Input Manual</div>
+                      </div>
+                    </div>
+                  </button>
+                </>
+              )}
+
+              {/* Nanti Saja */}
+              {!showManualTime && (
+                <button
+                  onClick={() => {
+                    setShowClosePopup(false)
+                    setPendingRecord(null)
+                    setManualTime('')
+                  }}
+                  disabled={closingRecord}
+                  className="w-full py-3 text-slate-400 text-xs font-black uppercase tracking-widest hover:text-slate-600 transition-colors disabled:opacity-50"
+                >
+                  Nanti Saja
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
