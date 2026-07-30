@@ -30,74 +30,76 @@ interface MenuItem {
   active?: boolean
 }
 
+
+
 // ═══════════════════════════════════════════════════
-// 🎯 ROLE GROUPING v2.0 (14 role baru + legacy)
+// 🎯 ROLE GROUPING v3.0 — FINAL DISCUSSION DRAFT
 // ═══════════════════════════════════════════════════
 
-// Semua role yang bisa akses aplikasi (untuk tab basic)
 const ALL_ROLES = [
-  // Role baru
-  'super_admin', 'director_ops', 'business_dev', 'manager_ops',
-  'hr_ho', 'spv_she_ho', 'pjo_site', 'she_site', 'hr_site',
-  'gl_produksi', 'gl_plant', 'admin_site', 'admin_plant', 'employee',
-  // Legacy
-  'karyawan', 'atasan', 'pjo', 'admin', 'hrga',
-  'hrga_oprek', 'hrga_site', 'hrga_pusat'
+  'super_admin',
+  'director_ops',
+  'business_dev',
+  'manager_ops',
+  'hr_ho',
+  'spv_she_ho',
+  'pjo_site',
+  'she_site',
+  'hr_site',
+  'gl_produksi',
+  'gl_plant',
+  'admin_site',
+  'admin_plant',
+  'employee',
 ]
 
-// Role yang punya bawahan (untuk tab TIM)
-const TEAM_LEADER_ROLES = [
-  'super_admin', 'director_ops', 'manager_ops', 'business_dev',
-  'hr_ho', 'spv_she_ho', 'pjo_site', 'she_site', 'hr_site',
-  'gl_produksi', 'gl_plant', 'admin_site', 'admin_plant',
-  // Legacy
-  'atasan', 'pjo', 'admin', 'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat'
+const LEADER_ROLES = [
+  'super_admin',
+  'gl_produksi',
+  'gl_plant',
+  'pjo_site',
 ]
 
-// Role yang bisa approve
-const APPROVER_ROLES = [
-  'super_admin', 'hr_ho', 'pjo_site', 'hr_site',
-  'gl_produksi', 'gl_plant',
-  // Legacy
-  'atasan', 'pjo', 'hrga', 'admin', 'admin_site', 'hrga_site', 'hrga_oprek'
+const SAFETY_ROLES = [
+  'super_admin',
+  'she_site',
+  'spv_she_ho',
 ]
 
-// Role HO Executive (monitor only, view all)
-const HO_EXECUTIVE_ROLES = [
-  'director_ops', 'business_dev', 'manager_ops', 'spv_she_ho'
+const HR_ROLES = [
+  'super_admin',
+  'hr_site',
+  'hr_ho',
+  'admin_site', // sesuai diskusi: admin_site dekat ke HR
 ]
 
-// Role yang bisa kelola master data
-const MASTER_DATA_ROLES = [
-  'super_admin', 'hr_ho', 'hr_site',
-  // Legacy
-  'hrga', 'admin', 'hrga_oprek', 'hrga_site', 'hrga_pusat'
+const ADMIN_ROLES = [
+  'super_admin',
+  'admin_site',
 ]
 
-// Role yang bisa import excel
-const IMPORT_ROLES = [
-  'super_admin', 'hr_ho', 'hr_site',
-  // Legacy
-  'hrga', 'admin', 'hrga_oprek', 'hrga_site', 'hrga_pusat'
-]
-
-// Role yang bisa lihat data expired
-const DATA_MONITOR_ROLES = [
-  'super_admin', 'director_ops', 'business_dev', 'manager_ops',
-  'hr_ho', 'spv_she_ho', 'pjo_site', 'she_site', 'hr_site',
-  'admin_site', 'admin_plant',
-  // Legacy
-  'atasan', 'pjo', 'admin', 'hrga', 'hrga_oprek', 'hrga_site', 'hrga_pusat'
-]
-
-// Role yang bisa akses menu Plant (Katalog Part, Order, Admin Partbook)
 const PLANT_ROLES = [
-  'super_admin','admin_plant','gl_plant','pjo_site',
-  'manager_ops','director_ops','business_dev','hr_ho'
+  'super_admin',
+  'gl_plant',
+  'admin_plant',
+  'pjo_site',
+]
+
+const SITE_ROLES = [
+  'super_admin',
+  'pjo_site',
+  'admin_site',
+]
+
+const HO_ROLES = [
+  'super_admin',
+  'business_dev',
+  'manager_ops',
+  'director_ops',
 ]
 
 const TAB_CONFIG = [
-  // TAB 1: ABSENSI
+  // 1. BASIC — ABSENSI
   {
     key: 'absensi',
     label: 'Absensi',
@@ -108,125 +110,118 @@ const TAB_CONFIG = [
         m.menu_key === 'absensi_saya' ||
         m.menu_key === 'riwayat_absensi' ||
         m.menu_key === 'kelola_absensi' ||
-        m.menu_key === 'import_roster' ||
-        m.menu_key === 'export_absensi_matrix' ||
         m.menu_key === 'manajemen_absensi' ||
-        m.menu_key === 'rekap_absensi'
+        m.menu_key === 'rekap_absensi' ||
+        m.menu_key === 'monitor_absensi' ||
+        m.menu_key === 'export_absensi_matrix'
       )
     }
   },
 
-  // TAB 2: PENGAJUAN
+  // 2. BASIC — PENGAJUAN
   {
     key: 'pengajuan',
     label: 'Pengajuan',
     icon: '📋',
     roles: ALL_ROLES,
     customMatch: (m: MenuItem) => {
-  return (
-    m.menu_key === 'form_cuti' ||
-    m.menu_key === 'form_lembur' ||
-    m.menu_key === 'evident_sakit' ||
-    m.menu_key === 'kelola_cuti' ||
-    m.menu_key === 'kelola_lembur' ||
-    m.menu_key === 'koreksi_absensi'
-  )
-}
-  },
-
-  // TAB 3: DATA / MONITORING
-  {
-    key: 'data',
-    label: 'Data',
-    icon: '📁',
-    roles: DATA_MONITOR_ROLES,
-    customMatch: (m: MenuItem) => {
       return (
-        m.menu_key === 'monitoring_expired' ||
-        m.menu_key === 'monitoring_cuti_tiket' ||
-        m.menu_key === 'monitoring_roster_cr'
+        m.menu_key === 'form_cuti' ||
+        m.menu_key === 'cuti_saya' ||
+        m.menu_key === 'form_lembur' ||
+        m.menu_key === 'riwayat_lembur' ||
+        m.menu_key === 'evident_sakit' ||
+        m.menu_key === 'kelola_cuti' ||
+        m.menu_key === 'kelola_lembur' ||
+        m.menu_key === 'koreksi_absensi'
       )
     }
   },
 
-  // TAB 4: TIM
+  // 3. BASIC — SAYA
   {
-    key: 'data_bawahan',
-    label: 'Tim',
+    key: 'saya',
+    label: 'Saya',
+    icon: '👤',
+    roles: ALL_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+      
+        m.menu_key === 'data_saya' ||
+        m.menu_key === 'kpi_saya' ||
+        m.menu_key === 'pkwt_saya' ||
+        m.menu_key === 'sp_saya' ||
+        m.menu_key === 'roster_saya' ||
+        m.menu_key === 'bpjs_saya' ||
+        m.menu_key === 'simper_saya' ||
+        m.menu_key === 'apd_saya' ||
+        m.menu_key === 'mcu_saya' ||
+        m.menu_key === 'ganti_password'
+      )
+    }
+  },
+
+  // 4. LEADER
+  {
+    key: 'leader',
+    label: 'Leader',
     icon: '👥',
-    roles: TEAM_LEADER_ROLES,
-    customMatch: (m: MenuItem) => {
-      return (
-        m.menu_key === 'data_bawahan' ||
-        m.menu_key === 'cuti_bawahan' ||
-        m.menu_key === 'roster_bawahan' ||
-        m.menu_key === 'absensi_bawahan' ||
-        m.menu_key === 'kpi_bawahan' ||
-        m.menu_key === 'penilaian_bawahan'
-      )
-    }
-  },
-
-  // TAB 5: APPROVAL
-  {
-    key: 'approval',
-    label: 'Approval',
-    icon: '✅',
-    roles: APPROVER_ROLES,
+    roles: LEADER_ROLES,
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'approval_center' ||
         m.menu_key === 'riwayat_approval' ||
-        m.menu_key === 'approval_koreksi'
+        m.menu_key === 'approval_koreksi' ||
+        m.menu_key === 'data_bawahan' ||
+        m.menu_key === 'cuti_bawahan' ||
+        m.menu_key === 'absensi_bawahan' ||
+        m.menu_key === 'roster_bawahan' ||
+        m.menu_key === 'kpi_bawahan' ||
+        m.menu_key === 'penilaian_bawahan' ||
+        m.menu_key === 'crew_on_duty' ||
+        m.menu_key === 'setting_unit' // sementara tetap di sini sampai revisi final
       )
     }
   },
 
-  // TAB 6: KELOLA
+  // 5. SAFETY
   {
-    key: 'kelola_hrga',
-    label: 'Kelola',
-    icon: '🛠️',
-    roles: MASTER_DATA_ROLES,
+    key: 'safety',
+    label: 'Safety',
+    icon: '🦺',
+    roles: SAFETY_ROLES,
     customMatch: (m: MenuItem) => {
       return (
-        m.menu_key === 'kelola_karyawan' ||
-        m.menu_key === 'kelola_akses' ||
-        m.menu_key === 'role_manager' ||
-        m.menu_key === 'kelola_kpi' ||
         m.menu_key === 'kelola_apd' ||
-        m.menu_key === 'kelola_pkwt' ||
-        m.menu_key === 'kelola_sp' ||
-        m.menu_key === 'kelola_bpjs' ||
-        m.menu_key === 'kelola_mcu' ||
-        m.menu_key === 'kelola_simper' ||
-        m.menu_key === 'kelola_roster' ||
-        m.menu_key === 'kelola_pengumuman' ||
-        m.menu_key === 'kelola_bobot_kpi' ||
-        m.menu_key === 'kelola_site_master' ||
-        m.menu_key === 'kelola_job_kategori' ||
-        m.menu_key === 'kelola_hak_cuti' ||
-        m.menu_key === 'data_sakit' ||
-        m.menu_key === 'hr_override_absensi' ||
-        m.menu_key === 'monitoring_mcu' ||
-        m.menu_key === 'kelola_unit' ||
-        m.menu_key === 'setting_unit' ||
-        m.menu_key === 'crew_on_duty' ||
         m.menu_key === 'monitoring_apd'
       )
     }
   },
 
-  // TAB 7: IMPORT (EXCEL)
+  // 6. HR
   {
-    key: 'import_export',
-    label: 'Import',
-    icon: '📥',
-    roles: IMPORT_ROLES,
+    key: 'hr',
+    label: 'HR',
+    icon: '🗂️',
+    roles: HR_ROLES,
     customMatch: (m: MenuItem) => {
       return (
+        m.menu_key === 'kelola_karyawan' ||
+        m.menu_key === 'kelola_job_kategori' ||
+        m.menu_key === 'kelola_pengumuman' ||
+        m.menu_key === 'kelola_pkwt' ||
+        m.menu_key === 'kelola_sp' ||
+        m.menu_key === 'kelola_bpjs' ||
+        m.menu_key === 'kelola_mcu' ||
+        m.menu_key === 'kelola_simper' ||
+        m.menu_key === 'kelola_cuti' ||
+        m.menu_key === 'kelola_lembur' ||
+        m.menu_key === 'kelola_hak_cuti' ||
+        m.menu_key === 'data_sakit' ||
+        m.menu_key === 'monitoring_mcu' ||
+        m.menu_key === 'monitoring_cuti_tiket' ||
+        m.menu_key === 'kelola_bobot_kpi' ||
         m.menu_key === 'import_karyawan' ||
-        m.menu_key === 'import_apd' ||
         m.menu_key === 'import_pkwt' ||
         m.menu_key === 'import_kpi' ||
         m.menu_key === 'import_sp' ||
@@ -234,47 +229,33 @@ const TAB_CONFIG = [
         m.menu_key === 'import_mcu' ||
         m.menu_key === 'import_mcu_bulk' ||
         m.menu_key === 'import_simper' ||
-        m.menu_key === 'import_roster_bulk'  // 🆕 Chat 29: Import Roster Bulanan
+        m.menu_key === 'import_roster_bulk'
       )
     }
   },
 
-  // TAB 8: PROFILE
+  // 7. ADMIN — KHUSUS ADMIN SITE
   {
-    key: 'profile',
-    label: 'Profile',
-    icon: '👤',
-    roles: ALL_ROLES,
+    key: 'admin',
+    label: 'Admin',
+    icon: '🧾',
+    roles: ADMIN_ROLES,
     customMatch: (m: MenuItem) => {
       return (
-        m.menu_key === 'data_saya' ||
-        m.menu_key === 'kpi_saya' ||
-        m.menu_key === 'mcu_saya' ||
-        m.menu_key === 'apd_saya' ||      // ← BARU
-        m.menu_key === 'ganti_password'
+        m.menu_key === 'monitoring_expired' ||
+        m.menu_key === 'monitoring_roster_cr' ||
+        m.menu_key === 'monitoring_cuti_tiket' ||
+        m.menu_key === 'kelola_karyawan' ||
+        m.menu_key === 'kelola_kpi' ||
+        m.menu_key === 'kelola_sp' ||
+        m.menu_key === 'manajemen_absensi' ||
+        m.menu_key === 'approval_center' ||
+        m.menu_key === 'riwayat_approval'
       )
     }
   },
 
-  // TAB 9: SYSTEM (Super Admin only)
-  {
-    key: 'system_config',
-    label: 'System',
-    icon: '⚙️',
-    roles: [],
-    customMatch: (m: MenuItem) => {
-      return (
-        m.menu_key === 'manage_permissions' ||
-        m.menu_key === 'system_audit' ||
-        m.menu_key === 'config_global' ||
-        m.menu_key === 'reset_password_admin'
-      )
-    }
-  },
-
-
-
-    // TAB 10: PLANT (Katalog, Order, Admin Partbook, Dokumen)
+  // 8. PLANT
   {
     key: 'plant',
     label: 'Plant',
@@ -284,7 +265,66 @@ const TAB_CONFIG = [
       return (
         m.menu_key === 'plant_katalog' ||
         m.menu_key === 'plant_orders' ||
-        m.menu_key === 'plant_admin' 
+        m.menu_key === 'plant_admin'
+      )
+    }
+  },
+
+  // 9. SITE
+  {
+    key: 'site',
+    label: 'Site',
+    icon: '🏢',
+    roles: SITE_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'kelola_unit' ||
+        m.menu_key === 'manajemen_absensi' ||
+        m.menu_key === 'monitoring_expired'
+      )
+    }
+  },
+
+  // 10. HO
+  {
+    key: 'ho',
+    label: 'HO',
+    icon: '📊',
+    roles: HO_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'monitoring_expired' ||
+        m.menu_key === 'monitoring_cuti_tiket' ||
+        m.menu_key === 'monitoring_mcu' ||
+        m.menu_key === 'monitoring_roster_cr' ||
+        m.menu_key === 'manajemen_absensi' ||
+        m.menu_key === 'kelola_unit' ||
+        m.menu_key === 'plant_katalog' ||
+        m.menu_key === 'plant_orders' ||
+        m.menu_key === 'approval_center'
+      )
+    }
+  },
+
+  // 11. SYSTEM — KHUSUS SUPER ADMIN
+  {
+    key: 'system',
+    label: 'System',
+    icon: '⚙️',
+    roles: ['super_admin'],
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'manage_permissions' ||
+        m.menu_key === 'kelola_akses' ||
+        m.menu_key === 'system_audit' ||
+        m.menu_key === 'audit_log' ||
+        m.menu_key === 'config_global' ||
+        m.menu_key === 'kelola_site_master' ||
+        m.menu_key === 'reset_password_admin' ||
+        m.menu_key === 'kelola_roles' ||
+        m.menu_key === 'role_manager' ||
+        m.menu_key === 'import_roles' ||
+        m.menu_key === 'import_matrix'
       )
     }
   },
@@ -330,6 +370,13 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
     window.addEventListener('refreshNotif', fetchNotif);
     return () => window.removeEventListener('refreshNotif', fetchNotif);
   }, [])
+
+  // 🎯 Auto-redirect ke Absensi Hari Ini kalau tidak ada menu di URL
+useEffect(() => {
+  if (!loading && user && !searchParams.get('menu')) {
+    router.replace('/dashboard?menu=absensi_saya')
+  }
+}, [loading, user])
 
   useEffect(() => {
     if (menus.length > 0) {
@@ -706,7 +753,7 @@ async function checkAuth() {
     const tabMenus = menus.filter(m => tab.customMatch(m))
     tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
     
-    if (tab.key === 'profile' || tabMenus.length > 1) {
+    if (tab.key === 'saya' || tabMenus.length > 1) {
       setBottomSheetMenus(tabMenus)
       setBottomSheetTitle(tab.label)
       setActiveTab(tab.key)
@@ -722,8 +769,8 @@ async function checkAuth() {
 
     // Tambahkan ini: Jika tab diklik tapi tidak ada isinya
     if (tabMenus.length === 0) {
-      alert(`Menu ${tab.label} belum tersedia untuk akses Anda atau sedang dalam pemeliharaan.`)
-    }
+  return
+}
   }
 
   function navigateMenu(menuKey: string) {
@@ -851,13 +898,16 @@ if (menuKey === 'import_roster_bulk') {
   if (loading || !user) return <div className="min-h-screen bg-slate-100 flex items-center justify-center animate-pulse text-slate-500">Memuat...</div>
 
     const visibleTabs = TAB_CONFIG.filter(tab => {
-    // Jika tab adalah system_config, HANYA tampil jika isSuperAdmin true
-    if (tab.key === 'system_config') return isSuperAdmin;
-    
-    // Untuk tab lainnya, admin bypass atau cek role seperti biasa
-    if (isSuperAdmin) return true;
-    return tab.roles.some(r => userRoles.includes(r));
-  });
+  if (tab.key === 'system' && !isSuperAdmin) return false
+
+  const roleAllowed =
+    isSuperAdmin || tab.roles.some(r => userRoles.includes(r))
+
+  if (!roleAllowed) return false
+
+  const tabMenus = menus.filter(m => tab.customMatch(m))
+  return tabMenus.length > 0
+})
 
   return (
     <div className="min-h-screen bg-[#F1F5F9] flex relative overflow-hidden">
@@ -996,11 +1046,11 @@ if (menuKey === 'import_roster_bulk') {
                   {activeMenu === m.menu_key && <span className="text-blue-600">✓</span>}
                 </button>
               ))}
-              {activeTab === 'profile' && (
-                <button onClick={handleLogout} className="w-full text-left p-5 rounded-3xl flex items-center gap-4 text-red-600 bg-red-50 font-black mt-4 uppercase text-sm border border-red-100 active:scale-95 transition-all">
-                  <span className="text-2xl">🚪</span><span>Keluar Aplikasi</span>
-                </button>
-              )}
+              {activeTab === 'saya' && (
+  <button onClick={handleLogout} className="w-full text-left p-5 rounded-3xl flex items-center gap-4 text-red-600 bg-red-50 font-black mt-4 uppercase text-sm border border-red-100 active:scale-95 transition-all">
+    <span className="text-2xl">🚪</span><span>Keluar Aplikasi</span>
+  </button>
+)}
             </div>
           </div>
         </>

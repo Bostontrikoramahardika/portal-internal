@@ -223,12 +223,56 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Karyawan sudah punya role ${role}` }, { status: 409 })
       }
 
-      const { error } = await supabaseAdmin
+      // 1. Insert role ke tabel roles
+      const { error: roleErr } = await supabaseAdmin
         .from('roles')
         .insert({ nrp: target_nrp, role })
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-      return NextResponse.json({ ok: true, message: `Role ${role} ditambahkan` })
+      if (roleErr) return NextResponse.json({ error: roleErr.message }, { status: 500 })
+
+      // 🆕 2. AUTO-COPY permission dari role_templates → user_permissions
+      const { data: templatePerms } = await supabaseAdmin
+        .from('role_template_permissions')
+        .select('perm_key')
+        .eq('role_key', role)
+
+      const templatePermList = templatePerms || []
+      let permsAdded = 0
+      
+      if (templatePermList.length > 0) {
+        // Ambil permission yang sudah dimiliki user (biar tidak duplikat)
+        const { data: existingPerms } = await supabaseAdmin
+          .from('user_permissions')
+          .select('perm_key')
+          .eq('nrp', target_nrp)
+        
+        const existingSet = new Set((existingPerms || []).map(p => p.perm_key))
+        const newPerms = templatePermList
+          .filter(p => !existingSet.has(p.perm_key))
+          .map(p => ({ 
+            nrp: target_nrp, 
+            perm_key: p.perm_key, 
+            granted_by: auditBy 
+          }))
+        
+        if (newPerms.length > 0) {
+          const { error: permErr } = await supabaseAdmin
+            .from('user_permissions')
+            .insert(newPerms)
+          
+          if (permErr) {
+            // Role sudah masuk tapi permission gagal → log warning, JANGAN rollback
+            console.error('⚠️ Role added but some permissions failed:', permErr.message)
+          } else {
+            permsAdded = newPerms.length
+          }
+        }
+      }
+
+      return NextResponse.json({ 
+        ok: true, 
+        message: `Role ${role} ditambahkan${permsAdded > 0 ? ` + ${permsAdded} permission auto-assigned` : ''}` 
+      })
     }
 
     if (action === 'REMOVE_ROLE') {

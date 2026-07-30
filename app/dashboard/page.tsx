@@ -109,29 +109,81 @@ function DashboardContent() {
 
   // 🔐 Menu yang punya View sendiri (tidak perlu fetch /api/data)
   const STANDALONE_MENUS = [
-    'manage_permissions',
-    'kelola_site_master',
-    'setting_site',
-    'config_global',
-    'reset_password_admin',
-    'system_audit',
-    'approval_center',
-    'kelola_hak_cuti',
-    'monitoring_cuti_tiket',
-    'monitoring_roster_cr',
-    'export_absensi_matrix',
-    'role_manager'
-  ]
+  // Standalone lama
+  'manage_permissions',
+  'kelola_site_master',
+  'setting_site',
+  'config_global',
+  'reset_password_admin',
+  'system_audit',
+  'approval_center',
+  'kelola_hak_cuti',
+  'monitoring_cuti_tiket',
+  'monitoring_roster_cr',
+  'export_absensi_matrix',
+  'role_manager',
+  // 🆕 Menu yang punya halaman sendiri di /dashboard/xxx
+  'kelola_apd',
+  'apd_saya',
+  'monitoring_apd',
+  'koreksi_absensi',
+  'approval_koreksi',
+  'manajemen_absensi',
+  'rekap_absensi',
+  'hr_override_absensi',
+  'monitoring_mcu',
+  'mcu_saya',
+  'kelola_akses',
+  'import_mcu_bulk',
+  'import_roster_bulk',
+  'kelola_unit',
+  'setting_unit',
+  'crew_on_duty',
+  'plant_katalog',
+  'plant_orders',
+  'plant_admin'
+]
+
+// 🎯 Menu yang harus AUTO-REDIRECT ke halaman khusus (jika diakses via /dashboard?menu=xxx)
+const AUTO_REDIRECT_MAP: Record<string, string> = {
+  kelola_apd: '/dashboard/kelola-apd',
+  apd_saya: '/dashboard/apd-saya',
+  monitoring_apd: '/dashboard/monitoring-apd',
+  koreksi_absensi: '/dashboard/koreksi-absensi',
+  approval_koreksi: '/dashboard/approval-koreksi',
+  manajemen_absensi: '/dashboard/manajemen-absensi',
+  rekap_absensi: '/dashboard/rekap-absensi',
+  hr_override_absensi: '/dashboard/hr-override-absensi',
+  monitoring_mcu: '/dashboard/monitoring-mcu',
+  mcu_saya: '/dashboard/mcu-saya',
+  kelola_akses: '/dashboard/kelola-akses',
+  import_mcu_bulk: '/dashboard/import-mcu',
+  import_roster_bulk: '/dashboard/import-roster',
+  kelola_unit: '/dashboard/kelola-unit',
+  setting_unit: '/dashboard/setting-unit',
+  crew_on_duty: '/dashboard/crew-on-duty',
+  plant_katalog: '/parts-catalog',
+  plant_orders: '/part-orders',
+  plant_admin: '/partbook/admin',
+}
 
   const isStandalone = STANDALONE_MENUS.includes(menuKey)
 
-  useEffect(() => {
-    if (!isStandalone) {
-      loadData()
-    } else {
-      setLoading(false)
-    }
-  }, [menuKey])
+  const router = useRouter()
+
+useEffect(() => {
+  // 🚀 Auto-redirect untuk menu yang punya halaman sendiri
+  if (AUTO_REDIRECT_MAP[menuKey]) {
+    router.replace(AUTO_REDIRECT_MAP[menuKey])
+    return
+  }
+  
+  if (!isStandalone) {
+    loadData()
+  } else {
+    setLoading(false)
+  }
+}, [menuKey])
 
   async function loadData() {
     setLoading(true); setError('')
