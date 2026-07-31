@@ -74,7 +74,15 @@ export async function GET(request: NextRequest) {
           options: JABATAN_ALL
         },
         { key: 'departemen', label: 'Departemen', type: 'text', placeholder: 'Contoh: HR, Operasional, Plant' },
-        
+
+        // 🆕 POH (Point of Hire)
+{ 
+  key: 'poh', 
+  label: 'POH (Point of Hire)', 
+  type: 'select',
+  options: ['Jakarta', 'Surabaya', 'Kendari', 'Makassar', 'Balikpapan', 'Samarinda', 'Palu', 'Manado', 'Jayapura', 'Lain-lain'],
+  placeholder: 'Kota tempat rekrutmen'
+},
 
         { key: 'no_hp', label: 'No HP', type: 'text', placeholder: '08xxxxxxxxxx' },
         { key: 'email', label: 'Email', type: 'text', placeholder: 'nama@email.com' },

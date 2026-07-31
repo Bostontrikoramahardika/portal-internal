@@ -207,6 +207,7 @@ const TAB_CONFIG = [
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'kelola_karyawan' ||
+        m.menu_key === 'hr_dashboard' ||
         m.menu_key === 'kelola_job_kategori' ||
         m.menu_key === 'kelola_pengumuman' ||
         m.menu_key === 'kelola_pkwt' ||
@@ -243,6 +244,7 @@ const TAB_CONFIG = [
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'monitoring_expired' ||
+        m.menu_key === 'hr_dashboard' ||
         m.menu_key === 'monitoring_roster_cr' ||
         m.menu_key === 'monitoring_cuti_tiket' ||
         m.menu_key === 'kelola_karyawan' ||
@@ -294,6 +296,7 @@ const TAB_CONFIG = [
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'monitoring_expired' ||
+        m.menu_key === 'hr_dashboard' ||
         m.menu_key === 'monitoring_cuti_tiket' ||
         m.menu_key === 'monitoring_mcu' ||
         m.menu_key === 'monitoring_roster_cr' ||

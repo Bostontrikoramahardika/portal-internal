@@ -56,10 +56,16 @@ export async function GET(request: NextRequest) {
         'grade', 'catatan_atasan', 'keterangan'
       ],
       karyawan: [
-        'nrp', 'nama', 'jabatan', 'departemen', 'site',
-        'tanggal_masuk', 'tempat_lahir', 'tanggal_lahir',
-        'no_hp', 'email', 'alamat', 'status_pernikahan'
-      ],
+  'nrp', 'nama', 'jabatan', 'departemen', 'site',
+  'tanggal_masuk', 'tempat_lahir', 'tanggal_lahir',
+  'no_hp', 'email', 'alamat', 'status_pernikahan'
+],
+// 🆕 Alias untuk kompatibilitas
+employees: [
+  'nrp', 'nama', 'jabatan', 'departemen', 'site',
+  'tanggal_masuk', 'tempat_lahir', 'tanggal_lahir',
+  'no_hp', 'email', 'alamat', 'status_pernikahan'
+],
     }
 
     const columns = TEMPLATE_COLUMNS[table]

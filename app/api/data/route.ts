@@ -1008,7 +1008,7 @@ export async function GET(request: NextRequest) {
     if (qErr) return NextResponse.json({ error: qErr.message }, { status: 500 })
     
     const enriched = await enrichWithNames(rows || [], target_table)
-    const columns = getColumns(enriched)
+    const columns = getColumns(enriched, target_table)
 
     return NextResponse.json({ type: 'table', title: menu_label, table: target_table, access_mode, columns, rows: enriched, total: enriched.length })
 
@@ -1068,20 +1068,82 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
     const atasanEmp = atasanNrp ? empMapNrp.get(String(atasanNrp)) : null
     const pjoEmp    = pjoNrp    ? empMapNrp.get(String(pjoNrp))    : null
     
-    return {
-      ...r,
-      _nama_karyawan: emp?.nama || r.nama_karyawan || r.nrp || '-',
-      _jabatan:       emp?.jabatan || '-',
-      _site:          emp?.site || '-',
-      _nama_atasan:   atasanEmp?.nama || (atasanNrp ? String(atasanNrp) : 'Belum diset'),
-      _nama_pjo:      pjoEmp?.nama    || (pjoNrp    ? String(pjoNrp)    : 'Belum diset')
+    const result: any = { ...r }
+    
+    // Skip _nama_karyawan untuk employees (biar tidak duplikat)
+    if (table !== 'employees') {
+      result._nama_karyawan = emp?.nama || r.nama_karyawan || r.nrp || '-'
+      result._jabatan       = emp?.jabatan || '-'
+      result._site          = emp?.site || '-'
     }
+    
+    // 🆕 MASA KERJA (untuk table employees)
+    if (table === 'employees') {
+      const tglMasuk = r.tanggal_masuk || r.tgl_masuk
+      const tglResign = r.tanggal_resign
+      
+      if (tglMasuk) {
+        const start = new Date(tglMasuk)
+        const end = tglResign ? new Date(tglResign) : new Date()
+        
+        if (!isNaN(start.getTime())) {
+          const diffMs = end.getTime() - start.getTime()
+          const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+          const years = Math.floor(totalDays / 365)
+          const months = Math.floor((totalDays % 365) / 30)
+          
+          if (years > 0 && months > 0) {
+            result._masa_kerja = `${years} Th ${months} Bln`
+          } else if (years > 0) {
+            result._masa_kerja = `${years} Tahun`
+          } else if (months > 0) {
+            result._masa_kerja = `${months} Bulan`
+          } else {
+            result._masa_kerja = `${totalDays} Hari`
+          }
+        } else {
+          result._masa_kerja = '-'
+        }
+      } else {
+        result._masa_kerja = '-'
+      }
+      
+      // 🆕 STATUS RESIGN
+      if (tglResign) {
+        result._status = `🚪 Resign (${tglResign})`
+      } else {
+        result._status = '✅ Aktif'
+      }
+    }
+    
+    result._nama_atasan = atasanEmp?.nama || (atasanNrp ? String(atasanNrp) : 'Belum diset')
+    result._nama_pjo    = pjoEmp?.nama    || (pjoNrp    ? String(pjoNrp)    : 'Belum diset')
+    
+    return result
   })
 }
 
-function getColumns(rows: any[]): string[] {
+function getColumns(rows: any[], table?: string): string[] {
   if (!rows || rows.length === 0) return []
   const visibleKeys = Object.keys(rows[0]).filter((k: string) => !HIDDEN_COLUMNS.includes(k))
+  
+  // 🆕 Custom column order untuk table employees
+  if (table === 'employees') {
+    const preferredOrder = [
+      'nama', 'jabatan', 'departemen', 'site', 
+      'tanggal_masuk', '_masa_kerja', 'poh', 'tanggal_resign',
+      '_status', 'alasan_resign',
+      'no_hp', 'email', 'status_karyawan'
+    ]
+    const orderedKeys = preferredOrder.filter(k => visibleKeys.includes(k))
+    const restKeys = visibleKeys.filter(k => 
+      !preferredOrder.includes(k) && 
+      !k.startsWith('_') &&
+      k !== 'resign_by' // hide resign_by dari view
+    )
+    return [...orderedKeys, ...restKeys]
+  }
+  
   const priority = PRIORITY_COLUMNS.filter((c: string) => visibleKeys.includes(c))
   const other = visibleKeys.filter((k: string) => !PRIORITY_COLUMNS.includes(k) && !SECONDARY_COLUMNS.includes(k) && !k.startsWith('_'))
   const secondary = SECONDARY_COLUMNS.filter((c: string) => visibleKeys.includes(c))

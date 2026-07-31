@@ -141,7 +141,8 @@ function DashboardContent() {
   'crew_on_duty',
   'plant_katalog',
   'plant_orders',
-  'plant_admin'
+  'plant_admin',
+  'hr_dashboard',
 ]
 
 // 🎯 Menu yang harus AUTO-REDIRECT ke halaman khusus (jika diakses via /dashboard?menu=xxx)
@@ -165,6 +166,7 @@ const AUTO_REDIRECT_MAP: Record<string, string> = {
   plant_katalog: '/parts-catalog',
   plant_orders: '/part-orders',
   plant_admin: '/partbook/admin',
+  hr_dashboard: '/dashboard/hr-dashboard',
 }
 
   const isStandalone = STANDALONE_MENUS.includes(menuKey)
@@ -2534,41 +2536,35 @@ function AnnouncementCard({ announcement }: any) {
 }
 
 
-// ============ 📊 TABLE VIEW (v2.6 Compact + Filter Site/Status Attendance) ============
+// ============ 📊 TABLE VIEW v3.0 — Advanced (Filter Site + Sort + Column Filter + Refresh) ============
 function TableView({ data, onReload }: any) {
   const { title, rows = [], columns = [], table, access_mode } = data
   const [formModal, setFormModal] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterSite, setFilterSite] = useState('ALL')
   const [filterStatusAbsensi, setFilterStatusAbsensi] = useState('ALL')
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({})
+  const [refreshing, setRefreshing] = useState(false)
   const isApproval = access_mode?.includes('APPROVAL')
 
   // 🔐 Hook Auth
   const { can, isSuperAdmin } = useAuth()
 
-  // 1. Ambil pemetaan permission untuk tabel ini
   const tablePerms = getTablePermissions(table)
-
-  // 🔒 Kunci Schema: Paksa false untuk tabel virtual (fail-safe)
   const VIRTUAL_TABLES = ['monitoring_expired']
   const isVirtualTable = VIRTUAL_TABLES.includes(table) || access_mode === 'VIEW_ONLY'
   const hasSchema = isVirtualTable ? false : (tablePerms?.has_schema !== false)
 
-  // Tombol Tambah
   const canCreate = isSuperAdmin || (hasSchema && (
-  tablePerms?.create ? can(tablePerms.create) : (access_mode === 'CRUD')
-))
-
-const canEdit = isSuperAdmin || (hasSchema && (
-  tablePerms?.edit ? can(tablePerms.edit) : (access_mode === 'CRUD')
-))
-
-  // Tombol Hapus
+    tablePerms?.create ? can(tablePerms.create) : (access_mode === 'CRUD')
+  ))
+  const canEdit = isSuperAdmin || (hasSchema && (
+    tablePerms?.edit ? can(tablePerms.edit) : (access_mode === 'CRUD')
+  ))
   const canDelete = access_mode !== 'VIEW_ONLY' && (
     tablePerms?.delete ? can(tablePerms.delete) : (access_mode === 'CRUD' || isSuperAdmin)
   )
-
-  // Approval
   const canApprove = (() => {
     if (isSuperAdmin) return true
     if (!isApproval) return false
@@ -2578,36 +2574,107 @@ const canEdit = isSuperAdmin || (hasSchema && (
     return true
   })()
 
-  // Filter pencarian umum
-  const filteredRows = rows.filter((r: any) => {
-    return Object.values(r).some((val) =>
-      String(val).toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  })
-
-  // Filter site khusus attendance
-  const siteList =
-    table === 'attendance'
-      ? Array.from(new Set((rows || []).map((r: any) => r.site).filter(Boolean))).sort() as string[]
-      : []
-
-  // Filter final khusus attendance
-  const displayRows = (() => {
-    let result = filteredRows
-    if (table === 'attendance') {
-      if (filterSite !== 'ALL') {
-        result = result.filter((r: any) => String(r.site || '') === filterSite)
+  // 🆕 SORT HANDLER
+  const handleSort = (columnKey: string) => {
+    if (sortConfig?.key === columnKey) {
+      // Cycle: asc -> desc -> null
+      if (sortConfig.direction === 'asc') {
+        setSortConfig({ key: columnKey, direction: 'desc' })
+      } else {
+        setSortConfig(null)
       }
-      if (filterStatusAbsensi !== 'ALL') {
-        result = result.filter((r: any) =>
-          String(r.status || r.keterangan || '').toUpperCase().includes(filterStatusAbsensi)
-        )
-      }
+    } else {
+      setSortConfig({ key: columnKey, direction: 'asc' })
     }
+  }
+
+  // 🆕 COLUMN FILTER HANDLER
+  const handleColumnFilter = (columnKey: string, value: string) => {
+    setColumnFilters(prev => ({ ...prev, [columnKey]: value }))
+  }
+
+  // 🆕 REFRESH HANDLER
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await onReload()
+    setTimeout(() => setRefreshing(false), 500)
+  }
+
+  // 🆕 SITE LIST (untuk semua tabel, bukan cuma attendance)
+  const siteList = Array.from(new Set(
+    (rows || [])
+      .map((r: any) => r.site || r._site)
+      .filter(Boolean)
+  )).sort() as string[]
+  const hasSiteColumn = siteList.length > 0 && (columns.includes('site') || columns.includes('_site'))
+
+  // 🎯 APPLY FILTERS + SORT
+  const displayRows = (() => {
+    let result = rows.filter((r: any) => {
+      // Search global
+      const matchSearch = !searchTerm || Object.values(r).some((val) =>
+        String(val).toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      if (!matchSearch) return false
+
+      // Filter site (untuk semua tabel yang punya kolom site)
+      if (filterSite !== 'ALL' && hasSiteColumn) {
+        const rowSite = String(r.site || r._site || '')
+        if (rowSite !== filterSite) return false
+      }
+
+      // Filter status absensi
+      if (table === 'attendance' && filterStatusAbsensi !== 'ALL') {
+        const status = String(r.status || r.keterangan || '').toUpperCase()
+        if (!status.includes(filterStatusAbsensi)) return false
+      }
+
+      // Filter per kolom
+      for (const [key, filterVal] of Object.entries(columnFilters)) {
+        if (!filterVal) continue
+        const cellVal = String(r[key] ?? '').toLowerCase()
+        if (!cellVal.includes(filterVal.toLowerCase())) return false
+      }
+
+      return true
+    })
+
+    // 🆕 SORT
+    if (sortConfig) {
+      result = [...result].sort((a: any, b: any) => {
+        const aVal = a[sortConfig.key]
+        const bVal = b[sortConfig.key]
+        
+        // Handle null/undefined
+        if (aVal == null && bVal == null) return 0
+        if (aVal == null) return sortConfig.direction === 'asc' ? 1 : -1
+        if (bVal == null) return sortConfig.direction === 'asc' ? -1 : 1
+
+        // Numeric sort
+        const aNum = Number(aVal)
+        const bNum = Number(bVal)
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return sortConfig.direction === 'asc' ? aNum - bNum : bNum - aNum
+        }
+
+        // Date sort
+        const aDate = new Date(aVal)
+        const bDate = new Date(bVal)
+        if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
+          return sortConfig.direction === 'asc' 
+            ? aDate.getTime() - bDate.getTime() 
+            : bDate.getTime() - aDate.getTime()
+        }
+
+        // String sort
+        const cmp = String(aVal).localeCompare(String(bVal), 'id')
+        return sortConfig.direction === 'asc' ? cmp : -cmp
+      })
+    }
+
     return result
   })()
 
-  // Handler Approve
   async function handleApprove(id: string, action: string) {
     const note = action === 'REJECTED' ? prompt('Alasan Penolakan:') : 'OK'
     if (!note && action === 'REJECTED') return
@@ -2625,13 +2692,10 @@ const canEdit = isSuperAdmin || (hasSchema && (
     if (res.ok) { alert('✅ Berhasil diproses'); onReload() }
   }
 
-  // Handler Delete
   async function handleDelete(id: string, label: string) {
     if (!confirm(`⚠️ Hapus data "${label || id}"?`)) return
     const url = `/api/crud?table=${encodeURIComponent(table)}&id=${encodeURIComponent(id)}`
-    const res = await fetch(url, {
-      method: 'DELETE',
-    })
+    const res = await fetch(url, { method: 'DELETE' })
     const data = await res.json()
     if (res.ok) { 
       alert('✅ Terhapus')
@@ -2639,6 +2703,17 @@ const canEdit = isSuperAdmin || (hasSchema && (
     } else {
       alert('❌ Gagal hapus: ' + (data.error || 'Unknown error'))
     }
+  }
+
+  // 🆕 CLEAR ALL FILTERS
+  const hasActiveFilters = searchTerm || filterSite !== 'ALL' || filterStatusAbsensi !== 'ALL' || 
+                           Object.values(columnFilters).some(v => v) || sortConfig
+  const clearFilters = () => {
+    setSearchTerm('')
+    setFilterSite('ALL')
+    setFilterStatusAbsensi('ALL')
+    setColumnFilters({})
+    setSortConfig(null)
   }
 
   return (
@@ -2653,14 +2728,27 @@ const canEdit = isSuperAdmin || (hasSchema && (
               Monitoring & Pengelolaan Data
             </p>
           </div>
-          {canCreate && (
+          <div className="flex gap-2">
+            {/* 🆕 REFRESH BUTTON */}
             <button
-              onClick={() => setFormModal({ mode: 'create' })}
-              className="bg-white text-[#003D79] px-3 py-2 lg:px-5 lg:py-2.5 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-xs shadow-lg hover:bg-blue-50 active:scale-95 transition-all whitespace-nowrap"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="bg-white/20 text-white p-2 lg:px-3 lg:py-2.5 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-xs hover:bg-white/30 active:scale-95 transition-all disabled:opacity-50"
+              title="Refresh Data"
             >
-              ➕ Tambah
+              <span className={refreshing ? 'inline-block animate-spin' : ''}>🔄</span>
+              <span className="hidden lg:inline ml-1">Refresh</span>
             </button>
-          )}
+
+            {canCreate && (
+              <button
+                onClick={() => setFormModal({ mode: 'create' })}
+                className="bg-white text-[#003D79] px-3 py-2 lg:px-5 lg:py-2.5 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-xs shadow-lg hover:bg-blue-50 active:scale-95 transition-all whitespace-nowrap"
+              >
+                ➕ Tambah
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -2680,8 +2768,8 @@ const canEdit = isSuperAdmin || (hasSchema && (
             />
           </div>
 
-          {/* Filter Site — khusus attendance */}
-          {table === 'attendance' && siteList.length > 0 && (
+          {/* 🆕 Filter Site (untuk semua tabel yang punya kolom site) */}
+          {hasSiteColumn && (
             <select
               value={filterSite}
               onChange={e => setFilterSite(e.target.value)}
@@ -2694,7 +2782,7 @@ const canEdit = isSuperAdmin || (hasSchema && (
             </select>
           )}
 
-          {/* Filter Status — khusus attendance */}
+          {/* Filter Status Absensi */}
           {table === 'attendance' && (
             <select
               value={filterStatusAbsensi}
@@ -2706,148 +2794,261 @@ const canEdit = isSuperAdmin || (hasSchema && (
               <option value="SUKSES">✅ Tepat Waktu</option>
             </select>
           )}
+
+          {/* 🆕 CLEAR FILTERS */}
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="py-2 lg:py-2.5 px-3 rounded-lg lg:rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-[10px] lg:text-xs font-black hover:bg-rose-100 transition-all whitespace-nowrap"
+            >
+              ✕ Reset
+            </button>
+          )}
         </div>
 
-        <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 mt-1.5">
-          Menampilkan <span className="text-[#003D79] font-black">{displayRows.length}</span> dari {rows.length} data
-        </p>
+        <div className="flex items-center justify-between mt-1.5">
+          <p className="text-[9px] lg:text-[10px] font-bold text-slate-400">
+            Menampilkan <span className="text-[#003D79] font-black">{displayRows.length}</span> dari {rows.length} data
+          </p>
+          {sortConfig && (
+            <p className="text-[9px] lg:text-[10px] font-bold text-blue-600">
+              Sorted by: <span className="font-black">{formatColumnName(sortConfig.key)}</span> ({sortConfig.direction === 'asc' ? '↑' : '↓'})
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* TABEL */}
-      <div className="bg-white rounded-xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto overflow-y-auto max-h-[75vh]">
-          <table className="w-full text-left text-[11px] lg:text-xs">
-            <thead className="bg-[#003D79] text-white sticky top-0 z-10 shadow-md">
-              <tr>
-                {columns.map((c: string) => (
-                  <th key={c} className="px-3 py-2.5 lg:px-5 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">
-                    {formatColumnName(c)}
-                  </th>
-                ))}
-                <th className="px-3 py-2.5 lg:px-5 lg:py-3 font-black uppercase tracking-wider text-center whitespace-nowrap">
-                  Aksi
+      {/* TABEL — v3.1 Split Section + Zebra + Compact */}
+{(() => {
+  // 🆕 Split rows: Aktif vs Resign (khusus employees)
+  const isEmployeesTable = table === 'employees'
+  const activeRows = isEmployeesTable 
+    ? displayRows.filter((r: any) => !r.tanggal_resign)
+    : displayRows
+  const resignRows = isEmployeesTable 
+    ? displayRows.filter((r: any) => r.tanggal_resign)
+    : []
+
+  // Reusable Table Renderer
+  const renderTable = (dataRows: any[], sectionTitle?: string, sectionColor?: string) => (
+    <div className="bg-white rounded-xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+      {sectionTitle && (
+        <div className={`px-4 py-2 lg:px-5 lg:py-2.5 ${sectionColor} border-b border-slate-100 flex items-center justify-between`}>
+          <div className="flex items-center gap-2">
+            <span className="text-white font-black text-xs lg:text-sm uppercase tracking-wider">
+              {sectionTitle}
+            </span>
+            <span className="bg-white/25 text-white text-[10px] lg:text-xs font-black px-2 py-0.5 rounded-full">
+              {dataRows.length}
+            </span>
+          </div>
+        </div>
+      )}
+      <div className="overflow-x-auto overflow-y-auto max-h-[60vh]">
+        <table className="w-full text-left text-[11px] lg:text-xs">
+          <thead className="bg-[#003D79] text-white sticky top-0 z-10 shadow-md">
+            <tr>
+              {columns.map((c: string) => (
+                <th 
+                  key={c} 
+                  className="px-2.5 py-1.5 lg:px-4 lg:py-2 font-black uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#002D5F] transition-colors select-none text-[10px] lg:text-[11px]"
+                  onClick={() => handleSort(c)}
+                >
+                  <div className="flex items-center gap-1">
+                    <span>{formatColumnName(c)}</span>
+                    <span className="text-blue-300 text-[9px]">
+                      {sortConfig?.key === c 
+                        ? (sortConfig.direction === 'asc' ? '↑' : '↓')
+                        : '⇅'}
+                    </span>
+                  </div>
                 </th>
+              ))}
+              <th className="px-2.5 py-1.5 lg:px-4 lg:py-2 font-black uppercase tracking-wider text-center whitespace-nowrap text-[10px] lg:text-[11px]">
+                Aksi
+              </th>
+            </tr>
+            {/* FILTER ROW per column */}
+            <tr className="bg-blue-50">
+              {columns.map((c: string) => (
+                <th key={`filter-${c}`} className="px-1.5 py-1 lg:px-2 lg:py-1.5">
+                  <input
+                    type="text"
+                    placeholder={`Filter...`}
+                    value={columnFilters[c] || ''}
+                    onChange={e => handleColumnFilter(c, e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                    className="w-full px-1.5 py-0.5 rounded text-[10px] font-medium bg-white border border-blue-200 focus:outline-none focus:ring-1 focus:ring-[#003D79] focus:border-[#003D79] text-slate-700 placeholder:text-slate-300"
+                  />
+                </th>
+              ))}
+              <th className="px-1.5 py-1"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {dataRows.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + 1} className="px-4 py-6 lg:py-8 text-center text-slate-300 font-black uppercase tracking-widest text-[11px] italic">
+                  Tidak ada data
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {displayRows.length === 0 ? (
-                <tr>
-                  <td colSpan={columns.length + 1} className="px-4 py-10 lg:py-16 text-center text-slate-300 font-black uppercase tracking-widest text-xs italic">
-                    Data tidak ditemukan
+            ) : dataRows.map((r: any, i: number) => (
+              <tr 
+                key={i} 
+                className={`transition-all hover:bg-blue-50 ${
+                  i % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                }`}
+              >
+                {columns.map((c: string) => (
+                  <td key={c} className="px-2.5 py-1.5 lg:px-4 lg:py-2 whitespace-nowrap font-medium text-slate-700 text-[11px] lg:text-xs">
+                    {renderCell(c, r[c])}
                   </td>
-                </tr>
-              ) : displayRows.map((r: any, i: number) => (
-                <tr key={i} className="hover:bg-slate-50/80 transition-all">
-                  {columns.map((c: string) => (
-                    <td key={c} className="px-3 py-2.5 lg:px-5 lg:py-3 whitespace-nowrap font-medium text-slate-700">
-                      {renderCell(c, r[c])}
-                    </td>
-                  ))}
-                  <td className="px-3 py-2.5 lg:px-5 lg:py-3 whitespace-nowrap">
-                    <div className="flex justify-center gap-1.5 lg:gap-2">
+                ))}
+                <td className="px-2.5 py-1.5 lg:px-4 lg:py-2 whitespace-nowrap">
+                  <div className="flex justify-center gap-1 lg:gap-1.5">
 
-                      {r.foto_url && (
+                    {r.foto_url && (
+                      <button
+                        onClick={() => window.open(r.foto_url, '_blank')}
+                        className="bg-indigo-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-indigo-600 shadow-sm"
+                      >
+                        📷
+                      </button>
+                    )}
+
+                    {/* Tombol khusus monitoring_expired */}
+                    {table === 'monitoring_expired' && r.jenis_dokumen && (
+                      <>
                         <button
-                          onClick={() => window.open(r.foto_url, '_blank')}
-                          className="bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-indigo-600 shadow-sm"
+                          onClick={() => setFormModal({ mode: 'update_expired', row: r })}
+                          className="bg-blue-600 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-blue-700 shadow-sm"
                         >
-                          📷 Foto
+                          🔄
                         </button>
-                      )}
-
-                      {/* Tombol khusus monitoring_expired */}
-                      {table === 'monitoring_expired' && r.jenis_dokumen && (
-                        <>
-                          <button
-                            onClick={() => setFormModal({ mode: 'update_expired', row: r })}
-                            className="bg-blue-600 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-blue-700 shadow-sm"
-                          >
-                            🔄 Perpanjang
-                          </button>
-                          <button
-                            onClick={async () => {
-                              const jenis = r.jenis_dokumen
-                              const nama = r.nama_karyawan || r.nama
-                              if (!confirm(`⚠️ Hapus dokumen ${jenis} milik ${nama}?\n\n${jenis === 'SIMPOL' ? 'Data SIMPOL akan dikosongkan.' : 'Baris dokumen akan dihapus permanen.'}`)) return
-                              const res = await fetch('/api/monitoring-expired', {
-                                method: 'DELETE',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  jenis_dokumen: jenis,
-                                  record_id: jenis === 'SIMPOL' ? r.nrp : r.id,
-                                  nama_karyawan: nama
-                                })
+                        <button
+                          onClick={async () => {
+                            const jenis = r.jenis_dokumen
+                            const nama = r.nama_karyawan || r.nama
+                            if (!confirm(`⚠️ Hapus dokumen ${jenis} milik ${nama}?`)) return
+                            const res = await fetch('/api/monitoring-expired', {
+                              method: 'DELETE',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                jenis_dokumen: jenis,
+                                record_id: jenis === 'SIMPOL' ? r.nrp : r.id,
+                                nama_karyawan: nama
                               })
-                              const json = await res.json()
-                              if (res.ok) {
-                                alert(json.message || '✅ Berhasil dihapus')
-                                window.dispatchEvent(new Event('refreshNotif'))
-                                onReload()
-                              } else {
-                                alert('❌ Gagal: ' + (json.error || 'Unknown'))
-                              }
-                            }}
-                            className="bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-rose-600 shadow-sm"
-                          >
-                            🗑️ Hapus
-                          </button>
-                        </>
-                      )}
+                            })
+                            const json = await res.json()
+                            if (res.ok) {
+                              alert(json.message || '✅ Berhasil dihapus')
+                              window.dispatchEvent(new Event('refreshNotif'))
+                              onReload()
+                            } else {
+                              alert('❌ Gagal: ' + (json.error || 'Unknown'))
+                            }
+                          }}
+                          className="bg-rose-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-rose-600 shadow-sm"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
 
-                      {/* Tombol Edit & Hapus umum */}
-                      {table !== 'monitoring_expired' && canEdit && !isApproval && (
+                    {/* Tombol Edit & Hapus umum */}
+                    {table !== 'monitoring_expired' && canEdit && !isApproval && (
+                      <>
+                        {/* Tombol Resign khusus employees */}
+                        {table === 'employees' && !r.tanggal_resign && (
+                          <button
+                            onClick={() => setFormModal({ mode: 'resign', row: r })}
+                            className="bg-orange-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-orange-600 shadow-sm"
+                            title="Resign"
+                          >
+                            🚪
+                          </button>
+                        )}
+                        
+                        {/* Tombol Aktifkan */}
+                        {table === 'employees' && r.tanggal_resign && (
+                          <button
+                            onClick={() => setFormModal({ mode: 'unresign', row: r })}
+                            className="bg-emerald-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-emerald-600 shadow-sm"
+                            title="Aktifkan"
+                          >
+                            ↩️
+                          </button>
+                        )}
+
                         <button
                           onClick={() => setFormModal({ mode: 'edit', row: r })}
-                          className="bg-amber-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-amber-600 shadow-sm"
+                          className="bg-amber-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-amber-600 shadow-sm"
+                          title="Edit"
                         >
-                          ✏️ Edit
+                          ✏️
                         </button>
-                      )}
-                      {table !== 'monitoring_expired' && canDelete && !isApproval && (
+                      </>
+                    )}
+                    {table !== 'monitoring_expired' && canDelete && !isApproval && (
+                      <button
+                        onClick={() => handleDelete(r.id, r.nama || r._nama_karyawan || r.id)}
+                        className="bg-rose-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-rose-600 shadow-sm"
+                        title="Hapus"
+                      >
+                        🗑️
+                      </button>
+                    )}
+
+                    {canApprove && r.status_atasan === 'PENDING' && (
+                      <>
                         <button
-                          onClick={() => handleDelete(r.id, r.nama || r._nama_karyawan || r.id)}
-                          className="bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-rose-600 shadow-sm"
+                          onClick={() => handleApprove(r.id, 'APPROVED')}
+                          className="bg-emerald-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-emerald-600 shadow-sm"
                         >
-                          🗑️ Hapus
+                          ✅
                         </button>
-                      )}
+                        <button
+                          onClick={() => handleApprove(r.id, 'REJECTED')}
+                          className="bg-rose-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-rose-600 shadow-sm"
+                        >
+                          ❌
+                        </button>
+                      </>
+                    )}
 
-                      {/* Tombol Approve */}
-                      {canApprove && r.status_atasan === 'PENDING' && (
-                        <>
-                          <button
-                            onClick={() => handleApprove(r.id, 'APPROVED')}
-                            className="bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-emerald-600 shadow-sm"
-                          >
-                            ✅ Approve
-                          </button>
-                          <button
-                            onClick={() => handleApprove(r.id, 'REJECTED')}
-                            className="bg-rose-500 text-white px-2.5 py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black hover:bg-rose-600 shadow-sm"
-                          >
-                            ❌ Reject
-                          </button>
-                        </>
-                      )}
-
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {displayRows.length > 0 && (
-          <div className="px-3 py-2 lg:px-4 lg:py-2.5 border-t border-slate-100 bg-slate-50">
-            <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
-              {displayRows.length} Data • BTM Portal v2.6
-            </p>
-          </div>
-        )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+      {dataRows.length > 0 && (
+        <div className="px-3 py-1.5 lg:px-4 lg:py-2 border-t border-slate-100 bg-slate-50">
+          <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
+            {dataRows.length} Data
+          </p>
+        </div>
+      )}
+    </div>
+  )
 
-      {/* Modal CRUD */}
+  // 🎨 Render: Split untuk employees, Single untuk tabel lain
+  if (isEmployeesTable) {
+    return (
+      <div className="space-y-3 lg:space-y-4">
+        {/* SECTION AKTIF */}
+        {renderTable(activeRows, '✅ Karyawan Aktif', 'bg-emerald-600')}
+        
+        {/* SECTION RESIGN */}
+        {resignRows.length > 0 && renderTable(resignRows, '🚪 Karyawan Resign', 'bg-rose-500')}
+      </div>
+    )
+  }
+
+  return renderTable(displayRows)
+})()}
+
       {formModal && formModal.mode !== 'update_expired' && (
         <CrudModal
           table={table}
@@ -2858,7 +3059,16 @@ const canEdit = isSuperAdmin || (hasSchema && (
         />
       )}
 
-      {/* Modal Update Expired */}
+      {/* 🆕 Modal Resign */}
+{formModal && (formModal.mode === 'resign' || formModal.mode === 'unresign') && (
+  <ResignModal
+    row={formModal.row}
+    mode={formModal.mode}
+    onClose={() => setFormModal(null)}
+    onSuccess={() => { setFormModal(null); onReload() }}
+  />
+)}
+
       {formModal && formModal.mode === 'update_expired' && (
         <UpdateExpiredModal
           row={formModal.row}
@@ -3007,6 +3217,199 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
             <button type="button" onClick={onClose} className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">BATAL</button>
             <button type="submit" disabled={saving} className="flex-1 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all">
               {saving ? 'PROSES SIMPAN...' : '💾 SIMPAN DATA'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ============ 🚪 RESIGN MODAL ============
+function ResignModal({ row, mode, onClose, onSuccess }: any) {
+  const isResign = mode === 'resign'
+  const [tglResign, setTglResign] = useState(new Date().toISOString().split('T')[0])
+  const [alasan, setAlasan] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function handleSubmit(e: any) {
+    e.preventDefault()
+    
+    if (isResign && !alasan.trim()) {
+      alert('❌ Alasan resign wajib diisi')
+      return
+    }
+
+    if (!confirm(isResign 
+      ? `⚠️ Yakin resign-kan karyawan "${row.nama}"?\n\nTanggal: ${tglResign}\nAlasan: ${alasan}`
+      : `⚠️ Yakin aktifkan kembali karyawan "${row.nama}"?\n\nData resign akan dihapus.`
+    )) return
+
+    setSaving(true)
+    try {
+      const values = isResign 
+        ? {
+            tanggal_resign: tglResign,
+            alasan_resign: alasan,
+            status_karyawan: 'Resign'
+          }
+        : {
+            tanggal_resign: null,
+            alasan_resign: null,
+            resign_by: null,
+            status_karyawan: 'Aktif'
+          }
+      
+      const res = await fetch('/api/crud', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          table: 'employees', 
+          id: row.id, 
+          values 
+        })
+      })
+      
+      const resData = await res.json()
+      
+      if (res.ok) {
+        alert(isResign 
+          ? '✅ Karyawan berhasil di-resign'
+          : '✅ Karyawan berhasil diaktifkan kembali'
+        )
+        onSuccess()
+      } else {
+        alert('❌ Gagal: ' + (resData.error || 'Terjadi kesalahan'))
+      }
+    } catch (err) {
+      alert('❌ Kesalahan Koneksi Server')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[99] flex items-center justify-center p-4">
+      <div className={`bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] border-4 border-white`}>
+        <div className={`p-6 ${isResign ? 'bg-orange-500' : 'bg-emerald-500'} text-white`}>
+          <div className="flex items-center gap-3">
+            <span className="text-4xl">{isResign ? '🚪' : '↩️'}</span>
+            <div>
+              <h3 className="font-black text-xl tracking-tight">
+                {isResign ? 'Resign Karyawan' : 'Aktifkan Karyawan'}
+              </h3>
+              <p className="text-white/80 text-xs font-bold">
+                {row.nama} • {row.nrp}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100">
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase">Jabatan</p>
+                <p className="font-bold text-slate-800">{row.jabatan || '-'}</p>
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase">Site</p>
+                <p className="font-bold text-slate-800">{row.site || '-'}</p>
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase">Tgl Masuk</p>
+                <p className="font-bold text-slate-800">{row.tanggal_masuk || '-'}</p>
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase">Masa Kerja</p>
+                <p className="font-bold text-blue-600">{row._masa_kerja || '-'}</p>
+              </div>
+            </div>
+          </div>
+
+          {isResign ? (
+            <>
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+                  Tanggal Resign <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={tglResign}
+                  onChange={e => setTglResign(e.target.value)}
+                  className="w-full p-4 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-orange-500 outline-none"
+                  required
+                />
+              </div>
+{/* 🆕 Field POH (informasi saja) */}
+{row.poh && (
+  <div className="bg-slate-100 p-3 rounded-xl">
+    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">POH (Point of Hire)</p>
+    <p className="text-sm font-bold text-slate-700 mt-1">📍 {row.poh}</p>
+  </div>
+)}
+
+<div>
+  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+    Alasan Resign <span className="text-rose-500">*</span>
+  </label>
+
+                <select
+                  value={alasan}
+                  onChange={e => setAlasan(e.target.value)}
+                  className="w-full p-4 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:bg-white focus:border-orange-500 outline-none"
+                  required
+                >
+                  <option value="">-- Pilih Alasan --</option>
+                  <option value="Mengundurkan Diri">Mengundurkan Diri</option>
+                  <option value="Kontrak Habis">Kontrak Habis</option>
+                  <option value="Pensiun">Pensiun</option>
+                  <option value="PHK">PHK</option>
+                  <option value="Meninggal Dunia">Meninggal Dunia</option>
+                  <option value="Pindah Perusahaan">Pindah Perusahaan</option>
+                  <option value="Alasan Keluarga">Alasan Keluarga</option>
+                  <option value="Kesehatan">Kesehatan</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+              </div>
+
+              <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                <p className="text-[10px] font-bold text-orange-700">
+                  ⚠️ Setelah resign: Status karyawan berubah, tidak bisa clock in/out, tidak muncul di roster
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+              <p className="text-sm font-bold text-emerald-700 mb-2">
+                Karyawan ini akan diaktifkan kembali.
+              </p>
+              <div className="text-[11px] text-emerald-600 space-y-1">
+                <p>• Tanggal resign akan dihapus</p>
+                <p>• Alasan resign akan dihapus</p>
+                <p>• Status kembali ke "Aktif"</p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:bg-slate-200"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className={`flex-1 py-4 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 ${
+                isResign 
+                  ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' 
+                  : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200'
+              } disabled:opacity-50`}
+            >
+              {saving ? 'PROSES...' : (isResign ? '🚪 RESIGN' : '↩️ AKTIFKAN')}
             </button>
           </div>
         </form>
