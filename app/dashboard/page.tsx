@@ -2237,6 +2237,7 @@ function AbsensiClockView({ title }: any) {
               let statusLabel = 'HADIR';
               let statusColor = { dot: 'bg-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50' };
               if (ket.includes('TERLAMBAT')) { statusLabel = 'TERLAMBAT'; statusColor = { dot: 'bg-amber-500', text: 'text-amber-600', bg: 'bg-amber-50' }; }
+                            else if (ket.includes('BELUM ABSEN')) { statusLabel = 'BELUM'; statusColor = { dot: 'bg-slate-300', text: 'text-slate-500', bg: 'bg-slate-50' }; }
               else if (ket.includes('MANGKIR') || ket.includes('TIDAK ADA')) { statusLabel = 'MANGKIR'; statusColor = { dot: 'bg-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' }; }
               else if (item.actual === 'OFF' || item.actual === 'MASUK OFF') { statusLabel = 'OFF'; statusColor = { dot: 'bg-slate-300', text: 'text-slate-400', bg: 'bg-slate-50' }; }
               else if (item.actual === 'SAKIT') { statusLabel = 'SAKIT'; statusColor = { dot: 'bg-blue-500', text: 'text-blue-600', bg: 'bg-blue-50' }; }
@@ -4045,7 +4046,8 @@ function RiwayatAbsensiCustom({ data }: any) {
     let matchStatus = true
     if (filterStatus === 'HADIR') matchStatus = ket.includes('SUKSES') && !ket.includes('TERLAMBAT')
     else if (filterStatus === 'TERLAMBAT') matchStatus = ket.includes('TERLAMBAT')
-    else if (filterStatus === 'MANGKIR') matchStatus = ket.includes('MANGKIR') || ket.includes('TIDAK ADA')
+     else if (filterStatus === 'MANGKIR') matchStatus = (ket.includes('MANGKIR') || ket.includes('TIDAK ADA')) && !ket.includes('BELUM ABSEN')
+    else if (filterStatus === 'BELUM') matchStatus = ket.includes('BELUM ABSEN')
     else if (filterStatus === 'SAKIT') matchStatus = actual === 'SAKIT'
     else if (filterStatus === 'IZIN') matchStatus = ket.includes('IZIN') || ket.includes('CUTI')
     else if (filterStatus === 'OFF') matchStatus = actual === 'OFF'
@@ -4063,7 +4065,11 @@ function RiwayatAbsensiCustom({ data }: any) {
     ).length,
     mangkir: allRows.filter((r: any) => {
       const ket = String(r.keterangan || '').toUpperCase()
-      return ket.includes('MANGKIR') || ket.includes('TIDAK ADA')
+      return (ket.includes('MANGKIR') || ket.includes('TIDAK ADA')) && !ket.includes('BELUM ABSEN')
+    }).length,
+    belum: allRows.filter((r: any) => {
+      const ket = String(r.keterangan || '').toUpperCase()
+      return ket.includes('BELUM ABSEN')
     }).length,
     off: allRows.filter((r: any) =>
       String(r.actual || '').toUpperCase() === 'OFF'
@@ -4090,12 +4096,13 @@ function RiwayatAbsensiCustom({ data }: any) {
           Roster Shift vs Data Absensi • Bulan Berjalan
         </p>
 
-        <div className="grid grid-cols-4 gap-1.5 lg:gap-2 mt-2.5 lg:mt-4">
+        <div className="grid grid-cols-5 gap-1.5 lg:gap-2 mt-2.5 lg:mt-4">
           {[
             { label: 'Hadir', val: stats.hadir, color: 'bg-emerald-500/20 text-emerald-200' },
             { label: 'Telat', val: stats.terlambat, color: 'bg-amber-500/20 text-amber-200' },
             { label: 'Mangkir', val: stats.mangkir, color: 'bg-rose-500/20 text-rose-200' },
-            { label: 'OFF', val: stats.off, color: 'bg-slate-500/20 text-slate-300' },
+            { label: 'Belum', val: stats.belum, color: 'bg-slate-500/20 text-slate-300' },
+            { label: 'OFF', val: stats.off, color: 'bg-slate-500/20 text-slate-200' },
           ].map((s) => (
             <div key={s.label} className={`${s.color} rounded-lg lg:rounded-xl p-1.5 lg:p-3 text-center`}>
               <p className="text-lg lg:text-3xl font-black leading-none">{s.val}</p>
@@ -4129,6 +4136,7 @@ function RiwayatAbsensiCustom({ data }: any) {
             <option value="ALL">🎛️ Semua</option>
             <option value="HADIR">✅ Hadir</option>
             <option value="TERLAMBAT">⚠️ Telat</option>
+              <option value="BELUM">⏳ Belum Absen</option>
             <option value="MANGKIR">❌ Mangkir</option>
             <option value="SAKIT">🤒 Sakit</option>
             <option value="IZIN">📋 Izin/Cuti</option>
@@ -4163,13 +4171,16 @@ function RiwayatAbsensiCustom({ data }: any) {
                 </tr>
               ) : rows.map((r: any, i: number) => {
                 const ket = String(r.keterangan || '').toUpperCase()
+                const isBelum = ket.includes('BELUM ABSEN')
                 const isHadir = ket.includes('SUKSES') && !ket.includes('TERLAMBAT')
                 const isTerlambat = ket.includes('TERLAMBAT')
-                const isMangkir = ket.includes('MANGKIR') || ket.includes('TIDAK ADA')
+                const isMangkir = (ket.includes('MANGKIR') || ket.includes('TIDAK ADA')) && !isBelum
                 const isSakit = String(r.actual || '').toUpperCase() === 'SAKIT'
                 const isOff = String(r.actual || '').toUpperCase() === 'OFF'
 
-                const statusConfig = isTerlambat
+                const statusConfig = isBelum
+                  ? { label: '⏳ Belum Absen', cls: 'bg-slate-50 text-slate-500 border-slate-200' }
+                  : isTerlambat
                   ? { label: '⚠️ Terlambat', cls: 'bg-amber-50 text-amber-700 border-amber-200' }
                   : isHadir
                   ? { label: '✅ Hadir', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' }

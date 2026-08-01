@@ -125,8 +125,9 @@ export async function GET(request: NextRequest) {
         .single()
 
       const siteTz = (siteConfig?.timezone || DEFAULT_TIMEZONE) as Timezone
+    const todaySite = getSiteDate(null, siteTz)  // ⭐ NEW: tanggal hari ini di TZ site
 
-      const finalRows = (rosters || []).map((r: any) => {
+    const finalRows = (rosters || []).map((r: any) => {
         const absensi = attendance?.find((a: any) => String(a.tanggal) === String(r.tanggal))
         const buktiSakit = evidences?.find((e: any) => String(e.tanggal) === String(r.tanggal))
         let actual = "-"; let evident = "-"; let keterangan = ""
@@ -145,15 +146,24 @@ export async function GET(request: NextRequest) {
           keterangan = buktiSakit.keterangan || "SAKIT"
         } 
         else {
-          if (r.shift_code === 'OFF') { 
-            actual = "OFF"; keterangan = "-" 
+                  if (r.shift_code === 'OFF') { 
+          actual = "OFF"; keterangan = "-" 
+        }
+        else if (['S', 'M', 'P', 'L'].includes(r.shift_code)) { 
+          // ⭐ FIX: Cek apakah tanggal masih di masa depan
+          if (String(r.tanggal) > todaySite) {
+            // Belum kejadian → jangan langsung MANGKIR
+            actual = r.shift_code === 'M' ? 'MALAM' : 'SIANG'
+            keterangan = "BELUM ABSEN"
+          } else {
+            // Sudah lewat & tidak ada absen → MANGKIR beneran
+            actual = "MANGKIR"
+            keterangan = "TIDAK ADA ABSENSI"
           }
-          else if (['S', 'M', 'P', 'L'].includes(r.shift_code)) { 
-            actual = "MANGKIR"; keterangan = "TIDAK ADA ABSENSI" 
-          }
-          else { 
-            actual = r.shift_code || "-"; keterangan = "IZIN / CUTI" 
-          }
+        }
+        else { 
+          actual = r.shift_code || "-"; keterangan = "IZIN / CUTI" 
+        }
         }
         return { tanggal: r.tanggal, roster: r.shift_code, actual, evident, keterangan, is_foto: !!buktiSakit }
       })
