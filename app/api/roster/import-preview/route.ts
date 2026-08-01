@@ -8,7 +8,7 @@ import ExcelJS from 'exceljs'
 
 const VALID_SHIFTS = ['S','M','OFF','CR','CT','LV','ID','TR','SCK','MCK','I','IR','A']
 
-const NRP_HEADERS = ['nrp','id ss6','id','no ss6','id ss','no','nomor','nik','id karyawan','no karyawan']
+const NRP_HEADERS = ['id ss6','no ss6','id ss','id karyawan','no karyawan','nrp','nik','id']
 const NAMA_HEADERS = ['nama','nama operator','nama karyawan','name','nama lengkap','nama pekerja']
 const UNIT_HEADERS = ['unit','no unit','kode unit']
 const JABATAN_HEADERS = ['jabatan','posisi','position','role']
@@ -57,15 +57,30 @@ function normalizeUnit(raw: any): string | null {
 
 /**
  * Cek apakah row adalah baris ringkasan (bukan data karyawan)
- * Ciri ringkasan: mengandung kata "RINGKASAN", "OFF/CUTI", "SHIFT", "DEPT.", dll
+ * 
+ * FIX: Sebelumnya keyword "HELPER PLANT", "WELDER", "DRIVER LV", "STAFF"
+ * bikin row karyawan dengan jabatan tsb ke-skip → data hilang!
+ * 
+ * Strategi baru:
+ * 1. Kalau ada NRP (angka 4+ digit) di kolom awal, PASTI row karyawan → BUKAN summary
+ * 2. Kalau tidak ada NRP, baru cek keyword ringkasan di kolom awal saja
  */
 function isSummaryRow(rowValues: any[]): boolean {
-  const text = rowValues.map(v => String(v || '').trim().toUpperCase()).join(' ')
+  // Ambil 6 kolom pertama saja (label ringkasan biasanya di sini)
+  const firstCells = rowValues.slice(0, 6)
+    .map(v => String(v || '').trim().toUpperCase())
+
+  // Kalau ada NRP (angka 4+ digit) → pasti row karyawan, BUKAN summary
+  const hasNRP = firstCells.some(v => /^\d{4,}$/.test(v))
+  if (hasNRP) return false
+
+  // Kalau tidak ada NRP, cek keyword summary di kolom awal
+  const text = firstCells.join(' ')
   const keywords = [
     'RINGKASAN', 'OFF/CUTI', 'OFF / CUTI',
     'SHIFT SIANG', 'SHIFT MALAM', 'DEPT.',
-    'DAY SHIFT', 'NIGHT SHIFT', 'STAFF', 'DRIVER LV',
-    'HELPER PLANT', 'SERVICE', 'WELDER', 'TROUBLESHOOT'
+    'DAY SHIFT', 'NIGHT SHIFT',
+    'TOTAL', 'JUMLAH', 'SUB TOTAL', 'SUBTOTAL', 'GRAND TOTAL'
   ]
   return keywords.some(k => text.includes(k))
 }
@@ -202,7 +217,11 @@ export async function POST(req: NextRequest) {
       empQuery = empQuery.eq('site', site)
     }
 
-    const { data: employees } = await empQuery
+    const { data: employees, error: empErr } = await empQuery
+
+    if (empErr) {
+      return NextResponse.json({ error: 'Gagal ambil data karyawan: ' + empErr.message }, { status: 500 })
+    }
 
     // Buat map dengan support leading zero
     const empMap = new Map<string, any>()

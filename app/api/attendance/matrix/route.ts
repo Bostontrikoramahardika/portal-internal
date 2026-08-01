@@ -1,7 +1,6 @@
-// app/api/attendance/matrix/route.ts v3.0
-// v3.0 - Chat 30 FINAL: Multi-timezone aware
-// - todayWita → todaySite (berdasarkan timezone site user)
-// - Backward compatible dengan semua logic role-based
+// app/api/attendance/matrix/route.ts v3.1
+// v3.1 - Fix Supabase limit 1000: pakai pagination via .range()
+// v3.0 - Chat 30: Multi-timezone aware
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
@@ -99,8 +98,7 @@ export async function GET(req: NextRequest) {
   const jmlHari   = new Date(tahun, bln, 0).getDate()
   const endDate   = `${tahun}-${String(bln).padStart(2,'0')}-${String(jmlHari).padStart(2,'0')}`
 
-  // ⭐ CHAT 30: Get today berdasarkan timezone site user
-  // Ambil timezone dari site user (fallback WITA)
+  // Get today berdasarkan timezone site user
   let siteTz: Timezone = DEFAULT_TIMEZONE
   if (session.site) {
     const { data: siteConfig } = await supabaseAdmin
@@ -220,27 +218,69 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  const { data: rosters } = await supabaseAdmin
-    .from('rosters')
-    .select('nrp, tanggal, shift_code')
-    .in('nrp', nrpList)
-    .gte('tanggal', startDate)
-    .lte('tanggal', endDate)
+  // ═══════════════════════════════════════════════════
+  // Fetch dengan pagination (bypass Supabase default limit 1000)
+  // ═══════════════════════════════════════════════════
+  async function fetchAllRosters(): Promise<any[]> {
+    const PAGE_SIZE = 1000
+    let all: any[] = []
+    let from = 0
+    while (true) {
+      const { data, error } = await supabaseAdmin
+        .from('rosters')
+        .select('nrp, tanggal, shift_code')
+        .in('nrp', nrpList)
+        .gte('tanggal', startDate)
+        .lte('tanggal', endDate)
+        .range(from, from + PAGE_SIZE - 1)
+      if (error) throw error
+      if (!data || data.length === 0) break
+      all = all.concat(data)
+      if (data.length < PAGE_SIZE) break
+      from += PAGE_SIZE
+    }
+    return all
+  }
 
-  const { data: attendances } = await supabaseAdmin
-    .from('attendance')
-    .select('nrp, tanggal, shift, clock_in, clock_out, status, jam_kerja_menit, terlambat_menit, clock_in_lokasi, clock_out_lokasi, clock_in_lat, clock_in_lng, clock_out_lat, clock_out_lng, keterangan')
-    .in('nrp', nrpList)
-    .gte('tanggal', startDate)
-    .lte('tanggal', endDate)
+  async function fetchAllAttendance(): Promise<any[]> {
+    const PAGE_SIZE = 1000
+    let all: any[] = []
+    let from = 0
+    while (true) {
+      const { data, error } = await supabaseAdmin
+        .from('attendance')
+        .select('nrp, tanggal, shift, clock_in, clock_out, status, jam_kerja_menit, terlambat_menit, clock_in_lokasi, clock_out_lokasi, clock_in_lat, clock_in_lng, clock_out_lat, clock_out_lng, keterangan')
+        .in('nrp', nrpList)
+        .gte('tanggal', startDate)
+        .lte('tanggal', endDate)
+        .range(from, from + PAGE_SIZE - 1)
+      if (error) throw error
+      if (!data || data.length === 0) break
+      all = all.concat(data)
+      if (data.length < PAGE_SIZE) break
+      from += PAGE_SIZE
+    }
+    return all
+  }
+
+  let rosters: any[] = []
+  let attendances: any[] = []
+  try {
+    rosters = await fetchAllRosters()
+    attendances = await fetchAllAttendance()
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Gagal fetch data' }, { status: 500 })
+  }
+
+  
 
   const rosterMap: Record<string, string> = {}
-  ;(rosters || []).forEach((r: any) => {
+  rosters.forEach((r: any) => {
     rosterMap[`${r.nrp}_${r.tanggal}`] = r.shift_code
   })
 
   const attMap: Record<string, any> = {}
-  ;(attendances || []).forEach((a: any) => {
+  attendances.forEach((a: any) => {
     attMap[`${a.nrp}_${a.tanggal}`] = a
   })
 
@@ -256,7 +296,6 @@ export async function GET(req: NextRequest) {
       const roster = rosterMap[`${emp.nrp}_${tgl}`] || null
       const att    = attMap[`${emp.nrp}_${tgl}`] || null
 
-      // ⭐ CHAT 30: Compare vs todaySite (bukan hardcode WITA)
       const isFuture = tgl > todaySite
       const isAfterResign = !!(resignDate && tgl > resignDate)
 
@@ -351,8 +390,8 @@ export async function GET(req: NextRequest) {
     ok: true,
     bulan,
     jmlHari,
-    todayWita: todaySite,  // Keep old field name for backward compat with frontend
-    todaySite,             // New field name
+    todayWita: todaySite,  // Backward compat
+    todaySite,
     siteTimezone: siteTz,
     groups,
     permission: {
