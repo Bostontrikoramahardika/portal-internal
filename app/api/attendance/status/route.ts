@@ -1,147 +1,153 @@
 // app/api/attendance/status/route.ts
-// v6.0 - FINAL FIX untuk kasus shift malam sudah clock-out
-// 
-// Perubahan dari v5.0:
-// - Kalau kemarin shift MALAM SUDAH clock-out & sekarang < jam 12 → tetap tampilkan
-//   (biar UI mobile tampilkan "SHIFT SELESAI", bukan "CLOCK IN")
-// - Logic v5.0 (belum clock-out) tetap dipertahankan
-//
-// Aman: tidak menulis/mengubah data attendance, cuma read logic
-// Kompatibel: frontend sudah handle 3 kondisi (no-in / no-out / done)
+// v6.4 FINAL - Fix shift malam sudah clock-out tetap tampil SHIFT SELESAI (< jam 12)
+// - Store UTC, detect via timezone SITE (dari sites_config)
+// - Compatible dengan library timezone yang ada (getSiteDate, getSiteHour, formatSiteTime)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
-import { supabase } from '@/app/lib/supabase'
-import { 
-  getSiteDate, 
-  getSiteFirstDayOfMonth, 
+import { supabase, supabaseAdmin } from '@/app/lib/supabase'
+import {
+  getSiteDate,
   getSiteHour,
-  Timezone, 
-  DEFAULT_TIMEZONE 
+  formatSiteTime,
+  Timezone,
 } from '@/app/lib/timezone'
 
+type AttendanceRecord = {
+  id: string
+  nrp: string
+  tanggal: string
+  shift: string
+  clock_in: string | null
+  clock_out: string | null
+  [key: string]: any
+}
+
 export async function GET(request: NextRequest) {
+  // ─── 1. Auth ────────────────────────────────────────────────────────────
   const token = request.cookies.get('session_token')?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   const session = await getSession(token)
-  if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+  if (!session) {
+    return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+  }
+
+  const nrp = session.nrp
+  if (!nrp) {
+    return NextResponse.json({ error: 'NRP tidak ditemukan' }, { status: 400 })
+  }
 
   try {
-    const { data: emp } = await supabase
+    // ─── 2. Ambil site karyawan ──────────────────────────────────────────
+    const { data: employee } = await supabaseAdmin
       .from('employees')
-      .select('site, nama, jabatan, departemen')
-      .eq('nrp', session.nrp)
+      .select('site')
+      .eq('nrp', nrp)
       .single()
 
-    if (!emp) {
-      return NextResponse.json({ error: 'Data karyawan tidak ditemukan' }, { status: 404 })
-    }
+    const site = employee?.site || 'PPA-MLP'
 
+    // ─── 3. Ambil timezone dari sites_config ─────────────────────────────
     const { data: siteConfig } = await supabase
       .from('sites_config')
-      .select('*')
-      .eq('nama_site', emp.site)
+      .select('timezone')
+      .eq('site', site)
       .single()
 
-    const siteTz: Timezone = (siteConfig?.timezone || DEFAULT_TIMEZONE) as Timezone
-    const today = getSiteDate(null, siteTz)
-    const firstDayStr = getSiteFirstDayOfMonth(siteTz)
-    const currentHour = getSiteHour(null, siteTz)
-    
-    const currentShift = (currentHour >= 4 && currentHour < 16) ? 'SIANG' : 'MALAM'
+    const siteTz: Timezone = (siteConfig?.timezone || 'Asia/Makassar') as Timezone
 
-    // Get yesterday
-    const yesterdayDate = new Date(today + 'T00:00:00Z')
-    yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1)
-    const yesterday = yesterdayDate.toISOString().split('T')[0]
+    // ─── 4. Hitung tanggal today/yesterday di TZ site ────────────────────
+    const now = new Date()
+    const today = getSiteDate(now, siteTz)
+    const currentHour = getSiteHour(now, siteTz)
 
-    // Get ALL records dari kemarin & hari ini
-    const { data: allRecords } = await supabase
+    // Hitung yesterday: kurangi 1 hari dari today (YYYY-MM-DD)
+    const todayObj = new Date(`${today}T00:00:00Z`)
+    todayObj.setUTCDate(todayObj.getUTCDate() - 1)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const yesterday = `${todayObj.getUTCFullYear()}-${pad(
+      todayObj.getUTCMonth() + 1
+    )}-${pad(todayObj.getUTCDate())}`
+
+    // ─── 5. Ambil record attendance today + yesterday ────────────────────
+    const { data: records, error } = await supabaseAdmin
       .from('attendance')
       .select('*')
-      .eq('nrp', session.nrp)
-      .in('tanggal', [yesterday, today])
+      .eq('nrp', nrp)
+      .in('tanggal', [today, yesterday])
       .order('clock_in', { ascending: false })
 
-    const records = allRecords || []
+    if (error) {
+      console.error('[status/route.ts] DB error:', error)
+      return NextResponse.json({ error: 'Database error' }, { status: 500 })
+    }
 
-    // ═══════════════════════════════════════════════════
-    // SMART DETECTION untuk "today" attendance
-    // 
-    // Prinsip: Yang jadi acuan adalah CLOCK IN (data actual),
-    //          BUKAN roster. Roster bisa berubah sesuai lapangan.
-    // ═══════════════════════════════════════════════════
-    let todayAttendance: any = null
-    
-    // ── STEP 1: Cari record HARI INI (prioritas tertinggi) ──
-    const todayRecord = records.find((r: any) => r.tanggal === today)
-    
+    const typedRecords: AttendanceRecord[] = (records || []) as AttendanceRecord[]
+    let todayAttendance: AttendanceRecord | null = null
+
+    // ─── Step 1: Cari record HARI INI ────────────────────────────────────
+    // (shift SIANG hari ini, atau MALAM yang clock-in hari ini)
+    const todayRecord = typedRecords.find(
+      (r: AttendanceRecord) => r.tanggal === today && r.clock_in
+    )
+
     if (todayRecord) {
       todayAttendance = todayRecord
-    } else {
-      // ── STEP 2: Cek record KEMARIN (mungkin shift malam lintas hari) ──
-      const yesterdayRecord = records.find(
-        (r: any) => r.tanggal === yesterday && r.clock_in && r.shift === 'MALAM'
+    }
+    // ─── Step 2: Cari record KEMARIN shift MALAM (< jam 12) ──────────────
+    // v6.0 FIX: tampilkan APAPUN status clock_out-nya
+    //   - clock_out = null  → UI tampil tombol "CLOCK OUT"
+    //   - clock_out = ada   → UI tampil "SHIFT SELESAI"
+    // v5.0 BUG: hanya return kalau clock_out=null → sudah clock-out → today=null → UI tampil "CLOCK IN" (SALAH)
+    else if (currentHour < 12) {
+      const yesterdayMalam = typedRecords.find(
+        (r: AttendanceRecord) =>
+          r.tanggal === yesterday && r.shift === 'MALAM' && r.clock_in
       )
-      
-      if (yesterdayRecord && currentHour < 12) {
-        // Kemarin shift MALAM & sekarang masih pagi (< jam 12)
-        // Tampilkan record ini, apapun status clock_out-nya:
-        //   - Belum clock-out → UI tampilkan tombol "CLOCK OUT"
-        //   - Sudah clock-out → UI tampilkan "SHIFT SELESAI" 
-        //                       (biar tidak muncul tombol "CLOCK IN" prematur)
-        todayAttendance = yesterdayRecord
+      if (yesterdayMalam) {
+        todayAttendance = yesterdayMalam
       }
-      // Kalau sudah >= jam 12 → biarkan null (siap-siap shift berikutnya)
-      // Kalau kemarin SIANG lupa clock-out → biarkan null (popup close-previous handle)
     }
 
-    // ═══════════════════════════════════════════════════
-    // Stats bulan ini
-    // ═══════════════════════════════════════════════════
-    const { data: monthAttendance } = await supabase
-      .from('attendance')
-      .select('status')
-      .eq('nrp', session.nrp)
-      .gte('tanggal', firstDayStr)
-      .lte('tanggal', today)
-
-    const stats = {
-      hadir: 0,
-      terlambat: 0,
-      setengah_hari: 0,
-      alpha: 0,
-      cuti: 0,
-      sakit: 0,
-      izin: 0,
-      total: (monthAttendance || []).length
+    // ─── 6. Format jam untuk display (opsional, kalau frontend butuh) ────
+    let clockInDisplay: string | null = null
+    let clockOutDisplay: string | null = null
+    if (todayAttendance?.clock_in) {
+      clockInDisplay = formatSiteTime(todayAttendance.clock_in, siteTz)
+    }
+    if (todayAttendance?.clock_out) {
+      clockOutDisplay = formatSiteTime(todayAttendance.clock_out, siteTz)
     }
 
-    ;(monthAttendance || []).forEach((a: any) => {
-      const s = String(a.status).toLowerCase()
-      if (s === 'hadir') stats.hadir++
-      else if (s === 'terlambat') stats.terlambat++
-      else if (s === 'setengah_hari') stats.setengah_hari++
-      else if (s === 'alpha') stats.alpha++
-      else if (s === 'cuti') stats.cuti++
-      else if (s === 'sakit') stats.sakit++
-      else if (s === 'izin') stats.izin++
-    })
-
+    // ─── 7. Return response ──────────────────────────────────────────────
     return NextResponse.json({
-      employee: emp,
-      site_config: siteConfig,
-      today: todayAttendance || null,
-      current_shift: currentShift,
-      site_date_today: today,
-      all_recent_records: records,
-      stats,
-      server_time: new Date().toISOString(),
-      site_timezone: siteTz
+      today: todayAttendance,
+      currentTime: now.toISOString(),
+      timezone: siteTz,
+      clockInDisplay,
+      clockOutDisplay,
+      debug: {
+        nrp,
+        site,
+        today,
+        yesterday,
+        currentHour,
+        recordsFound: typedRecords.length,
+        source: todayAttendance
+          ? todayAttendance.tanggal === today
+            ? 'today'
+            : 'yesterday-malam'
+          : 'none',
+      },
     })
-
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err) {
+    console.error('[status/route.ts] Unexpected error:', err)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
