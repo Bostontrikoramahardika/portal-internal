@@ -90,9 +90,20 @@ export async function GET(request: NextRequest) {
     const rolesLower = (session.roles || []).map((r: string) => r.toLowerCase())
     const isSuperAdmin = session.is_super_admin || false
     
-    const menuInfo = isSuperAdmin 
-      ? menusFound[0] 
-      : menusFound.find((m: any) => rolesLower.some((r: string) => r === (m.role || '').toLowerCase()))
+    // ⭐ FIX: Prioritas access_mode yang lebih luas (ALL/CRUD > TEAM_ATASAN > SELF)
+const priorityScore = (m: any): number => {
+  const mode = (m.access_mode || '').toUpperCase()
+  if (mode === 'ALL' || mode === 'CRUD') return 3
+  if (mode === 'TEAM_ATASAN' || mode === 'APPROVAL_ATASAN') return 2
+  if (mode === 'SELF') return 1
+  return 0
+}
+
+const menuInfo = isSuperAdmin 
+  ? [...menusFound].sort((a: any, b: any) => priorityScore(b) - priorityScore(a))[0]
+  : [...menusFound]
+      .filter((m: any) => rolesLower.some((r: string) => r === (m.role || '').toLowerCase()))
+      .sort((a: any, b: any) => priorityScore(b) - priorityScore(a))[0]
     
     if (!menuInfo) return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
 

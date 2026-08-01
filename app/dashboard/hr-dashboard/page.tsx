@@ -1,10 +1,12 @@
 'use client'
 
 // ═══════════════════════════════════════════════════════════════
-// HR DASHBOARD v4.0 - Full Featured
+// HR DASHBOARD v4.1 - Full Featured (CLEAN)
 // - Tab bar dinamis dari database
 // - Tab Karyawan: pakai komponen EmployeeTable (full featured)
 // - Tab lain: Coming Soon
+// - ✅ FIX Chat 32: Root cause fixed di /api/data/route.ts
+//   (prioritas access_mode ALL/CRUD > TEAM_ATASAN untuk multi-role user)
 // ═══════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react'
@@ -87,9 +89,15 @@ export default function HRDashboardPage() {
 
       {/* CONTENT */}
       <div className="px-4 py-4 lg:px-6 lg:py-6">
-        {currentTab?.tab_action?.startsWith('REDIRECT:') && (
-          <EmployeeTable menuKey={currentTab.tab_action.split(':')[1]} />
-        )}
+        {currentTab?.tab_action?.startsWith('REDIRECT:') && (() => {
+          const targetMenuKey = currentTab.tab_action.split(':')[1] || ''
+          return (
+            <EmployeeTable 
+              key={targetMenuKey} 
+              menuKey={targetMenuKey} 
+            />
+          )
+        })()}
 
         {currentTab?.tab_action === 'COMING_SOON' && (
           <ComingSoon label={currentTab.menu_label} />
