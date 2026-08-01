@@ -167,6 +167,7 @@ const AUTO_REDIRECT_MAP: Record<string, string> = {
   plant_orders: '/part-orders',
   plant_admin: '/partbook/admin',
   hr_dashboard: '/dashboard/hr-dashboard',
+  monitoring_cuti_tiket: '/dashboard/dashboard-cuti',  // 🌴 TAMBAHKAN BARIS INI
 }
 
   const isStandalone = STANDALONE_MENUS.includes(menuKey)

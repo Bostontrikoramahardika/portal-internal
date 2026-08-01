@@ -98,13 +98,12 @@ export async function GET(request: NextRequest) {
     //    (tidak filter by tanggal, cukup filter by NRP untuk periode ini)
     // ══════════════════════════════════
     const { data: leaveData } = await supabase
-      .from('leave_requests')
-      .select('id, nrp, status_final, jenis_cuti, tanggal_mulai, tanggal_selesai, created_at, catatan_atasan, catatan_pjo')
-      .eq('jenis_cuti', 'CUTI KOMPENSASI')
-      .in('nrp', nrpList)
-      .gte('tanggal_mulai', firstDay)
-      .lte('tanggal_mulai', lastDay)
-      .order('created_at', { ascending: false })
+  .from('leave_requests')
+  .select('id, nrp, status_final, jenis_cuti, tanggal_mulai, tanggal_selesai, created_at, catatan_atasan, catatan_pjo')
+  .in('nrp', nrpList)
+  .gte('tanggal_mulai', firstDay)
+  .lte('tanggal_mulai', lastDay)
+  .order('created_at', { ascending: false })
 
     // Map: nrp → leave_request (ambil yang paling baru saja)
     const leaveMap = new Map<string, any>()
