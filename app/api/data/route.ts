@@ -73,6 +73,16 @@ function detectShiftFromLocalHour(jamStr: string, siteConfig?: any): string {
   return 'MALAM'
 }
 
+// ═══════════════════════════════════════════════════════════
+// HELPER: Normalize date ke YYYY-MM-DD (handle ISO string & Date object)
+// ═══════════════════════════════════════════════════════════
+function normalizeDate(d: any): string {
+  if (!d) return ''
+  if (typeof d === 'string') return d.split('T')[0].split('+')[0].trim()
+  if (d instanceof Date) return d.toISOString().split('T')[0]
+  return String(d).split('T')[0]
+}
+
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get('session_token')?.value
@@ -126,7 +136,18 @@ const menuInfo = isSuperAdmin
       const nrpWithZero = nrpString.startsWith('0') ? nrpString : '0' + nrpString
 
       const { data: rosters } = await supabase.from('rosters').select('*').in('nrp', [nrpString, nrpWithZero]).order('tanggal', { ascending: false }).limit(62)
-      const { data: attendance } = await supabase.from('attendance').select('*').in('nrp', [nrpString, nrpWithZero])
+     // ⭐ FIX: Filter by date range biar tidak kena limit 1000
+const dateThreshold = new Date()
+dateThreshold.setDate(dateThreshold.getDate() - 90) // ambil 90 hari terakhir
+const threshold = dateThreshold.toISOString().split('T')[0]
+
+const { data: attendance } = await supabase
+  .from('attendance')
+  .select('*')
+  .in('nrp', [nrpString, nrpWithZero])
+  .gte('tanggal', threshold)
+  .order('tanggal', { ascending: false })
+  
       const { data: evidences } = await supabase.from('attendance_evidences').select('*').ilike('nama_karyawan', session.nama)
 
       const { data: siteConfig } = await supabase
@@ -139,8 +160,8 @@ const menuInfo = isSuperAdmin
     const todaySite = getSiteDate(null, siteTz)  // ⭐ NEW: tanggal hari ini di TZ site
 
     const finalRows = (rosters || []).map((r: any) => {
-        const absensi = attendance?.find((a: any) => String(a.tanggal) === String(r.tanggal))
-        const buktiSakit = evidences?.find((e: any) => String(e.tanggal) === String(r.tanggal))
+        const absensi = attendance?.find((a: any) => normalizeDate(a.tanggal) === normalizeDate(r.tanggal))
+        const buktiSakit = evidences?.find((e: any) => normalizeDate(e.tanggal) === normalizeDate(r.tanggal))
         let actual = "-"; let evident = "-"; let keterangan = ""
 
         if (absensi) {
