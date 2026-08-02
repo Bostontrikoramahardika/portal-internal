@@ -162,7 +162,9 @@ export function detectShiftFromClockIn(
   tz: Timezone = DEFAULT_TIMEZONE
 ): 'SIANG' | 'MALAM' {
   const hour = getSiteHour(clockInUTC, tz)
-  return (hour >= 4 && hour < 16) ? 'SIANG' : 'MALAM'
+  // 05:00 - 16:59 → SIANG
+  // 17:00 - 04:59 → MALAM
+  return (hour >= 5 && hour < 17) ? 'SIANG' : 'MALAM'
 }
 
 /**

@@ -60,17 +60,10 @@ function detectShiftFromLocalHour(jamStr: string, siteConfig?: any): string {
   const jam = parseInt(jamStr.split(':')[0])
   if (isNaN(jam)) return 'HADIR'
 
-  const siangStart = siteConfig?.siang_jam_masuk 
-    ? parseInt(siteConfig.siang_jam_masuk.split(':')[0]) 
-    : 6
-  const malamStart = siteConfig?.malam_jam_masuk 
-    ? parseInt(siteConfig.malam_jam_masuk.split(':')[0]) 
-    : 18
-
-  if (jam >= siangStart && jam < malamStart) {
-    return 'SIANG'
-  }
-  return 'MALAM'
+  // 05:00 - 16:59 → SIANG
+  // 17:00 - 04:59 → MALAM
+  // (sesuai aturan: siang 06:00-17:00, malam 18:00-05:00)
+  return (jam >= 5 && jam < 17) ? 'SIANG' : 'MALAM'
 }
 
 // ═══════════════════════════════════════════════════════════
