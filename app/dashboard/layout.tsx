@@ -360,8 +360,9 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [bottomSheetMenus, setBottomSheetMenus] = useState<MenuItem[]>([])
   const [bottomSheetTitle, setBottomSheetTitle] = useState('')
   const [notifCount, setNotifCount] = useState(0)
-const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdown: [] }, expired: { total: 0, critical: 0, breakdown: [] } })
+  const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdown: [] }, expired: { total: 0, critical: 0, breakdown: [] } })
   const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const [showScanTab, setShowScanTab] = useState(false)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -371,6 +372,7 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
     checkAuth()
     fetchNotif()
     initAutoSync()
+    setShowScanTab(true)
 
     // ✨ Dengerin sinyal dari halaman approval untuk update lonceng
     window.addEventListener('refreshNotif', fetchNotif);
@@ -753,7 +755,13 @@ async function checkAuth() {
 
     function handleTabClick(tab: typeof TAB_CONFIG[0]) {
         // Handle tab Plant → tampilkan bottom sheet menu
-    if (tab.key === 'plant') {
+     if (tab.key === 'scan') {
+    setActiveTab('scan')
+    router.push('/dashboard/scan-qr')
+    return
+  }
+    
+        if (tab.key === 'plant') {
       const tabMenus = menus.filter(m => tab.customMatch(m))
       tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
       setBottomSheetMenus(tabMenus)
@@ -1028,19 +1036,78 @@ if (menuKey === 'import_roster_bulk') {
       </main>
 
       {/* BOTTOM NAVIGATION MOBILE */}
-            <nav className="lg:hidden fixed bottom-3 left-3 right-3 z-50 bg-white/70 backdrop-blur-2xl border border-white/50 flex overflow-x-auto px-2 py-2 rounded-[1.8rem] shadow-[0_10px_40px_rgba(0,61,121,0.15)] no-scrollbar">
-        {visibleTabs.map(tab => (
-          <button 
-            key={tab.key} 
-            onClick={() => handleTabClick(tab)} 
-            className={`flex flex-col items-center min-w-[55px] flex-1 py-1 transition-all duration-300 ${activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'}`}
+           <nav className="lg:hidden fixed bottom-3 left-3 right-3 z-50 bg-white/70 backdrop-blur-2xl border border-white/50 flex overflow-x-auto px-2 py-2 rounded-[1.8rem] shadow-[0_10px_40px_rgba(0,61,121,0.15)] no-scrollbar">
+  {(() => {
+    const half = Math.ceil(visibleTabs.length / 2)
+    const leftTabs  = visibleTabs.slice(0, half)
+    const rightTabs = visibleTabs.slice(half)
+
+    return (
+      <>
+        {/* Tab kiri */}
+        {leftTabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => handleTabClick(tab)}
+            className={`flex flex-col items-center min-w-[55px] flex-1 py-1 transition-all duration-300 ${
+              activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'
+            }`}
           >
             <div className={`text-base mb-0.5 ${activeTab === tab.key ? '' : 'grayscale'}`}>{tab.icon}</div>
-            <span className={`text-[8px] tracking-tighter font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>{tab.label}</span>
-            {activeTab === tab.key && <div className="w-1 h-1 bg-[#003D79] rounded-full mt-0.5 animate-pulse"></div>}
+            <span className={`text-[8px] tracking-tighter font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>
+              {tab.label}
+            </span>
+            {activeTab === tab.key && <div className="w-1 h-1 bg-[#003D79] rounded-full mt-0.5 animate-pulse" />}
           </button>
         ))}
-      </nav>
+
+        {/* ✨ TAB SCAN — tengah, ikon beda */}
+        {showScanTab && (
+          <button
+            onClick={() => {
+              setActiveTab('scan')
+              router.push('/dashboard/scan-qr')
+            }}
+            className={`flex flex-col items-center min-w-[60px] flex-shrink-0 py-1 transition-all duration-300 relative ${
+              activeTab === 'scan' ? 'scale-110' : 'opacity-80'
+            }`}
+          >
+            {/* Ikon beda: lingkaran raised */}
+            <div className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 -mt-5 border-4 border-white ${
+              activeTab === 'scan'
+                ? 'bg-gradient-to-br from-[#003D79] to-[#0056b3] scale-110'
+                : 'bg-gradient-to-br from-slate-600 to-slate-800'
+            }`}>
+              <span className="text-xl">📷</span>
+            </div>
+            <span className={`text-[8px] tracking-tighter font-black uppercase mt-0.5 ${
+              activeTab === 'scan' ? 'text-[#003D79]' : 'text-slate-400'
+            }`}>
+              Scan
+            </span>
+          </button>
+        )}
+
+        {/* Tab kanan */}
+        {rightTabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => handleTabClick(tab)}
+            className={`flex flex-col items-center min-w-[55px] flex-1 py-1 transition-all duration-300 ${
+              activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'
+            }`}
+          >
+            <div className={`text-base mb-0.5 ${activeTab === tab.key ? '' : 'grayscale'}`}>{tab.icon}</div>
+            <span className={`text-[8px] tracking-tighter font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>
+              {tab.label}
+            </span>
+            {activeTab === tab.key && <div className="w-1 h-1 bg-[#003D79] rounded-full mt-0.5 animate-pulse" />}
+          </button>
+        ))}
+      </>
+    )
+  })()}
+</nav>
 
       {/* BOTTOM SHEET MENU */}
       {bottomSheetOpen && (

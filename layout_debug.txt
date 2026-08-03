@@ -1,0 +1,1200 @@
+﻿1: 'use client'
+2: 
+3: import { useEffect, useState, Suspense } from 'react'
+4: import { useRouter, useSearchParams } from 'next/navigation'
+5: import Image from 'next/image'
+6: import { AuthProvider } from '@/app/lib/AuthContext'
+7: import { saveUserCache, getUserCache, isCacheValid, saveMenusCache, getMenusCache } from '@/app/lib/auth-cache'
+8: import { initAutoSync } from '@/app/lib/sync-manager'
+9: import SyncIndicator from '@/app/dashboard/components/SyncIndicator'
+10: import ClockOutReminder from '@/app/dashboard/components/ClockOutReminder'
+11: import VerificationModal from '@/app/dashboard/components/VerificationModal'
+12: 
+13: interface User {
+14:   nrp: string
+15:   nrp_login?: string
+16:   nama: string
+17:   jabatan?: string
+18:   departemen?: string
+19:   site?: string
+20: }
+21: 
+22: interface MenuItem {
+23:   id: string
+24:   role: string
+25:   menu_key: string
+26:   menu_label: string
+27:   menu_icon: string
+28:   menu_group: string
+29:   sort_order: number
+30:   active?: boolean
+31: }
+32: 
+33: 
+34: 
+35: // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+36: // ðŸŽ¯ ROLE GROUPING v3.0 â€” FINAL DISCUSSION DRAFT
+37: // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+38: 
+39: const ALL_ROLES = [
+40:   'super_admin',
+41:   'director_ops',
+42:   'business_dev',
+43:   'manager_ops',
+44:   'hr_ho',
+45:   'spv_she_ho',
+46:   'pjo_site',
+47:   'she_site',
+48:   'hr_site',
+49:   'gl_produksi',
+50:   'gl_plant',
+51:   'admin_site',
+52:   'admin_plant',
+53:   'employee',
+54: ]
+55: 
+56: const LEADER_ROLES = [
+57:   'super_admin',
+58:   'gl_produksi',
+59:   'gl_plant',
+60:   'pjo_site',
+61: ]
+62: 
+63: const SAFETY_ROLES = [
+64:   'super_admin',
+65:   'she_site',
+66:   'spv_she_ho',
+67: ]
+68: 
+69: const HR_ROLES = [
+70:   'super_admin',
+71:   'hr_site',
+72:   'hr_ho',
+73:   'admin_site', // sesuai diskusi: admin_site dekat ke HR
+74: ]
+75: 
+76: const ADMIN_ROLES = [
+77:   'super_admin',
+78:   'admin_site',
+79: ]
+80: 
+81: const PLANT_ROLES = [
+82:   'super_admin',
+83:   'gl_plant',
+84:   'admin_plant',
+85:   'pjo_site',
+86: ]
+87: 
+88: const SITE_ROLES = [
+89:   'super_admin',
+90:   'pjo_site',
+91:   'admin_site',
+92: ]
+93: 
+94: const HO_ROLES = [
+95:   'super_admin',
+96:   'business_dev',
+97:   'manager_ops',
+98:   'director_ops',
+99: ]
+100: 
+101: const TAB_CONFIG = [
+102:   // 1. BASIC â€” ABSENSI
+103:   {
+104:     key: 'absensi',
+105:     label: 'Absensi',
+106:     icon: 'â°',
+107:     roles: ALL_ROLES,
+108:     customMatch: (m: MenuItem) => {
+109:       return (
+110:         m.menu_key === 'absensi_saya' ||
+111:         m.menu_key === 'riwayat_absensi' ||
+112:         m.menu_key === 'kelola_absensi' ||
+113:         m.menu_key === 'manajemen_absensi' ||
+114:         m.menu_key === 'rekap_absensi' ||
+115:         m.menu_key === 'monitor_absensi' ||
+116:         m.menu_key === 'export_absensi_matrix'
+117:       )
+118:     }
+119:   },
+120: 
+121:   // 2. BASIC â€” PENGAJUAN
+122:   {
+123:     key: 'pengajuan',
+124:     label: 'Pengajuan',
+125:     icon: 'ðŸ“‹',
+126:     roles: ALL_ROLES,
+127:     customMatch: (m: MenuItem) => {
+128:       return (
+129:         m.menu_key === 'form_cuti' ||
+130:         m.menu_key === 'cuti_saya' ||
+131:         m.menu_key === 'form_lembur' ||
+132:         m.menu_key === 'riwayat_lembur' ||
+133:         m.menu_key === 'evident_sakit' ||
+134:         m.menu_key === 'kelola_cuti' ||
+135:         m.menu_key === 'kelola_lembur' ||
+136:         m.menu_key === 'koreksi_absensi'
+137:       )
+138:     }
+139:   },
+140: 
+141:   // 3. BASIC â€” SAYA
+142:   {
+143:     key: 'saya',
+144:     label: 'Saya',
+145:     icon: 'ðŸ‘¤',
+146:     roles: ALL_ROLES,
+147:     customMatch: (m: MenuItem) => {
+148:       return (
+149:       
+150:         m.menu_key === 'data_saya' ||
+151:         m.menu_key === 'kpi_saya' ||
+152:         m.menu_key === 'pkwt_saya' ||
+153:         m.menu_key === 'sp_saya' ||
+154:         m.menu_key === 'roster_saya' ||
+155:         m.menu_key === 'bpjs_saya' ||
+156:         m.menu_key === 'simper_saya' ||
+157:         m.menu_key === 'apd_saya' ||
+158:         m.menu_key === 'mcu_saya' ||
+159:         m.menu_key === 'ganti_password'
+160:       )
+161:     }
+162:   },
+163: 
+164:   // 4. LEADER
+165:   {
+166:     key: 'leader',
+167:     label: 'Leader',
+168:     icon: 'ðŸ‘¥',
+169:     roles: LEADER_ROLES,
+170:     customMatch: (m: MenuItem) => {
+171:       return (
+172:         m.menu_key === 'approval_center' ||
+173:         m.menu_key === 'riwayat_approval' ||
+174:         m.menu_key === 'approval_koreksi' ||
+175:         m.menu_key === 'data_bawahan' ||
+176:         m.menu_key === 'cuti_bawahan' ||
+177:         m.menu_key === 'absensi_bawahan' ||
+178:         m.menu_key === 'roster_bawahan' ||
+179:         m.menu_key === 'kpi_bawahan' ||
+180:         m.menu_key === 'penilaian_bawahan' ||
+181:         m.menu_key === 'crew_on_duty' ||
+182:         m.menu_key === 'setting_unit' // sementara tetap di sini sampai revisi final
+183:       )
+184:     }
+185:   },
+186: 
+187:   // 5. SAFETY
+188:   {
+189:     key: 'safety',
+190:     label: 'Safety',
+191:     icon: 'ðŸ¦º',
+192:     roles: SAFETY_ROLES,
+193:     customMatch: (m: MenuItem) => {
+194:       return (
+195:         m.menu_key === 'kelola_apd' ||
+196:         m.menu_key === 'monitoring_apd'||
+197:         m.menu_key === 'kelola_event' 
+198:       )
+199:     }
+200:   },
+201: 
+202:   // 6. HR
+203:   {
+204:     key: 'hr',
+205:     label: 'HR',
+206:     icon: 'ðŸ—‚ï¸',
+207:     roles: HR_ROLES,
+208:     customMatch: (m: MenuItem) => {
+209:       return (
+210:       
+211:         m.menu_key === 'hr_dashboard' ||
+212:         m.menu_key === 'kelola_job_kategori' ||
+213:         m.menu_key === 'kelola_pengumuman' ||
+214:         m.menu_key === 'kelola_pkwt' ||
+215:         m.menu_key === 'kelola_sp' ||
+216:         m.menu_key === 'kelola_bpjs' ||
+217:         m.menu_key === 'kelola_mcu' ||
+218:         m.menu_key === 'kelola_simper' ||
+219:         m.menu_key === 'kelola_cuti' ||
+220:         m.menu_key === 'kelola_lembur' ||
+221:         m.menu_key === 'kelola_hak_cuti' ||
+222:         m.menu_key === 'data_sakit' ||
+223:         m.menu_key === 'monitoring_mcu' ||
+224:         m.menu_key === 'monitoring_cuti_tiket' ||
+225:         m.menu_key === 'kelola_bobot_kpi' ||
+226:         m.menu_key === 'import_karyawan' ||
+227:         m.menu_key === 'import_pkwt' ||
+228:         m.menu_key === 'import_kpi' ||
+229:         m.menu_key === 'import_sp' ||
+230:         m.menu_key === 'import_bpjs' ||
+231:         m.menu_key === 'import_mcu' ||
+232:         m.menu_key === 'import_mcu_bulk' ||
+233:         m.menu_key === 'import_simper' ||
+234:         m.menu_key === 'import_roster_bulk'||
+235:         m.menu_key === 'kelola_event' 
+236:       )
+237:     }
+238:   },
+239: 
+240:   // 7. ADMIN â€” KHUSUS ADMIN SITE
+241:   {
+242:     key: 'admin',
+243:     label: 'Admin',
+244:     icon: 'ðŸ§¾',
+245:     roles: ADMIN_ROLES,
+246:     customMatch: (m: MenuItem) => {
+247:       return (
+248:         m.menu_key === 'monitoring_expired' ||
+249:         m.menu_key === 'hr_dashboard' ||
+250:         m.menu_key === 'monitoring_roster_cr' ||
+251:         m.menu_key === 'monitoring_cuti_tiket' ||
+252:         m.menu_key === 'kelola_kpi' ||
+253:         m.menu_key === 'kelola_sp' ||
+254:         m.menu_key === 'manajemen_absensi' ||
+255:         m.menu_key === 'approval_center' ||
+256:         m.menu_key === 'riwayat_approval' ||
+257:          m.menu_key === 'kelola_event'   
+258:       )
+259:     }
+260:   },
+261: 
+262:   // 8. PLANT
+263:   {
+264:     key: 'plant',
+265:     label: 'Plant',
+266:     icon: 'ðŸšœ',
+267:     roles: PLANT_ROLES,
+268:     customMatch: (m: MenuItem) => {
+269:       return (
+270:         m.menu_key === 'plant_katalog' ||
+271:         m.menu_key === 'plant_orders' ||
+272:         m.menu_key === 'plant_admin'
+273:       )
+274:     }
+275:   },
+276: 
+277:   // 9. SITE
+278:   {
+279:     key: 'site',
+280:     label: 'Site',
+281:     icon: 'ðŸ¢',
+282:     roles: SITE_ROLES,
+283:     customMatch: (m: MenuItem) => {
+284:       return (
+285:         m.menu_key === 'kelola_unit' ||
+286:         m.menu_key === 'manajemen_absensi' ||
+287:         m.menu_key === 'monitoring_expired'
+288:       )
+289:     }
+290:   },
+291: 
+292:   // 10. HO
+293:   {
+294:     key: 'ho',
+295:     label: 'HO',
+296:     icon: 'ðŸ“Š',
+297:     roles: HO_ROLES,
+298:     customMatch: (m: MenuItem) => {
+299:       return (
+300:         m.menu_key === 'monitoring_expired' ||
+301:         m.menu_key === 'hr_dashboard' ||
+302:         m.menu_key === 'monitoring_cuti_tiket' ||
+303:         m.menu_key === 'monitoring_mcu' ||
+304:         m.menu_key === 'monitoring_roster_cr' ||
+305:         m.menu_key === 'manajemen_absensi' ||
+306:         m.menu_key === 'kelola_unit' ||
+307:         m.menu_key === 'plant_katalog' ||
+308:         m.menu_key === 'plant_orders' ||
+309:         m.menu_key === 'approval_center'||
+310:         m.menu_key === 'kelola_event'   
+311:       )
+312:     }
+313:   },
+314: 
+315:   // 11. SYSTEM â€” KHUSUS SUPER ADMIN
+316:   {
+317:     key: 'system',
+318:     label: 'System',
+319:     icon: 'âš™ï¸',
+320:     roles: ['super_admin'],
+321:     customMatch: (m: MenuItem) => {
+322:       return (
+323:         m.menu_key === 'manage_permissions' ||
+324:         m.menu_key === 'kelola_akses' ||
+325:         m.menu_key === 'system_audit' ||
+326:         m.menu_key === 'audit_log' ||
+327:         m.menu_key === 'config_global' ||
+328:         m.menu_key === 'kelola_site_master' ||
+329:         m.menu_key === 'reset_password_admin' ||
+330:         m.menu_key === 'kelola_roles' ||
+331:         m.menu_key === 'role_manager' ||
+332:         m.menu_key === 'import_roles' ||
+333:         m.menu_key === 'import_matrix'
+334:       )
+335:     }
+336:   },
+337: ]
+338: 
+339: 
+340: 
+341: 
+342: 
+343: export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+344:   return (
+345:     <Suspense fallback={<div className="min-h-screen bg-slate-100 flex items-center justify-center text-slate-500">Memuat...</div>}>
+346:       <DashboardLayoutContent>{children}</DashboardLayoutContent>
+347:     </Suspense>
+348:   )
+349: }
+350: 
+351: function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
+352:   const [user, setUser] = useState<User | null>(null)
+353:   const [userRoles, setUserRoles] = useState<string[]>([])
+354:   const [isSuperAdmin, setIsSuperAdmin] = useState(false) // State baru
+355:   const [userPermissions, setUserPermissions] = useState<string[]>([]) // State baru
+356:   const [menus, setMenus] = useState<MenuItem[]>([])
+357:   const [loading, setLoading] = useState(true)
+358:   const [activeTab, setActiveTab] = useState('absensi')
+359:   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
+360:   const [bottomSheetMenus, setBottomSheetMenus] = useState<MenuItem[]>([])
+361:   const [bottomSheetTitle, setBottomSheetTitle] = useState('')
+362:   const [notifCount, setNotifCount] = useState(0)
+363: const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdown: [] }, expired: { total: 0, critical: 0, breakdown: [] } })
+364:   const [isNotifOpen, setIsNotifOpen] = useState(false)
+365: 
+366:   const router = useRouter()
+367:   const searchParams = useSearchParams()
+368:   const activeMenu = searchParams.get('menu') || 'absensi_saya'
+369: 
+370:   useEffect(() => { 
+371:     checkAuth()
+372:     fetchNotif()
+373:     initAutoSync()
+374: 
+375:     // âœ¨ Dengerin sinyal dari halaman approval untuk update lonceng
+376:     window.addEventListener('refreshNotif', fetchNotif);
+377:     return () => window.removeEventListener('refreshNotif', fetchNotif);
+378:   }, [])
+379: 
+380: useEffect(() => {
+381:   // Skip auto-redirect kalau user di sub-route (bukan /dashboard root)
+382:   if (typeof window !== 'undefined') {
+383:     const path = window.location.pathname
+384:     if (path !== '/dashboard' && path !== '/dashboard/') {
+385:       return  // Sub-route seperti /dashboard/kelola-event/xxx â†’ biarkan
+386:     }
+387:   }
+388:   
+389:   if (!loading && user && !searchParams.get('menu')) {
+390:     router.replace('/dashboard?menu=absensi_saya')
+391:   }
+392: }, [loading, user])
+393: 
+394:   useEffect(() => {
+395:     if (menus.length > 0) {
+396:       const tab = TAB_CONFIG.find(t => {
+397:         const matched = menus.filter(m => t.customMatch && t.customMatch(m))
+398:         return matched.some(m => m.menu_key === activeMenu)
+399:       })
+400:       if (tab) setActiveTab(tab.key)
+401:     }
+402:   }, [activeMenu, menus])
+403: 
+404:     // â”€â”€ âœ¨ Silent role check di background (tidak block UI) â”€â”€
+405:   async function silentRoleCheck(cachedUser: any) {
+406:     try {
+407:       const token = typeof window !== 'undefined'
+408:         ? localStorage.getItem('btm_session_token_v1')
+409:         : null
+410: 
+411:       const headers: Record<string, string> = {}
+412:       if (token) headers['Authorization'] = `Bearer ${token}`
+413: 
+414:       const res = await fetch('/api/auth/me', {
+415:         headers,
+416:         signal: AbortSignal.timeout(5000)
+417:       })
+418: 
+419:       if (!res.ok) return  // silent fail, tidak ganggu user
+420: 
+421:       const fresh = await res.json()
+422:       if (!fresh.user) return
+423: 
+424:       // Bandingkan roles cache vs fresh
+425:       const cachedRoles = new Set((cachedUser.roles || []).sort())
+426:       const freshRoles  = new Set((fresh.roles || []).sort())
+427: 
+428:       const rolesChanged =
+429:         cachedRoles.size !== freshRoles.size ||
+430:         [...cachedRoles].some(r => !freshRoles.has(r as string)) ||
+431:         [...freshRoles].some(r => !cachedRoles.has(r as string))
+432: 
+433:       // Bandingkan permissions
+434:       const cachedPerms = new Set((cachedUser.permissions || []).sort())
+435:       const freshPerms  = new Set((fresh.permissions || []).sort())
+436: 
+437:       const permsChanged =
+438:         cachedPerms.size !== freshPerms.size ||
+439:         [...cachedPerms].some(p => !freshPerms.has(p as string)) ||
+440:         [...freshPerms].some(p => !cachedPerms.has(p as string))
+441: 
+442:       // Bandingkan super admin status
+443:       const superChanged = 
+444:         Boolean(cachedUser.is_super_admin) !== Boolean(fresh.user.is_super_admin)
+445: 
+446:       // Kalau ada perubahan â†’ auto refresh
+447:       if (rolesChanged || permsChanged || superChanged) {
+448:         console.log('ðŸ”„ Roles/Permissions berubah â†’ auto refresh')
+449:         console.log('Cached roles:', [...cachedRoles])
+450:         console.log('Fresh roles:',  [...freshRoles])
+451: 
+452:         // Update cache dengan data fresh
+453:         const newUserData = {
+454:           ...fresh.user,
+455:           roles: fresh.roles || [],
+456:           permissions: fresh.permissions || []
+457:         }
+458:         saveUserCache(newUserData)
+459: 
+460:         // Fetch menus baru juga
+461:         try {
+462:           const menuRes = await fetch('/api/menus', {
+463:             headers,
+464:             signal: AbortSignal.timeout(5000)
+465:           })
+466:           if (menuRes.ok) {
+467:             const menuData = await menuRes.json()
+468:             const menusArr = Array.isArray(menuData) 
+469:               ? menuData 
+470:               : (menuData.menus || menuData.data || [])
+471:             const filtered = menusArr.filter((m: MenuItem) => {
+472:               if (m.active === false) return false
+473:               if (fresh.user?.is_super_admin) return true
+474:               if (m.role === '*') return true                       // â† BARU
+475:               return (fresh.roles || []).includes(m.role)
+476:             })
+477:             saveMenusCache({ menus: filtered })
+478: 
+479:             // Update juga cache lama
+480:             if (typeof window !== 'undefined') {
+481:               localStorage.setItem('btm_menus_v1', JSON.stringify(filtered))
+482:               localStorage.setItem('btm_menus_time_v1', Date.now().toString())
+483:             }
+484:           }
+485:         } catch {}
+486: 
+487:         // Tampilkan notif kecil
+488:         showRoleUpdateNotification()
+489: 
+490:         // Reload halaman setelah 1.5 detik biar user sadar
+491:         setTimeout(() => {
+492:           window.location.reload()
+493:         }, 1500)
+494:       }
+495:     } catch (err) {
+496:       // Silent fail, tidak ganggu user
+497:       console.debug('Silent role check gagal (tidak masalah)')
+498:     }
+499:   }
+500: 
+501:   // Notifikasi kecil di kanan atas
+502:   function showRoleUpdateNotification() {
+503:     if (typeof window === 'undefined') return
+504: 
+505:     const notif = document.createElement('div')
+506:     notif.style.cssText = `
+507:       position: fixed;
+508:       top: 20px;
+509:       right: 20px;
+510:       background: #003D79;
+511:       color: white;
+512:       padding: 12px 20px;
+513:       border-radius: 12px;
+514:       font-weight: bold;
+515:       font-size: 13px;
+516:       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+517:       z-index: 99999;
+518:       animation: slideIn 0.3s ease;
+519:     `
+520:     notif.innerHTML = 'ðŸ”„ Menu diperbarui, memuat ulang...'
+521:     document.body.appendChild(notif)
+522: 
+523:     // Style animation
+524:     const style = document.createElement('style')
+525:     style.textContent = `
+526:       @keyframes slideIn {
+527:         from { transform: translateX(400px); opacity: 0; }
+528:         to   { transform: translateX(0);      opacity: 1; }
+529:       }
+530:     `
+531:     document.head.appendChild(style)
+532:   }
+533: 
+534: async function checkAuth() {
+535:   // â”€â”€ STEP 1: Load cache dulu (instant, tidak nunggu network) â”€â”€
+536:   const cachedUser      = getUserCache()
+537:   const cachedMenusData = getMenusCache()
+538: 
+539:   if (cachedUser) {
+540:     setUser(cachedUser)
+541:     setUserRoles(Array.isArray(cachedUser.roles) ? cachedUser.roles : [])
+542:     setIsSuperAdmin(cachedUser.is_super_admin || false)
+543:     setUserPermissions(cachedUser.permissions || [])
+544:     if (cachedMenusData?.menus) setMenus(cachedMenusData.menus)
+545:   }
+546: 
+547:     // â”€â”€ âœ¨ AUTO-REFRESH: Cek perubahan roles di background â”€â”€
+548:   if (cachedUser && navigator.onLine) {
+549:     silentRoleCheck(cachedUser)
+550:   }
+551: 
+552:   // Backward compat: cache menu lama
+553:   const cachedMenu     = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_v1') : null
+554:   const cachedMenuTime = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_time_v1') : null
+555:   const isMenuOldValid = cachedMenuTime && (Date.now() - parseInt(cachedMenuTime)) < 3600000
+556:   if (cachedMenu && isMenuOldValid && !cachedMenusData) {
+557:     try { setMenus(JSON.parse(cachedMenu)) } catch {}
+558:   }
+559: 
+560:   // â”€â”€ STEP 2: Kalau offline â†’ langsung pakai cache, tidak perlu fetch â”€â”€
+561:   if (!navigator.onLine) {
+562:     console.log('ðŸ“´ Offline â€” menggunakan cache lokal')
+563:     if (cachedUser && isCacheValid()) {
+564:       setLoading(false)
+565:       return
+566:     }
+567:     // Tidak ada cache sama sekali â†’ terpaksa minta login
+568:     router.push('/')
+569:     return
+570:   }
+571: 
+572:   // â”€â”€ STEP 3: Online â†’ coba fetch dengan cookie dulu â”€â”€
+573:   try {
+574:     const controller = new AbortController()
+575:     const timeoutId  = setTimeout(() => controller.abort(), 8000)
+576: 
+577:     const [authRes, menuRes] = await Promise.all([
+578:       fetch('/api/auth/me', { signal: controller.signal }),
+579:       fetch('/api/menus',   { signal: controller.signal })
+580:     ])
+581: 
+582:     clearTimeout(timeoutId)
+583: 
+584:     // â”€â”€ STEP 4: Kalau cookie gagal â†’ coba token dari localStorage â”€â”€
+585:     if (!authRes.ok) {
+586:       const localToken = typeof window !== 'undefined'
+587:         ? localStorage.getItem('btm_session_token_v1')
+588:         : null
+589: 
+590:       if (localToken) {
+591:         console.log('ðŸ”„ Cookie hilang, coba token dari localStorage...')
+592:         try {
+593:           const retryRes = await fetch('/api/auth/me', {
+594:             headers: { 'Authorization': `Bearer ${localToken}` },
+595:             signal: AbortSignal.timeout(5000)
+596:           })
+597: 
+598:           if (retryRes.ok) {
+599:             // Token localStorage masih valid â†’ set ulang cookie via renew
+600:             const retryData = await retryRes.json()
+601:             console.log('âœ… Token localStorage valid, lanjut masuk')
+602: 
+603:             // Panggil renew endpoint untuk set ulang cookie
+604:             await fetch('/api/auth/renew', {
+605:               method: 'POST',
+606:               headers: {
+607:                 'Content-Type': 'application/json',
+608:                 'Authorization': `Bearer ${localToken}`
+609:               },
+610:               signal: AbortSignal.timeout(5000)
+611:             })
+612: 
+613:             // Set state dari data yang didapat
+614:             setUser(retryData.user)
+615:             const roles = Array.isArray(retryData.roles) ? retryData.roles : []
+616:             setUserRoles(roles)
+617:             setIsSuperAdmin(retryData.user?.is_super_admin || false)
+618:             setUserPermissions(retryData.permissions || [])
+619: 
+620:             // Fetch menus ulang
+621:             try {
+622:               const menuRetry = await fetch('/api/menus', {
+623:                 headers: { 'Authorization': `Bearer ${localToken}` },
+624:                 signal: AbortSignal.timeout(5000)
+625:               })
+626:               if (menuRetry.ok) {
+627:                 const menuRetryData = await menuRetry.json()
+628:                 const menusArr = Array.isArray(menuRetryData)
+629:                   ? menuRetryData
+630:                   : (menuRetryData.menus || menuRetryData.data || [])
+631:                 const filtered = menusArr.filter((m: MenuItem) => {
+632:                   if (m.active === false) return false
+633:                   if (retryData.user?.is_super_admin) return true
+634:                   if (m.role === '*') return true                   // â† BARU
+635:                   return roles.includes(m.role)
+636:                 })
+637:                 setMenus(filtered)
+638:                 saveMenusCache({ menus: filtered })
+639:               }
+640:             } catch {}
+641: 
+642:             saveUserCache({ ...retryData.user, roles, permissions: retryData.permissions || [] })
+643:             setLoading(false)
+644:             return
+645:           }
+646:         } catch (retryErr) {
+647:           console.warn('âš ï¸ Retry dengan localStorage token gagal:', retryErr)
+648:         }
+649:       }
+650: 
+651:       // Token localStorage juga gagal â†’ cek cache offline
+652:       if (cachedUser && isCacheValid()) {
+653:         console.log('ðŸ”´ Session invalid, pakai cache offline')
+654:         setLoading(false)
+655:         return
+656:       }
+657: 
+658:       // Tidak ada fallback â†’ paksa login
+659:       router.push('/')
+660:       return
+661:     }
+662: 
+663:     // â”€â”€ STEP 5: Cookie valid â†’ proses normal â”€â”€
+664:     const [data, menuData] = await Promise.all([
+665:       authRes.json(),
+666:       menuRes.json()
+667:     ])
+668: 
+669:     setUser(data.user)
+670:     const roles: string[] = Array.isArray(data.roles) ? data.roles : []
+671:     setUserRoles(roles)
+672:     setIsSuperAdmin(data.user?.is_super_admin || false)
+673:     setUserPermissions(data.permissions || [])
+674: 
+675:     const menusArray = Array.isArray(menuData)
+676:       ? menuData
+677:       : (menuData.menus || menuData.data || [])
+678: 
+679:     const filtered = menusArray.filter((m: MenuItem) => {
+680:       if (m.active === false) return false
+681:       if (data.user?.is_super_admin) return true
+682:       if (m.role === '*') return true                 // â† BARU: wildcard match semua role
+683:       return roles.includes(m.role)
+684:     })
+685: 
+686:     setMenus(filtered)
+687: 
+688:     // Simpan cache lama (backward compat)
+689:     if (typeof window !== 'undefined') {
+690:       try {
+691:         localStorage.setItem('btm_menus_v1', JSON.stringify(filtered))
+692:         localStorage.setItem('btm_menus_time_v1', Date.now().toString())
+693:       } catch {}
+694:     }
+695: 
+696:     // Simpan cache baru
+697:     saveUserCache({ ...data.user, roles, permissions: data.permissions || [] })
+698:     saveMenusCache({ menus: filtered })
+699: 
+700:     // âœ… v2.0: Pastikan token di localStorage selalu fresh
+701:     // (token sudah ada dari login, tapi kalau user login lama â†’ tidak ada)
+702:     // Kita tidak bisa ambil token dari /api/auth/me karena httpOnly
+703:     // Token sudah tersimpan saat login, tidak perlu update di sini
+704: 
+705:   } catch (err: any) {
+706:     console.error('Auth Error:', err)
+707: 
+708:     const isNetworkError = err.name === 'AbortError' ||
+709:                            err.name === 'TypeError' ||
+710:                            !navigator.onLine
+711: 
+712:     if (isNetworkError && cachedUser && isCacheValid()) {
+713:       console.log('ðŸ”´ Network error, pakai cached session')
+714:       setLoading(false)
+715:       return
+716:     }
+717: 
+718:     router.push('/')
+719:   } finally {
+720:     setLoading(false)
+721:   }
+722: }
+723: 
+724:   async function fetchNotif() {
+725:     try {
+726:       const res = await fetch('/api/notifikasi')
+727:       if (res.ok) {
+728:         const data = await res.json()
+729:         setNotifCount(data.total_notifikasi || 0)
+730:         setNotifData({
+731:           approval: data.approval || { total: 0, breakdown: [] },
+732:           expired: data.expired || { total: 0, critical: 0, breakdown: [] }
+733:         })
+734:       }
+735:     } catch (err) { console.error("Notif Error:", err) }
+736:   }
+737: 
+738:   async function handleLogout() {
+739:     // âœ¨ Hapus semua cache offline
+740:     try {
+741:       const { clearAuthCache } = await import('@/app/lib/auth-cache')
+742:       clearAuthCache()
+743:       // Hapus cache menu lama juga
+744:       if (typeof window !== 'undefined') {
+745:         localStorage.removeItem('btm_menus_v1')
+746:         localStorage.removeItem('btm_menus_time_v1')
+747:       }
+748:     } catch {}
+749:     
+750:     try { await fetch('/api/auth/logout', { method: 'POST' }) } catch {}
+751:     router.push('/')
+752: }
+753: 
+754:     function handleTabClick(tab: typeof TAB_CONFIG[0]) {
+755:         // Handle tab Plant â†’ tampilkan bottom sheet menu
+756:     if (tab.key === 'plant') {
+757:       const tabMenus = menus.filter(m => tab.customMatch(m))
+758:       tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+759:       setBottomSheetMenus(tabMenus)
+760:       setBottomSheetTitle('Plant')
+761:       setActiveTab('plant')
+762:       setBottomSheetOpen(true)
+763:       return
+764:     }
+765: 
+766:     const tabMenus = menus.filter(m => tab.customMatch(m))
+767:     tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+768:     
+769:     if (tab.key === 'saya' || tabMenus.length > 1) {
+770:       setBottomSheetMenus(tabMenus)
+771:       setBottomSheetTitle(tab.label)
+772:       setActiveTab(tab.key)
+773:       setBottomSheetOpen(true)
+774:       return
+775:     }
+776:     
+777:     if (tabMenus.length === 1) {
+778:       router.push(`/dashboard?menu=${tabMenus[0].menu_key}`)
+779:       setActiveTab(tab.key)
+780:       return
+781:     }
+782: 
+783:     // Tambahkan ini: Jika tab diklik tapi tidak ada isinya
+784:     if (tabMenus.length === 0) {
+785:   return
+786: }
+787:   }
+788: 
+789:   function navigateMenu(menuKey: string) {
+790:     // Routing khusus untuk menu Plant
+791:     if (menuKey === 'plant_katalog') {
+792:       router.push('/parts-catalog')
+793:       setBottomSheetOpen(false)
+794:       return
+795:     }
+796:     if (menuKey === 'plant_orders') {
+797:       router.push('/part-orders')
+798:       setBottomSheetOpen(false)
+799:       return
+800:     }
+801:     if (menuKey === 'plant_admin') {
+802:       router.push('/partbook/admin')
+803:       setBottomSheetOpen(false)
+804:       return
+805:     }
+806: 
+807:     // Routing menu Koreksi Absensi (STANDALONE pages)
+808:     if (menuKey === 'koreksi_absensi') {
+809:       router.push('/dashboard/koreksi-absensi')
+810:       setBottomSheetOpen(false)
+811:       return
+812:     }
+813:     if (menuKey === 'approval_koreksi') {
+814:       router.push('/dashboard/approval-koreksi')
+815:       setBottomSheetOpen(false)
+816:       return
+817:     }
+818:     if (menuKey === 'manajemen_absensi') {
+819:   router.push('/dashboard/manajemen-absensi')
+820:   setBottomSheetOpen(false)
+821:   return
+822: }
+823: if (menuKey === 'rekap_absensi') {
+824:   router.push('/dashboard/rekap-absensi')
+825:   setBottomSheetOpen(false)
+826:   return
+827: }
+828:     if (menuKey === 'hr_override_absensi') {
+829:       router.push('/dashboard/hr-override-absensi')
+830:       setBottomSheetOpen(false)
+831:       return
+832:     }
+833: 
+834:     // âœ¨ MCU Advanced (Chat 18) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+835:     if (menuKey === 'monitoring_mcu') {
+836:       router.push('/dashboard/monitoring-mcu')
+837:       setBottomSheetOpen(false)
+838:       return
+839:     }
+840:     if (menuKey === 'mcu_saya') {
+841:       router.push('/dashboard/mcu-saya')
+842:       setBottomSheetOpen(false)
+843:       return
+844:     }
+845:     // ðŸ¦º APD Saya (Chat 22)
+846:     if (menuKey === 'apd_saya') {
+847:       router.push('/dashboard/apd-saya')
+848:       setBottomSheetOpen(false)
+849:       return
+850:     }
+851: 
+852:     // ðŸ¦º Kelola APD (Chat 22)
+853:     if (menuKey === 'kelola_apd') {
+854:       router.push('/dashboard/kelola-apd')
+855:       setBottomSheetOpen(false)
+856:       return
+857:     }
+858:         // Routing menu Kelola Akses (Batch 1 - Tab Karyawan)
+859:     if (menuKey === 'kelola_akses') {
+860:       router.push('/dashboard/kelola-akses')
+861:       setBottomSheetOpen(false)
+862:       return
+863:     }
+864: 
+865:     // ðŸ“Š Monitoring APD (Chat 22)
+866:     if (menuKey === 'monitoring_apd') {
+867:       router.push('/dashboard/monitoring-apd')
+868:       setBottomSheetOpen(false)
+869:       return
+870:     }
+871: 
+872:     // ðŸ“¥ Import MCU Massal Auto-Fill (Chat 20) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+873:     if (menuKey === 'import_mcu_bulk') {
+874:       router.push('/dashboard/import-mcu')
+875:       setBottomSheetOpen(false)
+876:       return
+877:     }
+878: 
+879:     // ðŸ“¤ Import Roster Bulanan (Chat 28)
+880: if (menuKey === 'import_roster_bulk') {
+881:   router.push('/dashboard/import-roster')
+882:   setBottomSheetOpen(false)
+883:   return
+884: }
+885: 
+886:     // ðŸšœ Kelola Unit (Chat 29)
+887:     if (menuKey === 'kelola_unit') {
+888:       router.push('/dashboard/kelola-unit')
+889:       setBottomSheetOpen(false)
+890:       return
+891:     }
+892: 
+893:         // ðŸŽ¯ Setting Unit per Shift (Chat 29)
+894:     if (menuKey === 'setting_unit') {
+895:       router.push('/dashboard/setting-unit')
+896:       setBottomSheetOpen(false)
+897:       return
+898:     }
+899: 
+900:     if (menuKey === 'crew_on_duty') {
+901:   router.push('/dashboard/crew-on-duty')
+902:   setBottomSheetOpen(false)
+903:   return
+904: }
+905: 
+906:     // Default: menu dashboard biasa
+907:     router.push(`/dashboard?menu=${menuKey}`)
+908:     setBottomSheetOpen(false)
+909:   }
+910: 
+911:   if (loading || !user) return <div className="min-h-screen bg-slate-100 flex items-center justify-center animate-pulse text-slate-500">Memuat...</div>
+912: 
+913:     const visibleTabs = TAB_CONFIG.filter(tab => {
+914:   if (tab.key === 'system' && !isSuperAdmin) return false
+915: 
+916:   const roleAllowed =
+917:     isSuperAdmin || tab.roles.some(r => userRoles.includes(r))
+918: 
+919:   if (!roleAllowed) return false
+920: 
+921:   const tabMenus = menus.filter(m => tab.customMatch(m))
+922:   return tabMenus.length > 0
+923: })
+924: 
+925:   return (
+926:     <div className="min-h-screen bg-[#F1F5F9] flex relative overflow-hidden">
+927:       <div 
+928:         className="fixed inset-0 pointer-events-none opacity-[0.03] z-0"
+929:         style={{ backgroundImage: `url('/bg-pattern.png')`, backgroundRepeat: 'repeat', backgroundSize: '150px' }}
+930:       />
+931: 
+932:       {/* SIDEBAR DESKTOP */}
+933:       <aside className="hidden lg:flex flex-col w-64 bg-[#003D79] text-white fixed top-0 left-0 bottom-0 z-40 overflow-y-auto">
+934:         <div className="p-5 border-b border-white/10 flex items-center justify-between gap-3">
+935:           <div className="flex items-center gap-3 min-w-0">
+936:             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg shrink-0">
+937:               <Image src="/btm-fix.png" alt="BTM" width={32} height={32} className="object-contain" />
+938:             </div>
+939:             <div className="min-w-0">
+940:               <div className="font-bold text-xs truncate">BTM Portal</div>
+941:               <div className="text-[10px] text-blue-200 font-black uppercase truncate leading-tight">{user.nama}</div>
+942:             </div>
+943:           </div>
+944: 
+945:           <button 
+946:             type="button"
+947:             onClick={() => setIsNotifOpen(true)} 
+948:             className="relative w-9 h-9 flex items-center justify-center active:scale-90 transition-all cursor-pointer bg-white/10 hover:bg-white/20 rounded-xl shrink-0"
+949:           >
+950:             <span className="text-lg">ðŸ””</span>
+951:             {notifCount > 0 && (
+952:               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black h-4 w-4 flex items-center justify-center rounded-full border-2 border-[#003D79] shadow-lg animate-bounce">
+953:                 {notifCount}
+954:               </span>
+955:             )}
+956:           </button>
+957:         </div>
+958: 
+959:         <div className="p-4 space-y-1">
+960:           {visibleTabs.map(tab => (
+961:             <div key={tab.key}>
+962:               <button onClick={() => handleTabClick(tab)} className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === tab.key ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}>
+963:                 <span className="text-lg">{tab.icon}</span><span>{tab.label}</span>
+964:               </button>
+965:               {activeTab === tab.key && menus.filter(m => tab.customMatch(m)).length > 1 && (
+966:                 <div className="ml-9 mt-1 space-y-1 border-l border-white/10">
+967:                   {menus.filter(m => tab.customMatch(m)).map(m => (
+968:                     <button key={m.menu_key} onClick={() => navigateMenu(m.menu_key)} className={`w-full text-left px-4 py-2 rounded-xl text-xs flex items-center gap-2 transition-colors ${activeMenu === m.menu_key ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+969:                       <span>{m.menu_icon || 'â€¢'}</span><span>{m.menu_label}</span>
+970:                     </button>
+971:                   ))}
+972:                 </div>
+973:               )}
+974:             </div>
+975:           ))}
+976:   
+977:           <button onClick={handleLogout} className="w-full mt-6 bg-red-600/20 text-red-400 py-2.5 rounded-xl text-xs font-bold hover:bg-red-600/30 transition-colors">ðŸšª Keluar</button>
+978:         </div>
+979:       </aside>
+980: 
+981:       {/* MAIN CONTENT */}
+982:       <main className="flex-1 min-w-0 lg:ml-64 pb-24 lg:pb-6">
+983:         <SyncIndicator />  {/* â† BARU! Badge sync indicator */}
+984:         <ClockOutReminder />
+985:         <VerificationModal />
+986: 
+987:         {/* HEADER MOBILE */}
+988:                        <div className="lg:hidden bg-white/70 backdrop-blur-xl border-b border-white/40 px-3 py-1.5 flex items-center justify-between fixed top-0 left-0 right-0 z-[60] shadow-[0_4px_20px_rgba(0,61,121,0.05)]">
+989:           {/* Kiri: Logo + Nama App + Versi (Kompak) */}
+990:           <div className="flex items-center gap-2 shrink-0">
+991:             <Image src="/btm-fix.png" alt="BTM" width={18} height={18} />
+992:             <div className="leading-[1.1]">
+993:               <h1 className="text-[10px] font-black uppercase text-[#003D79] tracking-tight">BTM Mobile</h1>
+994:               <p className="text-[7px] font-bold text-slate-400">v1.6.2</p>
+995:             </div>
+996:           </div>
+997: 
+998:           {/* Kanan: Info Karyawan + Lonceng (Baris Rapat) */}
+999:           <div className="flex items-center gap-2">
+1000:             <div className="text-right leading-[1.1] shrink-0 max-w-[140px]">
+1001:               <div className="text-[9px] font-black text-[#003D79] uppercase truncate">{user.nama}</div>
+1002:               <div className="text-[7px] text-slate-500 font-bold">NRP: {user.nrp_login || user.nrp}</div>
+1003:               <div className="text-[7px] text-blue-600 font-black">{user.site || '-'}</div>
+1004:             </div>
+1005:             <button 
+1006:               type="button"
+1007:               onClick={() => setIsNotifOpen(true)} 
+1008:               className="relative flex items-center justify-center active:scale-90 transition-all cursor-pointer z-[70] shrink-0"
+1009:             >
+1010:               <span className="text-2xl">ðŸ””</span>
+1011:               {notifCount > 0 && (
+1012:                 <>
+1013:                   <span className="absolute -top-0.5 -right-0.5 animate-ping h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
+1014:                   <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[7px] font-black h-3.5 w-3.5 flex items-center justify-center rounded-full border border-white shadow-lg pointer-events-none">
+1015:                     {notifCount}
+1016:                   </span>
+1017:                 </>
+1018:               )}
+1019:             </button>
+1020:           </div>
+1021:         </div>
+1022: 
+1023:                 <div className="p-4 lg:p-6 pt-16 lg:pt-6">
+1024:   <AuthProvider user={{ ...user, is_super_admin: isSuperAdmin }} permissions={userPermissions}>
+1025:     {children}
+1026:   </AuthProvider>
+1027: </div>
+1028:       </main>
+1029: 
+1030:       {/* BOTTOM NAVIGATION MOBILE */}
+1031:             <nav className="lg:hidden fixed bottom-3 left-3 right-3 z-50 bg-white/70 backdrop-blur-2xl border border-white/50 flex overflow-x-auto px-2 py-2 rounded-[1.8rem] shadow-[0_10px_40px_rgba(0,61,121,0.15)] no-scrollbar">
+1032:         {visibleTabs.map(tab => (
+1033:           <button 
+1034:             key={tab.key} 
+1035:             onClick={() => handleTabClick(tab)} 
+1036:             className={`flex flex-col items-center min-w-[55px] flex-1 py-1 transition-all duration-300 ${activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'}`}
+1037:           >
+1038:             <div className={`text-base mb-0.5 ${activeTab === tab.key ? '' : 'grayscale'}`}>{tab.icon}</div>
+1039:             <span className={`text-[8px] tracking-tighter font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>{tab.label}</span>
+1040:             {activeTab === tab.key && <div className="w-1 h-1 bg-[#003D79] rounded-full mt-0.5 animate-pulse"></div>}
+1041:           </button>
+1042:         ))}
+1043:       </nav>
+1044: 
+1045:       {/* BOTTOM SHEET MENU */}
+1046:       {bottomSheetOpen && (
+1047:         <>
+1048:           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] lg:hidden" onClick={() => setBottomSheetOpen(false)} />
+1049:           <div className="fixed bottom-0 left-0 right-0 z-[101] lg:hidden bg-white rounded-t-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom duration-300">
+1050:             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" />
+1051:             <h3 className="font-black text-lg mb-6 px-2 text-slate-800 tracking-tight uppercase text-center">{bottomSheetTitle}</h3>
+1052:             <div className="grid grid-cols-1 gap-3 max-h-[60vh] overflow-y-auto">
+1053:               {bottomSheetMenus.map(m => (
+1054:                 <button key={m.menu_key} onClick={() => navigateMenu(m.menu_key)} className={`w-full text-left p-5 rounded-3xl flex items-center justify-between border transition-all active:scale-95 ${activeMenu === m.menu_key ? 'bg-blue-50 border-blue-200 text-[#003D79]' : 'bg-slate-50 border-slate-100 text-slate-700'}`}>
+1055:                   <div className="flex items-center gap-4">
+1056:                     <span className="text-2xl">{m.menu_icon || 'ðŸ“„'}</span>
+1057:                     <span className="text-sm font-bold uppercase tracking-tight">{m.menu_label}</span>
+1058:                   </div>
+1059:                   {activeMenu === m.menu_key && <span className="text-blue-600">âœ“</span>}
+1060:                 </button>
+1061:               ))}
+1062:               {activeTab === 'saya' && (
+1063:   <button onClick={handleLogout} className="w-full text-left p-5 rounded-3xl flex items-center gap-4 text-red-600 bg-red-50 font-black mt-4 uppercase text-sm border border-red-100 active:scale-95 transition-all">
+1064:     <span className="text-2xl">ðŸšª</span><span>Keluar Aplikasi</span>
+1065:   </button>
+1066: )}
+1067:             </div>
+1068:           </div>
+1069:         </>
+1070:       )}
+1071: 
+1072:       {/* MODAL NOTIFICATION */}
+1073:       {isNotifOpen && (
+1074:         <>
+1075:           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[999]" onClick={() => setIsNotifOpen(false)} />
+1076:           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[1000] overflow-hidden">
+1077:             <div className="p-8 bg-[#003D79] text-white flex justify-between items-center">
+1078:               <div>
+1079:                 <h3 className="font-black text-xl tracking-tight uppercase">Pusat Notifikasi</h3>
+1080:                 <p className="text-blue-200 text-[10px] font-bold uppercase tracking-[0.2em]">Update Real-time</p>
+1081:               </div>
+1082:               <button onClick={() => setIsNotifOpen(false)} className="bg-white/10 hover:bg-white/20 h-10 w-10 flex items-center justify-center rounded-full transition-colors">âœ•</button>
+1083:             </div>
+1084:             <div className="p-6 max-h-[70vh] overflow-y-auto bg-slate-50/50 space-y-4">
+1085:               {notifCount === 0 ? (
+1086:                 <div className="text-center py-12">
+1087:                   <div className="text-5xl mb-4 opacity-20">ðŸï¸</div>
+1088:                   <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Semua Aman!</p>
+1089:                   <p className="text-slate-300 text-[10px] font-bold mt-2">Tidak ada notifikasi menunggu</p>
+1090:                 </div>
+1091:               ) : (
+1092:                 <div className="space-y-4">
+1093: 
+1094:                   {/* â•â•â•â•â•â•â• KATEGORI 1: APPROVAL â•â•â•â•â•â•â• */}
+1095:                   {notifData.approval.total > 0 && (
+1096:                     <div className="bg-white border-2 border-blue-100 rounded-[2rem] overflow-hidden shadow-sm">
+1097:                       <div className="bg-blue-50 px-5 py-3 flex items-center justify-between border-b border-blue-100">
+1098:                         <div className="flex items-center gap-2">
+1099:                           <span className="text-lg">ðŸ“</span>
+1100:                           <span className="font-black text-[#003D79] text-xs uppercase tracking-widest">Persetujuan</span>
+1101:                         </div>
+1102:                         <span className="bg-blue-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+1103:                           {notifData.approval.total}
+1104:                         </span>
+1105:                       </div>
+1106:                       <div className="divide-y divide-slate-50">
+1107:                         {notifData.approval.breakdown.map((item: any, i: number) => (
+1108:                           <button
+1109:                             key={i}
+1110:                             onClick={() => {
+1111:                               setIsNotifOpen(false)
+1112:                               router.push(`/dashboard?menu=approval_center`)
+1113:                             }}
+1114:                             className="w-full px-5 py-3 flex items-center gap-3 hover:bg-blue-50/50 transition-all active:scale-95 text-left"
+1115:                           >
+1116:                             <div className="text-xl">{item.icon}</div>
+1117:                             <div className="flex-1 min-w-0">
+1118:                               <p className="font-black text-slate-900 text-xs">
+1119:                                 {item.count} {item.jenis.replace(/_/g, ' ')}
+1120:                               </p>
+1121:                               <p className="text-[10px] text-slate-500 font-bold">
+1122:                                 dari {item.site} â€¢ Tahap {item.tahap}
+1123:                               </p>
+1124:                             </div>
+1125:                             <span className="text-slate-300 text-lg">â€º</span>
+1126:                           </button>
+1127:                         ))}
+1128:                       </div>
+1129:                     </div>
+1130:                   )}
+1131: 
+1132:                   {/* â•â•â•â•â•â•â• KATEGORI 2: DOKUMEN EXPIRED â•â•â•â•â•â•â• */}
+1133:                   {notifData.expired.total > 0 && (
+1134:                     <div className={`bg-white border-2 rounded-[2rem] overflow-hidden shadow-sm ${
+1135:                       notifData.expired.critical > 0 ? 'border-rose-200' : 'border-amber-100'
+1136:                     }`}>
+1137:                       <div className={`px-5 py-3 flex items-center justify-between border-b ${
+1138:                         notifData.expired.critical > 0 ? 'bg-rose-50 border-rose-100' : 'bg-amber-50 border-amber-100'
+1139:                       }`}>
+1140:                         <div className="flex items-center gap-2">
+1141:                           <span className="text-lg">{notifData.expired.critical > 0 ? 'ðŸš¨' : 'âš ï¸'}</span>
+1142:                           <span className={`font-black text-xs uppercase tracking-widest ${
+1143:                             notifData.expired.critical > 0 ? 'text-rose-700' : 'text-amber-700'
+1144:                           }`}>
+1145:                             Dokumen Expired
+1146:                           </span>
+1147:                           {notifData.expired.critical > 0 && (
+1148:                             <span className="bg-rose-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase animate-pulse">
+1149:                               ðŸ”¥ {notifData.expired.critical} Kritis
+1150:                             </span>
+1151:                           )}
+1152:                         </div>
+1153:                         <span className={`text-white text-[10px] font-black px-2.5 py-1 rounded-full ${
+1154:                           notifData.expired.critical > 0 ? 'bg-rose-500' : 'bg-amber-500'
+1155:                         }`}>
+1156:                           {notifData.expired.total}
+1157:                         </span>
+1158:                       </div>
+1159:                       <div className="divide-y divide-slate-50">
+1160:                         {notifData.expired.breakdown.map((item: any, i: number) => (
+1161:                           <button
+1162:                             key={i}
+1163:                             onClick={() => {
+1164:                               setIsNotifOpen(false)
+1165:                               router.push(`/dashboard?menu=monitoring_expired`)
+1166:                             }}
+1167:                             className="w-full px-5 py-3 flex items-center gap-3 hover:bg-amber-50/50 transition-all active:scale-95 text-left"
+1168:                           >
+1169:                             <div className="text-xl">{item.icon}</div>
+1170:                             <div className="flex-1 min-w-0">
+1171:                               <div className="flex items-center gap-2 mb-0.5">
+1172:                                 <p className="font-black text-slate-900 text-xs">
+1173:                                   {item.count} {item.jenis}
+1174:                                 </p>
+1175:                                 {item.critical > 0 && (
+1176:                                   <span className="bg-rose-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase animate-pulse">
+1177:                                     ðŸ”¥ {item.critical}
+1178:                                   </span>
+1179:                                 )}
+1180:                               </div>
+1181:                               <p className="text-[10px] text-slate-500 font-bold">
+1182:                                 Site: {item.site}
+1183:                               </p>
+1184:                             </div>
+1185:                             <span className="text-slate-300 text-lg">â€º</span>
+1186:                           </button>
+1187:                         ))}
+1188:                       </div>
+1189:                     </div>
+1190:                   )}
+1191: 
+1192:                 </div>
+1193:               )}
+1194:             </div>
+1195:           </div>
+1196:         </>
+1197:       )}
+1198:     </div>
+1199:   )
+1200: }
