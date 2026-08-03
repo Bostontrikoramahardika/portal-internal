@@ -193,7 +193,8 @@ const TAB_CONFIG = [
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'kelola_apd' ||
-        m.menu_key === 'monitoring_apd'
+        m.menu_key === 'monitoring_apd'||
+        m.menu_key === 'kelola_event' 
       )
     }
   },
@@ -206,7 +207,7 @@ const TAB_CONFIG = [
     roles: HR_ROLES,
     customMatch: (m: MenuItem) => {
       return (
-        m.menu_key === 'kelola_karyawan' ||
+      
         m.menu_key === 'hr_dashboard' ||
         m.menu_key === 'kelola_job_kategori' ||
         m.menu_key === 'kelola_pengumuman' ||
@@ -230,7 +231,8 @@ const TAB_CONFIG = [
         m.menu_key === 'import_mcu' ||
         m.menu_key === 'import_mcu_bulk' ||
         m.menu_key === 'import_simper' ||
-        m.menu_key === 'import_roster_bulk'
+        m.menu_key === 'import_roster_bulk'||
+        m.menu_key === 'kelola_event' 
       )
     }
   },
@@ -247,12 +249,12 @@ const TAB_CONFIG = [
         m.menu_key === 'hr_dashboard' ||
         m.menu_key === 'monitoring_roster_cr' ||
         m.menu_key === 'monitoring_cuti_tiket' ||
-        m.menu_key === 'kelola_karyawan' ||
         m.menu_key === 'kelola_kpi' ||
         m.menu_key === 'kelola_sp' ||
         m.menu_key === 'manajemen_absensi' ||
         m.menu_key === 'approval_center' ||
-        m.menu_key === 'riwayat_approval'
+        m.menu_key === 'riwayat_approval' ||
+         m.menu_key === 'kelola_event'   
       )
     }
   },
@@ -304,7 +306,8 @@ const TAB_CONFIG = [
         m.menu_key === 'kelola_unit' ||
         m.menu_key === 'plant_katalog' ||
         m.menu_key === 'plant_orders' ||
-        m.menu_key === 'approval_center'
+        m.menu_key === 'approval_center'||
+        m.menu_key === 'kelola_event'   
       )
     }
   },

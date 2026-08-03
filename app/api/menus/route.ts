@@ -29,17 +29,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Deduplikasi menu berdasarkan menu_key
-  const uniqueMenus = new Map()
-  ;(menus || []).forEach((m: any) => {
-    if (!uniqueMenus.has(m.menu_key)) {
-      uniqueMenus.set(m.menu_key, m)
-    }
-  })
+ // Deduplikasi menu berdasarkan menu_key
+// Prioritas: role spesifik user > role '*' > role lain
+const userRoles = session.roles || []
+const uniqueMenus = new Map()
 
-  const deduplicated = Array.from(uniqueMenus.values()).sort(
-    (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
-  )
+;(menus || []).forEach((m: any) => {
+  const existing = uniqueMenus.get(m.menu_key)
+  if (!existing) {
+    uniqueMenus.set(m.menu_key, m)
+    return
+  }
+  // Prioritaskan role yang match dengan user
+  const existingIsUserRole = userRoles.includes(existing.role) || existing.role === 'super_admin'
+  const newIsUserRole = userRoles.includes(m.role) || m.role === 'super_admin'
+  if (!existingIsUserRole && newIsUserRole) {
+    uniqueMenus.set(m.menu_key, m)
+  }
+})
+
+const deduplicated = Array.from(uniqueMenus.values()).sort(
+  (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
+)
 
   const response = NextResponse.json({ menus: deduplicated })
 

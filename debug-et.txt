@@ -1,19 +1,19 @@
-'use client'
+﻿'use client'
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // EMPLOYEE TABLE v1.0 - Extracted from page.tsx
 // - Full-featured table dengan filter, sort, CRUD, resign
 // - Dipakai di HR Dashboard tab Karyawan
 // - Zero perubahan di page.tsx (aman untuk production)
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/app/lib/AuthContext'
 import { getTablePermissions } from '@/app/lib/tablePermissions'
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HELPER: Status Badge
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function StatusBadge({ value }: any) {
   const m: any = {
     PENDING: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -32,12 +32,12 @@ function StatusBadge({ value }: any) {
   )
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HELPER: Format nama kolom (translation)
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function formatColumnName(col: string) {
   const special: any = {
-    _nama_karyawan: '👤 Karyawan',
+    _nama_karyawan: 'ðŸ‘¤ Karyawan',
     _jabatan: 'Jabatan',
     _site: 'Site',
     _departemen: 'Dept',
@@ -56,9 +56,9 @@ function formatColumnName(col: string) {
   return special[col] || col.replace(/_/g, ' ').toUpperCase()
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HELPER: Render Cell Value
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function renderCell(col: string, val: any) {
   if (val === null || val === undefined) {
     return <span className="text-slate-200 italic font-bold text-[10px]">EMPTY</span>
@@ -78,14 +78,14 @@ function renderCell(col: string, val: any) {
     }
   }
   if (col.includes('foto') || col === 'image_url') {
-    return <a href={val} target="_blank" className="text-blue-600 font-black uppercase text-[9px] underline tracking-widest">👁️ DOKUMEN</a>
+    return <a href={val} target="_blank" className="text-blue-600 font-black uppercase text-[9px] underline tracking-widest">ðŸ‘ï¸ DOKUMEN</a>
   }
   return String(val)
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MAIN COMPONENT: EmployeeTable
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 export default function EmployeeTable({ menuKey = 'kelola_karyawan' }: { menuKey?: string }) {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -95,24 +95,13 @@ export default function EmployeeTable({ menuKey = 'kelola_karyawan' }: { menuKey
     setLoading(true)
     setError('')
     try {
-     const res = await fetch(`/api/data?menu=${encodeURIComponent(menuKey)}`, {
-  cache: 'no-store'
-})
+      const res = await fetch(`/api/data?menu=${menuKey}`)
       const json = await res.json()
       if (!res.ok) {
         setError(json.error || 'Gagal memuat data')
         return
       }
-      console.log('🔍 [EmployeeTable] Response for menuKey:', menuKey, {
-  ok: res.ok,
-  type: json.type,
-  table: json.table,
-  columnsCount: json.columns?.length,
-  rowsCount: json.rows?.length,
-  firstRow: json.rows?.[0],
-  columns: json.columns
-})
-setData(json)
+      setData(json)
     } catch {
       setError('Kesalahan koneksi server')
     } finally {
@@ -121,15 +110,13 @@ setData(json)
   }
 
   useEffect(() => {
-  setData(null)
-  setError('')
-  loadData()
-}, [menuKey])
+    loadData()
+  }, [menuKey])
 
   if (loading) {
     return (
       <div className="text-center py-16">
-        <div className="text-4xl mb-3 animate-pulse">📊</div>
+        <div className="text-4xl mb-3 animate-pulse">ðŸ“Š</div>
         <div className="text-slate-500 text-sm font-bold">Memuat data karyawan...</div>
       </div>
     )
@@ -138,7 +125,7 @@ setData(json)
   if (error) {
     return (
       <div className="text-center py-16 px-6">
-        <div className="text-4xl mb-3">⚠️</div>
+        <div className="text-4xl mb-3">âš ï¸</div>
         <div className="text-rose-500 font-bold text-sm mb-3">{error}</div>
         <button onClick={loadData} className="px-4 py-2 bg-[#003D79] text-white text-sm font-bold rounded-full">
           Coba Lagi
@@ -152,9 +139,9 @@ setData(json)
   return <TableView data={data} onReload={loadData} />
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // COMPONENT: TableView (Full-featured, extracted from page.tsx)
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function TableView({ data, onReload }: any) {
   const { title, rows = [], columns = [], table, access_mode } = data
   const [formModal, setFormModal] = useState<any>(null)
@@ -260,15 +247,15 @@ function TableView({ data, onReload }: any) {
   })()
 
   async function handleDelete(id: string, label: string) {
-    if (!confirm(`⚠️ Hapus data "${label || id}"?`)) return
+    if (!confirm(`âš ï¸ Hapus data "${label || id}"?`)) return
     const url = `/api/crud?table=${encodeURIComponent(table)}&id=${encodeURIComponent(id)}`
     const res = await fetch(url, { method: 'DELETE' })
     const data = await res.json()
     if (res.ok) {
-      alert('✅ Terhapus')
+      alert('âœ… Terhapus')
       onReload()
     } else {
-      alert('❌ Gagal hapus: ' + (data.error || 'Unknown error'))
+      alert('âŒ Gagal hapus: ' + (data.error || 'Unknown error'))
     }
   }
 
@@ -317,7 +304,7 @@ function TableView({ data, onReload }: any) {
                   <div className="flex items-center gap-1">
                     <span>{formatColumnName(c)}</span>
                     <span className="text-blue-300 text-[9px]">
-                      {sortConfig?.key === c ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '⇅'}
+                      {sortConfig?.key === c ? (sortConfig.direction === 'asc' ? 'â†‘' : 'â†“') : 'â‡…'}
                     </span>
                   </div>
                 </th>
@@ -366,7 +353,7 @@ function TableView({ data, onReload }: any) {
                             className="bg-orange-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-orange-600 shadow-sm"
                             title="Resign"
                           >
-                            🚪
+                            ðŸšª
                           </button>
                         )}
                         {table === 'employees' && r.tanggal_resign && (
@@ -375,7 +362,7 @@ function TableView({ data, onReload }: any) {
                             className="bg-emerald-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-emerald-600 shadow-sm"
                             title="Aktifkan"
                           >
-                            ↩️
+                            â†©ï¸
                           </button>
                         )}
                         <button
@@ -383,7 +370,7 @@ function TableView({ data, onReload }: any) {
                           className="bg-amber-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-amber-600 shadow-sm"
                           title="Edit"
                         >
-                          ✏️
+                          âœï¸
                         </button>
                       </>
                     )}
@@ -393,7 +380,7 @@ function TableView({ data, onReload }: any) {
                         className="bg-rose-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-rose-600 shadow-sm"
                         title="Hapus"
                       >
-                        🗑️
+                        ðŸ—‘ï¸
                       </button>
                     )}
                   </div>
@@ -419,7 +406,7 @@ function TableView({ data, onReload }: any) {
       <div className="bg-white rounded-xl lg:rounded-2xl p-2.5 lg:p-4 border border-slate-100 shadow-sm">
         <div className="flex flex-col lg:flex-row gap-1.5 lg:gap-2">
           <div className="relative flex-1">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">ðŸ”</span>
             <input
               type="text"
               placeholder="Cari data..."
@@ -435,7 +422,7 @@ function TableView({ data, onReload }: any) {
               onChange={e => setFilterSite(e.target.value)}
               className="py-2 lg:py-2.5 px-2.5 lg:px-3 rounded-lg lg:rounded-2xl border border-slate-200 text-[11px] lg:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 bg-white min-w-[110px] lg:min-w-[130px]"
             >
-              <option value="ALL">🏢 Semua Site</option>
+              <option value="ALL">ðŸ¢ Semua Site</option>
               {siteList.map((s: string) => <option key={s} value={s}>{s}</option>)}
             </select>
           )}
@@ -445,7 +432,7 @@ function TableView({ data, onReload }: any) {
               onClick={clearFilters}
               className="py-2 lg:py-2.5 px-3 rounded-lg lg:rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-[10px] lg:text-xs font-black hover:bg-rose-100 transition-all whitespace-nowrap"
             >
-              ✕ Reset
+              âœ• Reset
             </button>
           )}
 
@@ -455,7 +442,7 @@ function TableView({ data, onReload }: any) {
             className="py-2 lg:py-2.5 px-3 rounded-lg lg:rounded-2xl bg-slate-100 text-slate-700 text-[10px] lg:text-xs font-black hover:bg-slate-200 transition-all whitespace-nowrap"
             title="Refresh"
           >
-            <span className={refreshing ? 'inline-block animate-spin' : ''}>🔄</span>
+            <span className={refreshing ? 'inline-block animate-spin' : ''}>ðŸ”„</span>
           </button>
 
           {canCreate && (
@@ -463,7 +450,7 @@ function TableView({ data, onReload }: any) {
               onClick={() => setFormModal({ mode: 'create' })}
               className="py-2 lg:py-2.5 px-4 rounded-lg lg:rounded-2xl bg-emerald-500 text-white text-[10px] lg:text-xs font-black hover:bg-emerald-600 shadow-md whitespace-nowrap"
             >
-              ➕ Tambah Karyawan
+              âž• Tambah Karyawan
             </button>
           )}
         </div>
@@ -474,7 +461,7 @@ function TableView({ data, onReload }: any) {
           </p>
           {sortConfig && (
             <p className="text-[9px] lg:text-[10px] font-bold text-blue-600">
-              Sorted by: <span className="font-black">{formatColumnName(sortConfig.key)}</span> ({sortConfig.direction === 'asc' ? '↑' : '↓'})
+              Sorted by: <span className="font-black">{formatColumnName(sortConfig.key)}</span> ({sortConfig.direction === 'asc' ? 'â†‘' : 'â†“'})
             </p>
           )}
         </div>
@@ -483,8 +470,8 @@ function TableView({ data, onReload }: any) {
       {/* TABEL */}
       {isEmployeesTable ? (
         <div className="space-y-3 lg:space-y-4">
-          {renderTable(activeRows, '✅ Karyawan Aktif', 'bg-emerald-600')}
-          {resignRows.length > 0 && renderTable(resignRows, '🚪 Karyawan Resign', 'bg-rose-500')}
+          {renderTable(activeRows, 'âœ… Karyawan Aktif', 'bg-emerald-600')}
+          {resignRows.length > 0 && renderTable(resignRows, 'ðŸšª Karyawan Resign', 'bg-rose-500')}
         </div>
       ) : renderTable(displayRows)}
 
@@ -512,9 +499,9 @@ function TableView({ data, onReload }: any) {
   )
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MODAL: CRUD (Create/Edit)
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   const [fields, setFields] = useState<any[]>([])
   const [values, setValues] = useState<any>({})
@@ -550,13 +537,13 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
       })
       const resData = await res.json()
       if (res.ok) {
-        alert("✅ Data Berhasil Disimpan!")
+        alert("âœ… Data Berhasil Disimpan!")
         onSuccess()
       } else {
-        alert("❌ Gagal: " + (resData.error || 'Terjadi kesalahan'))
+        alert("âŒ Gagal: " + (resData.error || 'Terjadi kesalahan'))
       }
     } catch (err) {
-      alert("❌ Kesalahan Koneksi Server")
+      alert("âŒ Kesalahan Koneksi Server")
     } finally {
       setSaving(false)
     }
@@ -576,7 +563,7 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
         <div className="p-8 border-b bg-slate-50 flex justify-between items-center">
           <div>
             <h3 className="font-black text-2xl text-slate-900 tracking-tight">
-              {mode === 'create' ? '➕ Input Data Baru' : '✏️ Perbarui Data'}
+              {mode === 'create' ? 'âž• Input Data Baru' : 'âœï¸ Perbarui Data'}
             </h3>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Tabel: {table}</p>
           </div>
@@ -633,7 +620,7 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
               disabled={saving}
               className="flex-1 py-4 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
             >
-              {saving ? 'PROSES...' : '💾 SIMPAN DATA'}
+              {saving ? 'PROSES...' : 'ðŸ’¾ SIMPAN DATA'}
             </button>
           </div>
         </form>
@@ -642,9 +629,9 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   )
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MODAL: RESIGN / UNRESIGN
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function ResignModal({ row, mode, onClose, onSuccess }: any) {
   const isResign = mode === 'resign'
   const [tglResign, setTglResign] = useState(new Date().toISOString().split('T')[0])
@@ -655,13 +642,13 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
     e.preventDefault()
 
     if (isResign && !alasan.trim()) {
-      alert('❌ Alasan resign wajib diisi')
+      alert('âŒ Alasan resign wajib diisi')
       return
     }
 
     if (!confirm(isResign
-      ? `⚠️ Yakin resign-kan karyawan "${row.nama}"?\n\nTanggal: ${tglResign}\nAlasan: ${alasan}`
-      : `⚠️ Yakin aktifkan kembali karyawan "${row.nama}"?`
+      ? `âš ï¸ Yakin resign-kan karyawan "${row.nama}"?\n\nTanggal: ${tglResign}\nAlasan: ${alasan}`
+      : `âš ï¸ Yakin aktifkan kembali karyawan "${row.nama}"?`
     )) return
 
     setSaving(true)
@@ -688,13 +675,13 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
       const resData = await res.json()
 
       if (res.ok) {
-        alert(isResign ? '✅ Karyawan berhasil di-resign' : '✅ Karyawan berhasil diaktifkan kembali')
+        alert(isResign ? 'âœ… Karyawan berhasil di-resign' : 'âœ… Karyawan berhasil diaktifkan kembali')
         onSuccess()
       } else {
-        alert('❌ Gagal: ' + (resData.error || 'Terjadi kesalahan'))
+        alert('âŒ Gagal: ' + (resData.error || 'Terjadi kesalahan'))
       }
     } catch (err) {
-      alert('❌ Kesalahan Koneksi Server')
+      alert('âŒ Kesalahan Koneksi Server')
     } finally {
       setSaving(false)
     }
@@ -705,12 +692,12 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
       <div className="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl border-4 border-white">
         <div className={`p-6 ${isResign ? 'bg-orange-500' : 'bg-emerald-500'} text-white`}>
           <div className="flex items-center gap-3">
-            <span className="text-4xl">{isResign ? '🚪' : '↩️'}</span>
+            <span className="text-4xl">{isResign ? 'ðŸšª' : 'â†©ï¸'}</span>
             <div>
               <h3 className="font-black text-xl tracking-tight">
                 {isResign ? 'Resign Karyawan' : 'Aktifkan Karyawan'}
               </h3>
-              <p className="text-white/80 text-xs font-bold">{row.nama} • {row.nrp}</p>
+              <p className="text-white/80 text-xs font-bold">{row.nama} â€¢ {row.nrp}</p>
             </div>
           </div>
         </div>
@@ -777,7 +764,7 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
 
               <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
                 <p className="text-[10px] font-bold text-orange-700">
-                  ⚠️ Setelah resign: Status karyawan berubah, tidak bisa clock in/out, tidak muncul di roster
+                  âš ï¸ Setelah resign: Status karyawan berubah, tidak bisa clock in/out, tidak muncul di roster
                 </p>
               </div>
             </>
@@ -785,9 +772,9 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
             <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
               <p className="text-sm font-bold text-emerald-700 mb-2">Karyawan ini akan diaktifkan kembali.</p>
               <div className="text-[11px] text-emerald-600 space-y-1">
-                <p>• Tanggal resign akan dihapus</p>
-                <p>• Alasan resign akan dihapus</p>
-                <p>• Status kembali ke "Aktif"</p>
+                <p>â€¢ Tanggal resign akan dihapus</p>
+                <p>â€¢ Alasan resign akan dihapus</p>
+                <p>â€¢ Status kembali ke "Aktif"</p>
               </div>
             </div>
           )}
@@ -807,7 +794,7 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
                 isResign ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200'
               } disabled:opacity-50`}
             >
-              {saving ? 'PROSES...' : (isResign ? '🚪 RESIGN' : '↩️ AKTIFKAN')}
+              {saving ? 'PROSES...' : (isResign ? 'ðŸšª RESIGN' : 'â†©ï¸ AKTIFKAN')}
             </button>
           </div>
         </form>
