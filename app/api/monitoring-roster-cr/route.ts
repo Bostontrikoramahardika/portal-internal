@@ -1,6 +1,6 @@
 // app/api/monitoring-roster-cr/route.ts
-// Monitoring cuti kompensasi per KARYAWAN yang punya CR di bulan tertentu
-// Logic: 1 karyawan = 1 pengajuan cuti kompensasi menutup semua CR-nya
+// Monitoring roster cuti (CR + CT) per KARYAWAN yang punya jadwal di bulan tertentu
+// Logic: 1 karyawan = 1 pengajuan cuti menutup semua CR/CT-nya
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const periode = searchParams.get('periode') || 
+    const periode = searchParams.get('periode') ||
       `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
     const site = searchParams.get('site') || ''
 
@@ -47,12 +47,12 @@ export async function GET(request: NextRequest) {
     const lastDay = `${tahunP}-${bulanP}-${String(lastDayNum).padStart(2, '0')}`
 
     // ══════════════════════════════════
-    // 1. Ambil semua roster CR di periode
+    // 1. Ambil semua roster CR + CT di periode
     // ══════════════════════════════════
     const { data: crRoster, error: rosterError } = await supabase
       .from('rosters')
-      .select('nrp, tanggal')
-      .eq('shift_code', 'CR')
+      .select('nrp, tanggal, shift_code')
+      .in('shift_code', ['CR', 'CT'])   // ⭐ FIX Chat 34: CR + CT
       .gte('tanggal', firstDay)
       .lte('tanggal', lastDay)
       .order('tanggal', { ascending: true })
@@ -72,12 +72,12 @@ export async function GET(request: NextRequest) {
     }
 
     // ══════════════════════════════════
-    // 2. Group CR per NRP (kumpulkan tanggal per karyawan)
+    // 2. Group CR/CT per NRP (kumpulkan tanggal + jenis per karyawan)
     // ══════════════════════════════════
-    const crMap = new Map<string, string[]>() // nrp → [tanggal1, tanggal2, ...]
+    const crMap = new Map<string, Array<{ tanggal: string; shift_code: string }>>()
     crRoster.forEach((r: any) => {
       if (!crMap.has(r.nrp)) crMap.set(r.nrp, [])
-      crMap.get(r.nrp)!.push(r.tanggal)
+      crMap.get(r.nrp)!.push({ tanggal: r.tanggal, shift_code: r.shift_code })
     })
 
     const nrpList = Array.from(crMap.keys())
@@ -94,18 +94,18 @@ export async function GET(request: NextRequest) {
     ;(employees || []).forEach((e: any) => empMap.set(e.nrp, e))
 
     // ══════════════════════════════════
-    // 4. Ambil semua pengajuan CUTI KOMPENSASI dari NRP tersebut
-    //    (tidak filter by tanggal, cukup filter by NRP untuk periode ini)
+    // 4. Ambil semua pengajuan cuti dari NRP tersebut di periode ini
+    //    (accept semua jenis cuti, tidak hanya CUTI KOMPENSASI)
     // ══════════════════════════════════
     const { data: leaveData } = await supabase
-  .from('leave_requests')
-  .select('id, nrp, status_final, jenis_cuti, tanggal_mulai, tanggal_selesai, created_at, catatan_atasan, catatan_pjo')
-  .in('nrp', nrpList)
-  .gte('tanggal_mulai', firstDay)
-  .lte('tanggal_mulai', lastDay)
-  .order('created_at', { ascending: false })
+      .from('leave_requests')
+      .select('id, nrp, status_final, jenis_cuti, tanggal_mulai, tanggal_selesai, created_at, catatan_atasan, catatan_pjo')
+      .in('nrp', nrpList)
+      .gte('tanggal_mulai', firstDay)
+      .lte('tanggal_mulai', lastDay)
+      .order('created_at', { ascending: false })
 
-    // Map: nrp → leave_request (ambil yang paling baru saja)
+    // Map: nrp → leave_request (ambil yang paling baru)
     const leaveMap = new Map<string, any>()
     ;(leaveData || []).forEach((lr: any) => {
       if (!leaveMap.has(lr.nrp)) {
@@ -121,7 +121,9 @@ export async function GET(request: NextRequest) {
       .map(nrp => {
         const emp = empMap.get(nrp)
         const leave = leaveMap.get(nrp)
-        const tanggalCR = crMap.get(nrp) || []
+        const rosterList = crMap.get(nrp) || []
+        const tanggalCR = rosterList.map(x => x.tanggal)
+        const jenisRoster = Array.from(new Set(rosterList.map(x => x.shift_code))).sort().join(' + ')
 
         let status: string
         let badge: string
@@ -150,8 +152,10 @@ export async function GET(request: NextRequest) {
           tanggal_cr_list: tanggalCR,
           tanggal_cr_pertama: tanggalCR[0],
           tanggal_cr_terakhir: tanggalCR[tanggalCR.length - 1],
+          jenis_roster: jenisRoster,  // ⭐ NEW: "CR", "CT", atau "CR + CT"
           leave_request_id: leave?.id || null,
           status_final: leave?.status_final || null,
+          jenis_cuti_diajukan: leave?.jenis_cuti || null,
           status,
           badge,
           tanggal_ajukan: leave?.created_at || null,
@@ -162,7 +166,9 @@ export async function GET(request: NextRequest) {
         }
       })
 
-    // Filter by site
+    // ══════════════════════════════════
+    // 6. Filter by site (scope role)
+    // ══════════════════════════════════
     const isSuperAdmin = session.is_super_admin || false
     const rolesLower = (session.roles || []).map((r: string) => r.toLowerCase())
     const isHOScope = isSuperAdmin || rolesLower.some((r: string) =>
@@ -178,7 +184,9 @@ export async function GET(request: NextRequest) {
       rows = rows.filter((r: any) => r.site === site)
     }
 
-    // Sort: BELUM_AJUKAN dulu (prioritas), lalu MENUNGGU, DITOLAK, DISETUJUI
+    // ══════════════════════════════════
+    // 7. Sort: BELUM_AJUKAN dulu (prioritas), lalu DITOLAK, MENUNGGU, DISETUJUI
+    // ══════════════════════════════════
     const statusOrder: any = { BELUM_AJUKAN: 1, DITOLAK: 2, MENUNGGU: 3, DISETUJUI: 4 }
     rows.sort((a: any, b: any) => {
       const ord = (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99)
@@ -187,18 +195,20 @@ export async function GET(request: NextRequest) {
     })
 
     // ══════════════════════════════════
-    // 6. Statistik per karyawan
+    // 8. Statistik per karyawan
     // ══════════════════════════════════
     const stats = {
       total_karyawan: rows.length,
       sudah_ajukan: rows.filter((r: any) => r.status === 'DISETUJUI').length,
       menunggu: rows.filter((r: any) => r.status === 'MENUNGGU').length,
       belum_ajukan: rows.filter((r: any) => r.status === 'BELUM_AJUKAN').length,
-      ditolak: rows.filter((r: any) => r.status === 'DITOLAK').length
+      ditolak: rows.filter((r: any) => r.status === 'DITOLAK').length,
+      total_cr: rows.filter((r: any) => r.jenis_roster?.includes('CR')).length,
+      total_ct: rows.filter((r: any) => r.jenis_roster?.includes('CT')).length
     }
 
     // ══════════════════════════════════
-    // 7. Sites untuk filter
+    // 9. Sites untuk filter dropdown
     // ══════════════════════════════════
     const { data: sitesList } = await supabase
       .from('sites_config')
