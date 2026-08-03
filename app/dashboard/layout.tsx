@@ -377,8 +377,15 @@ const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdow
     return () => window.removeEventListener('refreshNotif', fetchNotif);
   }, [])
 
-  // 🎯 Auto-redirect ke Absensi Hari Ini kalau tidak ada menu di URL
 useEffect(() => {
+  // Skip auto-redirect kalau user di sub-route (bukan /dashboard root)
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname
+    if (path !== '/dashboard' && path !== '/dashboard/') {
+      return  // Sub-route seperti /dashboard/kelola-event/xxx → biarkan
+    }
+  }
+  
   if (!loading && user && !searchParams.get('menu')) {
     router.replace('/dashboard?menu=absensi_saya')
   }

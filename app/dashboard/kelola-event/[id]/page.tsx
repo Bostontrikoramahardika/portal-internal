@@ -1,13 +1,56 @@
 'use client'
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DETAIL EVENT v1.0
-// Halaman detail event: info + list peserta + TTD viewer
+// DETAIL EVENT v2.0
+// Halaman detail event: info + list peserta + TTD viewer + MoM
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+type MomItem = {
+  id: string
+  no_urut: number
+  topik: string
+  action_item: string | null
+  disampaikan_oleh: string | null
+  due_date: string | null
+  pic: string | null
+  status: 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED'
+  catatan: string | null
+  created_by: string
+  created_by_nama: string
+}
+
+type MomForm = {
+  topik: string
+  action_item: string
+  disampaikan_oleh: string
+  due_date: string
+  pic: string
+  status: 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED'
+  catatan: string
+}
+
+const EMPTY_FORM: MomForm = {
+  topik: '',
+  action_item: '',
+  disampaikan_oleh: '',
+  due_date: '',
+  pic: '',
+  status: 'OPEN',
+  catatan: '',
+}
+
+const STATUS_CONFIG = {
+  OPEN:        { label: 'Open',        color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+  IN_PROGRESS: { label: 'In Progress', color: 'bg-blue-100 text-blue-700 border-blue-300' },
+  DONE:        { label: 'Done',        color: 'bg-green-100 text-green-700 border-green-300' },
+  CANCELLED:   { label: 'Cancelled',   color: 'bg-red-100 text-red-700 border-red-300' },
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DetailEventPage() {
   const params = useParams()
   const router = useRouter()
@@ -23,6 +66,16 @@ export default function DetailEventPage() {
   const [qrModal, setQrModal] = useState(false)
   const [search, setSearch] = useState('')
 
+  // MoM state
+  const [momList, setMomList] = useState<MomItem[]>([])
+  const [momLoading, setMomLoading] = useState(false)
+  const [momForm, setMomForm] = useState<MomForm>(EMPTY_FORM)
+  const [editingMomId, setEditingMomId] = useState<string | null>(null)
+  const [showMomForm, setShowMomForm] = useState(false)
+  const [momSaving, setMomSaving] = useState(false)
+  const [momDeleteId, setMomDeleteId] = useState<string | null>(null)
+
+  // ─── Fetch Event + Peserta ──────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
@@ -42,8 +95,109 @@ export default function DetailEventPage() {
     }
   }, [eventId, router])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  // ─── Fetch MoM ─────────────────────────────────────────────────────────────
+  const fetchMom = useCallback(async () => {
+    setMomLoading(true)
+    try {
+      const res = await fetch(`/api/events/${eventId}/mom`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setMomList(data.mom || [])
+    } catch (err: any) {
+      console.error('Error fetch MoM:', err.message)
+    } finally {
+      setMomLoading(false)
+    }
+  }, [eventId])
 
+  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { if (eventId) fetchMom() }, [fetchMom, eventId])
+
+  // ─── MoM Handlers ──────────────────────────────────────────────────────────
+  const openAddMom = () => {
+    setEditingMomId(null)
+    setMomForm(EMPTY_FORM)
+    setShowMomForm(true)
+  }
+
+  const openEditMom = (item: MomItem) => {
+    setEditingMomId(item.id)
+    setMomForm({
+      topik: item.topik || '',
+      action_item: item.action_item || '',
+      disampaikan_oleh: item.disampaikan_oleh || '',
+      due_date: item.due_date || '',
+      pic: item.pic || '',
+      status: item.status || 'OPEN',
+      catatan: item.catatan || '',
+    })
+    setShowMomForm(true)
+  }
+
+  const cancelMomForm = () => {
+    setShowMomForm(false)
+    setEditingMomId(null)
+    setMomForm(EMPTY_FORM)
+  }
+
+  const saveMom = async () => {
+    if (!momForm.topik.trim()) {
+      alert('⚠️ Topik wajib diisi')
+      return
+    }
+    setMomSaving(true)
+    try {
+      const url = editingMomId
+        ? `/api/events/${eventId}/mom/${editingMomId}`
+        : `/api/events/${eventId}/mom`
+      const method = editingMomId ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(momForm),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      cancelMomForm()
+      fetchMom()
+    } catch (err: any) {
+      alert('❌ ' + err.message)
+    } finally {
+      setMomSaving(false)
+    }
+  }
+
+  const deleteMom = async (momId: string) => {
+    setMomDeleteId(momId)
+    try {
+      const res = await fetch(`/api/events/${eventId}/mom/${momId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      fetchMom()
+    } catch (err: any) {
+      alert('❌ ' + err.message)
+    } finally {
+      setMomDeleteId(null)
+    }
+  }
+
+  // Quick status update (langsung dari badge, tanpa buka form)
+  const updateStatus = async (item: MomItem, newStatus: MomItem['status']) => {
+    try {
+      const res = await fetch(`/api/events/${eventId}/mom/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...item, status: newStatus }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      fetchMom()
+    } catch (err: any) {
+      alert('❌ ' + err.message)
+    }
+  }
+
+  // ─── Filter peserta ─────────────────────────────────────────────────────────
   const filtered = attendances.filter((a) => {
     if (!search) return true
     const s = search.toLowerCase()
@@ -54,6 +208,7 @@ export default function DetailEventPage() {
     )
   })
 
+  // ─── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center">
@@ -69,9 +224,15 @@ export default function DetailEventPage() {
 
   const tipeEmoji: Record<string, string> = { MEETING: '🤝', TRAINING: '📚', ACARA: '🎉', SAFETY: '🦺' }
 
+  // Summary MoM counts
+  const momOpen       = momList.filter(m => m.status === 'OPEN').length
+  const momInProgress = momList.filter(m => m.status === 'IN_PROGRESS').length
+  const momDone       = momList.filter(m => m.status === 'DONE').length
+
   return (
     <div className="min-h-screen bg-[#f4f7fa] pb-24">
-      {/* HEADER */}
+
+      {/* ── HEADER ── */}
       <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-4 pb-4 lg:px-6 lg:pt-6 lg:pb-6 rounded-b-3xl shadow-lg">
         <button onClick={() => router.push('/dashboard/kelola-event')}
           className="text-blue-200 text-xs font-bold mb-2 hover:text-white transition-all">
@@ -98,14 +259,15 @@ export default function DetailEventPage() {
       </div>
 
       <div className="px-4 py-4 lg:px-6 lg:py-6 space-y-3">
-        {/* STATS */}
+
+        {/* ── STATS ── */}
         <div className="grid grid-cols-3 gap-2">
-          <StatCard color="blue" label="Total Hadir" value={totalHadir} icon="👥" />
-          <StatCard color="green" label="Internal" value={totalInternal} icon="💼" />
-          <StatCard color="purple" label="Tamu" value={totalTamu} icon="🎫" />
+          <StatCard color="blue"   label="Total Hadir" value={totalHadir}   icon="👥" />
+          <StatCard color="green"  label="Internal"    value={totalInternal} icon="💼" />
+          <StatCard color="purple" label="Tamu"        value={totalTamu}     icon="🎫" />
         </div>
 
-        {/* ACTIONS */}
+        {/* ── ACTIONS ── */}
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setQrModal(true)}
             className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#002a57] shadow-lg">
@@ -121,17 +283,18 @@ export default function DetailEventPage() {
           </button>
         </div>
 
-        {/* SEARCH */}
+        {/* ── SEARCH ── */}
         <div className="bg-white rounded-2xl border shadow-sm p-3">
           <input type="text" placeholder="🔍 Cari nama / NRP / perusahaan..."
             value={search} onChange={(e) => setSearch(e.target.value)}
             className="w-full border rounded-lg px-3 py-2 text-sm" />
         </div>
 
-        {/* LIST PESERTA */}
+        {/* ── LIST PESERTA ── */}
         <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
           <div className="px-4 py-2 border-b bg-slate-50 text-xs text-slate-600 font-bold">
-            Menampilkan <span className="text-[#003D79]">{filtered.length}</span> dari <span className="text-[#003D79]">{attendances.length}</span> peserta
+            Menampilkan <span className="text-[#003D79]">{filtered.length}</span> dari{' '}
+            <span className="text-[#003D79]">{attendances.length}</span> peserta
           </div>
 
           {!filtered.length ? (
@@ -202,8 +365,7 @@ export default function DetailEventPage() {
                         </div>
                       </div>
                       {a.signature_url && (
-                        <button onClick={() => setTtdModal(a)}
-                          className="text-blue-600 text-lg">👁️</button>
+                        <button onClick={() => setTtdModal(a)} className="text-blue-600 text-lg">👁️</button>
                       )}
                     </div>
                     <div className="flex items-center justify-between mt-2">
@@ -220,16 +382,330 @@ export default function DetailEventPage() {
             </>
           )}
         </div>
+
+        {/* ══════════════════════════════════════════════════════
+            ── MOM SECTION ──
+        ══════════════════════════════════════════════════════ */}
+        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+
+          {/* Header MoM */}
+          <div className="px-4 py-3 border-b bg-slate-50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-base">📋</span>
+              <span className="text-sm font-black text-slate-800">Minutes of Meeting</span>
+              {momList.length > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-[#003D79] text-white text-[10px] font-bold">
+                  {momList.length}
+                </span>
+              )}
+            </div>
+            <button onClick={openAddMom}
+              className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#002a57] transition-colors">
+              + Tambah Item
+            </button>
+          </div>
+
+          {/* MoM Summary badges (kalau ada data) */}
+          {momList.length > 0 && (
+            <div className="px-4 py-2 border-b flex gap-2 flex-wrap bg-slate-50/50">
+              <span className="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-300 text-[10px] font-bold">
+                🟡 Open: {momOpen}
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-300 text-[10px] font-bold">
+                🔵 In Progress: {momInProgress}
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-300 text-[10px] font-bold">
+                🟢 Done: {momDone}
+              </span>
+            </div>
+          )}
+
+          {/* Form Tambah/Edit MoM */}
+          {showMomForm && (
+            <div className="p-4 border-b bg-blue-50/40">
+              <p className="text-xs font-black text-[#003D79] mb-3">
+                {editingMomId ? '✏️ Edit Item MoM' : '➕ Tambah Item MoM'}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                {/* Topik */}
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                    Topik <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={momForm.topik}
+                    onChange={(e) => setMomForm(f => ({ ...f, topik: e.target.value }))}
+                    placeholder="Topik pembahasan..."
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#003D79] focus:border-transparent"
+                  />
+                </div>
+
+                {/* Action Item */}
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                    Action Item
+                  </label>
+                  <textarea
+                    value={momForm.action_item}
+                    onChange={(e) => setMomForm(f => ({ ...f, action_item: e.target.value }))}
+                    placeholder="Tindakan yang perlu dilakukan..."
+                    rows={2}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#003D79] focus:border-transparent resize-none"
+                  />
+                </div>
+
+                {/* Disampaikan Oleh */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                    Disampaikan Oleh
+                  </label>
+                  <input
+                    type="text"
+                    value={momForm.disampaikan_oleh}
+                    onChange={(e) => setMomForm(f => ({ ...f, disampaikan_oleh: e.target.value }))}
+                    placeholder="Nama pembicara..."
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#003D79] focus:border-transparent"
+                  />
+                </div>
+
+                {/* PIC */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                    PIC
+                  </label>
+                  <input
+                    type="text"
+                    value={momForm.pic}
+                    onChange={(e) => setMomForm(f => ({ ...f, pic: e.target.value }))}
+                    placeholder="Person in charge..."
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#003D79] focus:border-transparent"
+                  />
+                </div>
+
+                {/* Due Date */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                    Due Date <span className="text-slate-400 font-normal normal-case">(opsional)</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={momForm.due_date}
+                    onChange={(e) => setMomForm(f => ({ ...f, due_date: e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#003D79] focus:border-transparent"
+                  />
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={momForm.status}
+                    onChange={(e) => setMomForm(f => ({ ...f, status: e.target.value as MomForm['status'] }))}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#003D79] focus:border-transparent"
+                  >
+                    <option value="OPEN">Open</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="DONE">Done</option>
+                    <option value="CANCELLED">Cancelled</option>
+                  </select>
+                </div>
+
+                {/* Catatan */}
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wide mb-1">
+                    Catatan
+                  </label>
+                  <input
+                    type="text"
+                    value={momForm.catatan}
+                    onChange={(e) => setMomForm(f => ({ ...f, catatan: e.target.value }))}
+                    placeholder="Catatan tambahan..."
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#003D79] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Form Buttons */}
+              <div className="flex gap-2 mt-3">
+                <button onClick={saveMom} disabled={momSaving}
+                  className="px-4 py-2 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#002a57] disabled:opacity-50 transition-colors">
+                  {momSaving ? '⏳ Menyimpan...' : editingMomId ? '💾 Update' : '✅ Simpan'}
+                </button>
+                <button onClick={cancelMomForm} disabled={momSaving}
+                  className="px-4 py-2 bg-white text-slate-700 border rounded-lg text-xs font-bold hover:bg-slate-50 transition-colors">
+                  Batal
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* MoM List */}
+          {momLoading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#003D79]"></div>
+              <p className="text-xs text-slate-500 mt-2">Memuat MoM...</p>
+            </div>
+          ) : momList.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-3xl mb-2">📝</div>
+              <p className="text-sm text-slate-500">Belum ada Minutes of Meeting</p>
+              <p className="text-xs text-slate-400 mt-1">Klik "+ Tambah Item" untuk mulai mencatat</p>
+            </div>
+          ) : (
+            <>
+              {/* DESKTOP TABLE */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-50 border-b">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-black text-slate-600 uppercase tracking-wide w-8">No</th>
+                      <th className="px-3 py-2 text-left font-black text-slate-600 uppercase tracking-wide">Topik</th>
+                      <th className="px-3 py-2 text-left font-black text-slate-600 uppercase tracking-wide">Action Item</th>
+                      <th className="px-3 py-2 text-left font-black text-slate-600 uppercase tracking-wide">Disampaikan Oleh</th>
+                      <th className="px-3 py-2 text-left font-black text-slate-600 uppercase tracking-wide">Due Date</th>
+                      <th className="px-3 py-2 text-left font-black text-slate-600 uppercase tracking-wide">PIC</th>
+                      <th className="px-3 py-2 text-center font-black text-slate-600 uppercase tracking-wide">Status</th>
+                      <th className="px-3 py-2 text-center font-black text-slate-600 uppercase tracking-wide">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {momList.map((item) => (
+                      <tr key={item.id} className="border-b hover:bg-slate-50/80 transition-colors">
+                        <td className="px-3 py-2 text-slate-500 text-center">{item.no_urut}</td>
+                        <td className="px-3 py-2 font-bold text-slate-800 max-w-[140px]">
+                          <div className="truncate" title={item.topik}>{item.topik}</div>
+                          {item.catatan && (
+                            <div className="text-slate-400 font-normal truncate text-[10px] mt-0.5" title={item.catatan}>
+                              📌 {item.catatan}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-slate-600 max-w-[160px]">
+                          <div className="line-clamp-2" title={item.action_item || ''}>{item.action_item || '—'}</div>
+                        </td>
+                        <td className="px-3 py-2 text-slate-600">{item.disampaikan_oleh || '—'}</td>
+                        <td className="px-3 py-2 text-slate-600 whitespace-nowrap">
+                          {item.due_date ? (
+                            <span className={`${isDueDatePast(item.due_date) && item.status !== 'DONE' && item.status !== 'CANCELLED'
+                              ? 'text-red-600 font-bold' : ''}`}>
+                              {fmtDate(item.due_date)}
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td className="px-3 py-2 text-slate-600">{item.pic || '—'}</td>
+                        <td className="px-3 py-2 text-center">
+                          {/* Quick status dropdown */}
+                          <select
+                            value={item.status}
+                            onChange={(e) => updateStatus(item, e.target.value as MomItem['status'])}
+                            className={`text-[10px] font-bold rounded-full px-2 py-0.5 border cursor-pointer
+                              ${STATUS_CONFIG[item.status]?.color} focus:outline-none`}
+                          >
+                            <option value="OPEN">Open</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="DONE">Done</option>
+                            <option value="CANCELLED">Cancelled</option>
+                          </select>
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => openEditMom(item)}
+                              className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
+                              title="Edit">✏️</button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Hapus item "${item.topik}"?`)) deleteMom(item.id)
+                              }}
+                              disabled={momDeleteId === item.id}
+                              className="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors text-sm disabled:opacity-50"
+                              title="Hapus">
+                              {momDeleteId === item.id ? '⏳' : '🗑️'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* MOBILE CARDS */}
+              <div className="md:hidden divide-y">
+                {momList.map((item) => (
+                  <div key={item.id} className="p-3">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-[10px] font-black text-slate-400">#{item.no_urut}</span>
+                          <span className="font-bold text-sm text-slate-800 truncate">{item.topik}</span>
+                        </div>
+                        {item.action_item && (
+                          <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{item.action_item}</p>
+                        )}
+                        {item.catatan && (
+                          <p className="text-[10px] text-slate-400 mt-0.5">📌 {item.catatan}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button onClick={() => openEditMom(item)}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg text-sm">✏️</button>
+                        <button
+                          onClick={() => { if (confirm(`Hapus item "${item.topik}"?`)) deleteMom(item.id) }}
+                          disabled={momDeleteId === item.id}
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg text-sm disabled:opacity-50">
+                          {momDeleteId === item.id ? '⏳' : '🗑️'}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {/* Quick status select mobile */}
+                      <select
+                        value={item.status}
+                        onChange={(e) => updateStatus(item, e.target.value as MomItem['status'])}
+                        className={`text-[10px] font-bold rounded-full px-2 py-0.5 border cursor-pointer
+                          ${STATUS_CONFIG[item.status]?.color} focus:outline-none`}
+                      >
+                        <option value="OPEN">Open</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="DONE">Done</option>
+                        <option value="CANCELLED">Cancelled</option>
+                      </select>
+                      {item.pic && (
+                        <span className="text-[10px] text-slate-500">👤 {item.pic}</span>
+                      )}
+                      {item.due_date && (
+                        <span className={`text-[10px] ${isDueDatePast(item.due_date) && item.status !== 'DONE' && item.status !== 'CANCELLED'
+                          ? 'text-red-600 font-bold' : 'text-slate-500'}`}>
+                          📅 {fmtDate(item.due_date)}
+                        </span>
+                      )}
+                      {item.disampaikan_oleh && (
+                        <span className="text-[10px] text-slate-500">🎤 {item.disampaikan_oleh}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        {/* ── END MOM SECTION ── */}
+
       </div>
 
-      {/* TTD MODAL */}
+      {/* ── TTD MODAL ── */}
       {ttdModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={(e) => e.target === e.currentTarget && setTtdModal(null)}>
           <div className="bg-white rounded-2xl p-5 max-w-md w-full">
             <h3 className="text-sm font-black text-slate-800 mb-1">✍️ Tanda Tangan</h3>
             <p className="text-xs text-slate-500 mb-3">{ttdModal.nama}</p>
-            <img src={ttdModal.signature_url} alt="TTD" className="w-full border-2 border-slate-100 rounded-xl bg-white" />
+            <img src={ttdModal.signature_url} alt="TTD"
+              className="w-full border-2 border-slate-100 rounded-xl bg-white" />
             <button onClick={() => setTtdModal(null)}
               className="w-full mt-3 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200">
               Tutup
@@ -238,17 +714,27 @@ export default function DetailEventPage() {
         </div>
       )}
 
-      {/* QR MODAL */}
+      {/* ── QR MODAL ── */}
       {qrModal && <QREventModal event={event} onClose={() => setQrModal(false)} />}
     </div>
   )
 }
 
-// ─────────────────────────────────────────────────
+// ─── Helper: due date sudah lewat? ────────────────────────────────────────────
+function isDueDatePast(dateStr: string): boolean {
+  if (!dateStr) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dateStr)
+  due.setHours(0, 0, 0, 0)
+  return due < today
+}
+
+// ─── Sub Components ───────────────────────────────────────────────────────────
 function StatCard({ color, label, value, icon }: any) {
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-[#003D79] border-blue-200',
-    green: 'bg-green-50 text-green-700 border-green-200',
+    blue:   'bg-blue-50 text-[#003D79] border-blue-200',
+    green:  'bg-green-50 text-green-700 border-green-200',
     purple: 'bg-purple-50 text-purple-700 border-purple-200',
   }
   return (
@@ -283,9 +769,11 @@ function QREventModal({ event, onClose }: { event: any; onClose: () => void }) {
         <p className="text-sm font-bold text-[#003D79] mb-4">{event.nama_event}</p>
         {qrUrl ? (
           <img src={qrUrl} alt="QR" className="mx-auto w-64 h-64 rounded-xl border-4 border-slate-100 mb-4" />
-        ) : <div className="w-64 h-64 mx-auto bg-slate-100 rounded-xl flex items-center justify-center mb-4">
-          <span className="animate-spin text-2xl">⏳</span>
-        </div>}
+        ) : (
+          <div className="w-64 h-64 mx-auto bg-slate-100 rounded-xl flex items-center justify-center mb-4">
+            <span className="animate-spin text-2xl">⏳</span>
+          </div>
+        )}
         <div className="bg-slate-50 rounded-xl p-3 mb-4">
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">URL Scan</p>
           <p className="text-[11px] text-slate-700 break-all font-mono">{scanUrl}</p>
@@ -299,6 +787,7 @@ function QREventModal({ event, onClose }: { event: any; onClose: () => void }) {
   )
 }
 
+// ─── Format Helpers ───────────────────────────────────────────────────────────
 function fmtDate(iso: string): string {
   if (!iso) return '—'
   try { return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }
