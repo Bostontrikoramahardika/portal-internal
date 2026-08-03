@@ -1,15 +1,26 @@
 'use client'
 
 // ═══════════════════════════════════════════════════════════════════════════
-// KELOLA EVENT v1.0 - Chat 34
-// 3 TAB: QR Lokasi | Event/Acara | Master Perusahaan
-// Style: HR Dashboard (corporate blue #003D79)
+// KELOLA EVENT v2.0 - Chat 35
+// 4 TAB: QR Lokasi | Event/Acara | Master Perusahaan | Histori
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/app/lib/AuthContext'
 
-type TabKey = 'qr' | 'event' | 'perusahaan'
+type TabKey = 'qr' | 'event' | 'perusahaan' | 'histori'
+
+// Role yang dianggap HO (bisa lihat semua site)
+const HO_ROLES = [
+  'hr_ho', 'hrga', 'hrga_pusat',
+  'director_ops', 'manager_ops', 'business_dev',
+  'spv_she_ho', 'admin'
+]
+
+function isHORole(roles: string[]): boolean {
+  const lower = roles.map((r) => r.toLowerCase())
+  return lower.some((r) => HO_ROLES.includes(r))
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN PAGE
@@ -19,9 +30,10 @@ export default function KelolaEventPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('qr')
 
   const tabs: { key: TabKey; icon: string; label: string }[] = [
-    { key: 'qr', icon: '📱', label: 'QR Lokasi' },
-    { key: 'event', icon: '📋', label: 'Event / Acara' },
+    { key: 'qr',         icon: '📱', label: 'QR Lokasi' },
+    { key: 'event',      icon: '📋', label: 'Event / Acara' },
     { key: 'perusahaan', icon: '🏢', label: 'Master Perusahaan' },
+    { key: 'histori',    icon: '📜', label: 'Histori' },
   ]
 
   return (
@@ -39,7 +51,9 @@ export default function KelolaEventPage() {
           {tabs.map((t) => (
             <button key={t.key} onClick={() => setActiveTab(t.key)}
               className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs lg:text-sm font-bold whitespace-nowrap transition-all
-                ${activeTab === t.key ? 'bg-white text-[#003D79] shadow-lg' : 'bg-white/20 text-white/80 hover:bg-white/30'}`}>
+                ${activeTab === t.key
+                  ? 'bg-white text-[#003D79] shadow-lg'
+                  : 'bg-white/20 text-white/80 hover:bg-white/30'}`}>
               <span>{t.icon}</span><span>{t.label}</span>
             </button>
           ))}
@@ -47,10 +61,300 @@ export default function KelolaEventPage() {
       </div>
 
       <div className="px-4 py-4 lg:px-6 lg:py-6">
-        {activeTab === 'qr' && <QRLokasiTab />}
-        {activeTab === 'event' && <EventTab />}
+        {activeTab === 'qr'         && <QRLokasiTab />}
+        {activeTab === 'event'      && <EventTab />}
         {activeTab === 'perusahaan' && <MasterPerusahaanTab />}
+        {activeTab === 'histori'    && <HistoriTab isSuperAdmin={isSuperAdmin} />}
       </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TAB 4: HISTORI EVENT
+// ═══════════════════════════════════════════════════════════════════════════
+function HistoriTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+  const { user } = useAuth()
+
+  // Ambil roles user dari AuthContext — pakai field permissions sebagai proxy
+  // untuk detect HO, kita cek via API /api/auth/me (sudah di-cache di layout)
+  // Cara paling simpel: ambil dari window.__user_roles kalau ada,
+  // fallback: anggap HO kalau isSuperAdmin
+  const [userRoles, setUserRoles] = useState<string[]>([])
+  const [isHO, setIsHO] = useState(false)
+
+  // Fetch roles user sekali saat mount
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((d) => {
+        const roles: string[] = d.roles || []
+        setUserRoles(roles)
+        setIsHO(isSuperAdmin || isHORole(roles))
+      })
+      .catch(() => {
+        setIsHO(isSuperAdmin)
+      })
+  }, [isSuperAdmin])
+
+  // Filter state
+  const now = new Date()
+  const [filterBulan, setFilterBulan] = useState(String(now.getMonth() + 1).padStart(2, '0'))
+  const [filterTahun, setFilterTahun] = useState(String(now.getFullYear()))
+  const [filterSite, setFilterSite] = useState('')
+
+  // Data
+  const [events, setEvents] = useState<any[]>([])
+  const [momSummary, setMomSummary] = useState<Record<string, { total: number; done: number; open: number }>>({})
+  const [loading, setLoading] = useState(false)
+  const [sites, setSites] = useState<string[]>([])
+
+  // Fetch daftar site (untuk dropdown HO)
+  useEffect(() => {
+    fetch('/api/employees/sites')
+      .then((r) => r.json())
+      .then((d) => setSites(d.sites || []))
+      .catch(() => {})
+  }, [])
+
+  const fetchHistori = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      params.set('status', 'SELESAI')
+
+      // Filter site
+      if (isHO && filterSite) params.set('site', filterSite)
+
+      const res = await fetch(`/api/events?${params}`)
+      const data = await res.json()
+      let rows: any[] = data.data || []
+
+      // Filter bulan & tahun di client (lebih simpel daripada API baru)
+      if (filterBulan && filterTahun) {
+        rows = rows.filter((ev) => {
+          if (!ev.tanggal) return false
+          const d = new Date(ev.tanggal)
+          const bulanMatch = String(d.getMonth() + 1).padStart(2, '0') === filterBulan
+          const tahunMatch = String(d.getFullYear()) === filterTahun
+          return bulanMatch && tahunMatch
+        })
+      } else if (filterTahun) {
+        rows = rows.filter((ev) => {
+          if (!ev.tanggal) return false
+          return String(new Date(ev.tanggal).getFullYear()) === filterTahun
+        })
+      }
+
+      setEvents(rows)
+
+      // Fetch MoM summary untuk setiap event
+      if (rows.length > 0) {
+        const summaryMap: Record<string, { total: number; done: number; open: number }> = {}
+        await Promise.all(
+          rows.map(async (ev) => {
+            try {
+              const r = await fetch(`/api/events/${ev.id}/mom`)
+              const d = await r.json()
+              const mom: any[] = d.mom || []
+              summaryMap[ev.id] = {
+                total: mom.length,
+                done: mom.filter((m) => m.status === 'DONE').length,
+                open: mom.filter((m) => m.status === 'OPEN' || m.status === 'IN_PROGRESS').length,
+              }
+            } catch {
+              summaryMap[ev.id] = { total: 0, done: 0, open: 0 }
+            }
+          })
+        )
+        setMomSummary(summaryMap)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [isHO, filterSite, filterBulan, filterTahun])
+
+  useEffect(() => {
+    fetchHistori()
+  }, [fetchHistori])
+
+  // Generate opsi tahun (3 tahun ke belakang + tahun ini)
+  const tahunOptions = Array.from({ length: 4 }, (_, i) => String(now.getFullYear() - i))
+
+  const bulanOptions = [
+    { value: '', label: 'Semua Bulan' },
+    { value: '01', label: 'Januari' }, { value: '02', label: 'Februari' },
+    { value: '03', label: 'Maret' },   { value: '04', label: 'April' },
+    { value: '05', label: 'Mei' },     { value: '06', label: 'Juni' },
+    { value: '07', label: 'Juli' },    { value: '08', label: 'Agustus' },
+    { value: '09', label: 'September' },{ value: '10', label: 'Oktober' },
+    { value: '11', label: 'November' },{ value: '12', label: 'Desember' },
+  ]
+
+  const tipeEmoji: Record<string, string> = {
+    MEETING: '🤝', TRAINING: '📚', ACARA: '🎉', SAFETY: '🦺'
+  }
+
+  return (
+    <div className="space-y-4">
+
+      {/* FILTER BAR */}
+      <div className="bg-white rounded-2xl border shadow-sm p-4">
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-wide mb-3">🔍 Filter Histori</p>
+        <div className="flex flex-wrap gap-2">
+
+          {/* Bulan */}
+          <select
+            value={filterBulan}
+            onChange={(e) => setFilterBulan(e.target.value)}
+            className="border-2 border-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:border-blue-500 outline-none bg-white"
+          >
+            {bulanOptions.map((b) => (
+              <option key={b.value} value={b.value}>{b.label}</option>
+            ))}
+          </select>
+
+          {/* Tahun */}
+          <select
+            value={filterTahun}
+            onChange={(e) => setFilterTahun(e.target.value)}
+            className="border-2 border-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:border-blue-500 outline-none bg-white"
+          >
+            {tahunOptions.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+
+          {/* Site — hanya untuk HO */}
+          {isHO && (
+            <select
+              value={filterSite}
+              onChange={(e) => setFilterSite(e.target.value)}
+              className="border-2 border-slate-100 rounded-xl px-3 py-2 text-xs font-bold focus:border-blue-500 outline-none bg-white"
+            >
+              <option value="">🏢 Semua Site</option>
+              {sites.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          )}
+
+          <button
+            onClick={fetchHistori}
+            className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#002a57] transition-all"
+          >
+            🔄 Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* SUMMARY COUNT */}
+      {!loading && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs font-black text-slate-600">
+            📜 {events.length} event selesai
+            {filterBulan
+              ? ` • ${bulanOptions.find((b) => b.value === filterBulan)?.label} ${filterTahun}`
+              : ` • ${filterTahun}`}
+            {isHO && filterSite ? ` • ${filterSite}` : ''}
+          </p>
+        </div>
+      )}
+
+      {/* LIST */}
+      {loading ? (
+        <LoadingSpinner />
+      ) : events.length === 0 ? (
+        <EmptyState icon="📜" msg="Tidak ada event selesai di periode ini" />
+      ) : (
+        <div className="space-y-3">
+          {events.map((ev) => {
+            const mom = momSummary[ev.id]
+            return (
+              <div key={ev.id}
+                className="bg-white rounded-2xl border shadow-sm p-4 hover:shadow-md transition-all">
+
+                {/* Header card */}
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <span className="text-2xl shrink-0">{tipeEmoji[ev.tipe] || '📋'}</span>
+                    <div className="min-w-0">
+                      <h3 className="font-black text-slate-800 text-sm leading-tight">{ev.nama_event}</h3>
+                      {ev.deskripsi && (
+                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{ev.deskripsi}</p>
+                      )}
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap border bg-blue-100 text-blue-700 border-blue-300 shrink-0">
+                    ✅ SELESAI
+                  </span>
+                </div>
+
+                {/* Info grid */}
+                <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-500 mb-3">
+                  <div>📅 {fmtDate(ev.tanggal)}</div>
+                  <div>⏰ {ev.jam_mulai || '-'} – {ev.jam_selesai || '-'}</div>
+                  <div>📍 {ev.nama_lokasi || ev.lokasi || '-'}</div>
+                  <div>🏢 {ev.site || '-'}</div>
+                </div>
+
+                {/* Stats row */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="bg-blue-50 text-[#003D79] px-2.5 py-1 rounded-full text-[11px] font-black">
+                    👥 {ev.total_hadir} hadir
+                  </span>
+
+                  {/* MoM summary */}
+                  {mom && mom.total > 0 ? (
+                    <>
+                      <span className="bg-slate-50 text-slate-600 px-2.5 py-1 rounded-full text-[11px] font-bold border">
+                        📋 {mom.total} action item
+                      </span>
+                      {mom.done > 0 && (
+                        <span className="bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-[11px] font-bold border border-green-200">
+                          ✅ {mom.done} done
+                        </span>
+                      )}
+                      {mom.open > 0 && (
+                        <span className="bg-yellow-50 text-yellow-700 px-2.5 py-1 rounded-full text-[11px] font-bold border border-yellow-200">
+                          🟡 {mom.open} open
+                        </span>
+                      )}
+                    </>
+                  ) : mom && mom.total === 0 ? (
+                    <span className="bg-slate-50 text-slate-400 px-2.5 py-1 rounded-full text-[11px] font-bold border">
+                      📋 Tanpa MoM
+                    </span>
+                  ) : null}
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-slate-400">
+                    oleh {ev.created_by_nama || ev.created_by}
+                  </span>
+                  <div className="flex gap-2">
+                    <a
+                      href={`/api/events/${ev.id}/export`}
+                      className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-[10px] font-bold hover:bg-green-200 transition-all"
+                    >
+                      📊 Excel
+                    </a>
+                    <a
+                      href={`/dashboard/kelola-event/${ev.id}`}
+                      className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-[10px] font-bold hover:bg-[#002a57] transition-all"
+                    >
+                      Lihat Detail →
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -159,17 +463,6 @@ function EventTab() {
     fetchData()
   }
 
-  const handleFinish = async (id: string) => {
-    if (!confirm('Tandai event ini sebagai selesai?')) return
-    const res = await fetch(`/api/events/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'SELESAI' })
-    })
-    // Fallback kalau PATCH belum didukung: langsung refetch
-    fetchData()
-  }
-
   const tipeEmoji: Record<string, string> = {
     MEETING: '🤝', TRAINING: '📚', ACARA: '🎉', SAFETY: '🦺'
   }
@@ -181,7 +474,9 @@ function EventTab() {
           {['AKTIF', 'SELESAI', 'DIBATALKAN'].map((s) => (
             <button key={s} onClick={() => setStatusFilter(s)}
               className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all
-                ${statusFilter === s ? 'bg-[#003D79] text-white shadow' : 'bg-white text-slate-600 border hover:bg-slate-50'}`}>
+                ${statusFilter === s
+                  ? 'bg-[#003D79] text-white shadow'
+                  : 'bg-white text-slate-600 border hover:bg-slate-50'}`}>
               {s === 'AKTIF' ? '🟢' : s === 'SELESAI' ? '✅' : '❌'} {s}
             </button>
           ))}
@@ -309,7 +604,6 @@ function MasterPerusahaanTab() {
     <div className="space-y-3">
       <h2 className="text-sm font-black text-slate-700 uppercase tracking-wide">🏢 Master Perusahaan</h2>
 
-      {/* ADD FORM */}
       <div className="bg-white rounded-2xl border shadow-sm p-4">
         <div className="flex gap-2">
           <input
@@ -327,7 +621,6 @@ function MasterPerusahaanTab() {
         </div>
       </div>
 
-      {/* LIST */}
       {loading ? <LoadingSpinner /> : (
         <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
           <div className="divide-y">
@@ -357,7 +650,9 @@ function MasterPerusahaanTab() {
 // ═══════════════════════════════════════════════════════════════════════════
 // MODAL: CREATE QR LOKASI
 // ═══════════════════════════════════════════════════════════════════════════
-function CreateQRModal({ sites, onClose, onSuccess }: { sites: string[]; onClose: () => void; onSuccess: () => void }) {
+function CreateQRModal({ sites, onClose, onSuccess }: {
+  sites: string[]; onClose: () => void; onSuccess: () => void
+}) {
   const [form, setForm] = useState({ nama_lokasi: '', deskripsi: '', site: '' })
   const [saving, setSaving] = useState(false)
 
@@ -406,7 +701,10 @@ function CreateQRModal({ sites, onClose, onSuccess }: { sites: string[]; onClose
           </select>
         </div>
         <div className="flex gap-2 pt-2">
-          <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50">Batal</button>
+          <button type="button" onClick={onClose}
+            className="flex-1 px-4 py-2.5 border-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50">
+            Batal
+          </button>
           <button type="submit" disabled={saving}
             className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57] disabled:opacity-50">
             {saving ? 'Menyimpan...' : '✅ BUAT QR'}
@@ -460,10 +758,13 @@ function CreateEventModal({ onClose, onSuccess }: { onClose: () => void; onSucce
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1">Link ke QR Lokasi (opsional)</label>
-          <select value={form.qr_location_id} onChange={(e) => setForm({ ...form, qr_location_id: e.target.value })}
+          <select value={form.qr_location_id}
+            onChange={(e) => setForm({ ...form, qr_location_id: e.target.value })}
             className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none">
             <option value="">📱 Standalone (QR tersendiri)</option>
-            {qrLocations.map((l) => <option key={l.id} value={l.id}>📍 {l.nama_lokasi} ({l.site})</option>)}
+            {qrLocations.map((l) => (
+              <option key={l.id} value={l.id}>📍 {l.nama_lokasi} ({l.site})</option>
+            ))}
           </select>
           <p className="text-[10px] text-slate-400 mt-1">Pilih lokasi agar 1 QR bisa dipakai banyak event</p>
         </div>
@@ -529,7 +830,10 @@ function CreateEventModal({ onClose, onSuccess }: { onClose: () => void; onSucce
           </div>
         </div>
         <div className="flex gap-2 pt-2">
-          <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50">Batal</button>
+          <button type="button" onClick={onClose}
+            className="flex-1 px-4 py-2.5 border-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50">
+            Batal
+          </button>
           <button type="submit" disabled={saving}
             className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57] disabled:opacity-50">
             {saving ? 'Menyimpan...' : '✅ BUAT EVENT'}
@@ -541,12 +845,13 @@ function CreateEventModal({ onClose, onSuccess }: { onClose: () => void; onSucce
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// MODAL: QR DISPLAY (untuk QR Lokasi & Event)
+// MODAL: QR DISPLAY
 // ═══════════════════════════════════════════════════════════════════════════
-function QRDisplayModal({ data, type, onClose }: { data: any; type: 'location' | 'event'; onClose: () => void }) {
+function QRDisplayModal({ data, type, onClose }: {
+  data: any; type: 'location' | 'event'; onClose: () => void
+}) {
   const [qrUrl, setQrUrl] = useState('')
   const token = data.qr_token
-
   const scanUrl = typeof window !== 'undefined' ? `${window.location.origin}/scan/${token}` : ''
   const title = type === 'location' ? data.nama_lokasi : data.nama_event
 
@@ -585,7 +890,9 @@ function QRDisplayModal({ data, type, onClose }: { data: any; type: 'location' |
   }
 
   const copyUrl = () => {
-    navigator.clipboard.writeText(scanUrl).then(() => alert('✅ URL disalin!')).catch(() => {})
+    navigator.clipboard.writeText(scanUrl)
+      .then(() => alert('✅ URL disalin!'))
+      .catch(() => {})
   }
 
   return (
@@ -595,7 +902,8 @@ function QRDisplayModal({ data, type, onClose }: { data: any; type: 'location' |
         <p className="text-sm font-bold text-[#003D79] mb-4">{title}</p>
 
         {qrUrl ? (
-          <img src={qrUrl} alt="QR Code" className="mx-auto w-64 h-64 rounded-xl border-4 border-slate-100 mb-4" />
+          <img src={qrUrl} alt="QR Code"
+            className="mx-auto w-64 h-64 rounded-xl border-4 border-slate-100 mb-4" />
         ) : (
           <div className="mx-auto w-64 h-64 bg-slate-100 rounded-xl flex items-center justify-center mb-4">
             <span className="animate-spin text-2xl">⏳</span>
@@ -603,7 +911,7 @@ function QRDisplayModal({ data, type, onClose }: { data: any; type: 'location' |
         )}
 
         <div className="bg-slate-50 rounded-xl p-3 mb-4">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">URL Scan (bisa Google Lens)</p>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">URL Scan</p>
           <p className="text-[11px] text-slate-700 break-all font-mono">{scanUrl}</p>
         </div>
 
@@ -631,7 +939,8 @@ function QRDisplayModal({ data, type, onClose }: { data: any; type: 'location' |
 // ═══════════════════════════════════════════════════════════════════════════
 function ModalOverlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-white rounded-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
         {children}
       </div>
@@ -660,6 +969,8 @@ function EmptyState({ icon, msg }: { icon: string; msg: string }) {
 function fmtDate(iso: string): string {
   if (!iso) return '—'
   try {
-    return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+    return new Date(iso).toLocaleDateString('id-ID', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    })
   } catch { return iso }
 }
