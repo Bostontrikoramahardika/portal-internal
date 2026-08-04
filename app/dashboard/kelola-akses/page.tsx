@@ -19,6 +19,10 @@ interface Employee {
   roles: string[]
   permissions_count: number
   permissions: string[]
+  // ═══ Google Integration ═══
+  google_access_enabled?: boolean
+  google_email?: string | null
+  google_connected_at?: string | null
 }
 
 interface RoleTemplate {
@@ -253,6 +257,58 @@ function TabKaryawan() {
     setProcessing(false)
   }
 
+  // ═══ Handler untuk toggle Google Access ═══
+  const handleGoogleToggle = async (target_nrp: string, enabled: boolean) => {
+    setProcessing(true)
+    try {
+      const res = await fetch('/api/kelola-akses/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ action: 'TOGGLE_SINGLE', target_nrp, enabled })
+      })
+      const json = await res.json()
+      if (json.ok) {
+        showToast('✅ ' + json.message, 'ok')
+        load()
+      } else {
+        showToast(json.error || 'Gagal', 'err')
+      }
+    } catch {
+      showToast('Error jaringan', 'err')
+    }
+    setProcessing(false)
+  }
+
+  // ═══ Handler untuk bulk preset Google ═══
+  const handleGooglePreset = async (preset: 'ALL_ON' | 'ALL_OFF' | 'LEADER_UP' | 'HR_ONLY') => {
+    const labels = {
+      ALL_ON: 'Aktifkan SEMUA karyawan?',
+      ALL_OFF: 'Nonaktifkan SEMUA karyawan?',
+      LEADER_UP: 'Aktifkan hanya Leader ke atas (dan nonaktifkan sisanya)?',
+      HR_ONLY: 'Aktifkan hanya HR + Admin (dan nonaktifkan sisanya)?'
+    }
+    if (!confirm(labels[preset])) return
+
+    setProcessing(true)
+    try {
+      const res = await fetch('/api/kelola-akses/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ action: 'BULK_PRESET', preset })
+      })
+      const json = await res.json()
+      if (json.ok) {
+        showToast('✅ ' + json.message, 'ok')
+        load()
+      } else {
+        showToast(json.error || 'Gagal', 'err')
+      }
+    } catch {
+      showToast('Error jaringan', 'err')
+    }
+    setProcessing(false)
+  }
+
   return (
     <div className="space-y-4">
       {toast && (
@@ -286,6 +342,43 @@ function TabKaryawan() {
           </select>
           <button onClick={load} className="p-2 bg-white rounded-[1.2rem] shadow">
             <RefreshCw size={14} className="text-slate-500" />
+          </button>
+        </div>
+      </div>
+
+      {/* ═══ BULK PRESET GOOGLE ACCESS ═══ */}
+      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-[1.2rem] p-3">
+        <div className="text-[9px] font-black uppercase tracking-widest text-emerald-700 mb-2 flex items-center gap-1">
+          🔑 Bulk Preset Akses Google
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => handleGooglePreset('ALL_ON')}
+            disabled={processing}
+            className="text-[10px] font-bold py-2 px-2 bg-white text-emerald-700 rounded-lg hover:bg-emerald-100 border border-emerald-200 disabled:opacity-50"
+          >
+            ✅ Aktifkan Semua
+          </button>
+          <button
+            onClick={() => handleGooglePreset('ALL_OFF')}
+            disabled={processing}
+            className="text-[10px] font-bold py-2 px-2 bg-white text-rose-700 rounded-lg hover:bg-rose-100 border border-rose-200 disabled:opacity-50"
+          >
+            ❌ Nonaktifkan Semua
+          </button>
+          <button
+            onClick={() => handleGooglePreset('LEADER_UP')}
+            disabled={processing}
+            className="text-[10px] font-bold py-2 px-2 bg-white text-blue-700 rounded-lg hover:bg-blue-100 border border-blue-200 disabled:opacity-50"
+          >
+            👑 Leader Up
+          </button>
+          <button
+            onClick={() => handleGooglePreset('HR_ONLY')}
+            disabled={processing}
+            className="text-[10px] font-bold py-2 px-2 bg-white text-purple-700 rounded-lg hover:bg-purple-100 border border-purple-200 disabled:opacity-50"
+          >
+            🗂️ HR Only
           </button>
         </div>
       </div>
@@ -335,6 +428,16 @@ function TabKaryawan() {
                     {emp.permissions_count > 0 && (
                       <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
                         🔐 {emp.permissions_count} perm
+                      </span>
+                    )}
+                    {/* ═══ Badge Google Access ═══ */}
+                    {emp.google_access_enabled ? (
+                      <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                        {emp.google_email ? '🟢 G-Connected' : '✅ G-Allowed'}
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                        ⚫ G-Off
                       </span>
                     )}
                   </div>
@@ -409,6 +512,74 @@ function TabKaryawan() {
                         ))}
                       </div>
                     )}
+                  </div>
+
+                  {/* ═══════════════════════════════════════ */}
+                  {/* ═══ SECTION: GOOGLE INTEGRATION ═══   */}
+                  {/* ═══════════════════════════════════════ */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
+                        🔑 Akses Google Integration
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-3 space-y-3">
+                      {/* Toggle */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <div className="text-xs font-bold text-slate-700">
+                            Izin Connect Google
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            Calendar, Tasks, Gmail
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleGoogleToggle(emp.nrp, !emp.google_access_enabled)}
+                          disabled={processing}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            emp.google_access_enabled ? 'bg-emerald-600' : 'bg-slate-300'
+                          } ${processing ? 'opacity-50' : ''}`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              emp.google_access_enabled ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Status connect */}
+                      {emp.google_email ? (
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-2 flex items-start gap-2">
+                          <CheckCircle size={12} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[10px] font-black text-emerald-800 uppercase">Sudah Connect</div>
+                            <div className="text-xs font-mono text-emerald-700 truncate">{emp.google_email}</div>
+                            {emp.google_connected_at && (
+                              <div className="text-[9px] text-emerald-600 mt-0.5">
+                                Sejak: {new Date(emp.google_connected_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : emp.google_access_enabled ? (
+                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 flex items-start gap-2">
+                          <Info size={12} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                          <div className="text-[10px] text-blue-800">
+                            Diizinkan tapi belum connect. User bisa connect dari menu <strong>Data Saya</strong>.
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 flex items-start gap-2">
+                          <Info size={12} className="text-slate-500 flex-shrink-0 mt-0.5" />
+                          <div className="text-[10px] text-slate-600">
+                            Belum diizinkan. Aktifkan toggle di atas untuk memberi akses.
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

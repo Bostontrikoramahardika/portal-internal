@@ -147,10 +147,62 @@ export async function POST(request: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+    // ═══════════════════════════════════════════════════════════════
+    // AUTO-SYNC ke Google Calendar CREATOR (kalau connect)
+    // ═══════════════════════════════════════════════════════════════
+    let googleSyncStatus = 'SKIPPED'
+    let googleSyncMessage = 'Creator belum connect Google'
+    
+    try {
+      const { createCalendarEvent, toISODateTime } = await import('@/app/lib/google-calendar')
+      
+      const startISO = toISODateTime(tanggal, jam_mulai, '09:00')
+      const endISO = toISODateTime(tanggal, jam_selesai, '10:00')
+
+      const syncResult = await createCalendarEvent(session.nrp, {
+        summary: `[BTM] ${nama_event}`,
+        description: [
+          deskripsi || '',
+          '',
+          `📍 Lokasi: ${lokasi || '-'}`,
+          `🏢 Site: ${site || session.scope_site || session.site || '-'}`,
+          '',
+          '─────────────────────────',
+          'ℹ️ Event ini dari BTM Portal.',
+        ].join('\n'),
+        location: lokasi || site || '',
+        startDateTime: startISO,
+        endDateTime: endISO,
+      })
+
+      if (syncResult.ok && syncResult.eventId) {
+        // Simpan google_calendar_event_id di events
+        await supabase
+          .from('events')
+          .update({ google_calendar_event_id: syncResult.eventId })
+          .eq('id', newEvent.id)
+        
+        newEvent.google_calendar_event_id = syncResult.eventId
+        googleSyncStatus = 'SYNCED'
+        googleSyncMessage = 'Ter-sync ke Google Calendar Anda'
+      } else if (syncResult.error) {
+        googleSyncStatus = 'FAILED'
+        googleSyncMessage = syncResult.error
+      }
+    } catch (syncErr: any) {
+      console.error('Google Calendar sync error:', syncErr.message)
+      googleSyncStatus = 'FAILED'
+      googleSyncMessage = syncErr.message
+    }
+
     return NextResponse.json({
       success: true,
       message: '✅ Event berhasil dibuat',
-      data: newEvent
+      data: newEvent,
+      google_sync: {
+        status: googleSyncStatus,
+        message: googleSyncMessage
+      }
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

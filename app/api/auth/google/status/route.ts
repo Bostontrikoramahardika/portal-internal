@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   const { data: emp } = await supabaseAdmin
     .from('employees')
-    .select('google_email, google_connected_at')
+    .select('google_email, google_connected_at, google_access_enabled')
     .eq('nrp', session.nrp)
     .single()
 
@@ -24,5 +24,6 @@ export async function GET(request: NextRequest) {
     connected: Boolean(emp?.google_email),
     google_email: emp?.google_email || null,
     connected_at: emp?.google_connected_at || null,
+    access_enabled: Boolean(emp?.google_access_enabled),  // ═══ BARU
   })
 }

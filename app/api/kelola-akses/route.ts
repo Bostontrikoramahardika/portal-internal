@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
 
   let empQuery = supabaseAdmin
     .from('employees')
-    .select('nrp, nama, jabatan, departemen, site, is_super_admin, tanggal_resign')
+    .select('nrp, nama, jabatan, departemen, site, is_super_admin, tanggal_resign, google_access_enabled, google_email, google_connected_at')
     .is('tanggal_resign', null)
     .order('nama')
     .limit(limit)

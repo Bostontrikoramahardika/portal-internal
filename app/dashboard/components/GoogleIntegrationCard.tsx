@@ -11,6 +11,7 @@ type Status = {
   connected: boolean
   google_email: string | null
   connected_at: string | null
+  access_enabled: boolean       // ═══ BARU
 }
 
 export default function GoogleIntegrationCard() {
@@ -27,7 +28,7 @@ export default function GoogleIntegrationCard() {
       const data = await res.json()
       setStatus(data)
     } catch {
-      setStatus({ connected: false, google_email: null, connected_at: null })
+      setStatus({ connected: false, google_email: null, connected_at: null, access_enabled: false })
     } finally {
       setLoading(false)
     }
@@ -40,12 +41,12 @@ export default function GoogleIntegrationCard() {
     const params = new URLSearchParams(window.location.search)
     if (params.get('google_success')) {
       setAlert({ type: 'success', msg: '✅ Akun Google berhasil terhubung!' })
-      // Clean URL
       window.history.replaceState({}, '', window.location.pathname + '?menu=data_saya')
     } else if (params.get('google_error')) {
       const err = params.get('google_error')
       let msg = 'Gagal menghubungkan akun Google'
       if (err === 'cancelled') msg = 'Kamu membatalkan otorisasi Google'
+      if (err === 'not_allowed') msg = 'Akses Google belum diizinkan oleh admin. Silakan hubungi HR/Admin.'
       if (err === 'no_refresh_token') {
         msg = 'Silakan buka myaccount.google.com/permissions → hapus izin BTM Portal → coba lagi'
       }
@@ -116,7 +117,7 @@ export default function GoogleIntegrationCard() {
         </div>
 
         {status?.connected ? (
-          // ── CONNECTED STATE ──────────────────────────────
+          // ═══ CONNECTED STATE ═══
           <div>
             <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-3">
               <div className="flex items-center gap-2 mb-1">
@@ -157,8 +158,8 @@ export default function GoogleIntegrationCard() {
               {disconnecting ? '⏳ Memutus...' : '🔌 Putuskan Koneksi'}
             </button>
           </div>
-        ) : (
-          // ── NOT CONNECTED STATE ──────────────────────────
+        ) : status?.access_enabled ? (
+          // ═══ NOT CONNECTED — TAPI DIIZINKAN ═══
           <div>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-3">
               <p className="text-xs text-slate-600 leading-relaxed">
@@ -190,6 +191,36 @@ export default function GoogleIntegrationCard() {
 
             <p className="text-[10px] text-slate-400 text-center mt-2">
               Anda akan diarahkan ke Google untuk otorisasi
+            </p>
+          </div>
+        ) : (
+          // ═══ NOT CONNECTED — TIDAK DIIZINKAN ═══
+          <div>
+            <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-3">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">🔒</span>
+                <div className="flex-1">
+                  <h4 className="text-xs font-black text-amber-800 uppercase tracking-wide mb-1">
+                    Akses Belum Diizinkan
+                  </h4>
+                  <p className="text-[11px] text-amber-700 leading-relaxed">
+                    Integrasi Google belum tersedia untuk akun Anda. 
+                    Silakan hubungi <strong>HR / Admin</strong> untuk mengaktifkan fitur ini.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              disabled
+              className="w-full py-3 bg-slate-100 border-2 border-slate-200 rounded-xl text-sm font-black text-slate-400 cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <span className="text-lg opacity-50">🔒</span>
+              <span>Belum Diizinkan</span>
+            </button>
+
+            <p className="text-[10px] text-slate-400 text-center mt-2">
+              Hubungi admin untuk info lebih lanjut
             </p>
           </div>
         )}
