@@ -8,7 +8,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/app/lib/AuthContext'
 
-type TabKey = 'qr' | 'event' | 'perusahaan' | 'histori'
+type TabKey = 'qr' | 'event' | 'template' | 'perusahaan' | 'histori'
 
 // Role yang dianggap HO (bisa lihat semua site)
 const HO_ROLES = [
@@ -32,6 +32,7 @@ export default function KelolaEventPage() {
   const tabs: { key: TabKey; icon: string; label: string }[] = [
     { key: 'qr',         icon: '📱', label: 'QR Lokasi' },
     { key: 'event',      icon: '📋', label: 'Event / Acara' },
+    { key: 'template',   icon: '🔁', label: 'Template Meeting' },
     { key: 'perusahaan', icon: '🏢', label: 'Master Perusahaan' },
     { key: 'histori',    icon: '📜', label: 'Histori' },
   ]
@@ -63,6 +64,7 @@ export default function KelolaEventPage() {
       <div className="px-4 py-4 lg:px-6 lg:py-6">
         {activeTab === 'qr'         && <QRLokasiTab />}
         {activeTab === 'event'      && <EventTab />}
+        {activeTab === 'template'   && <TemplateTab />}
         {activeTab === 'perusahaan' && <MasterPerusahaanTab />}
         {activeTab === 'histori'    && <HistoriTab isSuperAdmin={isSuperAdmin} />}
       </div>
@@ -440,17 +442,27 @@ function EventTab() {
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
-  const [statusFilter, setStatusFilter] = useState('AKTIF')
+  const [statusFilter, setStatusFilter] = useState('SEMUA_AKTIF')
   const [qrModal, setQrModal] = useState<any>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (statusFilter) params.set('status', statusFilter)
+      // SEMUA_AKTIF = filter multi-status di client
+      if (statusFilter && statusFilter !== 'SEMUA_AKTIF') {
+        params.set('status', statusFilter)
+      }
       const res = await fetch(`/api/events?${params}`)
       const data = await res.json()
-      setEvents(data.data || [])
+      let rows = data.data || []
+      if (statusFilter === 'SEMUA_AKTIF') {
+        // Filter aktif = DRAFT + CONFIRMED + AKTIF + POSTPONED (yang masih perlu perhatian)
+        rows = rows.filter((r: any) => 
+          ['DRAFT', 'CONFIRMED', 'AKTIF', 'POSTPONED', 'PENDING_CONFIRM'].includes(r.status)
+        )
+      }
+      setEvents(rows)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }, [statusFilter])
@@ -463,6 +475,45 @@ function EventTab() {
     fetchData()
   }
 
+  // ═══ Handler untuk confirm/cancel/postpone ═══
+  const handleConfirmAction = async (ev: any, action: 'CONFIRM' | 'CANCEL' | 'POSTPONE') => {
+    let reason: string | null = null
+    let new_date: string | null = null
+
+    if (action === 'CANCEL') {
+      reason = prompt(`❌ Batalkan event "${ev.nama_event}"?\n\nAlasan (opsional):`)
+      if (reason === null) return  // user cancel prompt
+    }
+
+    if (action === 'POSTPONE') {
+      new_date = prompt(`📅 Undur event "${ev.nama_event}" ke tanggal baru (YYYY-MM-DD):`, ev.tanggal)
+      if (!new_date) return
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(new_date)) {
+        alert('❌ Format tanggal salah. Contoh: 2026-09-15')
+        return
+      }
+      reason = prompt('Alasan pengunduran (opsional):') || null
+    }
+
+    if (action === 'CONFIRM') {
+      if (!confirm(`✅ Konfirmasi event "${ev.nama_event}"?\n\nSemua undangan yang connect Google akan otomatis dapat event di Google Calendar mereka.`)) return
+    }
+
+    try {
+      const res = await fetch(`/api/events/${ev.id}/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, reason, new_date })
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      alert('✅ ' + json.message)
+      fetchData()
+    } catch (err: any) {
+      alert('❌ ' + err.message)
+    }
+  }
+
   const tipeEmoji: Record<string, string> = {
     MEETING: '🤝', TRAINING: '📚', ACARA: '🎉', SAFETY: '🦺'
   }
@@ -470,14 +521,22 @@ function EventTab() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap justify-between items-center gap-2">
-        <div className="flex gap-2">
-          {['AKTIF', 'SELESAI', 'DIBATALKAN'].map((s) => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all
-                ${statusFilter === s
+        <div className="flex gap-2 flex-wrap">
+          {[
+            { key: 'SEMUA_AKTIF', label: 'Semua Aktif', icon: '📋' },
+            { key: 'DRAFT', label: 'Draft', icon: '📝' },
+            { key: 'CONFIRMED', label: 'Confirmed', icon: '✅' },
+            { key: 'AKTIF', label: 'Berlangsung', icon: '🟢' },
+            { key: 'SELESAI', label: 'Selesai', icon: '📜' },
+            { key: 'CANCELLED', label: 'Dibatalkan', icon: '❌' },
+            { key: 'POSTPONED', label: 'Diundur', icon: '📅' },
+          ].map((s) => (
+            <button key={s.key} onClick={() => setStatusFilter(s.key)}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all whitespace-nowrap
+                ${statusFilter === s.key
                   ? 'bg-[#003D79] text-white shadow'
                   : 'bg-white text-slate-600 border hover:bg-slate-50'}`}>
-              {s === 'AKTIF' ? '🟢' : s === 'SELESAI' ? '✅' : '❌'} {s}
+              {s.icon} {s.label}
             </button>
           ))}
         </div>
@@ -502,10 +561,26 @@ function EventTab() {
                   {ev.deskripsi && <p className="text-[11px] text-slate-500 mb-1 line-clamp-2">{ev.deskripsi}</p>}
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap border
-                  ${ev.status === 'AKTIF' ? 'bg-green-100 text-green-700 border-green-300' :
+                  ${
+                    ev.status === 'DRAFT' ? 'bg-slate-100 text-slate-700 border-slate-300' :
+                    ev.status === 'PENDING_CONFIRM' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
+                    ev.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' :
+                    ev.status === 'AKTIF' ? 'bg-green-100 text-green-700 border-green-300' :
                     ev.status === 'SELESAI' ? 'bg-blue-100 text-blue-700 border-blue-300' :
-                    'bg-red-100 text-red-700 border-red-300'}`}>
-                  {ev.status}
+                    ev.status === 'POSTPONED' ? 'bg-orange-100 text-orange-700 border-orange-300' :
+                    ev.status === 'CANCELLED' ? 'bg-red-100 text-red-700 border-red-300' :
+                    'bg-slate-100 text-slate-600 border-slate-300'
+                  }`}>
+                  {
+                    ev.status === 'DRAFT' ? '📝 DRAFT' :
+                    ev.status === 'PENDING_CONFIRM' ? '⏳ MENUNGGU' :
+                    ev.status === 'CONFIRMED' ? '✅ CONFIRMED' :
+                    ev.status === 'AKTIF' ? '🟢 AKTIF' :
+                    ev.status === 'SELESAI' ? '📜 SELESAI' :
+                    ev.status === 'POSTPONED' ? '📅 DIUNDUR' :
+                    ev.status === 'CANCELLED' ? '❌ DIBATALKAN' :
+                    ev.status
+                  }
                 </span>
               </div>
 
@@ -525,7 +600,7 @@ function EventTab() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <button onClick={() => setQrModal(ev)}
                   className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-[10px] font-bold hover:bg-blue-200">
                   📱 QR
@@ -538,10 +613,30 @@ function EventTab() {
                   className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-[10px] font-bold hover:bg-green-200">
                   📊 Excel
                 </a>
-                {ev.status === 'AKTIF' && (
-                  <button onClick={() => handleCancel(ev.id)}
+
+                {/* ═══ Tombol confirm untuk DRAFT/PENDING_CONFIRM ═══ */}
+                {(ev.status === 'DRAFT' || ev.status === 'PENDING_CONFIRM') && (
+                  <>
+                    <button onClick={() => handleConfirmAction(ev, 'CONFIRM')}
+                      className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold hover:bg-emerald-200 ml-auto">
+                      ✅ Confirm
+                    </button>
+                    <button onClick={() => handleConfirmAction(ev, 'POSTPONE')}
+                      className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-[10px] font-bold hover:bg-orange-200">
+                      📅 Undur
+                    </button>
+                    <button onClick={() => handleConfirmAction(ev, 'CANCEL')}
+                      className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-[10px] font-bold hover:bg-red-200">
+                      ❌ Batal
+                    </button>
+                  </>
+                )}
+
+                {/* Tombol cancel untuk CONFIRMED/AKTIF */}
+                {(ev.status === 'CONFIRMED' || ev.status === 'AKTIF') && (
+                  <button onClick={() => handleConfirmAction(ev, 'CANCEL')}
                     className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-[10px] font-bold hover:bg-red-200 ml-auto">
-                    ❌
+                    ❌ Batal
                   </button>
                 )}
               </div>
@@ -929,6 +1024,415 @@ function QRDisplayModal({ data, type, onClose }: {
             🖨️ Print
           </button>
         </div>
+      </div>
+    </ModalOverlay>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TAB 5: TEMPLATE MEETING (Recurring)
+// ═══════════════════════════════════════════════════════════════════════════
+const DAY_LABELS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+const DAY_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+const MONTH_LABELS = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+]
+
+function TemplateTab() {
+  const [templates, setTemplates] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState<any>(null)
+  const [generating, setGenerating] = useState<any>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/event-templates')
+      const json = await res.json()
+      if (json.success) setTemplates(json.data || [])
+    } catch (err) { console.error(err) }
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const handleDelete = async (id: string, nama: string) => {
+    if (!confirm(`Nonaktifkan template "${nama}"?\n\nEvent yang sudah di-generate TIDAK akan terhapus.`)) return
+    try {
+      const res = await fetch(`/api/event-templates/${id}`, { method: 'DELETE' })
+      const json = await res.json()
+      if (json.success) {
+        alert('✅ ' + json.message)
+        load()
+      } else {
+        alert('❌ ' + (json.error || 'Gagal'))
+      }
+    } catch { alert('❌ Error jaringan') }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-between items-center">
+        <h2 className="text-sm font-black text-slate-700 uppercase tracking-wide">
+          🔁 Template Recurring ({templates.length})
+        </h2>
+        <button onClick={() => { setEditing(null); setShowForm(true) }}
+          className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#002a57] shadow-lg">
+          ➕ Template Baru
+        </button>
+      </div>
+
+      {/* Info banner */}
+      <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800 flex items-start gap-2">
+        <span className="text-lg">💡</span>
+        <div>
+          <strong>Template = recurring meeting.</strong> Sekali setup, klik <strong>🚀 Generate</strong> untuk buat events bulanan otomatis. Event yang di-generate berstatus <strong>DRAFT</strong>, menunggu konfirmasi admin H-2.
+        </div>
+      </div>
+
+      {loading ? <LoadingSpinner /> : !templates.length ? (
+        <EmptyState icon="🔁" msg="Belum ada template. Klik 'Template Baru' untuk buat pertama!" />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {templates.map(tpl => (
+            <div key={tpl.id} className="bg-white rounded-2xl border shadow-sm p-4 hover:shadow-md transition-all">
+              <div className="flex items-start gap-2 mb-2">
+                <span className="text-2xl shrink-0">📊</span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-black text-slate-800 text-sm leading-tight">{tpl.nama}</h3>
+                  {tpl.deskripsi && (
+                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{tpl.deskripsi}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Recurring days */}
+              <div className="flex gap-1 mb-2 flex-wrap">
+                {(tpl.recurring_days || []).map((d: number) => (
+                  <span key={d} className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                    {DAY_LABELS[d]}
+                  </span>
+                ))}
+              </div>
+
+              {/* Info grid */}
+              <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-500 mb-3">
+                {(tpl.default_jam_mulai || tpl.default_jam_selesai) && (
+                  <div>⏰ {tpl.default_jam_mulai?.slice(0, 5) || '?'} – {tpl.default_jam_selesai?.slice(0, 5) || '?'}</div>
+                )}
+                {tpl.default_lokasi && <div>📍 {tpl.default_lokasi}</div>}
+                {tpl.default_site && <div>🏢 {tpl.default_site}</div>}
+                <div>🔔 H-{tpl.reminder_h_minus} reminder</div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                <button onClick={() => setGenerating(tpl)}
+                  className="flex-1 px-3 py-2 bg-[#003D79] text-white rounded-lg text-[11px] font-bold hover:bg-[#002a57] flex items-center justify-center gap-1">
+                  🚀 Generate
+                </button>
+                <button onClick={() => { setEditing(tpl); setShowForm(true) }}
+                  className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-[11px] font-bold hover:bg-slate-200">
+                  ✏️
+                </button>
+                <button onClick={() => handleDelete(tpl.id, tpl.nama)}
+                  className="px-3 py-2 bg-red-100 text-red-600 rounded-lg text-[11px] font-bold hover:bg-red-200">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modals */}
+      {showForm && (
+        <TemplateFormModal
+          template={editing}
+          onClose={() => { setShowForm(false); setEditing(null) }}
+          onSuccess={() => { setShowForm(false); setEditing(null); load() }}
+        />
+      )}
+      {generating && (
+        <GenerateEventsModal
+          template={generating}
+          onClose={() => setGenerating(null)}
+          onSuccess={() => setGenerating(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODAL: FORM TEMPLATE (Create/Edit)
+// ═══════════════════════════════════════════════════════════════════════════
+function TemplateFormModal({ template, onClose, onSuccess }: {
+  template: any | null
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [form, setForm] = useState({
+    nama: template?.nama || '',
+    deskripsi: template?.deskripsi || '',
+    tipe: template?.tipe || 'MEETING',
+    recurring_days: (template?.recurring_days || []) as number[],
+    default_jam_mulai: template?.default_jam_mulai?.slice(0, 5) || '',
+    default_jam_selesai: template?.default_jam_selesai?.slice(0, 5) || '',
+    default_lokasi: template?.default_lokasi || '',
+    default_site: template?.default_site || '',
+    reminder_h_minus: template?.reminder_h_minus ?? 2
+  })
+  const [saving, setSaving] = useState(false)
+
+  const toggleDay = (d: number) => {
+    setForm(f => ({
+      ...f,
+      recurring_days: f.recurring_days.includes(d)
+        ? f.recurring_days.filter(x => x !== d)
+        : [...f.recurring_days, d].sort()
+    }))
+  }
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault()
+    if (!form.nama.trim()) return alert('❌ Nama wajib diisi')
+    if (form.recurring_days.length === 0) return alert('❌ Pilih minimal 1 hari')
+
+    setSaving(true)
+    try {
+      const url = template ? `/api/event-templates/${template.id}` : '/api/event-templates'
+      const method = template ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      alert('✅ ' + json.message)
+      onSuccess()
+    } catch (err: any) { alert('❌ ' + err.message) }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <h2 className="text-lg font-black text-slate-800 mb-4">
+        {template ? '✏️ Edit Template' : '➕ Template Meeting Baru'}
+      </h2>
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Nama Meeting *</label>
+          <input type="text" required value={form.nama}
+            onChange={(e) => setForm({ ...form, nama: e.target.value })}
+            placeholder="Contoh: KPI HO Weekly Zoom"
+            className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Deskripsi</label>
+          <textarea value={form.deskripsi} rows={2}
+            onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
+            placeholder="Deskripsi opsional..."
+            className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none resize-none" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Hari Recurring *</label>
+          <div className="grid grid-cols-7 gap-1">
+            {DAY_LABELS.map((label, idx) => (
+              <button key={idx} type="button" onClick={() => toggleDay(idx)}
+                className={`py-2 rounded-lg text-[10px] font-black transition-all ${
+                  form.recurring_days.includes(idx)
+                    ? 'bg-[#003D79] text-white shadow-md'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-slate-400 mt-1">
+            {form.recurring_days.length === 0
+              ? 'Belum pilih hari'
+              : `Setiap: ${form.recurring_days.map(d => DAY_FULL[d]).join(', ')}`
+            }
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Jam Mulai</label>
+            <input type="time" value={form.default_jam_mulai}
+              onChange={(e) => setForm({ ...form, default_jam_mulai: e.target.value })}
+              className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Jam Selesai</label>
+            <input type="time" value={form.default_jam_selesai}
+              onChange={(e) => setForm({ ...form, default_jam_selesai: e.target.value })}
+              className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Tipe</label>
+            <select value={form.tipe} onChange={(e) => setForm({ ...form, tipe: e.target.value })}
+              className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none">
+              <option value="MEETING">🤝 Meeting</option>
+              <option value="TRAINING">📚 Training</option>
+              <option value="SAFETY">🦺 Safety</option>
+              <option value="ACARA">🎉 Acara</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Reminder H-</label>
+            <input type="number" min={0} max={7} value={form.reminder_h_minus}
+              onChange={(e) => setForm({ ...form, reminder_h_minus: Number(e.target.value) })}
+              className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Lokasi Default</label>
+          <input type="text" value={form.default_lokasi}
+            onChange={(e) => setForm({ ...form, default_lokasi: e.target.value })}
+            placeholder="Zoom Link / Meeting Room / Lapangan"
+            className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Site</label>
+          <input type="text" value={form.default_site}
+            onChange={(e) => setForm({ ...form, default_site: e.target.value })}
+            placeholder="PPA-MLP"
+            className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none" />
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <button type="button" onClick={onClose}
+            className="flex-1 px-4 py-2.5 border-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50">
+            Batal
+          </button>
+          <button type="submit" disabled={saving}
+            className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57] disabled:opacity-50">
+            {saving ? 'Menyimpan...' : (template ? '✅ Update' : '✅ Simpan')}
+          </button>
+        </div>
+      </form>
+    </ModalOverlay>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODAL: GENERATE EVENTS FROM TEMPLATE
+// ═══════════════════════════════════════════════════════════════════════════
+function GenerateEventsModal({ template, onClose, onSuccess }: {
+  template: any
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const now = new Date()
+  const [year, setYear] = useState(now.getFullYear())
+  const [month, setMonth] = useState(now.getMonth() + 1)
+  const [generating, setGenerating] = useState(false)
+  const [preview, setPreview] = useState<string[]>([])
+
+  useEffect(() => {
+    const dates: string[] = []
+    const daysInMonth = new Date(year, month, 0).getDate()
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month - 1, day)
+      if ((template.recurring_days || []).includes(date.getDay())) {
+        const label = date.toLocaleDateString('id-ID', { 
+          weekday: 'short', day: '2-digit', month: 'short' 
+        })
+        dates.push(label)
+      }
+    }
+    setPreview(dates)
+  }, [year, month, template.recurring_days])
+
+  const handleGenerate = async () => {
+    setGenerating(true)
+    try {
+      const res = await fetch(`/api/event-templates/${template.id}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year, month })
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      alert('✅ ' + json.message)
+      onSuccess()
+    } catch (err: any) { alert('❌ ' + err.message) }
+    finally { setGenerating(false) }
+  }
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <h2 className="text-lg font-black text-slate-800 mb-4">🚀 Generate Events</h2>
+
+      <div className="bg-blue-50 rounded-xl p-3 mb-4">
+        <div className="text-[10px] font-black text-blue-700 uppercase">Template</div>
+        <div className="text-sm font-black text-[#003D79]">{template.nama}</div>
+        <div className="text-[10px] text-slate-500 mt-1">
+          Setiap: {(template.recurring_days || []).map((d: number) => DAY_FULL[d]).join(', ')}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Bulan</label>
+          <select value={month} onChange={(e) => setMonth(Number(e.target.value))}
+            className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none">
+            {MONTH_LABELS.map((label, idx) => (
+              <option key={idx} value={idx + 1}>{label}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1">Tahun</label>
+          <select value={year} onChange={(e) => setYear(Number(e.target.value))}
+            className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none">
+            {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1, now.getFullYear() + 2].map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="bg-slate-50 rounded-xl p-3 mb-4">
+        <div className="text-[10px] font-black text-slate-500 uppercase mb-2">
+          ℹ️ Akan generate {preview.length} events:
+        </div>
+        {preview.length === 0 ? (
+          <div className="text-xs text-slate-400 italic">Tidak ada tanggal match untuk bulan ini</div>
+        ) : (
+          <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-700 font-bold max-h-32 overflow-y-auto">
+            {preview.map((d, i) => (
+              <div key={i} className="bg-white rounded px-2 py-1">• {d}</div>
+            ))}
+          </div>
+        )}
+        <div className="text-[9px] text-amber-700 mt-2 flex items-start gap-1">
+          <span>⚠️</span>
+          <span>Status awal: <strong>DRAFT</strong>. Perlu konfirmasi admin H-{template.reminder_h_minus} sebelum sync ke Google Calendar.</span>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button type="button" onClick={onClose}
+          className="flex-1 px-4 py-2.5 border-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50">
+          Batal
+        </button>
+        <button onClick={handleGenerate} disabled={generating || preview.length === 0}
+          className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57] disabled:opacity-50 flex items-center justify-center gap-2">
+          {generating ? '...' : '🚀 Generate'}
+        </button>
       </div>
     </ModalOverlay>
   )

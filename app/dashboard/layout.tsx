@@ -192,9 +192,9 @@ const TAB_CONFIG = [
     roles: SAFETY_ROLES,
     customMatch: (m: MenuItem) => {
       return (
-        m.menu_key === 'kelola_apd' ||
+                m.menu_key === 'kelola_apd' ||
         m.menu_key === 'monitoring_apd'||
-        m.menu_key === 'kelola_event' 
+        m.menu_key === 'kelola_event'
       )
     }
   },
@@ -307,7 +307,7 @@ const TAB_CONFIG = [
         m.menu_key === 'plant_katalog' ||
         m.menu_key === 'plant_orders' ||
         m.menu_key === 'approval_center'||
-        m.menu_key === 'kelola_event'   
+        m.menu_key === 'kelola_event'
       )
     }
   },
@@ -869,6 +869,7 @@ if (menuKey === 'rekap_absensi') {
       setBottomSheetOpen(false)
       return
     }
+
 
     // 📊 Monitoring APD (Chat 22)
     if (menuKey === 'monitoring_apd') {
