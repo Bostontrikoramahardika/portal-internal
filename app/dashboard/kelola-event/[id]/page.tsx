@@ -43,6 +43,25 @@ const EMPTY_FORM: MomForm = {
   catatan: '',
 }
 
+// ─── Invitation types ───
+type Invitation = {
+  id: string
+  nrp: string
+  nama: string | null
+  google_event_id: string | null
+  google_sync_status: 'PENDING' | 'SYNCED' | 'FAILED' | 'SKIPPED'
+  google_sync_error: string | null
+  invited_at: string
+}
+
+type InviteSummary = {
+  total: number
+  synced: number
+  pending: number
+  failed: number
+  skipped: number
+}
+
 const STATUS_CONFIG = {
   OPEN:        { label: 'Open',        color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
   IN_PROGRESS: { label: 'In Progress', color: 'bg-blue-100 text-blue-700 border-blue-300' },
@@ -74,6 +93,12 @@ export default function DetailEventPage() {
   const [showMomForm, setShowMomForm] = useState(false)
   const [momSaving, setMomSaving] = useState(false)
   const [momDeleteId, setMomDeleteId] = useState<string | null>(null)
+
+    // ── Invitations state ──
+  const [invitations, setInvitations] = useState<Invitation[]>([])
+  const [inviteSummary, setInviteSummary] = useState<InviteSummary>({ total: 0, synced: 0, pending: 0, failed: 0, skipped: 0 })
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
 
   // ─── Fetch Event + Peserta ──────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -110,8 +135,25 @@ export default function DetailEventPage() {
     }
   }, [eventId])
 
+  // ─── Fetch Invitations ─────────────────────────────────────
+  const fetchInvitations = useCallback(async () => {
+    setInviteLoading(true)
+    try {
+      const res = await fetch(`/api/events/${eventId}/invitations`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setInvitations(data.data || [])
+      setInviteSummary(data.summary || { total: 0, synced: 0, pending: 0, failed: 0, skipped: 0 })
+    } catch (err: any) {
+      console.error('Error fetch invitations:', err.message)
+    } finally {
+      setInviteLoading(false)
+    }
+  }, [eventId])
+
   useEffect(() => { fetchData() }, [fetchData])
   useEffect(() => { if (eventId) fetchMom() }, [fetchMom, eventId])
+  useEffect(() => { if (eventId) fetchInvitations() }, [fetchInvitations, eventId])
 
   // ─── MoM Handlers ──────────────────────────────────────────────────────────
   const openAddMom = () => {
@@ -197,7 +239,22 @@ export default function DetailEventPage() {
     }
   }
 
-  // ─── Filter peserta ─────────────────────────────────────────────────────────
+  // ─── Handler Remove Invitation ─────────────────────────────
+  const handleRemoveInvite = async (inv: Invitation) => {
+    if (!confirm(`Hapus undangan untuk ${inv.nama || inv.nrp}?\n\n${inv.google_sync_status === 'SYNCED' ? '⚠️ Event akan otomatis dihapus dari Google Calendar-nya juga.' : ''}`)) return
+    try {
+      const res = await fetch(`/api/events/${eventId}/invitations?nrp=${inv.nrp}`, {
+        method: 'DELETE'
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      fetchInvitations()
+    } catch (err: any) {
+      alert('❌ ' + err.message)
+    }
+  }
+
+  // ─── Filter peserta ─────────────────────────────────────────
   const filtered = attendances.filter((a) => {
     if (!search) return true
     const s = search.toLowerCase()
@@ -266,6 +323,118 @@ export default function DetailEventPage() {
           <StatCard color="green"  label="Internal"    value={totalInternal} icon="💼" />
           <StatCard color="purple" label="Tamu"        value={totalTamu}     icon="🎫" />
         </div>
+
+        {/* ══════════════════════════════════════════════════════
+            ── UNDANGAN PESERTA (Google Calendar Invite) ──
+        ══════════════════════════════════════════════════════ */}
+        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+
+          {/* Header */}
+          <div className="px-4 py-3 border-b bg-slate-50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-base">📋</span>
+              <span className="text-sm font-black text-slate-800">Undangan Peserta</span>
+              {inviteSummary.total > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-[#003D79] text-white text-[10px] font-bold">
+                  {inviteSummary.total}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#002a57] transition-colors"
+            >
+              + Undang
+            </button>
+          </div>
+
+          {/* Summary badges */}
+          {inviteSummary.total > 0 && (
+            <div className="px-4 py-2 border-b flex gap-2 flex-wrap bg-slate-50/50">
+              <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-300 text-[10px] font-bold">
+                ✅ Sync: {inviteSummary.synced}
+              </span>
+              {inviteSummary.pending > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-300 text-[10px] font-bold">
+                  ⏳ Pending: {inviteSummary.pending}
+                </span>
+              )}
+              {inviteSummary.skipped > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300 text-[10px] font-bold">
+                  ⏭️ Skipped: {inviteSummary.skipped}
+                </span>
+              )}
+              {inviteSummary.failed > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300 text-[10px] font-bold">
+                  ❌ Failed: {inviteSummary.failed}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Info kalau event masih DRAFT */}
+          {event.status === 'DRAFT' && invitations.length > 0 && (
+            <div className="px-4 py-2 border-b bg-amber-50 text-[10px] text-amber-800 flex items-start gap-2">
+              <span>💡</span>
+              <span>Event masih DRAFT — undangan belum di-sync ke Google Calendar. Klik <strong>✅ Confirm</strong> di halaman Kelola Event untuk sync.</span>
+            </div>
+          )}
+
+          {/* List Undangan */}
+          {inviteLoading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#003D79]"></div>
+              <p className="text-xs text-slate-500 mt-2">Memuat undangan...</p>
+            </div>
+          ) : invitations.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-3xl mb-2">📭</div>
+              <p className="text-sm text-slate-500">Belum ada undangan</p>
+              <p className="text-xs text-slate-400 mt-1">Klik "+ Undang" untuk undang peserta</p>
+            </div>
+          ) : (
+            <div className="divide-y max-h-96 overflow-y-auto">
+              {invitations.map((inv) => (
+                <div key={inv.id} className="px-4 py-2.5 flex items-center gap-2 hover:bg-slate-50/50">
+                  {/* Avatar */}
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-500 flex-shrink-0">
+                    {(inv.nama || '?')[0]?.toUpperCase()}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-slate-800 truncate">
+                      {inv.nama || inv.nrp}
+                    </div>
+                    <div className="text-[10px] text-slate-500 truncate">NRP: {inv.nrp}</div>
+                  </div>
+
+                  {/* Sync Status Badge */}
+                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap
+                    ${inv.google_sync_status === 'SYNCED' ? 'bg-green-100 text-green-700' :
+                      inv.google_sync_status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                      inv.google_sync_status === 'SKIPPED' ? 'bg-slate-100 text-slate-600' :
+                      'bg-red-100 text-red-700'}`}>
+                    {inv.google_sync_status === 'SYNCED' ? '✅ Sync' :
+                     inv.google_sync_status === 'PENDING' ? '⏳ Pending' :
+                     inv.google_sync_status === 'SKIPPED' ? '⏭️ Skip' :
+                     '❌ Fail'}
+                  </span>
+
+                  {/* Remove button */}
+                  <button
+                    onClick={() => handleRemoveInvite(inv)}
+                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg text-sm"
+                    title="Hapus undangan"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* ── END UNDANGAN ── */}
 
         {/* ── ACTIONS ── */}
         <div className="flex flex-wrap gap-2">
@@ -716,6 +885,20 @@ export default function DetailEventPage() {
 
       {/* ── QR MODAL ── */}
       {qrModal && <QREventModal event={event} onClose={() => setQrModal(false)} />}
+
+      {/* ── INVITE MODAL ── */}
+      {showInviteModal && (
+        <InviteModal
+          eventId={eventId}
+          eventSite={event.site}
+          existingNrps={invitations.map(i => i.nrp)}
+          onClose={() => setShowInviteModal(false)}
+          onSuccess={() => {
+            setShowInviteModal(false)
+            fetchInvitations()
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -786,6 +969,256 @@ function QREventModal({ event, onClose }: { event: any; onClose: () => void }) {
     </div>
   )
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INVITE MODAL — Multi-select karyawan + preset
+// ═══════════════════════════════════════════════════════════════════════════
+type Employee = {
+  nrp: string
+  nama: string
+  jabatan: string | null
+  departemen: string | null
+  site: string | null
+  roles?: string[]
+}
+
+function InviteModal({ eventId, eventSite, existingNrps, onClose, onSuccess }: {
+  eventId: string
+  eventSite: string | null
+  existingNrps: string[]
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [search, setSearch] = useState('')
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [preset, setPreset] = useState<'ALL' | 'LEADER' | 'STAFF'>('ALL')
+
+  // ─── Fetch karyawan by site + preset ───
+  const loadEmployees = useCallback(async () => {
+    setLoading(true)
+    try {
+      // Ambil karyawan aktif di site
+      const params = new URLSearchParams()
+      if (eventSite) params.set('site', eventSite)
+      if (search) params.set('search', search)
+      params.set('limit', '200')
+
+      const res = await fetch(`/api/kelola-akses?${params}`)
+      const data = await res.json()
+      if (!data.ok) throw new Error(data.error || 'Gagal load')
+
+      let list: Employee[] = data.data || []
+
+      // Filter berdasarkan preset
+      if (preset === 'LEADER') {
+        const LEADER_ROLES = [
+          'super_admin', 'director_ops', 'business_dev', 'manager_ops',
+          'hr_ho', 'hr_site', 'pjo_site', 'gl_produksi', 'gl_plant',
+          'admin_site', 'admin_plant', 'spv_she_ho', 'she_site'
+        ]
+        list = list.filter(e => 
+          (e.roles || []).some((r: string) => LEADER_ROLES.includes(r))
+        )
+      } else if (preset === 'STAFF') {
+        list = list.filter(e => {
+          const roles = e.roles || []
+          return roles.length === 0 || roles.every(r => 
+            !['super_admin', 'director_ops', 'business_dev', 'manager_ops',
+              'hr_ho', 'hr_site', 'pjo_site', 'gl_produksi', 'gl_plant',
+              'admin_site', 'admin_plant', 'spv_she_ho', 'she_site'].includes(r)
+          )
+        })
+      }
+
+      // Filter yang belum diundang
+      list = list.filter(e => !existingNrps.includes(e.nrp))
+
+      setEmployees(list)
+    } catch (err: any) {
+      console.error(err)
+      alert('❌ ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [eventSite, search, preset, existingNrps])
+
+  useEffect(() => {
+    const t = setTimeout(() => loadEmployees(), 400)
+    return () => clearTimeout(t)
+  }, [loadEmployees])
+
+  // ─── Toggle select ───
+  const toggle = (nrp: string) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(nrp)) next.delete(nrp)
+      else next.add(nrp)
+      return next
+    })
+  }
+
+  // ─── Select All / Clear ───
+  const selectAll = () => setSelected(new Set(employees.map(e => e.nrp)))
+  const clearAll = () => setSelected(new Set())
+
+  // ─── Submit ───
+  const handleSubmit = async () => {
+    if (selected.size === 0) {
+      alert('⚠️ Pilih minimal 1 peserta')
+      return
+    }
+
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/events/${eventId}/invitations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nrps: Array.from(selected) })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      alert('✅ ' + data.message)
+      onSuccess()
+    } catch (err: any) {
+      alert('❌ ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl">
+
+        {/* Header */}
+        <div className="p-4 border-b bg-[#003D79] text-white rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-black text-lg">➕ Undang Peserta</h3>
+              <p className="text-[11px] text-blue-200 mt-0.5">
+                Site: {eventSite || 'Semua'} • {existingNrps.length} sudah diundang
+              </p>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded-full">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Preset buttons */}
+        <div className="p-3 border-b flex gap-2 flex-wrap bg-slate-50">
+          {[
+            { key: 'ALL' as const, label: '👥 Semua', color: 'bg-[#003D79]' },
+            { key: 'LEADER' as const, label: '👑 Leader', color: 'bg-blue-600' },
+            { key: 'STAFF' as const, label: '👤 Staff', color: 'bg-emerald-600' },
+          ].map(p => (
+            <button key={p.key} onClick={() => setPreset(p.key)}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all
+                ${preset === p.key ? `${p.color} text-white shadow` : 'bg-white text-slate-600 border'}`}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="p-3 border-b">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="🔍 Cari nama atau NRP..."
+            className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#003D79] focus:border-transparent"
+          />
+        </div>
+
+        {/* Select All + Info */}
+        <div className="px-3 py-2 border-b bg-slate-50 flex items-center justify-between text-[11px]">
+          <div className="text-slate-600 font-bold">
+            {employees.length} karyawan tersedia
+            {selected.size > 0 && (
+              <span className="ml-2 text-[#003D79]">• {selected.size} dipilih</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={selectAll} className="text-blue-600 font-bold hover:underline">
+              Pilih Semua
+            </button>
+            {selected.size > 0 && (
+              <button onClick={clearAll} className="text-red-500 font-bold hover:underline">
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* List */}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="text-center py-10">
+              <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#003D79]"></div>
+              <p className="text-xs text-slate-500 mt-2">Memuat...</p>
+            </div>
+          ) : employees.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-3xl mb-2">🔍</div>
+              <p className="text-sm text-slate-500">
+                {existingNrps.length > 0 
+                  ? 'Semua karyawan sudah diundang / tidak match filter' 
+                  : 'Tidak ada karyawan ditemukan'}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {employees.map(emp => {
+                const isSelected = selected.has(emp.nrp)
+                return (
+                  <label
+                    key={emp.nrp}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors
+                      ${isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggle(emp.nrp)}
+                      className="w-4 h-4 text-[#003D79] rounded focus:ring-[#003D79]"
+                    />
+                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-500 flex-shrink-0">
+                      {emp.nama[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-slate-800 truncate">{emp.nama}</div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {emp.nrp} • {emp.jabatan || '-'} • {emp.site || '-'}
+                      </div>
+                    </div>
+                  </label>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-3 border-t bg-slate-50 flex gap-2">
+          <button onClick={onClose} disabled={saving}
+            className="flex-1 py-2.5 bg-white text-slate-600 border rounded-lg text-xs font-bold hover:bg-slate-100 disabled:opacity-50">
+            Batal
+          </button>
+          <button onClick={handleSubmit} disabled={saving || selected.size === 0}
+            className="flex-1 py-2.5 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#002a57] disabled:opacity-50">
+            {saving ? '⏳ Mengirim...' : `✅ Undang (${selected.size})`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 
 // ─── Format Helpers ───────────────────────────────────────────────────────────
 function fmtDate(iso: string): string {
