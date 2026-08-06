@@ -4,7 +4,7 @@
 // Sinkron dengan app/offline/page.tsx
 // ============================================
 
-const CACHE_NAME = 'btm-portal-v5'
+const CACHE_NAME = 'btm-app-v6'
 const OFFLINE_URL = '/offline'  // ✅ Next.js route
 
 // Halaman yang langsung di-cache saat install
@@ -124,6 +124,63 @@ self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-attendance') {
     event.waitUntil(notifyClientsToSync())
   }
+})
+
+// ============ PUSH NOTIFICATION ============
+self.addEventListener('push', (event) => {
+  console.log('📩 SW: Push event received!', event)
+  
+  let payload = { title: 'BTM Portal', body: 'Notifikasi baru' }
+  
+  if (event.data) {
+    try {
+      payload = event.data.json()
+      console.log('📩 SW: Payload JSON:', payload)
+    } catch (e) {
+      payload = { title: 'BTM Portal', body: event.data.text() }
+      console.log('📩 SW: Payload text:', payload)
+    }
+  }
+
+  const title = payload.title || 'BTM Portal'
+  const options = {
+    body: payload.body || 'Notifikasi baru',
+    icon: payload.icon || '/btm-fix.png',
+    badge: '/btm-fix.png',
+    tag: payload.tag || 'btm-' + Date.now(),
+    data: {
+      url: payload.url || '/dashboard',
+      ...(payload.data || {})
+    },
+    vibrate: [200, 100, 200],
+    requireInteraction: true   // ← WAJIB true supaya notif nempel
+  }
+
+  event.waitUntil(self.registration.showNotification(title, options))
+})
+
+// ============ NOTIFICATION CLICK ============
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const targetUrl = event.notification.data?.url || '/dashboard'
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientsArr) => {
+        // Kalau app sudah kebuka → focus + navigate
+        for (const client of clientsArr) {
+          if ('focus' in client) {
+            client.focus()
+            if ('navigate' in client) {
+              try { client.navigate(targetUrl) } catch (e) {}
+            }
+            return
+          }
+        }
+        // Kalau belum → buka window baru
+        if (self.clients.openWindow) return self.clients.openWindow(targetUrl)
+      })
+  )
 })
 
 async function notifyClientsToSync() {

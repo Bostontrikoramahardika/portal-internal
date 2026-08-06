@@ -1,9 +1,4 @@
 // app/api/scan/[qr_token]/route.ts
-// GET  → Info QR (bisa qr_locations atau events)
-//        Kalau qr_location → return list event AKTIF hari ini
-//        Kalau qr_event → return 1 event
-// POST → Submit absensi (event_id wajib kalau qr_location)
-
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabase } from '@/app/lib/supabase'
@@ -60,36 +55,34 @@ export async function GET(
       .order('is_default', { ascending: false })
       .order('nama_perusahaan')
 
-    // Mode: QR Lokasi (multi-event)
+    // ─── MODE: QR LOKASI (multi-event by site) ──────────────────────────
     if (qrLoc) {
-      // Ambil event AKTIF hari ini di lokasi ini
       const today = new Date().toISOString().split('T')[0]
 
+      // Ambil semua event AKTIF atau CONFIRMED hari ini di site yang sama
       const { data: events } = await supabase
         .from('events')
-        .select('id, nama_event, deskripsi, tipe, tanggal, jam_mulai, jam_selesai, status')
-        .eq('qr_location_id', qrLoc.id)
+        .select('id, nama_event, deskripsi, tipe, tanggal, jam_mulai, jam_selesai, status, site')
+        .eq('site', qrLoc.site)
         .eq('tanggal', today)
-        .eq('status', 'AKTIF')
+        .in('status', ['AKTIF', 'CONFIRMED'])
         .order('jam_mulai', { ascending: true })
 
       // Cek untuk setiap event, apakah user sudah scan
       let eventList = events || []
-      if (userInfo) {
+      if (userInfo && eventList.length > 0) {
         const eventIds = eventList.map((e: any) => e.id)
-        if (eventIds.length > 0) {
-          const { data: scanned } = await supabase
-            .from('event_attendances')
-            .select('event_id')
-            .in('event_id', eventIds)
-            .eq('nrp', userInfo.nrp)
+        const { data: scanned } = await supabase
+          .from('event_attendances')
+          .select('event_id')
+          .in('event_id', eventIds)
+          .eq('nrp', userInfo.nrp)
 
-          const scannedIds = new Set((scanned || []).map((s: any) => s.event_id))
-          eventList = eventList.map((e: any) => ({
-            ...e,
-            already_scanned: scannedIds.has(e.id)
-          }))
-        }
+        const scannedIds = new Set((scanned || []).map((s: any) => s.event_id))
+        eventList = eventList.map((e: any) => ({
+          ...e,
+          already_scanned: scannedIds.has(e.id)
+        }))
       }
 
       return NextResponse.json({
@@ -104,7 +97,7 @@ export async function GET(
       })
     }
 
-    // Mode: QR Event Standalone
+    // ─── MODE: QR EVENT STANDALONE ───────────────────────────────────────
     const { data: event, error } = await supabase
       .from('events')
       .select('*')
@@ -157,11 +150,11 @@ export async function POST(
     const { qr_token } = await params
     const body = await request.json()
     const {
-      event_id,         // wajib untuk mode qr_location
+      event_id,
       nama,
       jabatan,
       perusahaan_id,
-      perusahaan_nama,  // string kalau tamu ketik manual
+      perusahaan_nama,
       no_hp,
       signature
     } = body
@@ -170,7 +163,7 @@ export async function POST(
       return NextResponse.json({ error: 'Tanda tangan wajib diisi' }, { status: 400 })
     }
 
-    // Cari event: pakai event_id kalau ada, kalau tidak cari by qr_token
+    // Cari event
     let event: any = null
     if (event_id) {
       const { data } = await supabase
@@ -192,7 +185,7 @@ export async function POST(
       return NextResponse.json({ error: 'Event tidak ditemukan' }, { status: 404 })
     }
 
-    if (event.status !== 'AKTIF') {
+    if (!['AKTIF', 'CONFIRMED'].includes(event.status)) {
       return NextResponse.json({ error: `Event sudah ${event.status.toLowerCase()}` }, { status: 400 })
     }
 
@@ -247,7 +240,7 @@ export async function POST(
       return NextResponse.json({ error: 'Jabatan wajib diisi untuk tamu' }, { status: 400 })
     }
 
-    // Resolve perusahaan (dari master atau nama manual)
+    // Resolve perusahaan
     let perusahaanId = perusahaan_id || null
     let perusahaanNama: string | null = null
 
@@ -261,7 +254,6 @@ export async function POST(
     } else if (perusahaan_nama) {
       perusahaanNama = String(perusahaan_nama).trim()
     } else if (!isTamu) {
-      // Internal → default PT. Boston
       const { data: defaultBoston } = await supabase
         .from('master_perusahaan')
         .select('id, nama_perusahaan')

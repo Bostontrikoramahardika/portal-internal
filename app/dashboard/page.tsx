@@ -7,6 +7,7 @@ import { getTablePermissions } from '@/app/lib/tablePermissions'
 import { saveOfflineAttendance } from '@/app/lib/offlineDB'
 import KoreksiBadge from './components/KoreksiBadge'
 import GoogleIntegrationCard from '@/app/dashboard/components/GoogleIntegrationCard'
+import PushNotificationButton from '@/app/dashboard/components/PushNotificationButton'
 
 /**
  * 📊 HELPER: Salam Dinamis
@@ -448,10 +449,16 @@ function IdentityView({ data }: { data: any }) {
       {/* ═══════════════════════════════════════ */}
       {/* ═══ GOOGLE INTEGRATION CARD ═══        */}
       {/* ═══════════════════════════════════════ */}
-      <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-        <SectionTitle>Google Integration</SectionTitle>
-        <GoogleIntegrationCard />
-      </section>
+<section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
+  <SectionTitle>Google Integration</SectionTitle>
+  <GoogleIntegrationCard />
+</section>
+
+{/* ═══════ NOTIFIKASI PUSH ═══════ */}
+<section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
+  <SectionTitle>Notifikasi</SectionTitle>
+  <PushNotificationButton />
+</section>
 
       <p className="text-[8px] text-center text-slate-300 mt-10 font-bold uppercase tracking-widest px-8 italic">
         BTM Portal v1.6.1 • Data disinkronkan otomatis.

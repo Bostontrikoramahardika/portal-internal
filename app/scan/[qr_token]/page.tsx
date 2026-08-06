@@ -1,14 +1,7 @@
 'use client'
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PUBLIC SCAN PAGE v1.0
-// Halaman yang muncul saat user scan QR (baik pakai app maupun Google Lens)
-// - QR Lokasi → tampil list event aktif hari ini → pilih → TTD
-// - QR Event → langsung ke TTD
-// ═══════════════════════════════════════════════════════════════════════════
-
 import { useEffect, useState, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import SignatureCanvas from 'react-signature-canvas'
 
 type ScanInfo = {
@@ -27,7 +20,6 @@ type ScanInfo = {
 
 export default function ScanPage() {
   const params = useParams()
-  const router = useRouter()
   const qrToken = params?.qr_token as string
 
   const [info, setInfo] = useState<ScanInfo | null>(null)
@@ -40,12 +32,12 @@ export default function ScanPage() {
       .then((r) => r.json())
       .then((data) => {
         setInfo(data)
-        // Auto-select kalau qr_event atau cuma 1 event aktif
+        // qr_event → langsung set event, tidak perlu pilih
         if (data.mode === 'qr_event' && data.event) {
           setSelectedEventId(data.event.id)
-        } else if (data.mode === 'qr_location' && data.events?.length === 1) {
-          setSelectedEventId(data.events[0].id)
         }
+        // qr_location → SELALU tampil list dulu, walau 1 item
+        // (tidak auto-select, biar peserta sadar milih)
       })
       .catch(() => setInfo({ success: false, error: 'Gagal memuat data' }))
       .finally(() => setLoading(false))
@@ -57,7 +49,7 @@ export default function ScanPage() {
       <div className="min-h-screen bg-gradient-to-br from-[#003D79] to-[#0056b3] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-[#003D79] mb-3"></div>
-          <p className="text-sm font-bold text-slate-600">Memuat info event...</p>
+          <p className="text-sm font-bold text-slate-600">Memuat info meeting...</p>
         </div>
       </div>
     )
@@ -92,7 +84,11 @@ export default function ScanPage() {
               <div className="text-slate-800 font-black">{fmtDateTime(success.data?.scan_at)}</div>
             </div>
           </div>
-          <button onClick={() => window.location.reload()}
+          <button
+            onClick={() => {
+              setSuccess(null)
+              setSelectedEventId('')
+            }}
             className="w-full px-4 py-3 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57]">
             🔄 Scan Lagi (Peserta Lain)
           </button>
@@ -101,76 +97,113 @@ export default function ScanPage() {
     )
   }
 
-  // ─── PILIH EVENT (mode qr_location) ────────────────
+  // ─── PILIH MEETING (mode qr_location) ──────────────
   if (info.mode === 'qr_location' && !selectedEventId) {
+
+    // Tidak ada meeting hari ini
     if (!info.events?.length) {
       return (
         <div className="min-h-screen bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
             <div className="text-6xl mb-4">📭</div>
-            <h1 className="text-lg font-black text-amber-700 mb-2">Tidak Ada Event Hari Ini</h1>
-            <p className="text-sm text-slate-600 mb-4">
-              QR ini terpasang di <strong>{info.qr_location?.nama_lokasi}</strong>, 
-              namun belum ada event yang dijadwalkan hari ini.
+            <h1 className="text-lg font-black text-amber-700 mb-2">Tidak Ada Meeting Hari Ini</h1>
+            <p className="text-sm text-slate-600 mb-2">
+              Belum ada meeting yang dijadwalkan hari ini
+              {info.qr_location?.site ? ` di site ${info.qr_location.site}` : ''}.
             </p>
-            <p className="text-xs text-slate-500">Hubungi admin/SHE/PJO untuk membuat event.</p>
+            <p className="text-xs text-slate-400">Hubungi admin untuk informasi lebih lanjut.</p>
           </div>
         </div>
       )
     }
 
+    // Ada 1 atau lebih meeting → tampil list (selalu)
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#003D79] to-[#0056b3] p-4 pb-20">
-        <div className="max-w-md mx-auto pt-4">
-          <div className="bg-white rounded-2xl p-6 shadow-2xl">
-            <div className="text-center mb-4">
-              <div className="text-4xl mb-2">📍</div>
-              <h1 className="text-lg font-black text-[#003D79]">{info.qr_location?.nama_lokasi}</h1>
-              <p className="text-xs text-slate-500">Pilih acara yang Anda hadiri:</p>
-            </div>
+        <div className="max-w-md mx-auto pt-6">
 
-            <div className="space-y-2">
-              {info.events.map((ev: any) => (
-                <button key={ev.id}
+          {/* HEADER */}
+          <div className="text-center mb-4">
+            <div className="text-4xl mb-2">📋</div>
+            <h1 className="text-white text-lg font-black">Meeting Hari Ini</h1>
+            <p className="text-blue-200 text-xs mt-1">
+              {info.qr_location?.site || 'Site'} • {fmtDateToday()}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow-2xl">
+            <p className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wide">
+              Pilih meeting yang sedang Anda hadiri:
+            </p>
+
+            <div className="space-y-3">
+              {info.events!.map((ev: any) => (
+                <button
+                  key={ev.id}
                   onClick={() => !ev.already_scanned && setSelectedEventId(ev.id)}
                   disabled={ev.already_scanned}
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all
                     ${ev.already_scanned
-                      ? 'bg-green-50 border-green-300 cursor-not-allowed'
-                      : 'bg-white border-slate-100 hover:border-blue-500 hover:bg-blue-50'
+                      ? 'bg-green-50 border-green-200 cursor-not-allowed opacity-80'
+                      : 'bg-white border-slate-200 hover:border-[#003D79] hover:bg-blue-50 active:scale-[0.98]'
                     }`}>
-                  <div className="flex justify-between items-start mb-1">
-                    <div className="flex-1">
-                      <h3 className="font-black text-sm text-slate-800">{ev.nama_event}</h3>
-                      {ev.deskripsi && <p className="text-[11px] text-slate-500 mt-0.5">{ev.deskripsi}</p>}
+
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-sm text-slate-800 leading-tight">
+                        {ev.nama_event}
+                      </h3>
+                      {ev.deskripsi && (
+                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">{ev.deskripsi}</p>
+                      )}
                     </div>
-                    {ev.already_scanned && (
-                      <span className="px-2 py-0.5 bg-green-200 text-green-800 rounded-full text-[10px] font-black">
-                        ✅ HADIR
-                      </span>
-                    )}
+                    {ev.already_scanned
+                      ? <span className="shrink-0 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-black">✅ Hadir</span>
+                      : <span className="shrink-0 text-slate-300 text-lg">›</span>
+                    }
                   </div>
-                  <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-2">
-                    <span>⏰ {ev.jam_mulai || '-'} – {ev.jam_selesai || '-'}</span>
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">{ev.tipe}</span>
+
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className="text-[11px] text-slate-500">
+                      ⏰ {ev.jam_mulai || '?'} – {ev.jam_selesai || '?'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold
+                      ${ev.status === 'AKTIF'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-blue-100 text-blue-700'
+                      }`}>
+                      {ev.status}
+                    </span>
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">
+                      {ev.tipe}
+                    </span>
                   </div>
                 </button>
               ))}
             </div>
+
+            {/* Info user login */}
+            {info.is_logged_in && (
+              <div className="mt-4 pt-3 border-t border-slate-100">
+                <p className="text-[10px] text-slate-400 text-center">
+                  Login sebagai <strong className="text-slate-600">{info.user?.nama}</strong>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
     )
   }
 
-  // ─── FORM TTD & SUBMIT ─────────────────────────────
+  // ─── FORM TTD ──────────────────────────────────────
   const selectedEvent = info.mode === 'qr_event'
     ? info.event
     : info.events?.find((e: any) => e.id === selectedEventId)
 
   if (!selectedEvent) return null
 
-  // Kalau internal & sudah scan
+  // Internal sudah scan (qr_event mode)
   if (info.mode === 'qr_event' && info.already_scanned) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center p-4">
@@ -178,7 +211,7 @@ export default function ScanPage() {
           <div className="text-6xl mb-4">✅</div>
           <h1 className="text-lg font-black text-blue-700 mb-2">Anda Sudah Hadir!</h1>
           <p className="text-sm text-slate-600">
-            Anda sudah tercatat hadir di event <strong>{selectedEvent.nama_event}</strong>
+            Anda sudah tercatat hadir di <strong>{selectedEvent.nama_event}</strong>
           </p>
         </div>
       </div>
@@ -194,18 +227,16 @@ export default function ScanPage() {
       perusahaan={info.perusahaan || []}
       qrToken={qrToken}
       onBack={() => setSelectedEventId('')}
-      showBack={info.mode === 'qr_location' && (info.events?.length || 0) > 1}
+      showBack={info.mode === 'qr_location'}
       onSuccess={setSuccess}
     />
   )
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// FORM SCAN (TTD + Data)
+// FORM TTD
 // ═══════════════════════════════════════════════════════════════════════════
-function ScanForm({
-  event, isLoggedIn, user, lastSignature, perusahaan, qrToken, onBack, showBack, onSuccess
-}: any) {
+function ScanForm({ event, isLoggedIn, user, lastSignature, perusahaan, qrToken, onBack, showBack, onSuccess }: any) {
   const sigRef = useRef<any>(null)
   const [form, setForm] = useState({
     nama: user?.nama || '',
@@ -219,14 +250,11 @@ function ScanForm({
   const [msg, setMsg] = useState('')
   const [showCustomPerusahaan, setShowCustomPerusahaan] = useState(false)
 
-  // Set default perusahaan
   useEffect(() => {
     if (isLoggedIn) {
-      // Internal → default PT. Boston
       const boston = perusahaan.find((p: any) => p.nama_perusahaan.toLowerCase().includes('boston'))
       if (boston) setForm((f) => ({ ...f, perusahaan_id: boston.id }))
     } else {
-      // Tamu → default PT. Putra Perkasa
       const ppa = perusahaan.find((p: any) => p.nama_perusahaan.toLowerCase().includes('putra'))
       if (ppa) setForm((f) => ({ ...f, perusahaan_id: ppa.id }))
     }
@@ -238,9 +266,7 @@ function ScanForm({
   }
 
   const handleReuseSig = () => {
-    if (lastSignature) {
-      setSignature(lastSignature)
-    }
+    if (lastSignature) setSignature(lastSignature)
   }
 
   const handleSigEnd = () => {
@@ -253,23 +279,10 @@ function ScanForm({
     e.preventDefault()
     setMsg('')
 
-    // Validate
-    if (!isLoggedIn && !form.nama.trim()) {
-      setMsg('Nama wajib diisi')
-      return
-    }
-    if (!isLoggedIn && !form.jabatan.trim()) {
-      setMsg('Jabatan wajib diisi')
-      return
-    }
-    if (!isLoggedIn && !form.perusahaan_id && !form.perusahaan_nama.trim()) {
-      setMsg('Perusahaan wajib dipilih')
-      return
-    }
-    if (!signature) {
-      setMsg('Tanda tangan wajib diisi')
-      return
-    }
+    if (!isLoggedIn && !form.nama.trim()) return setMsg('Nama wajib diisi')
+    if (!isLoggedIn && !form.jabatan.trim()) return setMsg('Jabatan wajib diisi')
+    if (!isLoggedIn && !form.perusahaan_id && !form.perusahaan_nama.trim()) return setMsg('Perusahaan wajib dipilih')
+    if (!signature) return setMsg('Tanda tangan wajib diisi')
 
     setSubmitting(true)
     try {
@@ -288,7 +301,6 @@ function ScanForm({
           payload.perusahaan_nama = form.perusahaan_nama.trim()
         }
       } else {
-        // Internal boleh update perusahaan juga
         if (form.perusahaan_id) payload.perusahaan_id = form.perusahaan_id
       }
 
@@ -310,34 +322,37 @@ function ScanForm({
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#003D79] to-[#0056b3] p-4 pb-20">
       <div className="max-w-md mx-auto pt-4">
+
+        {/* TOMBOL BACK ke pilih meeting */}
         {showBack && (
-          <button onClick={onBack}
-            className="text-blue-200 text-xs font-bold mb-2 hover:text-white">
-            ← Pilih Acara Lain
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 text-blue-200 text-xs font-bold mb-3 hover:text-white transition-colors">
+            ← Pilih Meeting Lain
           </button>
         )}
 
         <div className="bg-white rounded-2xl p-5 shadow-2xl">
           {/* EVENT INFO */}
-          <div className="text-center mb-4 pb-4 border-b">
+          <div className="text-center mb-4 pb-4 border-b border-slate-100">
             <div className="text-3xl mb-2">📋</div>
-            <h1 className="text-base font-black text-[#003D79] mb-1">{event.nama_event}</h1>
+            <h1 className="text-base font-black text-[#003D79] mb-1 leading-tight">{event.nama_event}</h1>
             <p className="text-[11px] text-slate-500">
               📅 {fmtDate(event.tanggal)} • ⏰ {event.jam_mulai || '-'} – {event.jam_selesai || '-'}
             </p>
           </div>
 
-          {/* USER MODE INDICATOR */}
+          {/* USER MODE */}
           {isLoggedIn ? (
-            <div className="bg-blue-50 border-2 border-blue-100 rounded-xl p-3 mb-3">
-              <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-1">👤 Anda Login Sebagai</p>
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-3">
+              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wide mb-1">👤 Login sebagai</p>
               <p className="text-sm font-black text-slate-800">{user?.nama}</p>
               <p className="text-[11px] text-slate-500">{user?.jabatan} • {user?.site}</p>
             </div>
           ) : (
-            <div className="bg-purple-50 border-2 border-purple-100 rounded-xl p-3 mb-3">
-              <p className="text-[10px] font-bold text-purple-700 uppercase tracking-wide">👋 Anda Sebagai Tamu</p>
-              <p className="text-[11px] text-slate-600 mt-1">Silakan isi data Anda di bawah ini</p>
+            <div className="bg-purple-50 border border-purple-100 rounded-xl p-3 mb-3">
+              <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wide">👋 Tamu</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Silakan isi data Anda</p>
             </div>
           )}
 
@@ -348,7 +363,8 @@ function ScanForm({
                 <FormInput label="Nama Lengkap *" value={form.nama}
                   onChange={(v: string) => setForm({ ...form, nama: v })} required />
                 <FormInput label="Jabatan *" value={form.jabatan}
-                  onChange={(v: string) => setForm({ ...form, jabatan: v })} placeholder="Contoh: Supervisor" required />
+                  onChange={(v: string) => setForm({ ...form, jabatan: v })}
+                  placeholder="Contoh: Supervisor" required />
               </>
             )}
 
@@ -356,46 +372,52 @@ function ScanForm({
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1">Perusahaan *</label>
               {!showCustomPerusahaan ? (
-                <>
-                  <select value={form.perusahaan_id}
-                    onChange={(e) => {
-                      if (e.target.value === '__custom__') {
-                        setShowCustomPerusahaan(true)
-                        setForm({ ...form, perusahaan_id: '' })
-                      } else {
-                        setForm({ ...form, perusahaan_id: e.target.value })
-                      }
-                    }}
-                    className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none">
-                    <option value="">-- Pilih Perusahaan --</option>
-                    {perusahaan.map((p: any) => (
-                      <option key={p.id} value={p.id}>{p.nama_perusahaan}</option>
-                    ))}
-                    <option value="__custom__">➕ Perusahaan Lain (ketik manual)</option>
-                  </select>
-                </>
+                <select
+                  value={form.perusahaan_id}
+                  onChange={(e) => {
+                    if (e.target.value === '__custom__') {
+                      setShowCustomPerusahaan(true)
+                      setForm({ ...form, perusahaan_id: '' })
+                    } else {
+                      setForm({ ...form, perusahaan_id: e.target.value })
+                    }
+                  }}
+                  className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none">
+                  <option value="">-- Pilih Perusahaan --</option>
+                  {perusahaan.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.nama_perusahaan}</option>
+                  ))}
+                  <option value="__custom__">➕ Perusahaan Lain (ketik manual)</option>
+                </select>
               ) : (
                 <div className="flex gap-1">
-                  <input type="text" value={form.perusahaan_nama}
+                  <input
+                    type="text"
+                    value={form.perusahaan_nama}
                     onChange={(e) => setForm({ ...form, perusahaan_nama: e.target.value })}
                     placeholder="Ketik nama perusahaan..."
                     className="flex-1 border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none" />
-                  <button type="button" onClick={() => { setShowCustomPerusahaan(false); setForm({ ...form, perusahaan_nama: '' }) }}
-                    className="px-3 py-2 bg-slate-100 rounded-xl text-xs font-bold">↩️</button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCustomPerusahaan(false); setForm({ ...form, perusahaan_nama: '' }) }}
+                    className="px-3 py-2 bg-slate-100 rounded-xl text-xs font-bold hover:bg-slate-200">
+                    ↩️
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* NO HP (opsional) */}
+            {/* NO HP */}
             <FormInput label="No HP (opsional)" value={form.no_hp} type="tel"
               onChange={(v: string) => setForm({ ...form, no_hp: v })} placeholder="08xxx..." />
 
-            {/* TANDA TANGAN */}
+            {/* TTD */}
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1">✍️ Tanda Tangan *</label>
 
-              {signature && !sigRef.current?.isEmpty?.() === false ? (
-                <div className="border-2 border-slate-100 rounded-xl p-2 bg-white">
+              {/* Kalau pakai TTD lama (gambar) */}
+              {signature && sigRef.current?.isEmpty?.() !== false ? (
+                <div className="border-2 border-slate-100 rounded-xl p-2 bg-slate-50">
                   <img src={signature} alt="TTD" className="w-full h-32 object-contain" />
                 </div>
               ) : (
@@ -426,16 +448,18 @@ function ScanForm({
               </div>
             </div>
 
-            {/* ERROR MSG */}
+            {/* ERROR */}
             {msg && (
-              <div className="bg-red-50 border-2 border-red-100 text-red-700 text-xs font-bold p-3 rounded-xl">
+              <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-bold p-3 rounded-xl">
                 ⚠️ {msg}
               </div>
             )}
 
             {/* SUBMIT */}
-            <button type="submit" disabled={submitting}
-              className="w-full px-4 py-3 bg-[#003D79] text-white rounded-xl text-sm font-black hover:bg-[#002a57] shadow-lg disabled:opacity-50 transition-all">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full px-4 py-3 bg-[#003D79] text-white rounded-xl text-sm font-black hover:bg-[#002a57] shadow-lg disabled:opacity-50 transition-all active:scale-[0.98]">
               {submitting ? '⏳ Menyimpan...' : '✅ KONFIRMASI HADIR'}
             </button>
           </form>
@@ -445,13 +469,17 @@ function ScanForm({
   )
 }
 
-// ─────────────────────────────────────────────────
+// ─── HELPERS ───────────────────────────────────────
 function FormInput({ label, value, onChange, type = 'text', placeholder = '', required = false }: any) {
   return (
     <div>
       <label className="block text-xs font-bold text-slate-600 mb-1">{label}</label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder} required={required}
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        required={required}
         className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none" />
     </div>
   )
@@ -459,15 +487,26 @@ function FormInput({ label, value, onChange, type = 'text', placeholder = '', re
 
 function fmtDate(iso: string): string {
   if (!iso) return '—'
-  try { return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }
-  catch { return iso }
+  try {
+    return new Date(iso).toLocaleDateString('id-ID', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    })
+  } catch { return iso }
+}
+
+function fmtDateToday(): string {
+  return new Date().toLocaleDateString('id-ID', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+    timeZone: 'Asia/Makassar'
+  })
 }
 
 function fmtDateTime(iso: string): string {
   if (!iso) return '—'
   try {
     return new Date(iso).toLocaleString('id-ID', {
-      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Makassar'
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+      timeZone: 'Asia/Makassar'
     })
   } catch { return iso }
 }
