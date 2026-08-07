@@ -1,5 +1,5 @@
 // app/api/notifikasi/route.ts
-// v2.1 - Fix TypeScript warnings (parameter any type)
+// v3.0 - Merge dengan tabel notifications (push notification history)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
@@ -39,7 +39,6 @@ export async function GET(req: NextRequest) {
     let qPkwt = supabase.from('pkwt').select('nrp, tanggal_berakhir').lte('tanggal_berakhir', dateLimit)
     let qSimpol = supabase.from('employees').select('nrp, exp_simpol, site').lte('exp_simpol', dateLimit)
 
-    // Filter: kalau bukan HRGA, hanya lihat dokumen sendiri
     if (!isHrga) {
       qMcu = qMcu.eq('nrp', nrp)
       qSimper = qSimper.eq('nrp', nrp)
@@ -51,7 +50,6 @@ export async function GET(req: NextRequest) {
       qMcu, qSimper, qPkwt, qSimpol
     ])
 
-    // Ambil semua NRP unik untuk lookup site
     const allNrps = new Set<string>()
     ;(resMcu.data || []).forEach((r: any) => r.nrp && allNrps.add(String(r.nrp)))
     ;(resSimper.data || []).forEach((r: any) => r.nrp && allNrps.add(String(r.nrp)))
@@ -66,7 +64,6 @@ export async function GET(req: NextRequest) {
       ;(emps || []).forEach((e: any) => empSiteMap.set(String(e.nrp), e.site || '-'))
     }
 
-    // Fungsi helper: group by site + hitung kritis
     function buildBreakdown(rows: any[], jenis: string, tanggalField: string, icon: string, useEmpSite = true) {
       const siteMap = new Map<string, { count: number, critical: number }>()
       
@@ -111,20 +108,17 @@ export async function GET(req: NextRequest) {
     let totalApproval = 0
 
     if (isApprover) {
-      // Tahap ATASAN
       const [cutiAt, lemburAt, sakitAt] = await Promise.all([
         supabase.from('leave_requests').select('nrp').eq('atasan_nrp', nrp).eq('status_atasan', 'PENDING'),
         supabase.from('overtime_requests').select('nrp').eq('atasan_nrp', nrp).eq('status_atasan', 'PENDING'),
         supabase.from('attendance_evidences').select('nrp, kategori').eq('atasan_nrp', nrp).eq('status_atasan', 'PENDING')
       ])
 
-      // Tahap PJO
       const [cutiPjo, lemburPjo] = await Promise.all([
         supabase.from('leave_requests').select('nrp').eq('pjo_nrp', nrp).eq('status_atasan', 'APPROVED').eq('status_pjo', 'PENDING'),
         supabase.from('overtime_requests').select('nrp').eq('pjo_nrp', nrp).eq('status_atasan', 'APPROVED').eq('status_pjo', 'PENDING')
       ])
 
-      // Kumpulkan semua NRP karyawan pengaju untuk lookup site
       const approvalNrps = new Set<string>()
       ;(cutiAt.data || []).forEach((r: any) => r.nrp && approvalNrps.add(String(r.nrp)))
       ;(lemburAt.data || []).forEach((r: any) => r.nrp && approvalNrps.add(String(r.nrp)))
@@ -141,7 +135,6 @@ export async function GET(req: NextRequest) {
         ;(emps || []).forEach((e: any) => apprSiteMap.set(String(e.nrp), e.site || '-'))
       }
 
-      // Helper: group approval by site
       function groupApprovalBySite(rows: any[], jenis: string, icon: string, tahap: string) {
         const siteMap = new Map<string, number>()
         ;(rows || []).forEach((r: any) => {
@@ -153,7 +146,6 @@ export async function GET(req: NextRequest) {
         }))
       }
 
-      // Kategorisasi sakit
       const sakitOnly = (sakitAt.data || []).filter((r: any) => (r.kategori || 'SAKIT') === 'SAKIT')
       const izinPot = (sakitAt.data || []).filter((r: any) => r.kategori === 'IZIN_POTONGAN')
       const izinBay = (sakitAt.data || []).filter((r: any) => r.kategori === 'IZIN_BERBAYAR')
@@ -172,10 +164,34 @@ export async function GET(req: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════
-    // 3. RETURN
+    // 3. ✨ NEW: FETCH NOTIFIKASI DARI TABEL notifications
+    // ═══════════════════════════════════════════════
+    const { data: notifRows } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('nrp', nrp)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    const notifications = (notifRows || []).map((n: any) => ({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      icon: n.icon || '🔔',
+      url: n.url || '/dashboard',
+      category: n.category || 'GENERAL',
+      data: n.data || {},
+      read_at: n.read_at,
+      created_at: n.created_at
+    }))
+
+    const notifUnread = notifications.filter((n: any) => !n.read_at).length
+
+    // ═══════════════════════════════════════════════
+    // 4. RETURN
     // ═══════════════════════════════════════════════
     return NextResponse.json({
-      total_notifikasi: totalApproval + totalExpired,
+      total_notifikasi: totalApproval + totalExpired + notifUnread,
       approval: {
         total: totalApproval,
         breakdown: approvalBreakdown
@@ -185,7 +201,13 @@ export async function GET(req: NextRequest) {
         critical: totalExpiredCritical,
         breakdown: expiredBreakdown
       },
-      // Backward compatibility (biar layout.tsx lama tidak error)
+      // ✨ NEW: notifications dari tabel notifications
+      notifications: {
+        total: notifications.length,
+        unread: notifUnread,
+        items: notifications
+      },
+      // Backward compatibility
       total_pending: totalApproval,
       total_expired: totalExpired
     })

@@ -360,7 +360,11 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [bottomSheetMenus, setBottomSheetMenus] = useState<MenuItem[]>([])
   const [bottomSheetTitle, setBottomSheetTitle] = useState('')
   const [notifCount, setNotifCount] = useState(0)
-  const [notifData, setNotifData] = useState<any>({ approval: { total: 0, breakdown: [] }, expired: { total: 0, critical: 0, breakdown: [] } })
+  const [notifData, setNotifData] = useState<any>({ 
+  approval: { total: 0, breakdown: [] }, 
+  expired: { total: 0, critical: 0, breakdown: [] },
+  notifications: { total: 0, unread: 0, items: [] }
+})
   const [isNotifOpen, setIsNotifOpen] = useState(false)
   const [showScanTab, setShowScanTab] = useState(false)
 
@@ -731,10 +735,44 @@ async function checkAuth() {
         setNotifCount(data.total_notifikasi || 0)
         setNotifData({
           approval: data.approval || { total: 0, breakdown: [] },
-          expired: data.expired || { total: 0, critical: 0, breakdown: [] }
+          expired: data.expired || { total: 0, critical: 0, breakdown: [] },
+          notifications: data.notifications || { total: 0, unread: 0, items: [] }
         })
       }
     } catch (err) { console.error("Notif Error:", err) }
+  }
+
+  // ✨ NEW: Mark notification as read + navigate
+  async function handleNotifClick(item: any) {
+    // Mark as read
+    if (!item.read_at) {
+      try {
+        await fetch('/api/notifications', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: item.id })
+        })
+      } catch {}
+    }
+    
+    // Close modal & navigate
+    setIsNotifOpen(false)
+    router.push(item.url || '/dashboard')
+    
+    // Refresh notif count
+    setTimeout(fetchNotif, 500)
+  }
+
+  // ✨ NEW: Mark all notifications as read
+  async function handleMarkAllRead() {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true })
+      })
+      fetchNotif()
+    } catch {}
   }
 
   async function handleLogout() {
@@ -1253,6 +1291,83 @@ if (menuKey === 'import_roster_bulk') {
                             <span className="text-slate-300 text-lg">›</span>
                           </button>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ✨ ═══════ KATEGORI 3: MEETING & UMUM (dari tabel notifications) ═══════ */}
+                  {notifData.notifications.items.length > 0 && (
+                    <div className="bg-white border-2 border-purple-100 rounded-[2rem] overflow-hidden shadow-sm">
+                      <div className="bg-purple-50 px-5 py-3 flex items-center justify-between border-b border-purple-100">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">📨</span>
+                          <span className="font-black text-purple-700 text-xs uppercase tracking-widest">Meeting & Umum</span>
+                          {notifData.notifications.unread > 0 && (
+                            <span className="bg-purple-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase animate-pulse">
+                              {notifData.notifications.unread} Baru
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {notifData.notifications.unread > 0 && (
+                            <button
+                              onClick={handleMarkAllRead}
+                              className="text-[9px] text-purple-600 font-black uppercase hover:text-purple-800 hover:underline"
+                            >
+                              ✓ Baca Semua
+                            </button>
+                          )}
+                          <span className="bg-purple-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+                            {notifData.notifications.total}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="divide-y divide-slate-50 max-h-[300px] overflow-y-auto">
+                        {notifData.notifications.items.map((item: any) => {
+                          const isUnread = !item.read_at
+                          const createdDate = new Date(item.created_at)
+                          const now = new Date()
+                          const diffMs = now.getTime() - createdDate.getTime()
+                          const diffMin = Math.floor(diffMs / 60000)
+                          const diffHr = Math.floor(diffMin / 60)
+                          const diffDay = Math.floor(diffHr / 24)
+                          
+                          let timeAgo = 'baru saja'
+                          if (diffDay > 0) timeAgo = `${diffDay}h lalu`
+                          else if (diffHr > 0) timeAgo = `${diffHr}j lalu`
+                          else if (diffMin > 0) timeAgo = `${diffMin}m lalu`
+                          
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => handleNotifClick(item)}
+                              className={`w-full px-5 py-3 flex items-start gap-3 hover:bg-purple-50/50 transition-all active:scale-95 text-left ${
+                                isUnread ? 'bg-purple-50/30' : ''
+                              }`}
+                            >
+                              <div className="text-xl shrink-0 mt-0.5">
+                                {typeof item.icon === 'string' && item.icon.length <= 3 ? item.icon : '🔔'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <p className={`text-xs truncate ${isUnread ? 'font-black text-slate-900' : 'font-bold text-slate-600'}`}>
+                                    {item.title}
+                                  </p>
+                                  {isUnread && (
+                                    <span className="w-2 h-2 bg-purple-500 rounded-full shrink-0 animate-pulse" />
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-slate-500 font-medium line-clamp-2">
+                                  {item.body}
+                                </p>
+                                <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-wider">
+                                  {timeAgo} • {item.category}
+                                </p>
+                              </div>
+                              <span className="text-slate-300 text-lg shrink-0">›</span>
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                   )}
