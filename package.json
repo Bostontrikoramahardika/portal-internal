@@ -55,5 +55,9 @@
     "tailwindcss": "^4.3.2",
     "ts-node": "^10.9.2",
     "typescript": "^5"
+  },
+  "optionalDependencies": {
+    "@next/swc-wasm-nodejs": "^16.2.9",
+    "@next/swc-win32-x64-msvc": "^16.2.9"
   }
 }
