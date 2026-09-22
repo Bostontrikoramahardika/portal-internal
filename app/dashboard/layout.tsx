@@ -199,7 +199,7 @@ const TAB_CONFIG = [
     }
   },
 
-  // 6. HR
+    // 6. HR
   {
     key: 'hr',
     label: 'HR',
@@ -207,7 +207,6 @@ const TAB_CONFIG = [
     roles: HR_ROLES,
     customMatch: (m: MenuItem) => {
       return (
-      
         m.menu_key === 'hr_dashboard' ||
         m.menu_key === 'kelola_job_kategori' ||
         m.menu_key === 'kelola_pengumuman' ||
@@ -231,8 +230,9 @@ const TAB_CONFIG = [
         m.menu_key === 'import_mcu' ||
         m.menu_key === 'import_mcu_bulk' ||
         m.menu_key === 'import_simper' ||
-        m.menu_key === 'import_roster_bulk'||
-        m.menu_key === 'kelola_event' 
+        m.menu_key === 'import_roster_bulk' ||
+        m.menu_key === 'kelola_event' ||
+        m.menu_key === 'rekrutmen'
       )
     }
   },
