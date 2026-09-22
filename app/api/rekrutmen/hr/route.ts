@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabase';
 import { cookies } from 'next/headers';
-import { getSession } from '@/app/lib/auth-cache';
+import { getSession } from '@/app/lib/auth';
 
 async function checkHRPermission() {
   const cookieStore = await cookies();
