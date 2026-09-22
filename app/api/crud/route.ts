@@ -90,12 +90,18 @@ export async function POST(req: NextRequest) {
     const isStaff = !HRGA_ROLES.some(r => rolesLower.includes(r))
 
     if (isStaff) {
-      if (['apd_history', 'attendance_evidences', 'bpjs'].includes(table)) {
+      if (['apd_history', 'bpjs'].includes(table)) {
         dataToSave.nama_karyawan = session.nama || 'Unknown'
       }
       if (['pkwt', 'leave_requests', 'overtime_requests', 'attendance'].includes(table)) {
         dataToSave.nrp = session.nrp
       }
+    }
+
+    // 🌟 Selalu sertakan nrp & nama_karyawan untuk attendance_evidences
+    if (table === 'attendance_evidences') {
+      if (!dataToSave.nrp) dataToSave.nrp = session.nrp
+      if (!dataToSave.nama_karyawan) dataToSave.nama_karyawan = session.nama || 'Unknown'
     }
 
     if (table === 'announcements') dataToSave.created_by = session.nrp
