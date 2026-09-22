@@ -49,6 +49,12 @@ function checkTablePermission(
   // Tabel tidak punya requirement untuk operasi ini → izinkan
   if (!requiredPerm) return { allowed: true }
 
+  // 🌟 FIX: Pengajuan mandiri (Sakit/Izin, Cuti, Lembur) diizinkan untuk semua user terautentikasi
+  const SELF_SERVICE_PERMISSIONS = ['sakit_submit_own', 'cuti_submit_own', 'lembur_submit_own']
+  if (SELF_SERVICE_PERMISSIONS.includes(requiredPerm)) {
+    return { allowed: true }
+  }
+
   // Cek apakah user punya permission key yang dibutuhkan
   const allowed = hasPermission(session, requiredPerm)
   
@@ -80,8 +86,8 @@ export async function POST(req: NextRequest) {
 
     const dataToSave = cleanData({ ...values })
     const rolesLower = (session.roles || []).map((r: string) => r.toLowerCase())
-const HRGA_ROLES = ['hrga', 'admin', 'hrga_oprek', 'hrga_site', 'hrga_pusat', 'admin_site', 'admin_plant']
-const isStaff = !HRGA_ROLES.some(r => rolesLower.includes(r))
+    const HRGA_ROLES = ['hrga', 'admin', 'hrga_oprek', 'hrga_site', 'hrga_pusat', 'admin_site', 'admin_plant']
+    const isStaff = !HRGA_ROLES.some(r => rolesLower.includes(r))
 
     if (isStaff) {
       if (['apd_history', 'attendance_evidences', 'bpjs'].includes(table)) {
@@ -167,26 +173,26 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-try {
-  const session = await checkAccess(req)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  
-  // Baca dari query string ATAU body (fleksibel)
-  let table = ''
-  let id = ''
-  
-  const { searchParams } = new URL(req.url)
-  table = searchParams.get('table') || ''
-  id = searchParams.get('id') || ''
-  
-  // Kalau kosong, coba baca dari body
-  if (!table || !id) {
-    try {
-      const body = await req.json()
-      table = table || body.table || ''
-      id = id || body.id || ''
-    } catch {}
-  }
+  try {
+    const session = await checkAccess(req)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    
+    // Baca dari query string ATAU body (fleksibel)
+    let table = ''
+    let id = ''
+    
+    const { searchParams } = new URL(req.url)
+    table = searchParams.get('table') || ''
+    id = searchParams.get('id') || ''
+    
+    // Kalau kosong, coba baca dari body
+    if (!table || !id) {
+      try {
+        const body = await req.json()
+        table = table || body.table || ''
+        id = id || body.id || ''
+      } catch {}
+    }
     
     if (!ALLOWED_TABLES.includes(table)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 400 })
@@ -208,24 +214,24 @@ try {
 }
 
 export async function PATCH(req: NextRequest) {
-    try {
-      const session = await checkAccess(req)
-      if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      
-      const { table, ids, action } = await req.json()
-      if (action === 'bulk_delete' && ALLOWED_TABLES.includes(table)) {
-        // 🔐 Cek permission DELETE untuk bulk
-        const permCheck = checkTablePermission(session, table, 'delete')
-        if (!permCheck.allowed) {
-          return NextResponse.json({ error: permCheck.reason }, { status: 403 })
-        }
-
-        const { error } = await supabase.from(table).delete().in('id', ids)
-        if (error) throw error
-        return NextResponse.json({ message: 'Bulk Deleted' })
+  try {
+    const session = await checkAccess(req)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    
+    const { table, ids, action } = await req.json()
+    if (action === 'bulk_delete' && ALLOWED_TABLES.includes(table)) {
+      // 🔐 Cek permission DELETE untuk bulk
+      const permCheck = checkTablePermission(session, table, 'delete')
+      if (!permCheck.allowed) {
+        return NextResponse.json({ error: permCheck.reason }, { status: 403 })
       }
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
-    } catch (err: any) {
-      return NextResponse.json({ error: err.message }, { status: 500 })
+
+      const { error } = await supabase.from(table).delete().in('id', ids)
+      if (error) throw error
+      return NextResponse.json({ message: 'Bulk Deleted' })
     }
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }
