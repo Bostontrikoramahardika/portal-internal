@@ -705,17 +705,18 @@ const { data: attendance } = await supabase
       })
     }
 
+       // ==========================================
+    // 🎯 CASE FORM PENGAJUAN (Cuti, Lembur, Sakit/Izin)
     // ==========================================
-    // 🎯 CASE FORM PENGAJUAN (✅ FIXED Chat 30 - TZ Aware)
-    // ==========================================
-    if (['FORM_CUTI', 'FORM_LEMBUR'].includes(access_mode)) {
+    if (['FORM_CUTI', 'FORM_LEMBUR'].includes(access_mode) || ['cuti_saya', 'lembur_saya', 'form_cuti', 'form_lembur'].includes(menuKey)) {
       const currentMonth = getSiteMonth(null, userSiteTz)
       const currentYear = getSiteYear(null, userSiteTz)
       const firstDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
       const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`
 
-      const tblName = access_mode === 'FORM_CUTI' ? 'leave_requests' : 'overtime_requests'
-      const dateField = access_mode === 'FORM_CUTI' ? 'tanggal_mulai' : 'tanggal'
+      const isCuti = access_mode === 'FORM_CUTI' || ['cuti_saya', 'form_cuti'].includes(menuKey)
+      const tblName = isCuti ? 'leave_requests' : 'overtime_requests'
+      const dateField = isCuti ? 'tanggal_mulai' : 'tanggal'
 
       const { data: riwayat } = await supabase
         .from(tblName)
@@ -729,7 +730,7 @@ const { data: attendance } = await supabase
       let sisaCutiTahunan = 0
       let tahunCuti = currentYear
 
-      if (access_mode === 'FORM_CUTI') {
+      if (isCuti) {
         const { data: empRow } = await supabase
           .from('employees')
           .select('eligible_tiket_pesawat')
@@ -756,14 +757,40 @@ const { data: attendance } = await supabase
       }
 
       return NextResponse.json({ 
-        type: access_mode === 'FORM_CUTI' ? 'form_cuti' : 'form_lembur',
-        title: menu_label, 
-        table: target_table,
+        type: isCuti ? 'form_cuti' : 'form_lembur',
+        title: menu_label || (isCuti ? 'Pengajuan Cuti' : 'Pengajuan Lembur'), 
+        table: target_table || tblName,
         riwayat: riwayat || [],
+        rows: riwayat || [],
         periode: formatSiteMonthYear(null, userSiteTz),
         eligible_tiket_pesawat: eligibleTiket,
         sisa_cuti_tahunan: sisaCutiTahunan,
         tahun_cuti: tahunCuti
+      })
+    }
+    
+    if (menuKey === 'evident_sakit' || access_mode === 'FORM_SAKIT') {
+      const currentMonth = getSiteMonth(null, userSiteTz)
+      const currentYear = getSiteYear(null, userSiteTz)
+      const firstDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
+      const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`
+
+      // 🌟 FIX: Cari berdasarkan NRP OR nama_karyawan
+      const { data: rows } = await supabase
+        .from('attendance_evidences')
+        .select('*')
+        .or(`nrp.eq.${session.nrp},nama_karyawan.ilike.%${session.nama}%`)
+        .gte('tanggal', firstDay)
+        .lte('tanggal', lastDay)
+        .order('tanggal', { ascending: false })
+
+      return NextResponse.json({ 
+        type: 'form_sakit', 
+        title: menu_label || 'Pengajuan Sakit/Izin', 
+        rows: rows || [], 
+        riwayat: rows || [],
+        table: 'attendance_evidences',
+        periode: formatSiteMonthYear(null, userSiteTz)
       })
     }
     
