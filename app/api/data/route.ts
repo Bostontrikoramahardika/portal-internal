@@ -233,6 +233,7 @@ const menuInfo = isSuperAdmin
       })
 
       return NextResponse.json({
+        type: 'riwayat_absensi_custom',
         columns: [
           { key: 'tanggal', label: 'Tanggal' },
           { key: 'roster', label: 'Roster' },
