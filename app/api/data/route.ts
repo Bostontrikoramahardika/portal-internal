@@ -254,20 +254,86 @@ const menuInfo = isSuperAdmin
       if (menuKey === 'kpi_saya') q = q.eq('nrp', session.nrp)
 
       const { data: kpiRows } = await q
-      const { data: emps } = await supabase.from('employees').select('nrp, nama, site, jabatan')
-      
+      const { data: emps } = await supabase.from('employees').select('nrp, nama, site, jabatan, departemen')
+
+      // Hitung Absensi Aktual Bulan Berjalan (September 2026)
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = now.getMonth() // 0-indexed
+      const monthName = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+
+      const startOfMonthStr = new Date(year, month, 1).toISOString().split('T')[0]
+      const endOfMonthStr = new Date(year, month + 1, 0).toISOString().split('T')[0]
+      const totalDaysInMonth = new Date(year, month + 1, 0).getDate()
+
+      // Ambil absensi aktual bulan ini untuk user
+      const { data: attMonth } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('nrp', session.nrp)
+        .gte('date', startOfMonthStr)
+        .lte('date', endOfMonthStr)
+
+      // Ambil cuti/sakit/izin approved bulan ini
+      const { data: leaveMonth } = await supabase
+        .from('leave_requests')
+        .select('*')
+        .eq('nrp', session.nrp)
+        .eq('status', 'APPROVED')
+        .gte('start_date', startOfMonthStr)
+        .lte('end_date', endOfMonthStr)
+
+      let countHadir = 0
+      let countSakit = 0
+      let countIjin = 0
+      let countAlpa = 0
+
+      if (attMonth && attMonth.length > 0) {
+        attMonth.forEach((a: any) => {
+          const st = (a.status || '').toUpperCase()
+          if (st === 'HADIR' || st === 'LATE' || st === 'OFF_WORK' || a.clock_in) countHadir++
+          else if (st === 'SAKIT') countSakit++
+          else if (st === 'IZIN' || st === 'CUTI') countIjin++
+          else if (st === 'ALPA') countAlpa++
+        })
+      }
+
+      if (leaveMonth && leaveMonth.length > 0) {
+        leaveMonth.forEach((l: any) => {
+          const t = (l.leave_type || l.tipe || '').toUpperCase()
+          if (t.includes('SAKIT')) countSakit++
+          else if (t.includes('IZIN') || t.includes('CUTI')) countIjin++
+        })
+      }
+
+      // Default minimal tampilkan hari berjalan jika absensi masih awal
+      const todayDate = now.getDate()
+      const effectiveDays = Math.max(todayDate, countHadir + countSakit + countIjin + countAlpa)
+
       let enrichedKpi = (kpiRows || []).map((k: any) => {
         const emp = emps?.find((e: any) => e.nrp === k.nrp)
-        const totalPerforma = (Number(k.cat_kinerja) || 0) + (Number(k.cat_sikap) || 0) + (Number(k.cat_disiplin) || 0)
+        const nOtomatis = Number(k.nilai_otomatis !== undefined ? k.nilai_otomatis : k.nilai_sistem) || 0
+        const nPerforma = Number(k.nilai_performa !== undefined ? k.nilai_performa : ((Number(k.cat_kinerja) || 0) + (Number(k.cat_sikap) || 0) + (Number(k.cat_disiplin) || 0))) || 0
+        const nAkhir = Number(k.nilai_kpi !== undefined ? k.nilai_kpi : (nOtomatis + nPerforma)) || 0
+
         return {
           ...k,
+          periode: k.periode || monthName,
           _nama_karyawan: emp?.nama || k.nrp,
           _jabatan: emp?.jabatan || '-',
           _site: emp?.site || '-',
-          nilai_sistem: Math.round((k.nilai_sistem || 0) * 10) / 10,
-          nilai_performa: totalPerforma,
-          nilai_akhir: Math.round(((Number(k.nilai_sistem) || 0) + totalPerforma) * 10) / 10,
-          pelanggaran: k.pelanggaran || '-'
+          departemen: emp?.departemen || 'Operasional',
+          nilai_sistem: Math.round(nOtomatis * 10) / 10,
+          nilai_performa: Math.round(nPerforma * 10) / 10,
+          nilai_akhir: Math.round(nAkhir * 10) / 10,
+          pelanggaran: k.rincian_pelanggaran || k.pelanggaran || '-',
+          
+          // Metrics Absensi Aktual
+          total_hari_bulan: totalDaysInMonth,
+          total_hadir: countHadir > 0 ? countHadir : Math.max(1, effectiveDays - countSakit - countIjin - countAlpa),
+          total_sakit: countSakit,
+          total_ijin: countIjin,
+          total_alpa: countAlpa
         }
       })
 

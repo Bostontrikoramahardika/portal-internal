@@ -4498,65 +4498,379 @@ function KPISayaRaportView({ data }: any) {
   const raport = data.rows?.[0]
 
   if (!raport) return (
-    <div className="bg-white p-24 rounded-[3rem] border-4 border-dashed border-slate-50 text-center">
-      <div className="text-6xl mb-6 grayscale opacity-30">📄</div>
-      <h3 className="font-black text-slate-300 uppercase tracking-[0.3em] text-xs italic">Penilaian belum dirilis untuk periode berjalan.</h3>
+    <div className="bg-white p-20 rounded-3xl border-2 border-dashed border-slate-200 text-center max-w-4xl mx-auto my-6">
+      <div className="w-16 h-16 mx-auto mb-4 text-slate-300">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+      </div>
+      <h3 className="font-bold text-slate-400 uppercase tracking-widest text-xs">Penilaian belum dirilis untuk periode berjalan.</h3>
     </div>
   )
 
+  // 1. PERIODE DINAMIS (Bulan Berjalan)
+  const currentMonthYear = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+  const periodePenilaian = raport.periode || currentMonthYear
+
+  // 2. ABSENSI AKTUAL REALTIME DARI DATABASE
+  const totalHariBulan = Number(raport.total_hari_bulan) || 30
+  const hadirHari = Number(raport.total_hadir) || 0
+  const sakitHari = Number(raport.total_sakit) || 0
+  const ijinHari = Number(raport.total_ijin) || 0
+  const alpaHari = Number(raport.total_alpa) || 0
+  const pctKehadiran = totalHariBulan > 0 ? Math.round((hadirHari / totalHariBulan) * 1000) / 10 : 0
+
+  // 3. ANGKA SKOR KPI
+  const nilaiAkhir = Number(raport.nilai_akhir) || Number(raport.nilai_kpi) || 0
+  const nilaiSistem = Number(raport.nilai_sistem) || Number(raport.nilai_otomatis) || 0
+  const nilaiPerforma = Number(raport.nilai_performa) || 0
+
+  const catKinerja = Number(raport.cat_kinerja) || 0
+  const catSikap = Number(raport.cat_sikap) || 0
+  const catDisiplin = Number(raport.cat_disiplin) || 0
+
+  // 4. KETERANGAN DARI HRGA SITE / ATASAN
+  const ketKehadiran = raport.ket_kehadiran || "-"
+  const ketDisiplin = raport.ket_disiplin || "-"
+  const ketKualitas = raport.ket_kualitas || "-"
+  const ketPenilaianAtasan = raport.catatan || raport.ket_atasan || "-"
+
+  const radius = 58
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference - (Math.min(100, Math.max(0, nilaiAkhir)) / 100) * circumference
+
   return (
-    <div className="max-w-4xl mx-auto pb-10 animate-in fade-in duration-700">
-      <div className="bg-slate-900 text-white p-10 rounded-t-[3rem] relative overflow-hidden shadow-2xl border-x border-t border-slate-800">
-        <div className="absolute top-0 right-0 p-12 opacity-5 text-[10rem] font-black italic select-none pointer-events-none tracking-tighter">BTM</div>
-        <div className="relative z-10">
-          <div className="flex justify-between items-start mb-10">
-            <div>
-              <p className="text-amber-500 font-black text-[10px] tracking-[0.4em] uppercase mb-3">Performance & Discipline Evaluation</p>
-              <h1 className="text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-4xl font-black tracking-tighter text-white">RAPORT KARYAWAN</h1>
+    <div className="max-w-6xl mx-auto pb-16 font-sans text-slate-800 bg-slate-100/60 p-3 md:p-6 rounded-3xl border border-slate-200/80 shadow-sm animate-in fade-in duration-500">
+      
+      {/* ================= 1. HEADER EXECUTIVE ================= */}
+      <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 text-white p-5 md:p-7 rounded-3xl shadow-xl mb-6 relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl flex items-center justify-center font-black text-2xl tracking-tighter shadow-inner shrink-0">
+              <svg className="w-8 h-8 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
-            <div className="bg-white/5 px-6 py-4 rounded-[1.5rem] backdrop-blur-3xl border border-white/10 text-right">
-              <span className="text-[9px] block opacity-40 uppercase font-black tracking-[0.2em] mb-1">Evaluation Period</span>
-              <span className="font-black text-base tracking-widest uppercase text-amber-500">{raport.periode}</span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-black tracking-wider text-base text-white">PT. BOSTON</span>
+                <span className="text-[10px] text-blue-300 font-medium italic">Together for a Better Tomorrow</span>
+              </div>
+              <h1 className="text-xl md:text-2xl font-black tracking-tight text-white mt-0.5">Raport Kinerja Karyawan</h1>
+              <p className="text-[11px] text-slate-300 font-semibold tracking-wide">Key Performance Indicator (KPI)</p>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-amber-600 rounded-[1.5rem] flex items-center justify-center text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-2xl lg:text-4xl font-black text-slate-950 shadow-2xl shadow-amber-500/20">
-              {raport._nama_karyawan?.[0]}
+
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/15 text-xs self-stretch md:self-auto justify-between md:justify-start">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <div>
+                <span className="text-[9px] uppercase font-bold text-blue-200 block">Periode Penilaian</span>
+                <span className="font-extrabold text-amber-400 text-sm">{periodePenilaian}</span>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black tracking-tight">{raport._nama_karyawan}</h2>
-              <p className="text-xs opacity-50 font-black tracking-[0.2em] uppercase mt-1">NRP: {raport.nrp} • {raport._jabatan || 'Internal Staff'}</p>
+            <div className="w-px h-8 bg-white/20"></div>
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <div>
+                <span className="text-[9px] uppercase font-bold text-blue-200 block">Site Operasional</span>
+                <span className="font-extrabold text-white text-sm">{raport._site || "PPA-MLP"}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white p-10 border-x border-b border-slate-100 rounded-b-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)]">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="text-center p-8 bg-slate-50/50 rounded-[2.5rem] border-2 border-slate-50">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Kedisiplinan (Sistem)</p>
-            <div className="text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-5xl font-black text-slate-900">{raport.nilai_sistem} <span className="text-xs opacity-20 font-bold uppercase tracking-widest">/ 70</span></div>
-            <p className="text-[9px] text-slate-400 mt-4 italic font-black uppercase tracking-tighter">Automated Analysis</p>
+      {/* ================= 2. HERO SECTION (3 CARDS) ================= */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 mb-6">
+        
+        {/* Card A: Profil Karyawan (Col 4) */}
+        <div className="md:col-span-4 bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-900 to-slate-800 text-white shadow-md flex items-center justify-center text-2xl font-black uppercase shrink-0 border-2 border-white">
+              {(raport._nama_karyawan || "K")[0]}
+            </div>
+            <div className="overflow-hidden">
+              <h2 className="text-base font-extrabold text-slate-800 truncate leading-tight">{raport._nama_karyawan}</h2>
+              <p className="text-xs text-slate-500 font-semibold mt-0.5">NIK / NRP : {raport.nrp}</p>
+              <div className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Aktif
+              </div>
+            </div>
           </div>
-          <div className="text-center p-8 bg-blue-50/30 rounded-[2.5rem] border-2 border-blue-50">
-            <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4">Performa (Atasan)</p>
-            <div className="text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-3xl lg:text-5xl font-black text-blue-600">{raport.nilai_performa} <span className="text-xs opacity-20 font-bold uppercase tracking-widest">/ 30</span></div>
-            <p className="text-[9px] text-blue-400 mt-4 italic font-black uppercase tracking-tighter">Human Review</p>
-          </div>
-          <div className="text-center p-8 bg-slate-900 rounded-[2.5rem] shadow-2xl text-white border-4 border-slate-800">
-            <p className="text-[10px] font-black opacity-50 uppercase tracking-widest mb-4">Total Penilaian</p>
-            <div className="text-6xl font-black text-amber-500">{raport.nilai_akhir}</div>
-            <div className="mt-4 inline-block px-5 py-2 bg-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/5">
-              {raport.nilai_akhir >= 85 ? 'Sangat Memuaskan' : raport.nilai_akhir >= 70 ? 'Memuaskan' : 'Cukup / Kurang'}
+
+          <div className="border-t border-slate-100 pt-3.5 mt-4 space-y-1.5 text-xs font-medium">
+            <div className="flex justify-between">
+              <span className="text-slate-400">Departemen</span>
+              <span className="font-bold text-slate-700">{raport.departemen || "Operasional"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Jabatan</span>
+              <span className="font-bold text-slate-700 truncate max-w-[160px]">{raport._jabatan || "Staff"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Site</span>
+              <span className="font-bold text-slate-700">{raport._site || "PPA-MLP"}</span>
             </div>
           </div>
         </div>
+
+        {/* Card B: Gauge Score Total (Col 4) */}
+        <div className="md:col-span-4 bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 flex flex-col items-center justify-center relative">
+          <div className="absolute top-4 right-4 w-7 h-7 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          </div>
+          <p className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Nilai KPI Total</p>
+          
+          <div className="relative w-36 h-36 flex items-center justify-center my-1">
+            <svg className="w-full h-full transform -rotate-90">
+              <circle cx="72" cy="72" r={radius} stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-100" />
+              <circle cx="72" cy="72" r={radius} stroke="currentColor" strokeWidth="12" fill="transparent" className="text-blue-600 transition-all duration-1000 ease-out" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-4xl font-black text-slate-900 tracking-tighter leading-none">{nilaiAkhir}</span>
+              <span className="text-[10px] font-bold text-slate-400 mt-1">/ 100 POIN</span>
+            </div>
+          </div>
+
+          <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 mt-1">
+            <span>? Evaluasi Realtime</span>
+            <span className="text-slate-400 font-normal">Bulan Berjalan</span>
+          </div>
+        </div>
+
+        {/* Card C: Catatan Evaluasi Atasan / HRGA (Col 4) */}
+        <div className="md:col-span-4 bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Catatan Evaluasi Atasan</p>
+                <h3 className="text-sm font-bold text-slate-800">Feedback Management / HRGA</h3>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/70 relative mt-2 min-h-[90px] flex flex-col justify-between">
+            {ketPenilaianAtasan !== "-" ? (
+              <p className="text-xs text-slate-700 italic font-medium leading-relaxed">
+                "{ketPenilaianAtasan}"
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 italic font-medium leading-relaxed">
+                - Belum ada catatan evaluasi dari Atasan / HRGA Site.
+              </p>
+            )}
+            <p className="text-[10px] font-bold text-slate-500 text-right mt-2">
+              � Atasan / HRGA Site
+            </p>
+          </div>
+        </div>
+
       </div>
+
+      {/* ================= 3. METRIC KEHADIRAN GRID (BULAN BERJALAN AKTUAL) ================= */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5 mb-6">
+        
+        {/* Kehadiran */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            </div>
+            <span className="text-xs font-bold text-slate-700">Kehadiran</span>
+          </div>
+          <p className="text-lg font-black text-slate-800">{pctKehadiran}%</p>
+          <p className="text-[10px] text-slate-400 font-medium">( {hadirHari} / {totalHariBulan} Hari )</p>
+        </div>
+
+        {/* Sakit */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.636a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            </div>
+            <span className="text-xs font-bold text-slate-700">Sakit</span>
+          </div>
+          <p className="text-lg font-black text-slate-800">{sakitHari} Hari</p>
+          <p className="text-[10px] text-slate-400 font-medium">Bulan Berjalan</p>
+        </div>
+
+        {/* Ijin */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <span className="text-xs font-bold text-slate-700">Ijin</span>
+          </div>
+          <p className="text-lg font-black text-slate-800">{ijinHari} Hari</p>
+          <p className="text-[10px] text-slate-400 font-medium">Bulan Berjalan</p>
+        </div>
+
+        {/* Alpa */}
+        <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+            </div>
+            <span className="text-xs font-bold text-slate-700">Alpa</span>
+          </div>
+          <p className="text-lg font-black text-slate-800">{alpaHari} Hari</p>
+          <p className="text-[10px] text-slate-400 font-medium">Bulan Berjalan</p>
+        </div>
+
+        {/* Total Kehadiran */}
+        <div className="col-span-2 sm:col-span-1 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div>
+            <span className="text-xs font-bold text-slate-700 block mb-1">Total Hari Kerja</span>
+            <p className="text-lg font-black text-slate-800">{hadirHari} <span className="text-xs font-semibold text-slate-400">/ {totalHariBulan} Hari</span></p>
+          </div>
+          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mt-2">
+            <div className="h-full bg-blue-600 rounded-full" style={{ width: Math.min(100, pctKehadiran) + "%" }}></div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ================= 4. DETAIL NILAI KPI PER KATEGORI (5 ROWS) ================= */}
+      <div className="bg-white rounded-3xl p-5 md:p-6 shadow-sm border border-slate-200/80 mb-6">
+        <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-blue-900 text-white flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            </div>
+            <h3 className="font-extrabold text-sm text-slate-800 tracking-wide">Detail Nilai KPI per Kategori</h3>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-semibold text-slate-400">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Nilai Kategori</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-200"></span> Target</span>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          
+          {/* Row 1: Kehadiran */}
+          <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/60 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+            <div className="md:col-span-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-slate-800">Kehadiran</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-black text-slate-900">{pctKehadiran}%</span>
+                  <span className="text-[10px] text-slate-400 font-medium">( {hadirHari} / {totalHariBulan} Hari )</span>
+                </div>
+                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden mt-1">
+                  <div className="h-full bg-blue-600 rounded-full" style={{ width: Math.min(100, pctKehadiran) + "%" }}></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-4 border-t md:border-t-0 md:border-l border-slate-200/80 pt-2 md:pt-0 md:pl-4 text-xs space-y-1 font-medium text-slate-600">
+              <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Rincian</p>
+              <div className="flex justify-between"><span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Hadir</span><span className="font-bold text-slate-800">{hadirHari} hari</span></div>
+              <div className="flex justify-between"><span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Sakit</span><span className="font-bold text-slate-800">{sakitHari} hari</span></div>
+              <div className="flex justify-between"><span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Ijin</span><span className="font-bold text-slate-800">{ijinHari} hari</span></div>
+            </div>
+
+            <div className="md:col-span-4 bg-white p-3 rounded-xl border border-slate-200 text-xs">
+              <span className="text-[10px] font-bold text-slate-400 block uppercase mb-0.5">Catatan / Keterangan</span>
+              {ketKehadiran !== "-" ? (
+                <p className="text-slate-700 leading-relaxed font-medium">{ketKehadiran}</p>
+              ) : (
+                <p className="text-slate-400 italic font-normal">- Belum ada catatan dari HRGA / Atasan</p>
+              )}
+            </div>
+          </div>
+
+          {/* Row 2: Disiplin & Tanggung Jawab */}
+          <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/60 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+            <div className="md:col-span-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-slate-800">Disiplin & Tanggung Jawab</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-black text-slate-900">{nilaiSistem} Poin</span>
+                  <span className="text-[10px] text-slate-400 font-medium">( Maks 70 Poin )</span>
+                </div>
+                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden mt-1">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: Math.min(100, (nilaiSistem / 70 * 100)) + "%" }}></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-4 border-t md:border-t-0 md:border-l border-slate-200/80 pt-2 md:pt-0 md:pl-4 text-xs space-y-1 font-medium text-slate-600">
+              <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Rincian</p>
+              <div className="flex justify-between"><span>Pelanggaran</span><span className="font-bold text-slate-800">{raport.pelanggaran || "0 kasus"}</span></div>
+              <div className="flex justify-between"><span>Evaluasi Sistem</span><span className="font-bold text-slate-800">Automated</span></div>
+            </div>
+
+            <div className="md:col-span-4 bg-white p-3 rounded-xl border border-slate-200 text-xs">
+              <span className="text-[10px] font-bold text-slate-400 block uppercase mb-0.5">Catatan / Keterangan</span>
+              {ketDisiplin !== "-" ? (
+                <p className="text-slate-700 leading-relaxed font-medium">{ketDisiplin}</p>
+              ) : (
+                <p className="text-slate-400 italic font-normal">- Belum ada catatan dari HRGA / Atasan</p>
+              )}
+            </div>
+          </div>
+
+          {/* Row 3: Penilaian Atasan */}
+          <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/60 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+            <div className="md:col-span-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-slate-800">Penilaian Performa Atasan</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-black text-slate-900">{nilaiPerforma} Poin</span>
+                  <span className="text-[10px] text-slate-400 font-medium">( Maks 30 Poin )</span>
+                </div>
+                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden mt-1">
+                  <div className="h-full bg-purple-600 rounded-full" style={{ width: Math.min(100, (nilaiPerforma / 30 * 100)) + "%" }}></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-4 border-t md:border-t-0 md:border-l border-slate-200/80 pt-2 md:pt-0 md:pl-4 text-xs space-y-1 font-medium text-slate-600">
+              <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Rincian Score</p>
+              <div className="flex justify-between"><span>Kinerja</span><span className="font-bold text-slate-800">{catKinerja} Poin</span></div>
+              <div className="flex justify-between"><span>Sikap</span><span className="font-bold text-slate-800">{catSikap} Poin</span></div>
+              <div className="flex justify-between"><span>Disiplin</span><span className="font-bold text-slate-800">{catDisiplin} Poin</span></div>
+            </div>
+
+            <div className="md:col-span-4 bg-white p-3 rounded-xl border border-slate-200 text-xs">
+              <span className="text-[10px] font-bold text-slate-400 block uppercase mb-0.5">Catatan / Keterangan</span>
+              {ketKualitas !== "-" ? (
+                <p className="text-slate-700 leading-relaxed font-medium">{ketKualitas}</p>
+              ) : (
+                <p className="text-slate-400 italic font-normal">- Belum ada catatan dari HRGA / Atasan</p>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ================= 5. FOOTER SLOGAN ================= */}
+      <div className="bg-slate-900 text-white px-6 py-4 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-2 shadow-lg">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-amber-400 text-slate-900 flex items-center justify-center font-black text-xs">??</div>
+          <span className="font-extrabold text-xs tracking-wide">Terus Berkembang, Raih Hasil yang Lebih Baik!</span>
+        </div>
+        <span className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Kinerja Hari Ini, Masa Depan Nanti</span>
+      </div>
+
     </div>
   )
 }
 
-// ============ 👥 KPI & PENILAIAN BAWAHAN (v3.1 Chat 27) ============
+
 function PenilaianBawahanView({ data, onReload }: any) {
   const [selectedEmp, setSelectedEmp] = useState<any>(null)
   const [selectedKpiId, setSelectedKpiId] = useState<string | null>(null)
