@@ -712,7 +712,7 @@ const { data: attendance } = await supabase
       const currentMonth = getSiteMonth(null, userSiteTz)
       const currentYear = getSiteYear(null, userSiteTz)
       const firstDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
-      const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`
+      const lastDayObj = new Date(currentYear, currentMonth, 0); const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`
 
       const isCuti = access_mode === 'FORM_CUTI' || ['cuti_saya', 'form_cuti'].includes(menuKey)
       const tblName = isCuti ? 'leave_requests' : 'overtime_requests'
@@ -773,7 +773,7 @@ const { data: attendance } = await supabase
       const currentMonth = getSiteMonth(null, userSiteTz)
       const currentYear = getSiteYear(null, userSiteTz)
       const firstDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
-      const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`
+      const lastDayObj = new Date(currentYear, currentMonth, 0); const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`
 
       // 🌟 FIX: Cari berdasarkan NRP OR nama_karyawan
       const { data: rows } = await supabase
@@ -798,7 +798,7 @@ const { data: attendance } = await supabase
       const currentMonth = getSiteMonth(null, userSiteTz)
       const currentYear = getSiteYear(null, userSiteTz)
       const firstDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
-      const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`
+      const lastDayObj = new Date(currentYear, currentMonth, 0); const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`
 
       const { data: rows } = await supabase
         .from('attendance_evidences')
