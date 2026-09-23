@@ -12,7 +12,7 @@ const ALLOWED_TABLES = [
   'bpjs', 'mcu', 'simper', 'apd_history', 'attendance_evidences',
   'sites_config',
   'kpi_settings',
-  'job_categories' // ✅ v1.5.0
+  'job_categories'
 ]
 
 function cleanData(obj: any) {
@@ -29,35 +29,25 @@ async function checkAccess(req: NextRequest) {
   return await getSession(token)
 }
 
-// 🔐 Helper: cek permission spesifik per operasi CRUD
 function checkTablePermission(
   session: any,
   table: string,
   operation: 'create' | 'edit' | 'delete'
 ): { allowed: boolean; reason?: string } {
-  
-  // Super admin bypass semua
   if (session.is_super_admin) return { allowed: true }
 
   const tablePerm = getTablePermissions(table)
-  
-  // Tabel tidak ada di TABLE_PERMISSIONS → izinkan (tabel internal/legacy)
   if (!tablePerm) return { allowed: true }
 
   const requiredPerm = tablePerm[operation]
-
-  // Tabel tidak punya requirement untuk operasi ini → izinkan
   if (!requiredPerm) return { allowed: true }
 
-  // 🌟 FIX: Pengajuan mandiri (Sakit/Izin, Cuti, Lembur) diizinkan untuk semua user terautentikasi
   const SELF_SERVICE_PERMISSIONS = ['sakit_submit_own', 'cuti_submit_own', 'lembur_submit_own']
   if (SELF_SERVICE_PERMISSIONS.includes(requiredPerm)) {
     return { allowed: true }
   }
 
-  // Cek apakah user punya permission key yang dibutuhkan
   const allowed = hasPermission(session, requiredPerm)
-  
   if (!allowed) {
     return { 
       allowed: false, 
@@ -78,7 +68,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 400 })
     }
 
-    // 🔐 Cek permission CREATE
     const permCheck = checkTablePermission(session, table, 'create')
     if (!permCheck.allowed) {
       return NextResponse.json({ error: permCheck.reason }, { status: 403 })
@@ -98,15 +87,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 🌟 Selalu sertakan nrp & nama_karyawan untuk attendance_evidences
+    // 🌟 MANDATORI: Wajib simpan nrp & nama_karyawan untuk attendance_evidences
     if (table === 'attendance_evidences') {
-      if (!dataToSave.nrp) dataToSave.nrp = session.nrp
-      if (!dataToSave.nama_karyawan) dataToSave.nama_karyawan = session.nama || 'Unknown'
+      dataToSave.nrp = session.nrp
+      dataToSave.nama_karyawan = session.nama || 'Unknown'
     }
 
     if (table === 'announcements') dataToSave.created_by = session.nrp
 
-    // 🎯 v3.0 Chat 27: Auto-set penilai_nrp saat CREATE KPI
     if (table === 'kpi') {
       dataToSave.penilai_nrp = session.nrp
       dataToSave.created_by = session.nrp
@@ -131,7 +119,6 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 400 })
     }
 
-    // 🔐 Cek permission EDIT
     const permCheck = checkTablePermission(session, table, 'edit')
     if (!permCheck.allowed) {
       return NextResponse.json({ error: permCheck.reason }, { status: 403 })
@@ -139,8 +126,6 @@ export async function PUT(req: NextRequest) {
 
     const dataToUpdate = cleanData({ ...values })
 
-    // 🎯 v3.0 Chat 27: Untuk KPI, cegah user edit nilai orang lain
-    // Super admin bypass, selain itu wajib penilai_nrp = session.nrp
     if (table === 'kpi' && !session.is_super_admin) {
       const { data: existingKpi } = await supabase
         .from('kpi')
@@ -154,11 +139,9 @@ export async function PUT(req: NextRequest) {
         }, { status: 403 })
       }
 
-      // Jangan biarkan penilai_nrp diubah dari client
       delete dataToUpdate.penilai_nrp
     }
 
-    // Gunakan update berdasarkan ID (integer) atau Kode (string) jika ID tidak ada
     const query = supabase.from(table).update(dataToUpdate)
 
     if (id) {
@@ -183,7 +166,6 @@ export async function DELETE(req: NextRequest) {
     const session = await checkAccess(req)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     
-    // Baca dari query string ATAU body (fleksibel)
     let table = ''
     let id = ''
     
@@ -191,7 +173,6 @@ export async function DELETE(req: NextRequest) {
     table = searchParams.get('table') || ''
     id = searchParams.get('id') || ''
     
-    // Kalau kosong, coba baca dari body
     if (!table || !id) {
       try {
         const body = await req.json()
@@ -204,7 +185,6 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 400 })
     }
 
-    // 🔐 Cek permission DELETE
     const permCheck = checkTablePermission(session, table, 'delete')
     if (!permCheck.allowed) {
       return NextResponse.json({ error: permCheck.reason }, { status: 403 })
@@ -226,7 +206,6 @@ export async function PATCH(req: NextRequest) {
     
     const { table, ids, action } = await req.json()
     if (action === 'bulk_delete' && ALLOWED_TABLES.includes(table)) {
-      // 🔐 Cek permission DELETE untuk bulk
       const permCheck = checkTablePermission(session, table, 'delete')
       if (!permCheck.allowed) {
         return NextResponse.json({ error: permCheck.reason }, { status: 403 })
