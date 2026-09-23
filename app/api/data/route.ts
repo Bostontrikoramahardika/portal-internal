@@ -128,21 +128,6 @@ const menuInfo = isSuperAdmin
       const nrpString = String(session.nrp).trim()
       const nrpWithZero = nrpString.startsWith('0') ? nrpString : '0' + nrpString
 
-      const { data: rosters } = await supabase.from('rosters').select('*').in('nrp', [nrpString, nrpWithZero]).order('tanggal', { ascending: false }).limit(62)
-     // ⭐ FIX: Filter by date range biar tidak kena limit 1000
-const dateThreshold = new Date()
-dateThreshold.setDate(dateThreshold.getDate() - 90) // ambil 90 hari terakhir
-const threshold = dateThreshold.toISOString().split('T')[0]
-
-const { data: attendance } = await supabase
-  .from('attendance')
-  .select('*')
-  .in('nrp', [nrpString, nrpWithZero])
-  .gte('tanggal', threshold)
-  .order('tanggal', { ascending: false })
-  
-      const { data: evidences } = await supabase.from('attendance_evidences').select('*').ilike('nama_karyawan', session.nama)
-
       const { data: siteConfig } = await supabase
         .from('sites_config')
         .select('siang_jam_masuk, malam_jam_masuk, timezone')
@@ -150,49 +135,114 @@ const { data: attendance } = await supabase
         .single()
 
       const siteTz = (siteConfig?.timezone || DEFAULT_TIMEZONE) as Timezone
-    const todaySite = getSiteDate(null, siteTz)  // ⭐ NEW: tanggal hari ini di TZ site
+      const todaySite = getSiteDate(null, siteTz) // YYYY-MM-DD
 
-    const finalRows = (rosters || []).map((r: any) => {
-        const absensi = attendance?.find((a: any) => normalizeDate(a.tanggal) === normalizeDate(r.tanggal))
-        const buktiSakit = evidences?.find((e: any) => normalizeDate(e.tanggal) === normalizeDate(r.tanggal))
-        let actual = "-"; let evident = "-"; let keterangan = ""
+      const now = new Date(todaySite + 'T00:00:00')
+      const currentYear = now.getFullYear()
+      const currentMonth = now.getMonth() + 1
+      const currentDate = now.getDate()
+
+      let startDateStr = ''
+      if (currentDate <= 7) {
+        // Tanggal 1-7: Tampilkan 7 hari sebelum tanggal 1 bulan berjalan
+        const prevH7 = new Date(currentYear, currentMonth - 1, 1 - 7)
+        const y = prevH7.getFullYear()
+        const m = String(prevH7.getMonth() + 1).padStart(2, '0')
+        const d = String(prevH7.getDate()).padStart(2, '0')
+        startDateStr = y + '-' + m + '-' + d
+      } else {
+        // Lewat H7: Tampilkan dari tanggal 1 bulan berjalan
+        const m = String(currentMonth).padStart(2, '0')
+        startDateStr = currentYear + '-' + m + '-01'
+      }
+
+      // Tanggal akhir bulan berjalan (anti tgl 31 September)
+      const lastDayObj = new Date(currentYear, currentMonth, 0)
+      const lastD = String(lastDayObj.getDate()).padStart(2, '0')
+      const mStr = String(currentMonth).padStart(2, '0')
+      const endDateStr = currentYear + '-' + mStr + '-' + lastD
+
+      // Ambil Roster hanya dalam rentang tanggal
+      const { data: rosters } = await supabase
+        .from('rosters')
+        .select('*')
+        .in('nrp', [nrpString, nrpWithZero])
+        .gte('tanggal', startDateStr)
+        .lte('tanggal', endDateStr)
+        .order('tanggal', { ascending: false })
+
+      // Ambil Attendance hanya dalam rentang tanggal
+      const { data: attendance } = await supabase
+        .from('attendance')
+        .select('*')
+        .in('nrp', [nrpString, nrpWithZero])
+        .gte('tanggal', startDateStr)
+        .lte('tanggal', endDateStr)
+        .order('tanggal', { ascending: false })
+
+      // Ambil Evidence hanya dalam rentang tanggal
+      const { data: evidences } = await supabase
+        .from('attendance_evidences')
+        .select('*')
+        .or('nrp.eq.' + nrpString + ',nrp.eq.' + nrpWithZero + ',nama_karyawan.ilike.%' + session.nama + '%')
+        .gte('tanggal', startDateStr)
+        .lte('tanggal', endDateStr)
+
+      const finalRows = (rosters || []).map((r) => {
+        const absensi = attendance?.find((a) => normalizeDate(a.tanggal) === normalizeDate(r.tanggal))
+        const buktiSakit = evidences?.find((e) => normalizeDate(e.tanggal) === normalizeDate(r.tanggal))
+        let actual = '-'
+        let evident = '-'
+        let keterangan = ''
 
         if (absensi) {
-          // ⭐ CHAT 30: Convert UTC → site timezone
           const jamMasuk = absensi.clock_in ? formatSiteTime(absensi.clock_in, siteTz) : '--:--'
           const jamPulang = absensi.clock_out ? formatSiteTime(absensi.clock_out, siteTz) : '--:--'
           actual = detectShiftFromLocalHour(jamMasuk, siteConfig)
-          evident = `${jamMasuk} / ${jamPulang}`
-          keterangan = absensi.status === 'TERLAMBAT' ? '⚠️ TERLAMBAT' : '✅ SUKSES'
-        } 
-        else if (buktiSakit) {
-          actual = "SAKIT"
+          evident = jamMasuk + ' / ' + jamPulang
+          keterangan = absensi.status === 'TERLAMBAT' ? '?? TERLAMBAT' : '? SUKSES'
+        } else if (buktiSakit) {
+          actual = 'SAKIT'
           evident = buktiSakit.foto_url
-          keterangan = buktiSakit.keterangan || "SAKIT"
-        } 
-        else {
-                  if (r.shift_code === 'OFF') { 
-          actual = "OFF"; keterangan = "-" 
-        }
-        else if (['S', 'M', 'P', 'L'].includes(r.shift_code)) { 
-          // ⭐ FIX: Cek apakah tanggal masih di masa depan
-          if (String(r.tanggal) > todaySite) {
-            // Belum kejadian → jangan langsung MANGKIR
-            actual = r.shift_code === 'M' ? 'MALAM' : 'SIANG'
-            keterangan = "BELUM ABSEN"
+          keterangan = buktiSakit.keterangan || 'SAKIT'
+        } else {
+          if (r.shift_code === 'OFF') {
+            actual = 'OFF'
+            keterangan = '-'
+          } else if (['S', 'M', 'P', 'L'].includes(r.shift_code)) {
+            if (String(r.tanggal) > todaySite) {
+              actual = r.shift_code === 'M' ? 'MALAM' : 'SIANG'
+              keterangan = 'BELUM ABSEN'
+            } else {
+              actual = 'MANGKIR'
+              keterangan = 'TIDAK ADA ABSENSI'
+            }
           } else {
-            // Sudah lewat & tidak ada absen → MANGKIR beneran
-            actual = "MANGKIR"
-            keterangan = "TIDAK ADA ABSENSI"
+            actual = r.shift_code || '-'
+            keterangan = 'IZIN / CUTI'
           }
         }
-        else { 
-          actual = r.shift_code || "-"; keterangan = "IZIN / CUTI" 
+        return {
+          tanggal: r.tanggal,
+          roster: r.shift_code,
+          actual,
+          evident,
+          keterangan,
+          is_foto: !!buktiSakit,
         }
-        }
-        return { tanggal: r.tanggal, roster: r.shift_code, actual, evident, keterangan, is_foto: !!buktiSakit }
       })
-      return NextResponse.json({ type: 'riwayat_absensi_custom', title: menu_label, rows: finalRows })
+
+      return NextResponse.json({
+        columns: [
+          { key: 'tanggal', label: 'Tanggal' },
+          { key: 'roster', label: 'Roster' },
+          { key: 'actual', label: 'Actual Shift' },
+          { key: 'evident', label: 'Jam / Bukti' },
+          { key: 'keterangan', label: 'Keterangan' },
+        ],
+        title: menu_label,
+        rows: finalRows,
+      })
     }
 
     // ==========================================
