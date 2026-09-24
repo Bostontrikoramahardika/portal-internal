@@ -34,6 +34,13 @@ export default function LogistikDashboardPage() {
   const [opnameCurrentStock, setOpnameCurrentStock] = useState<number | null>(null);
   const [submittingOpname, setSubmittingOpname] = useState(false);
 
+  // Print Document Modal State (Task #5)
+  const [printModal, setPrintModal] = useState<{
+    open: boolean;
+    type: "DO" | "PO" | "BAST";
+    data: any;
+  }>({ open: false, type: "DO", data: null });
+
   // Fetch Master Data
   const fetchMasters = async () => {
     try {
@@ -68,11 +75,11 @@ export default function LogistikDashboardPage() {
         const d = await res.json();
         setGrnList(d.grn_list || []);
       } else if (activeTab === "stock") {
-        const res = await fetch("/api/logistik/stock?warehouse_code=" + selectedWarehouse + "&search=" + searchPart);
+        const res = await fetch("/api/logistik/stock?warehouse_code=" + selectedWarehouse + "&search=" + encodeURIComponent(searchPart));
         const d = await res.json();
         setStockList(d.stock || []);
       } else if (activeTab === "parts") {
-        const res = await fetch("/api/logistik/master-part?search=" + searchPart);
+        const res = await fetch("/api/logistik/master-part?search=" + encodeURIComponent(searchPart));
         const d = await res.json();
         setPartsList(d.parts || []);
       } else if (activeTab === "opname") {
@@ -234,7 +241,7 @@ export default function LogistikDashboardPage() {
           { id: "po", label: "Purchase Order (PO)" },
           { id: "grn", label: "Penerimaan (GRN)" },
           { id: "stock", label: "Stok Gudang" },
-          { id: "opname", label: "Stock Opname ?" },
+          { id: "opname", label: "Stock Opname" },
           { id: "parts", label: "Master Part" },
           { id: "import", label: "Import Accurate" },
           { id: "masters", label: "Gudang & Vendor" },
@@ -270,7 +277,7 @@ export default function LogistikDashboardPage() {
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-b border-slate-800/80 pb-3">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono font-bold text-amber-400 text-sm">{pr.pr_number}</span>
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold border border-slate-700">
                           Unit: {pr.unit_code || "GENERAL"}
@@ -282,27 +289,40 @@ export default function LogistikDashboardPage() {
                               : pr.prioritas === "URGENT"
                               ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                               : "bg-slate-800 text-slate-400")}
-                          >
+                        >
                           {pr.prioritas}
                         </span>
                       </div>
                       <p className="text-xs text-slate-400 mt-1">
-                        Diajukan oleh: <span className="text-white font-medium">{pr.requester_name}</span> ({pr.site_code}) • {new Date(pr.created_at).toLocaleDateString("id-ID")}
+                        Diajukan oleh: <span className="text-white font-medium">{pr.requester_name}</span> ({pr.site_code}) - {new Date(pr.created_at).toLocaleDateString("id-ID")}
                       </p>
                     </div>
 
-                    <span
-                      className={"text-xs font-black px-3 py-1 rounded-xl self-start md:self-auto " +
-                        (pr.status === "FULFILLED"
-                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                          : pr.status === "APPROVED_READY_ISSUE"
-                          ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
-                          : pr.status === "REJECTED"
-                          ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                          : "bg-amber-500/20 text-amber-400 border border-amber-500/30")}
-                    >
-                      {pr.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={"text-xs font-black px-3 py-1 rounded-xl " +
+                          (pr.status === "FULFILLED"
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            : pr.status === "APPROVED_READY_ISSUE"
+                            ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                            : pr.status === "REJECTED"
+                            ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                            : "bg-amber-500/20 text-amber-400 border border-amber-500/30")}
+                      >
+                        {pr.status}
+                      </span>
+                      {pr.status === "FULFILLED" && (
+                        <button
+                          onClick={() => setPrintModal({ open: true, type: "DO", data: pr })}
+                          className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border border-amber-500/30 flex items-center gap-1 shadow-sm"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                          </svg>
+                          Cetak DO
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Items list */}
@@ -400,12 +420,23 @@ export default function LogistikDashboardPage() {
                         Vendor: <span className="text-white font-medium">{po.master_vendor?.nama_vendor || po.vendor_code}</span>
                       </p>
                     </div>
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200">
-                      {po.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200">
+                        {po.status}
+                      </span>
+                      <button
+                        onClick={() => setPrintModal({ open: true, type: "PO", data: po })}
+                        className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-bold border border-cyan-500/30 flex items-center gap-1 shadow-sm"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Cetak PO
+                      </button>
+                    </div>
                   </div>
                   <div className="text-xs text-slate-300">
-                    Total Item: {po.po_items?.length || 0} • Estimasi Total: Rp {Number(po.total_amount || 0).toLocaleString("id-ID")}
+                    Total Item: {po.po_items?.length || 0} - Estimasi Total: Rp {Number(po.total_amount || 0).toLocaleString("id-ID")}
                   </div>
                 </div>
               ))}
@@ -434,10 +465,21 @@ export default function LogistikDashboardPage() {
                         Surat Jalan: <span className="text-white font-medium">{grn.surat_jalan_no || "-"}</span> | Gudang: {grn.warehouse_code}
                       </p>
                     </div>
-                    <span className="text-xs text-slate-400">{new Date(grn.received_at).toLocaleDateString("id-ID")}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-400">{new Date(grn.received_at).toLocaleDateString("id-ID")}</span>
+                      <button
+                        onClick={() => setPrintModal({ open: true, type: "BAST", data: grn })}
+                        className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center gap-1 shadow-sm"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Cetak BAST
+                      </button>
+                    </div>
                   </div>
                   <div className="text-xs text-slate-300">
-                    Diterima oleh: {grn.received_name} • Total: {grn.grn_items?.length || 0} Part Masuk
+                    Diterima oleh: {grn.received_name} - Total: {grn.grn_items?.length || 0} Part Masuk
                   </div>
                 </div>
               ))}
@@ -517,7 +559,7 @@ export default function LogistikDashboardPage() {
         </div>
       )}
 
-      {/* TAB 5: STOCK OPNAME & ADJUSTMENT ? */}
+      {/* TAB 5: STOCK OPNAME & ADJUSTMENT */}
       {activeTab === "opname" && (
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Form Eksekusi Opname */}
@@ -769,7 +811,7 @@ export default function LogistikDashboardPage() {
               <div key={w.warehouse_code} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4">
                 <span className="font-mono font-bold text-amber-300 text-xs">{w.warehouse_code}</span>
                 <h3 className="text-sm font-bold text-white">{w.nama_gudang}</h3>
-                <p className="text-xs text-slate-400 mt-1">Site: {w.site_code} • Lokasi: {w.lokasi_fisik || "-"}</p>
+                <p className="text-xs text-slate-400 mt-1">Site: {w.site_code} - Lokasi: {w.lokasi_fisik || "-"}</p>
               </div>
             ))}
           </div>
@@ -780,9 +822,118 @@ export default function LogistikDashboardPage() {
               <div key={v.vendor_code} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4">
                 <span className="font-mono font-bold text-cyan-300 text-xs">{v.vendor_code}</span>
                 <h3 className="text-sm font-bold text-white">{v.nama_vendor}</h3>
-                <p className="text-xs text-slate-400 mt-1">Kategori: {v.kategori_suplai || "-"} • PIC: {v.nama_pic || "-"}</p>
+                <p className="text-xs text-slate-400 mt-1">Kategori: {v.kategori_suplai || "-"} - PIC: {v.nama_pic || "-"}</p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* TASK #5: CETAK DOKUMEN PDF (PRINT PREVIEW MODAL) */}
+      {printModal.open && printModal.data && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white text-slate-900 rounded-3xl p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <div className="flex items-center gap-3">
+                <img src="/logo.png" alt="Logo BTM" className="h-9 w-auto" />
+                <div>
+                  <h2 className="text-sm font-black tracking-tight text-[#003D79]">PT. BOSTON PPA - MLP</h2>
+                  <p className="text-[10px] text-slate-500 font-medium">Site Project Muara Lawa - Kutai Barat</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPrintModal({ open: false, type: "DO", data: null })}
+                className="text-slate-400 hover:text-slate-700 text-lg font-bold"
+              >
+                ?
+              </button>
+            </div>
+
+            {/* Document Header */}
+            <div className="text-center py-2 border-b border-dashed border-slate-300">
+              <h1 className="text-base font-black tracking-wide text-slate-800">
+                {printModal.type === "DO" && "DELIVERY ORDER (SURAT JALAN PENGELUARAN PART)"}
+                {printModal.type === "PO" && "OFFICIAL PURCHASE ORDER (PO)"}
+                {printModal.type === "BAST" && "BERITA ACARA SERAH TERIMA / PENERIMAAN BARANG (LPB)"}
+              </h1>
+              <p className="text-xs font-mono font-bold text-slate-600 mt-0.5">
+                No: {printModal.type === "DO" ? printModal.data.pr_number : printModal.type === "PO" ? printModal.data.po_number : printModal.data.grn_number}
+              </p>
+            </div>
+
+            {/* Document Meta Info */}
+            <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <div>
+                <p><span className="text-slate-500">Tanggal:</span> <span className="font-semibold">{new Date(printModal.data.created_at || printModal.data.received_at).toLocaleDateString("id-ID")}</span></p>
+                <p><span className="text-slate-500">Site / Unit:</span> <span className="font-semibold">{printModal.data.site_code || "PPA-MLP"} / {printModal.data.unit_code || "-"}</span></p>
+              </div>
+              <div>
+                <p><span className="text-slate-500">Petugas/Requester:</span> <span className="font-semibold">{printModal.data.requester_name || printModal.data.received_name || printModal.data.created_by_name || "Logistik"}</span></p>
+                <p><span className="text-slate-500">Gudang / Vendor:</span> <span className="font-semibold">{printModal.data.assigned_warehouse_code || printModal.data.warehouse_code || printModal.data.vendor_code || "-"}</span></p>
+              </div>
+            </div>
+
+            {/* Table Items */}
+            <table className="w-full text-left text-xs border border-slate-200">
+              <thead className="bg-slate-100 text-slate-700">
+                <tr>
+                  <th className="p-2 border">No</th>
+                  <th className="p-2 border">Part Number</th>
+                  <th className="p-2 border">Nama Suku Cadang</th>
+                  <th className="p-2 border text-right">Kuantitas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {((printModal.data.pr_items || printModal.data.po_items || printModal.data.grn_items || [])).map((item: any, idx: number) => (
+                  <tr key={idx} className="border">
+                    <td className="p-2 border text-center">{idx + 1}</td>
+                    <td className="p-2 border font-mono font-bold text-slate-800">{item.part_number}</td>
+                    <td className="p-2 border">{item.part_name || "-"}</td>
+                    <td className="p-2 border text-right font-bold">{item.qty_request || item.qty_ordered || item.qty_received} {item.satuan || "PCS"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Signatures */}
+            <div className="grid grid-cols-3 gap-4 text-center text-xs pt-4 border-t border-slate-200">
+              <div>
+                <p className="text-slate-500">Diajukan / Diserahkan</p>
+                <div className="h-14"></div>
+                <p className="font-bold border-t pt-1 border-slate-300">( ......................... )</p>
+              </div>
+              <div>
+                <p className="text-slate-500">Disetujui Plant / PJO</p>
+                <div className="h-14"></div>
+                <p className="font-bold border-t pt-1 border-slate-300">( ......................... )</p>
+              </div>
+              <div>
+                <p className="text-slate-500">Penerima Gudang / Mekanik</p>
+                <div className="h-14"></div>
+                <p className="font-bold border-t pt-1 border-slate-300">( ......................... )</p>
+              </div>
+            </div>
+
+            {/* Print & Close Buttons */}
+            <div className="flex gap-2 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setPrintModal({ open: false, type: "DO", data: null })}
+                className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 text-xs"
+              >
+                Tutup
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex-1 py-2.5 rounded-xl bg-[#003D79] text-white font-bold hover:bg-blue-900 text-xs flex items-center justify-center gap-1.5 shadow-md"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Cetak Dokumen Sekarang
+              </button>
+            </div>
           </div>
         </div>
       )}
