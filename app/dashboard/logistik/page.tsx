@@ -3,940 +3,1210 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
-export default function LogistikDashboardPage() {
-  const [activeTab, setActiveTab] = useState<
-    "pr" | "po" | "grn" | "stock" | "parts" | "opname" | "import" | "masters"
-  >("pr");
+interface LowStockItem {
+  id: string | number;
+  kode_barang?: string;
+  part_number?: string;
+  nama_barang: string;
+  stok: number;
+  min_stok: number;
+  satuan?: string;
+  lokasi_rak?: string;
+  kategori?: string;
+  status_level: "OUT_OF_STOCK" | "LOW_STOCK";
+  deficit: number;
+}
 
+export default function LogistikDashboardPage() {
+  const [activeTab, setActiveTab] = useState<"pr" | "po" | "lpb" | "stok" | "opname">("pr");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
+
+  // Min Stock Alert States
+  const [lowStockList, setLowStockList] = useState<LowStockItem[]>([]);
+  const [stockFilter, setStockFilter] = useState<"ALL" | "LOW" | "OUT">("ALL");
+  const [broadcastingAlert, setBroadcastingAlert] = useState(false);
+
+  // Data Lists
   const [prList, setPrList] = useState<any[]>([]);
   const [poList, setPoList] = useState<any[]>([]);
-  const [grnList, setGrnList] = useState<any[]>([]);
-  const [stockList, setStockList] = useState<any[]>([]);
-  const [partsList, setPartsList] = useState<any[]>([]);
-  const [warehouses, setWarehouses] = useState<any[]>([]);
-  const [vendors, setVendors] = useState<any[]>([]);
-  const [opnameHistory, setOpnameHistory] = useState<any[]>([]);
+  const [lpbList, setLpbList] = useState<any[]>([]);
+  const [stokList, setStokList] = useState<any[]>([]);
+  const [opnameList, setOpnameList] = useState<any[]>([]);
 
-  // Filter States
-  const [selectedWarehouse, setSelectedWarehouse] = useState("ALL");
-  const [searchPart, setSearchPart] = useState("");
-  const [actionMsg, setActionMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  // Modal & Form States
+  const [isPrModalOpen, setIsPrModalOpen] = useState(false);
+  const [isPoModalOpen, setIsPoModalOpen] = useState(false);
+  const [isLpbModalOpen, setIsLpbModalOpen] = useState(false);
+  const [isOpnameModalOpen, setIsOpnameModalOpen] = useState(false);
 
-  // Stock Opname Form State
-  const [opnameForm, setOpnameForm] = useState({
-    warehouse_code: "WH-MLP",
-    part_number: "",
-    qty_fisik: "",
-    rak_lokasi: "",
-    keterangan: "Stock Opname Berkala",
-  });
-  const [opnameCurrentStock, setOpnameCurrentStock] = useState<number | null>(null);
-  const [submittingOpname, setSubmittingOpname] = useState(false);
-
-  // Print Document Modal State (Task #5)
-  const [printModal, setPrintModal] = useState<{
-    open: boolean;
-    type: "DO" | "PO" | "BAST";
-    data: any;
-  }>({ open: false, type: "DO", data: null });
-
-  // Fetch Master Data
-  const fetchMasters = async () => {
-    try {
-      const [whRes, venRes] = await Promise.all([
-        fetch("/api/logistik/warehouses"),
-        fetch("/api/logistik/vendors"),
-      ]);
-      const whData = await whRes.json();
-      const venData = await venRes.json();
-      if (whData.warehouses) setWarehouses(whData.warehouses);
-      if (venData.vendors) setVendors(venData.vendors);
-    } catch (e) {
-      console.error(e);
+  // Document Print Modal State
+  const [printDoc, setPrintDoc] = useState<{
+    isOpen: boolean;
+    docType: "DO" | "PO" | "BAST";
+    docNumber: string;
+    date: string;
+    reference: string;
+    recipientOrVendor: string;
+    items: Array<{
+      kode?: string;
+      nama: string;
+      qty: number;
+      satuan?: string;
+      keterangan?: string;
+    }>;
+    catatan?: string;
+    signatories: {
+      maker: { title: string; name: string };
+      checker: { title: string; name: string };
+      approver: { title: string; name: string };
+    };
+  }>({ 
+    isOpen: false,
+    docType: "DO",
+    docNumber: "",
+    date: "",
+    reference: "",
+    recipientOrVendor: "",
+    items: [],
+    catatan: "",
+    signatories: {
+      maker: { title: "Dibuat Oleh / Logistik", name: "Staff Gudang" },
+      checker: { title: "Diperiksa Oleh", name: "Kepala Gudang / GL" },
+      approver: { title: "Disetujui Oleh", name: "Project Manager / PJO" }
     }
-  };
+  });
 
-  // Fetch Tab Specific Data
+  // Form inputs
+  const [prForm, setPrForm] = useState({
+    nomor_pr: "",
+    unit_code: "",
+    nama_barang: "",
+    part_number: "",
+    jumlah: 1,
+    satuan: "PCS",
+    prioritas: "NORMAL",
+    keterangan: ""
+  });
+
+  const [poForm, setPoForm] = useState({
+    nomor_po: "",
+    nomor_pr: "",
+    vendor: "",
+    nama_barang: "",
+    jumlah: 1,
+    satuan: "PCS",
+    estimasi_harga: 0,
+    keterangan: ""
+  });
+
+  const [lpbForm, setLpbForm] = useState({
+    nomor_lpb: "",
+    nomor_po: "",
+    nama_barang: "",
+    jumlah_diterima: 1,
+    satuan: "PCS",
+    kondisi: "BAIK",
+    lokasi_simpan: "Gudang Utama",
+    penerima: ""
+  });
+
+  const [opnameForm, setOpnameForm] = useState({
+    barang_id: "",
+    nama_barang: "",
+    stok_sistem: 0,
+    stok_fisik: 0,
+    lokasi_rak: "",
+    alasan: "",
+    auditor: ""
+  });
+
   const fetchData = async () => {
     setLoading(true);
-    setActionMsg(null);
     try {
-      if (activeTab === "pr") {
-        const res = await fetch("/api/logistik/pr/list");
-        const d = await res.json();
-        setPrList(d.pr_list || []);
-      } else if (activeTab === "po") {
-        const res = await fetch("/api/logistik/po/list");
-        const d = await res.json();
-        setPoList(d.po_list || []);
-      } else if (activeTab === "grn") {
-        const res = await fetch("/api/logistik/grn/list");
-        const d = await res.json();
-        setGrnList(d.grn_list || []);
-      } else if (activeTab === "stock") {
-        const res = await fetch("/api/logistik/stock?warehouse_code=" + selectedWarehouse + "&search=" + encodeURIComponent(searchPart));
-        const d = await res.json();
-        setStockList(d.stock || []);
-      } else if (activeTab === "parts") {
-        const res = await fetch("/api/logistik/master-part?search=" + encodeURIComponent(searchPart));
-        const d = await res.json();
-        setPartsList(d.parts || []);
-      } else if (activeTab === "opname") {
-        const res = await fetch("/api/logistik/stock-opname?warehouse_code=" + selectedWarehouse);
-        const d = await res.json();
-        setOpnameHistory(d.history || []);
-      }
-    } catch (err: any) {
-      console.error(err);
+      const [resPr, resPo, resLpb, resStok, resOpname, resMinStock] = await Promise.all([
+        fetch("/api/logistik/pr").then(function(r) { return r.json(); }).catch(function() { return { success: false, data: [] }; }),
+        fetch("/api/logistik/po").then(function(r) { return r.json(); }).catch(function() { return { success: false, data: [] }; }),
+        fetch("/api/logistik/lpb").then(function(r) { return r.json(); }).catch(function() { return { success: false, data: [] }; }),
+        fetch("/api/logistik/stok").then(function(r) { return r.json(); }).catch(function() { return { success: false, data: [] }; }),
+        fetch("/api/logistik/stock-opname").then(function(r) { return r.json(); }).catch(function() { return { success: false, data: [] }; }),
+        fetch("/api/logistik/min-stock").then(function(r) { return r.json(); }).catch(function() { return { success: false, items: [] }; })
+      ]);
+
+      if (resPr.success) setPrList(resPr.data || []);
+      if (resPo.success) setPoList(resPo.data || []);
+      if (resLpb.success) setLpbList(resLpb.data || []);
+      if (resStok.success) setStokList(resStok.data || []);
+      if (resOpname.success) setOpnameList(resOpname.data || []);
+      if (resMinStock.success) setLowStockList(resMinStock.items || []);
+    } catch (err) {
+      console.error("Fetch Error:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMasters();
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab, selectedWarehouse]);
-
-  // Handle PR Action (Approval / Issue)
-  const handlePrAction = async (prId: number, action: string, extraData?: any) => {
-    try {
-      const res = await fetch("/api/logistik/pr/action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pr_id: prId, action, ...extraData }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Aksi gagal");
-      setActionMsg({ text: data.message || "Aksi berhasil diproses!", type: "success" });
-      fetchData();
-    } catch (e: any) {
-      setActionMsg({ text: e.message, type: "error" });
-    }
-  };
-
-  // Cek realtime stok sistem saat input part_number di form Opname
-  const handleOpnamePartChange = async (pNum: string) => {
-    setOpnameForm((prev) => ({ ...prev, part_number: pNum }));
-    if (!pNum || pNum.trim().length < 3) {
-      setOpnameCurrentStock(null);
+  const handleBroadcastAlert = async () => {
+    if (lowStockList.length === 0) {
+      setMessage({ text: "Seluruh stok saat ini aman, tidak ada alert yang perlu dikirim.", type: "info" });
       return;
     }
+    setBroadcastingAlert(true);
     try {
-      const res = await fetch("/api/logistik/stock?warehouse_code=" + opnameForm.warehouse_code + "&search=" + encodeURIComponent(pNum.trim()));
-      const d = await res.json();
-      const match = (d.stock || []).find((s: any) => s.part_number.toLowerCase() === pNum.trim().toLowerCase());
-      if (match) {
-        setOpnameCurrentStock(match.qty_tersedia);
-        if (match.rak_lokasi && !opnameForm.rak_lokasi) {
-          setOpnameForm((prev) => ({ ...prev, rak_lokasi: match.rak_lokasi }));
-        }
+      const res = await fetch("/api/logistik/min-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ triggered_by: "Manual UI Broadcast" })
+      });
+      const json = await res.json();
+      if (json.success) {
+        setMessage({ text: json.message, type: "success" });
       } else {
-        setOpnameCurrentStock(0);
+        setMessage({ text: json.error || "Gagal mengirim alert", type: "error" });
       }
     } catch (err) {
-      setOpnameCurrentStock(null);
+      setMessage({ text: "Terjadi kesalahan saat memproses alert.", type: "error" });
+    } finally {
+      setBroadcastingAlert(false);
     }
   };
 
-  // Submit Stock Opname
-  const handleOpnameSubmit = async (e: React.FormEvent) => {
+  const handleQuickRestockPr = (item: any) => {
+    var defQty = item.deficit && item.deficit > 0 ? item.deficit : (item.min_stok || 1) * 2;
+    setPrForm({
+      nomor_pr: "PR-RESTOCK-" + Date.now().toString().slice(-6),
+      unit_code: "GUDANG-LOGISTIK",
+      nama_barang: item.nama_barang || "",
+      part_number: item.part_number || item.kode_barang || "",
+      jumlah: defQty,
+      satuan: item.satuan || "PCS",
+      prioritas: item.stok <= 0 ? "URGENT" : "HIGH",
+      keterangan: "Restock Otomatis: Stok saat ini (" + item.stok + ") di bawah minimum (" + item.min_stok + ")"
+    });
+    setIsPrModalOpen(true);
+  };
+
+  const handleSelectBarangOpname = (barangId: string) => {
+    const found = stokList.find(function(s) { return String(s.id) === String(barangId); });
+    if (found) {
+      setOpnameForm({
+        barang_id: String(found.id),
+        nama_barang: found.nama_barang || "",
+        stok_sistem: Number(found.stok || 0),
+        stok_fisik: Number(found.stok || 0),
+        lokasi_rak: found.lokasi_rak || found.lokasi || "",
+        alasan: "",
+        auditor: ""
+      });
+    }
+  };
+
+  const handleSubmitPr = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!opnameForm.part_number || opnameForm.qty_fisik === "") return;
-    setSubmittingOpname(true);
-    setActionMsg(null);
+    try {
+      const res = await fetch("/api/logistik/pr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(prForm)
+      });
+      const json = await res.json();
+      if (json.success) {
+        setMessage({ text: "PR Berhasil dibuat!", type: "success" });
+        setIsPrModalOpen(false);
+        fetchData();
+      } else {
+        setMessage({ text: json.error || "Gagal membuat PR", type: "error" });
+      }
+    } catch (err) {
+      setMessage({ text: "Terjadi kesalahan jaringan", type: "error" });
+    }
+  };
+
+  const handleSubmitPo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/logistik/po", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(poForm)
+      });
+      const json = await res.json();
+      if (json.success) {
+        setMessage({ text: "PO Berhasil diterbitkan!", type: "success" });
+        setIsPoModalOpen(false);
+        fetchData();
+      } else {
+        setMessage({ text: json.error || "Gagal membuat PO", type: "error" });
+      }
+    } catch (err) {
+      setMessage({ text: "Terjadi kesalahan jaringan", type: "error" });
+    }
+  };
+
+  const handleSubmitLpb = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/logistik/lpb", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(lpbForm)
+      });
+      const json = await res.json();
+      if (json.success) {
+        setMessage({ text: "LPB / GRN Berhasil dicatat & Stok ditambahkan!", type: "success" });
+        setIsLpbModalOpen(false);
+        fetchData();
+      } else {
+        setMessage({ text: json.error || "Gagal mencatat LPB", type: "error" });
+      }
+    } catch (err) {
+      setMessage({ text: "Terjadi kesalahan jaringan", type: "error" });
+    }
+  };
+
+  const handleSubmitOpname = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       const res = await fetch("/api/logistik/stock-opname", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(opnameForm),
+        body: JSON.stringify(opnameForm)
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal penyesuaian stok");
-
-      setActionMsg({
-        text: "Penyesuaian Berhasil! No: " + data.so_number + " (Selisih: " + (data.selisih > 0 ? "+" : "") + data.selisih + ")",
-        type: "success",
-      });
-
-      setOpnameForm({
-        warehouse_code: opnameForm.warehouse_code,
-        part_number: "",
-        qty_fisik: "",
-        rak_lokasi: "",
-        keterangan: "Stock Opname Berkala",
-      });
-      setOpnameCurrentStock(null);
-      fetchData();
-    } catch (err: any) {
-      setActionMsg({ text: err.message, type: "error" });
-    } finally {
-      setSubmittingOpname(false);
+      const json = await res.json();
+      if (json.success) {
+        setMessage({ text: "Penyesuaian Stok Opname Berhasil disimpan!", type: "success" });
+        setIsOpnameModalOpen(false);
+        fetchData();
+      } else {
+        setMessage({ text: json.error || "Gagal menyimpan Stock Opname", type: "error" });
+      }
+    } catch (err) {
+      setMessage({ text: "Terjadi kesalahan koneksi", type: "error" });
     }
   };
 
-  const selisihOpname =
-    opnameCurrentStock !== null && opnameForm.qty_fisik !== ""
-      ? parseInt(opnameForm.qty_fisik || "0", 10) - opnameCurrentStock
-      : null;
+  const openPrintDo = (pr: any) => {
+    setPrintDoc({
+      isOpen: true,
+      docType: "DO",
+      docNumber: "DO-" + (pr.nomor_pr || pr.id || Date.now()),
+      date: new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }),
+      reference: pr.nomor_pr || "-",
+      recipientOrVendor: (pr.unit_code ? "Unit " + pr.unit_code : "Plant Site") + " / " + (pr.pemohon || "Operational Staff"),
+      items: [{
+        kode: pr.part_number || pr.kode_barang || "-",
+        nama: pr.nama_barang || "Sparepart / Material",
+        qty: pr.jumlah || 1,
+        satuan: pr.satuan || "PCS",
+        keterangan: "Pengeluaran PR status: " + (pr.status || "APPROVED")
+      }],
+      catatan: "Barang telah diserahkan dari gudang pusat ke operational site.",
+      signatories: {
+        maker: { title: "Petugas Gudang (Issuer)", name: "Gudang Logistik" },
+        checker: { title: "Penerima Lapangan", name: pr.pemohon || "Driver / Mechanic" },
+        approver: { title: "Kepala Logistik / GL", name: "GL Logistic Site" }
+      }
+    });
+  };
+
+  const openPrintPo = (po: any) => {
+    setPrintDoc({
+      isOpen: true,
+      docType: "PO",
+      docNumber: po.nomor_po || ("PO-" + Date.now()),
+      date: new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }),
+      reference: po.nomor_pr || "PR-REF",
+      recipientOrVendor: po.vendor || "Supplier Resmi BTM",
+      items: [{
+        kode: po.nomor_po || "-",
+        nama: po.nama_barang || "Barang Pengadaan",
+        qty: po.jumlah || 1,
+        satuan: po.satuan || "PCS",
+        keterangan: "Estimasi: Rp " + Number(po.estimasi_harga || 0).toLocaleString("id-ID")
+      }],
+      catatan: "Pembayaran sesuai terms of payment yang disepakati. Harap sertakan PO ini saat pengiriman barang.",
+      signatories: {
+        maker: { title: "Purchasing Officer", name: "Procurement BTM" },
+        checker: { title: "Finance / Tax", name: "Finance Dept" },
+        approver: { title: "Project Manager / PJO", name: "PJO Site" }
+      }
+    });
+  };
+
+  const openPrintBast = (lpb: any) => {
+    setPrintDoc({
+      isOpen: true,
+      docType: "BAST",
+      docNumber: lpb.nomor_lpb || ("LPB-" + Date.now()),
+      date: new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }),
+      reference: lpb.nomor_po || "PO-REF",
+      recipientOrVendor: "Gudang Logistik Site (Penerima: " + (lpb.penerima || "Staff Gudang") + ")",
+      items: [{
+        kode: lpb.nomor_po || "-",
+        nama: lpb.nama_barang || "Barang Masuk LPB",
+        qty: lpb.jumlah_diterima || lpb.jumlah || 1,
+        satuan: lpb.satuan || "PCS",
+        keterangan: "Kondisi: " + (lpb.kondisi || "BAIK") + " | Lokasi: " + (lpb.lokasi_simpan || "Gudang")
+      }],
+      catatan: "Barang telah diperiksa secara fisik, spesifikasi, dan jumlah telah sesuai.",
+      signatories: {
+        maker: { title: "Penerima Gudang", name: lpb.penerima || "Staff Gudang" },
+        checker: { title: "Inspector QC / Mech GL", name: "Inspector Site" },
+        approver: { title: "Kepala Logistik", name: "GL Logistik" }
+      }
+    });
+  };
+
+  const filteredStockList = stokList.filter(function(item) {
+    var cur = Number(item.stok || 0);
+    var min = Number(item.min_stok || 0);
+    if (stockFilter === "OUT") return cur <= 0;
+    if (stockFilter === "LOW") return cur <= min;
+    return true;
+  });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 pb-28">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-6 pb-28">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5 mb-6">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link
-              href="/dashboard"
-              className="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-900 border border-slate-800"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard" className="text-xs text-amber-500 hover:underline flex items-center gap-1 font-semibold">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+              Kembali ke Menu Utama
             </Link>
-            <h1 className="text-xl md:text-2xl font-black bg-gradient-to-r from-amber-400 via-orange-400 to-amber-200 bg-clip-text text-transparent">
-              Logistics & Procurement System
-            </h1>
+            <span className="text-slate-600 text-xs">�</span>
+            <Link href="/parts-catalog" className="text-xs text-cyan-400 hover:underline flex items-center gap-1 font-semibold">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+              Buka Parts Catalog
+            </Link>
           </div>
-          <p className="text-xs text-slate-400">
-            Modul terpadu Pengadaan, Inventori Multi-Gudang & Kontrol Suku Cadang Plant
-          </p>
+          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2 mt-1">
+            <svg className="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+            Sistem Logistik & Pergudangan Site
+          </h1>
+          <p className="text-xs text-slate-400">PT. Boston PPA - MLP | Modul Terintegrasi PR, PO, LPB, Stok Opname, & Min-Stock Alert</p>
         </div>
-
-        {/* Quick Link ke Parts Catalog */}
-        <Link
-          href="/parts-catalog"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold text-xs hover:bg-amber-500/20 transition-all shadow-sm"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-          Buka Parts Catalog Unit
-        </Link>
-      </div>
-
-      {/* Alert Banner */}
-      {actionMsg && (
-        <div
-          className={"max-w-7xl mx-auto mb-4 p-4 rounded-xl border flex items-center justify-between " +
-            (actionMsg.type === "success"
-              ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-300"
-              : "bg-rose-950/40 border-rose-500/30 text-rose-300")}
-        >
-          <span className="text-xs md:text-sm font-medium">{actionMsg.text}</span>
-          <button onClick={() => setActionMsg(null)} className="text-slate-400 hover:text-white text-sm">
-            ?
+        <div className="flex items-center gap-2">
+          <button onClick={fetchData} disabled={loading} className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
+            <svg className={"w-3.5 h-3.5 " + (loading ? "animate-spin" : "")} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            Refresh
+          </button>
+          <button onClick={handleBroadcastAlert} disabled={broadcastingAlert} className="px-3.5 py-2 bg-red-950/70 hover:bg-red-900/80 text-red-300 border border-red-800/60 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+            <svg className={"w-3.5 h-3.5 " + (broadcastingAlert ? "animate-spin" : "")} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+            Broadcast Alert Stok
           </button>
         </div>
-      )}
-
-      {/* Navigation 8 Tabs */}
-      <div className="max-w-7xl mx-auto mb-6 flex gap-1.5 overflow-x-auto border-b border-slate-800 pb-2">
-        {[
-          { id: "pr", label: "Permintaan (PR)" },
-          { id: "po", label: "Purchase Order (PO)" },
-          { id: "grn", label: "Penerimaan (GRN)" },
-          { id: "stock", label: "Stok Gudang" },
-          { id: "opname", label: "Stock Opname" },
-          { id: "parts", label: "Master Part" },
-          { id: "import", label: "Import Accurate" },
-          { id: "masters", label: "Gudang & Vendor" },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id as any)}
-            className={"px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all " +
-              (activeTab === t.id
-                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
-                : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800")}
-          >
-            {t.label}
-          </button>
-        ))}
       </div>
 
-      {/* TAB 1: PERMINTAAN PART (PR) */}
-      {activeTab === "pr" && (
-        <div className="max-w-7xl mx-auto space-y-4">
-          {loading ? (
-            <div className="text-center py-12 text-slate-500 text-xs">Memuat data PR...</div>
-          ) : prList.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 text-slate-500 text-xs">
-              Belum ada Permintaan Suku Cadang (PR).
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {prList.map((pr) => (
-                <div
-                  key={pr.id}
-                  className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-3 hover:border-slate-700 transition-all"
-                >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-b border-slate-800/80 pb-3">
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono font-bold text-amber-400 text-sm">{pr.pr_number}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold border border-slate-700">
-                          Unit: {pr.unit_code || "GENERAL"}
-                        </span>
-                        <span
-                          className={"text-[10px] font-extrabold px-2 py-0.5 rounded-full " +
-                            (pr.prioritas === "EMERGENCY_BREAKDOWN"
-                              ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                              : pr.prioritas === "URGENT"
-                              ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                              : "bg-slate-800 text-slate-400")}
-                        >
-                          {pr.prioritas}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 mt-1">
-                        Diajukan oleh: <span className="text-white font-medium">{pr.requester_name}</span> ({pr.site_code}) - {new Date(pr.created_at).toLocaleDateString("id-ID")}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={"text-xs font-black px-3 py-1 rounded-xl " +
-                          (pr.status === "FULFILLED"
-                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                            : pr.status === "APPROVED_READY_ISSUE"
-                            ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
-                            : pr.status === "REJECTED"
-                            ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                            : "bg-amber-500/20 text-amber-400 border border-amber-500/30")}
-                      >
-                        {pr.status}
-                      </span>
-                      {pr.status === "FULFILLED" && (
-                        <button
-                          onClick={() => setPrintModal({ open: true, type: "DO", data: pr })}
-                          className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border border-amber-500/30 flex items-center gap-1 shadow-sm"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                          </svg>
-                          Cetak DO
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Items list */}
-                  <div className="bg-slate-950/60 rounded-xl p-3 border border-slate-800/80">
-                    <table className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="text-slate-400 border-b border-slate-800">
-                          <th className="pb-1.5 font-medium">Part Number</th>
-                          <th className="pb-1.5 font-medium">Nama Part</th>
-                          <th className="pb-1.5 font-medium text-right">Qty Req</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-900">
-                        {(pr.pr_items || []).map((item: any) => (
-                          <tr key={item.id} className="text-slate-300">
-                            <td className="py-1.5 font-mono text-amber-300">{item.part_number}</td>
-                            <td className="py-1.5">{item.part_name}</td>
-                            <td className="py-1.5 text-right font-bold">{item.qty_request} {item.satuan}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Action Workflow Buttons */}
-                  <div className="flex items-center gap-2 pt-1 flex-wrap">
-                    {pr.status === "PENDING_GL_PLANT" && (
-                      <button
-                        onClick={() => handlePrAction(pr.id, "APPROVE_GL_PLANT")}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500"
-                      >
-                        ? Setujui (GL Plant)
-                      </button>
-                    )}
-                    {pr.status === "PENDING_PJO" && (
-                      <button
-                        onClick={() => handlePrAction(pr.id, "APPROVE_PJO")}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500"
-                      >
-                        ? Otorisasi (PJO Site)
-                      </button>
-                    )}
-                    {pr.status === "PENDING_HO" && (
-                      <button
-                        onClick={() => handlePrAction(pr.id, "APPROVE_HO", { assigned_warehouse_code: "WH-MLP" })}
-                        className="px-3 py-1.5 rounded-lg bg-cyan-600 text-white text-xs font-bold hover:bg-cyan-500"
-                      >
-                        ? Approve & Assign WH-MLP (HO)
-                      </button>
-                    )}
-                    {pr.status === "APPROVED_READY_ISSUE" && (
-                      <button
-                        onClick={() => handlePrAction(pr.id, "FULFILL_ISSUE")}
-                        className="px-3.5 py-1.5 rounded-lg bg-amber-500 text-slate-950 text-xs font-extrabold hover:bg-amber-400 shadow-md shadow-amber-500/20"
-                      >
-                        ? Keluarkan Barang & Potong Stok
-                      </button>
-                    )}
-                    {pr.status !== "FULFILLED" && pr.status !== "REJECTED" && (
-                      <button
-                        onClick={() => {
-                          const r = prompt("Alasan penolakan:");
-                          if (r) handlePrAction(pr.id, "REJECT", { reason: r });
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-slate-800 text-rose-400 text-xs font-bold border border-rose-500/20 hover:bg-rose-950/40"
-                      >
-                        ? Tolak PR
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+      {/* Notification Toast */}
+      {message && (
+        <div className={"max-w-7xl mx-auto mb-4 p-3 rounded-lg text-xs font-semibold flex items-center justify-between border " + (message.type === "success" ? "bg-emerald-950/60 border-emerald-800 text-emerald-300" : message.type === "info" ? "bg-cyan-950/60 border-cyan-800 text-cyan-300" : "bg-rose-950/60 border-rose-800 text-rose-300")}>
+          <span>{message.text}</span>
+          <button onClick={function() { setMessage(null); }} className="text-slate-400 hover:text-slate-200">?</button>
         </div>
       )}
 
-      {/* TAB 2: PURCHASE ORDER (PO) */}
-      {activeTab === "po" && (
-        <div className="max-w-7xl mx-auto space-y-4">
-          {loading ? (
-            <div className="text-center py-12 text-slate-500 text-xs">Memuat PO...</div>
-          ) : poList.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 text-slate-500 text-xs">
-              Belum ada Purchase Order (PO) yang diterbitkan.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {poList.map((po) => (
-                <div key={po.id} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                    <div>
-                      <span className="font-mono font-bold text-cyan-400 text-sm">{po.po_number}</span>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Vendor: <span className="text-white font-medium">{po.master_vendor?.nama_vendor || po.vendor_code}</span>
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200">
-                        {po.status}
-                      </span>
-                      <button
-                        onClick={() => setPrintModal({ open: true, type: "PO", data: po })}
-                        className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-bold border border-cyan-500/30 flex items-center gap-1 shadow-sm"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        Cetak PO
-                      </button>
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-300">
-                    Total Item: {po.po_items?.length || 0} - Estimasi Total: Rp {Number(po.total_amount || 0).toLocaleString("id-ID")}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 3: PENERIMAAN BARANG (GRN) */}
-      {activeTab === "grn" && (
-        <div className="max-w-7xl mx-auto space-y-4">
-          {loading ? (
-            <div className="text-center py-12 text-slate-500 text-xs">Memuat GRN...</div>
-          ) : grnList.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 text-slate-500 text-xs">
-              Belum ada data Penerimaan Barang (GRN / LPB).
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {grnList.map((grn) => (
-                <div key={grn.id} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-2">
-                  <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                    <div>
-                      <span className="font-mono font-bold text-emerald-400 text-sm">{grn.grn_number}</span>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Surat Jalan: <span className="text-white font-medium">{grn.surat_jalan_no || "-"}</span> | Gudang: {grn.warehouse_code}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400">{new Date(grn.received_at).toLocaleDateString("id-ID")}</span>
-                      <button
-                        onClick={() => setPrintModal({ open: true, type: "BAST", data: grn })}
-                        className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center gap-1 shadow-sm"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        Cetak BAST
-                      </button>
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-300">
-                    Diterima oleh: {grn.received_name} - Total: {grn.grn_items?.length || 0} Part Masuk
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 4: MONITORING STOK GUDANG */}
-      {activeTab === "stock" && (
-        <div className="max-w-7xl mx-auto space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <select
-              value={selectedWarehouse}
-              onChange={(e) => setSelectedWarehouse(e.target.value)}
-              className="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-            >
-              <option value="ALL">Semua Gudang</option>
-              {warehouses.map((w) => (
-                <option key={w.warehouse_code} value={w.warehouse_code}>
-                  {w.warehouse_code} - {w.nama_gudang}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              placeholder="Cari part number atau nama part..."
-              value={searchPart}
-              onChange={(e) => setSearchPart(e.target.value)}
-              className="md:col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-            />
-          </div>
-
-          {loading ? (
-            <div className="text-center py-12 text-slate-500 text-xs">Memuat stok...</div>
-          ) : stockList.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 text-slate-500 text-xs">
-              Tidak ada data stok untuk kriteria ini.
-            </div>
-          ) : (
-            <div className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
-                    <tr>
-                      <th className="p-3 font-medium">Gudang</th>
-                      <th className="p-3 font-medium">Part Number</th>
-                      <th className="p-3 font-medium">Nama Part</th>
-                      <th className="p-3 font-medium">Rak</th>
-                      <th className="p-3 font-medium text-right">Stok Tersedia</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {stockList.map((s) => (
-                      <tr key={s.id} className="hover:bg-slate-800/40">
-                        <td className="p-3 font-semibold text-slate-300">{s.warehouse_code}</td>
-                        <td className="p-3 font-mono font-bold text-amber-300">{s.part_number}</td>
-                        <td className="p-3 text-slate-200">{s.master_part?.part_name || "-"}</td>
-                        <td className="p-3 text-slate-400">{s.rak_lokasi || "-"}</td>
-                        <td className="p-3 text-right">
-                          <span
-                            className={"font-bold px-2 py-0.5 rounded " +
-                              (s.qty_tersedia <= (s.master_part?.min_stock || 0)
-                                ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                                : "text-emerald-400")}
-                          >
-                            {s.qty_tersedia} {s.master_part?.satuan || "PCS"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      {/* Min-Stock Warning Bar (Task #6) */}
+      {lowStockList.length > 0 && (
+        <div className="max-w-7xl mx-auto mb-6 bg-gradient-to-r from-red-950/80 via-amber-950/50 to-slate-900 border border-red-700/60 rounded-xl p-4 shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-start md:items-center gap-3">
+              <div className="p-2.5 bg-red-900/80 text-red-200 rounded-lg shrink-0">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 5: STOCK OPNAME & ADJUSTMENT */}
-      {activeTab === "opname" && (
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* Form Eksekusi Opname */}
-          <form
-            onSubmit={handleOpnameSubmit}
-            className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 md:p-5 space-y-4"
-          >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
-                <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span className="text-amber-400">?</span> Form Penyesuaian Fisik vs Sistem (Stock Opname)
-                </h2>
-                <p className="text-xs text-slate-400">
-                  Input kuantitas hasil cek fisik gudang untuk menyinkronkan saldo aktual & catat kartu stok penyesuaian
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-red-200">PERINGATAN STOK MINIMUM</span>
+                  <span className="px-2 py-0.5 bg-red-600 text-white rounded text-[10px] font-black">{lowStockList.length} ITEM KRITIS</span>
+                </div>
+                <p className="text-xs text-red-300/80 mt-0.5">
+                  Terdapat part/material gudang yang telah mencapai atau berada di bawah batas safety stock.
                 </p>
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Gudang</label>
-                <select
-                  value={opnameForm.warehouse_code}
-                  onChange={(e) => {
-                    setOpnameForm({ ...opnameForm, warehouse_code: e.target.value });
-                    if (opnameForm.part_number) handleOpnamePartChange(opnameForm.part_number);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                >
-                  {warehouses.map((w) => (
-                    <option key={w.warehouse_code} value={w.warehouse_code}>
-                      {w.warehouse_code} - {w.nama_gudang}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Part Number</label>
-                <input
-                  type="text"
-                  placeholder="Ketik Part Number..."
-                  value={opnameForm.part_number}
-                  onChange={(e) => handleOpnamePartChange(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Qty Fisik Aktual</label>
-                <input
-                  type="number"
-                  placeholder="0"
-                  min="0"
-                  value={opnameForm.qty_fisik}
-                  onChange={(e) => setOpnameForm({ ...opnameForm, qty_fisik: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500 font-bold"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Posisi Rak</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: A-01-02"
-                  value={opnameForm.rak_lokasi}
-                  onChange={(e) => setOpnameForm({ ...opnameForm, rak_lokasi: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-            </div>
-
-            {/* Preview Selisih Box */}
-            {opnameForm.part_number && opnameCurrentStock !== null && (
-              <div className="p-3.5 bg-slate-950/70 rounded-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-6">
-                  <div>
-                    <span className="text-slate-500 block">Stok Sistem:</span>
-                    <span className="font-bold text-white text-sm">{opnameCurrentStock} PCS</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">Fisik Diinput:</span>
-                    <span className="font-bold text-amber-300 text-sm">
-                      {opnameForm.qty_fisik !== "" ? opnameForm.qty_fisik : "-"} PCS
-                    </span>
-                  </div>
-                  {selisihOpname !== null && (
-                    <div>
-                      <span className="text-slate-500 block">Selisih:</span>
-                      <span
-                        className={"font-black text-sm px-2 py-0.5 rounded " +
-                          (selisihOpname === 0
-                            ? "bg-slate-800 text-slate-300"
-                            : selisihOpname > 0
-                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                            : "bg-rose-500/20 text-rose-400 border border-rose-500/30")}
-                      >
-                        {selisihOpname > 0 ? "+" + selisihOpname : selisihOpname} PCS
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-1 md:max-w-xs">
-                  <input
-                    type="text"
-                    placeholder="Alasan penyesuaian..."
-                    value={opnameForm.keterangan}
-                    onChange={(e) => setOpnameForm({ ...opnameForm, keterangan: e.target.value })}
-                    className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submittingOpname}
-                  className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 disabled:opacity-50 transition-all shadow-md shadow-amber-500/20 shrink-0"
-                >
-                  {submittingOpname ? "Menyimpan..." : "Simpan Penyesuaian"}
-                </button>
-              </div>
-            )}
-          </form>
-
-          {/* Riwayat Stock Opname Table */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-300">Riwayat Penyesuaian Terakhir (Audit Trail)</h3>
-            {loading ? (
-              <div className="text-center py-8 text-slate-500 text-xs">Memuat history...</div>
-            ) : opnameHistory.length === 0 ? (
-              <div className="text-center py-8 bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-500 text-xs">
-                Belum ada riwayat stock opname / adjustment.
-              </div>
-            ) : (
-              <div className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
-                    <tr>
-                      <th className="p-3 font-medium">Tanggal</th>
-                      <th className="p-3 font-medium">No. Ref</th>
-                      <th className="p-3 font-medium">Part Number</th>
-                      <th className="p-3 font-medium">Gudang</th>
-                      <th className="p-3 font-medium text-right">Sebelum</th>
-                      <th className="p-3 font-medium text-right">Sesudah</th>
-                      <th className="p-3 font-medium text-right">Selisih</th>
-                      <th className="p-3 font-medium">Petugas & Catatan</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {opnameHistory.map((h) => (
-                      <tr key={h.id} className="hover:bg-slate-800/40">
-                        <td className="p-3 text-slate-400">{new Date(h.created_at).toLocaleDateString("id-ID")}</td>
-                        <td className="p-3 font-mono font-semibold text-cyan-400">{h.reference_id}</td>
-                        <td className="p-3 font-mono font-bold text-amber-300">{h.part_number}</td>
-                        <td className="p-3 text-slate-300">{h.warehouse_code}</td>
-                        <td className="p-3 text-right text-slate-400">{h.qty_before}</td>
-                        <td className="p-3 text-right font-bold text-white">{h.qty_after}</td>
-                        <td className="p-3 text-right">
-                          <span
-                            className={"font-bold " +
-                              (h.qty_change > 0
-                                ? "text-emerald-400"
-                                : h.qty_change < 0
-                                ? "text-rose-400"
-                                : "text-slate-400")}
-                          >
-                            {h.qty_change > 0 ? "+" + h.qty_change : h.qty_change}
-                          </span>
-                        </td>
-                        <td className="p-3 text-slate-300">
-                          <div>{h.actor_nama}</div>
-                          <div className="text-[10px] text-slate-500">{h.keterangan}</div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 6: MASTER PART */}
-      {activeTab === "parts" && (
-        <div className="max-w-7xl mx-auto space-y-4">
-          <input
-            type="text"
-            placeholder="Cari nomor part, nama, atau kategori..."
-            value={searchPart}
-            onChange={(e) => setSearchPart(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-          />
-
-          {loading ? (
-            <div className="text-center py-12 text-slate-500 text-xs">Memuat master part...</div>
-          ) : partsList.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-500 text-xs">
-              Tidak ada part ditemukan.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {partsList.map((p) => (
-                <div key={p.part_number} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <span className="font-mono font-black text-amber-300 text-sm">{p.part_number}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold">
-                      {p.movement_category || "FAST"}
-                    </span>
-                  </div>
-                  <h3 className="text-xs font-bold text-white">{p.part_name}</h3>
-                  <div className="text-[11px] text-slate-400">
-                    <div>Kategori: {p.kategori || "-"} / {p.sub_kategori || "-"}</div>
-                    <div>Model: {p.model_kompatibel || "-"}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 7: IMPORT ACCURATE */}
-      {activeTab === "import" && (
-        <div className="max-w-4xl mx-auto bg-slate-900/80 rounded-2xl border border-slate-800 p-6 space-y-4 text-xs">
-          <h2 className="text-sm font-bold text-white">Import Excel Data Accurate</h2>
-          <p className="text-slate-400">
-            Upload file .xlsx export Accurate untuk sinkronisasi massal katalog master part dan saldo awal gudang.
-          </p>
-          <div className="p-8 border-2 border-dashed border-slate-800 rounded-2xl text-center space-y-2">
-            <p className="text-slate-400">Pilih file Excel Accurate (.xlsx)</p>
-            <input
-              type="file"
-              accept=".xlsx,.xls"
-              className="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* TAB 8: GUDANG & VENDOR */}
-      {activeTab === "masters" && (
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <h2 className="text-sm font-bold text-white">Daftar Gudang Multi-Site</h2>
-            {warehouses.map((w) => (
-              <div key={w.warehouse_code} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4">
-                <span className="font-mono font-bold text-amber-300 text-xs">{w.warehouse_code}</span>
-                <h3 className="text-sm font-bold text-white">{w.nama_gudang}</h3>
-                <p className="text-xs text-slate-400 mt-1">Site: {w.site_code} - Lokasi: {w.lokasi_fisik || "-"}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-sm font-bold text-white">Daftar Master Vendor</h2>
-            {vendors.map((v) => (
-              <div key={v.vendor_code} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4">
-                <span className="font-mono font-bold text-cyan-300 text-xs">{v.vendor_code}</span>
-                <h3 className="text-sm font-bold text-white">{v.nama_vendor}</h3>
-                <p className="text-xs text-slate-400 mt-1">Kategori: {v.kategori_suplai || "-"} - PIC: {v.nama_pic || "-"}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* TASK #5: CETAK DOKUMEN PDF (PRINT PREVIEW MODAL) */}
-      {printModal.open && printModal.data && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white text-slate-900 rounded-3xl p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
-            <div className="flex justify-between items-center border-b pb-3">
-              <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="Logo BTM" className="h-9 w-auto" />
-                <div>
-                  <h2 className="text-sm font-black tracking-tight text-[#003D79]">PT. BOSTON PPA - MLP</h2>
-                  <p className="text-[10px] text-slate-500 font-medium">Site Project Muara Lawa - Kutai Barat</p>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setPrintModal({ open: false, type: "DO", data: null })}
-                className="text-slate-400 hover:text-slate-700 text-lg font-bold"
+                onClick={function() {
+                  setActiveTab("stok");
+                  setStockFilter("LOW");
+                }}
+                className="px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white rounded-lg text-xs font-bold transition shadow-sm"
               >
-                ?
+                Lihat Part Menipis
               </button>
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Document Header */}
-            <div className="text-center py-2 border-b border-dashed border-slate-300">
-              <h1 className="text-base font-black tracking-wide text-slate-800">
-                {printModal.type === "DO" && "DELIVERY ORDER (SURAT JALAN PENGELUARAN PART)"}
-                {printModal.type === "PO" && "OFFICIAL PURCHASE ORDER (PO)"}
-                {printModal.type === "BAST" && "BERITA ACARA SERAH TERIMA / PENERIMAAN BARANG (LPB)"}
-              </h1>
-              <p className="text-xs font-mono font-bold text-slate-600 mt-0.5">
-                No: {printModal.type === "DO" ? printModal.data.pr_number : printModal.type === "PO" ? printModal.data.po_number : printModal.data.grn_number}
-              </p>
-            </div>
+      {/* Tab Navigation */}
+      <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pb-3 mb-4 border-b border-slate-800 text-xs font-semibold">
+        <button
+          onClick={function() { setActiveTab("pr"); }}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "pr" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800")}
+        >
+          1. Purchase Request ({prList.length})
+        </button>
+        <button
+          onClick={function() { setActiveTab("po"); }}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "po" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800")}
+        >
+          2. Purchase Order ({poList.length})
+        </button>
+        <button
+          onClick={function() { setActiveTab("lpb"); }}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "lpb" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800")}
+        >
+          3. Penerimaan / LPB ({lpbList.length})
+        </button>
+        <button
+          onClick={function() { setActiveTab("stok"); }}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "stok" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800")}
+        >
+          4. Stok Real-Time ({stokList.length})
+          {lowStockList.length > 0 && <span className="w-2 h-2 rounded-full bg-red-500 inline-block"></span>}
+        </button>
+        <button
+          onClick={function() { setActiveTab("opname"); }}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "opname" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800")}
+        >
+          5. Stock Opname ({opnameList.length})
+        </button>
+      </div>
 
-            {/* Document Meta Info */}
-            <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <div>
-                <p><span className="text-slate-500">Tanggal:</span> <span className="font-semibold">{new Date(printModal.data.created_at || printModal.data.received_at).toLocaleDateString("id-ID")}</span></p>
-                <p><span className="text-slate-500">Site / Unit:</span> <span className="font-semibold">{printModal.data.site_code || "PPA-MLP"} / {printModal.data.unit_code || "-"}</span></p>
-              </div>
-              <div>
-                <p><span className="text-slate-500">Petugas/Requester:</span> <span className="font-semibold">{printModal.data.requester_name || printModal.data.received_name || printModal.data.created_by_name || "Logistik"}</span></p>
-                <p><span className="text-slate-500">Gudang / Vendor:</span> <span className="font-semibold">{printModal.data.assigned_warehouse_code || printModal.data.warehouse_code || printModal.data.vendor_code || "-"}</span></p>
-              </div>
-            </div>
-
-            {/* Table Items */}
-            <table className="w-full text-left text-xs border border-slate-200">
-              <thead className="bg-slate-100 text-slate-700">
+      {/* TAB CONTENT 1: PR */}
+      {activeTab === "pr" && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-slate-200">Daftar Purchase Request (Permintaan Barang)</h2>
+            <button onClick={function() { setIsPrModalOpen(true); }} className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
+              + Buat PR Manual
+            </button>
+          </div>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
+            <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
+              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
                 <tr>
-                  <th className="p-2 border">No</th>
-                  <th className="p-2 border">Part Number</th>
-                  <th className="p-2 border">Nama Suku Cadang</th>
-                  <th className="p-2 border text-right">Kuantitas</th>
+                  <th className="p-3">Nomor PR</th>
+                  <th className="p-3">Unit / Pemohon</th>
+                  <th className="p-3">Part / Barang</th>
+                  <th className="p-3">Qty</th>
+                  <th className="p-3">Prioritas</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3 text-right">Aksi Dokumen</th>
                 </tr>
               </thead>
-              <tbody>
-                {((printModal.data.pr_items || printModal.data.po_items || printModal.data.grn_items || [])).map((item: any, idx: number) => (
-                  <tr key={idx} className="border">
-                    <td className="p-2 border text-center">{idx + 1}</td>
-                    <td className="p-2 border font-mono font-bold text-slate-800">{item.part_number}</td>
-                    <td className="p-2 border">{item.part_name || "-"}</td>
-                    <td className="p-2 border text-right font-bold">{item.qty_request || item.qty_ordered || item.qty_received} {item.satuan || "PCS"}</td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-slate-800/60">
+                {prList.length === 0 ? (
+                  <tr><td colSpan={7} className="p-6 text-center text-slate-500">Belum ada data PR yang tercatat.</td></tr>
+                ) : (
+                  prList.map(function(pr, idx) {
+                    return (
+                      <tr key={idx} className="hover:bg-slate-800/40 transition">
+                        <td className="p-3 font-mono font-bold text-amber-400">{pr.nomor_pr || "PR-" + pr.id}</td>
+                        <td className="p-3">
+                          <div className="font-semibold text-slate-200">{pr.unit_code || "-"}</div>
+                          <div className="text-[10px] text-slate-400">{pr.pemohon || pr.requester || "Staff"}</div>
+                        </td>
+                        <td className="p-3">
+                          <div className="font-semibold text-slate-200">{pr.nama_barang || pr.item_name}</div>
+                          <div className="text-[10px] text-slate-500 font-mono">{pr.part_number || "-"}</div>
+                        </td>
+                        <td className="p-3 font-bold">{pr.jumlah || pr.qty || 1} {pr.satuan || "PCS"}</td>
+                        <td className="p-3">
+                          <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (pr.prioritas === "EMERGENCY" || pr.prioritas === "URGENT" ? "bg-rose-900/60 text-rose-300 border border-rose-800" : "bg-slate-800 text-slate-300")}>
+                            {pr.prioritas || "NORMAL"}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (pr.status === "APPROVED" ? "bg-emerald-900/60 text-emerald-300 border border-emerald-800" : pr.status === "PENDING" ? "bg-amber-900/60 text-amber-300 border border-amber-800" : "bg-slate-800 text-slate-400")}>
+                            {pr.status || "PENDING"}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            onClick={function() { openPrintDo(pr); }}
+                            className="px-2.5 py-1 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 rounded text-[11px] font-semibold transition inline-flex items-center gap-1"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                            Cetak DO
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
-
-            {/* Signatures */}
-            <div className="grid grid-cols-3 gap-4 text-center text-xs pt-4 border-t border-slate-200">
-              <div>
-                <p className="text-slate-500">Diajukan / Diserahkan</p>
-                <div className="h-14"></div>
-                <p className="font-bold border-t pt-1 border-slate-300">( ......................... )</p>
-              </div>
-              <div>
-                <p className="text-slate-500">Disetujui Plant / PJO</p>
-                <div className="h-14"></div>
-                <p className="font-bold border-t pt-1 border-slate-300">( ......................... )</p>
-              </div>
-              <div>
-                <p className="text-slate-500">Penerima Gudang / Mekanik</p>
-                <div className="h-14"></div>
-                <p className="font-bold border-t pt-1 border-slate-300">( ......................... )</p>
-              </div>
-            </div>
-
-            {/* Print & Close Buttons */}
-            <div className="flex gap-2 pt-2 border-t">
-              <button
-                type="button"
-                onClick={() => setPrintModal({ open: false, type: "DO", data: null })}
-                className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 text-xs"
-              >
-                Tutup
-              </button>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="flex-1 py-2.5 rounded-xl bg-[#003D79] text-white font-bold hover:bg-blue-900 text-xs flex items-center justify-center gap-1.5 shadow-md"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                Cetak Dokumen Sekarang
-              </button>
-            </div>
           </div>
         </div>
       )}
+
+      {/* TAB CONTENT 2: PO */}
+      {activeTab === "po" && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-slate-200">Daftar Purchase Order (PO Pengadaan)</h2>
+            <button onClick={function() { setIsPoModalOpen(true); }} className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
+              + Terbitkan PO
+            </button>
+          </div>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
+            <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
+              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
+                <tr>
+                  <th className="p-3">Nomor PO</th>
+                  <th className="p-3">Ref PR</th>
+                  <th className="p-3">Vendor / Supplier</th>
+                  <th className="p-3">Item Pengadaan</th>
+                  <th className="p-3">Qty</th>
+                  <th className="p-3">Total / Estimasi</th>
+                  <th className="p-3 text-right">Aksi Dokumen</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {poList.length === 0 ? (
+                  <tr><td colSpan={7} className="p-6 text-center text-slate-500">Belum ada PO yang diterbitkan.</td></tr>
+                ) : (
+                  poList.map(function(po, idx) {
+                    return (
+                      <tr key={idx} className="hover:bg-slate-800/40 transition">
+                        <td className="p-3 font-mono font-bold text-amber-400">{po.nomor_po || "PO-" + po.id}</td>
+                        <td className="p-3 font-mono text-slate-400">{po.nomor_pr || "-"}</td>
+                        <td className="p-3 font-semibold text-slate-200">{po.vendor || "Vendor Utama"}</td>
+                        <td className="p-3 text-slate-200">{po.nama_barang || po.item_name}</td>
+                        <td className="p-3 font-bold">{po.jumlah || po.qty || 1} {po.satuan || "PCS"}</td>
+                        <td className="p-3 font-semibold text-emerald-400">Rp {Number(po.estimasi_harga || 0).toLocaleString("id-ID")}</td>
+                        <td className="p-3 text-right">
+                          <button
+                            onClick={function() { openPrintPo(po); }}
+                            className="px-2.5 py-1 bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-800 rounded text-[11px] font-semibold transition inline-flex items-center gap-1"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                            Cetak PO
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT 3: LPB / GRN */}
+      {activeTab === "lpb" && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-slate-200">Daftar Penerimaan Barang (LPB / GRN)</h2>
+            <button onClick={function() { setIsLpbModalOpen(true); }} className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
+              + Catat Penerimaan LPB
+            </button>
+          </div>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
+            <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
+              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
+                <tr>
+                  <th className="p-3">Nomor LPB</th>
+                  <th className="p-3">Ref PO</th>
+                  <th className="p-3">Nama Barang</th>
+                  <th className="p-3">Qty Diterima</th>
+                  <th className="p-3">Kondisi</th>
+                  <th className="p-3">Penerima & Lokasi</th>
+                  <th className="p-3 text-right">Aksi Dokumen</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {lpbList.length === 0 ? (
+                  <tr><td colSpan={7} className="p-6 text-center text-slate-500">Belum ada penerimaan LPB yang dicatat.</td></tr>
+                ) : (
+                  lpbList.map(function(lpb, idx) {
+                    return (
+                      <tr key={idx} className="hover:bg-slate-800/40 transition">
+                        <td className="p-3 font-mono font-bold text-emerald-400">{lpb.nomor_lpb || "LPB-" + lpb.id}</td>
+                        <td className="p-3 font-mono text-slate-400">{lpb.nomor_po || "-"}</td>
+                        <td className="p-3 font-semibold text-slate-200">{lpb.nama_barang || lpb.item_name}</td>
+                        <td className="p-3 font-bold text-emerald-300">{lpb.jumlah_diterima || lpb.jumlah || 1} {lpb.satuan || "PCS"}</td>
+                        <td className="p-3">
+                          <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (lpb.kondisi === "BAIK" ? "bg-emerald-900/60 text-emerald-300 border border-emerald-800" : "bg-rose-900/60 text-rose-300 border border-rose-800")}>
+                            {lpb.kondisi || "BAIK"}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <div className="font-semibold text-slate-200">{lpb.penerima || "Staff Gudang"}</div>
+                          <div className="text-[10px] text-slate-500">{lpb.lokasi_simpan || "Gudang Utama"}</div>
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            onClick={function() { openPrintBast(lpb); }}
+                            className="px-2.5 py-1 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded text-[11px] font-semibold transition inline-flex items-center gap-1"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                            Cetak BAST
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT 4: STOK REAL-TIME */}
+      {activeTab === "stok" && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-bold text-slate-200">Inventaris & Stok Fisik Gudang</h2>
+              <p className="text-xs text-slate-400">Total {stokList.length} master part terdaftar di database logistik site.</p>
+            </div>
+            {/* Filter Chips */}
+            <div className="flex items-center gap-2 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+              <button
+                onClick={function() { setStockFilter("ALL"); }}
+                className={"px-3 py-1 rounded transition " + (stockFilter === "ALL" ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-400 hover:text-slate-200")}
+              >
+                Semua ({stokList.length})
+              </button>
+              <button
+                onClick={function() { setStockFilter("LOW"); }}
+                className={"px-3 py-1 rounded transition flex items-center gap-1 " + (stockFilter === "LOW" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-400 hover:text-amber-300")}
+              >
+                Menipis ({lowStockList.length})
+              </button>
+              <button
+                onClick={function() { setStockFilter("OUT"); }}
+                className={"px-3 py-1 rounded transition " + (stockFilter === "OUT" ? "bg-rose-500 text-white font-bold" : "text-rose-400 hover:text-rose-300")}
+              >
+                Habis (0)
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
+            <table className="w-full text-left text-xs text-slate-300 min-w-[750px]">
+              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
+                <tr>
+                  <th className="p-3">Kode / Part No</th>
+                  <th className="p-3">Nama Part & Kategori</th>
+                  <th className="p-3">Lokasi Rak</th>
+                  <th className="p-3 text-center">Stok Saat Ini</th>
+                  <th className="p-3 text-center">Batas Min</th>
+                  <th className="p-3">Status Stok</th>
+                  <th className="p-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {filteredStockList.length === 0 ? (
+                  <tr><td colSpan={7} className="p-6 text-center text-slate-500">Tidak ada barang sesuai filter yang dipilih.</td></tr>
+                ) : (
+                  filteredStockList.map(function(item, idx) {
+                    var curStok = Number(item.stok || 0);
+                    var minStok = Number(item.min_stok || 0);
+                    var isOut = curStok <= 0;
+                    var isLow = curStok <= minStok;
+                    return (
+                      <tr key={idx} className={"transition " + (isOut ? "bg-rose-950/20 hover:bg-rose-950/40" : isLow ? "bg-amber-950/20 hover:bg-amber-950/40" : "hover:bg-slate-800/40")}>
+                        <td className="p-3 font-mono font-bold text-amber-400">
+                          {item.part_number || item.kode_barang || "ITEM-" + item.id}
+                        </td>
+                        <td className="p-3">
+                          <div className="font-semibold text-slate-200">{item.nama_barang}</div>
+                          <div className="text-[10px] text-slate-400">{item.kategori || "Spareparts"}</div>
+                        </td>
+                        <td className="p-3 font-mono text-slate-400">{item.lokasi_rak || item.lokasi || "RAK-01"}</td>
+                        <td className="p-3 text-center">
+                          <span className={"font-bold text-sm " + (isOut ? "text-rose-400 font-mono" : isLow ? "text-amber-400 font-mono" : "text-emerald-400 font-mono")}>
+                            {curStok} {item.satuan || "PCS"}
+                          </span>
+                        </td>
+                        <td className="p-3 text-center font-mono text-slate-400">{minStok} {item.satuan || "PCS"}</td>
+                        <td className="p-3">
+                          {isOut ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-900/60 text-rose-300 border border-rose-800">
+                              HABIS (0)
+                            </span>
+                          ) : isLow ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-900/60 text-amber-300 border border-amber-800">
+                              MENIPIS ({"<="} MIN)
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-800">
+                              AMAN
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3 text-right">
+                          {isLow ? (
+                            <button
+                              onClick={function() { handleQuickRestockPr(item); }}
+                              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded text-[11px] font-bold transition inline-flex items-center gap-1 shadow"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                              Restock PR
+                            </button>
+                          ) : (
+                            <button
+                              onClick={function() {
+                                handleSelectBarangOpname(String(item.id));
+                                setIsOpnameModalOpen(true);
+                              }}
+                              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded text-[11px] font-semibold transition"
+                            >
+                              Opname
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT 5: STOCK OPNAME */}
+      {activeTab === "opname" && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-200">Riwayat Stock Opname & Penyesuaian Stok</h2>
+              <p className="text-xs text-slate-400">Pencatatan audit fisik, rekonsiliasi selisih, dan log movement ADJUST.</p>
+            </div>
+            <button onClick={function() { setIsOpnameModalOpen(true); }} className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold transition shadow">
+              + Mulai Stock Opname Baru
+            </button>
+          </div>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
+            <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
+              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
+                <tr>
+                  <th className="p-3">Tanggal / Waktu</th>
+                  <th className="p-3">Nama Part</th>
+                  <th className="p-3 text-center">Sistem</th>
+                  <th className="p-3 text-center">Fisik</th>
+                  <th className="p-3 text-center">Selisih (Delta)</th>
+                  <th className="p-3">Auditor & Alasan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {opnameList.length === 0 ? (
+                  <tr><td colSpan={6} className="p-6 text-center text-slate-500">Belum ada riwayat stock opname yang tercatat.</td></tr>
+                ) : (
+                  opnameList.map(function(op, idx) {
+                    var delta = Number(op.selisih || (Number(op.stok_fisik || 0) - Number(op.stok_sistem || 0)));
+                    return (
+                      <tr key={idx} className="hover:bg-slate-800/40 transition">
+                        <td className="p-3 font-mono text-slate-400">
+                          {op.created_at ? new Date(op.created_at).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}
+                        </td>
+                        <td className="p-3 font-semibold text-slate-200">{op.nama_barang || "Sparepart"}</td>
+                        <td className="p-3 text-center font-mono">{op.stok_sistem || 0}</td>
+                        <td className="p-3 text-center font-mono font-bold text-amber-400">{op.stok_fisik || 0}</td>
+                        <td className="p-3 text-center font-mono">
+                          <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (delta > 0 ? "bg-emerald-900/60 text-emerald-300 border border-emerald-800" : delta < 0 ? "bg-rose-900/60 text-rose-300 border border-rose-800" : "bg-slate-800 text-slate-400")}>
+                            {delta > 0 ? "+" + delta : delta}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <div className="font-semibold text-slate-300">{op.auditor || "Auditor Gudang"}</div>
+                          <div className="text-[10px] text-slate-500">{op.alasan || op.catatan || "Penyesuaian Fisik Bulanan"}</div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PR */}
+      {isPrModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                Buat Purchase Request (PR)
+              </h3>
+              <button onClick={function() { setIsPrModalOpen(false); }} className="text-slate-400 hover:text-slate-200">?</button>
+            </div>
+            <form onSubmit={handleSubmitPr} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Nomor PR</label>
+                  <input type="text" value={prForm.nomor_pr} onChange={function(e) { setPrForm({ ...prForm, nomor_pr: e.target.value }); }} placeholder="Auto / PR-2026-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Unit Code</label>
+                  <input type="text" value={prForm.unit_code} onChange={function(e) { setPrForm({ ...prForm, unit_code: e.target.value }); }} placeholder="DT-01, EX-200, dsb" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+              </div>
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Nama Barang / Sparepart</label>
+                <input type="text" value={prForm.nama_barang} onChange={function(e) { setPrForm({ ...prForm, nama_barang: e.target.value }); }} placeholder="Filter Oli, Tyre 24R, dsb" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Part Number</label>
+                  <input type="text" value={prForm.part_number} onChange={function(e) { setPrForm({ ...prForm, part_number: e.target.value }); }} placeholder="PN-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Jumlah (Qty)</label>
+                  <input type="number" min="1" value={prForm.jumlah} onChange={function(e) { setPrForm({ ...prForm, jumlah: Number(e.target.value) }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Satuan</label>
+                  <select value={prForm.satuan} onChange={function(e) { setPrForm({ ...prForm, satuan: e.target.value }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200">
+                    <option value="PCS">PCS</option>
+                    <option value="SET">SET</option>
+                    <option value="LITER">LITER</option>
+                    <option value="BOX">BOX</option>
+                    <option value="DRUM">DRUM</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Prioritas</label>
+                <select value={prForm.prioritas} onChange={function(e) { setPrForm({ ...prForm, prioritas: e.target.value }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200">
+                  <option value="NORMAL">NORMAL - Kebutuhan Terjadwal</option>
+                  <option value="HIGH">HIGH - Stok Kritis</option>
+                  <option value="URGENT">URGENT - Breakdown Unit (BD)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Keterangan Tambahan</label>
+                <textarea value={prForm.keterangan} onChange={function(e) { setPrForm({ ...prForm, keterangan: e.target.value }); }} rows={2} placeholder="Justifikasi kebutuhan..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200"></textarea>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button type="button" onClick={function() { setIsPrModalOpen(false); }} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition">Batal</button>
+                <button type="submit" className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition">Simpan & Kirim PR</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PO */}
+      {isPoModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Terbitkan Purchase Order (PO)
+              </h3>
+              <button onClick={function() { setIsPoModalOpen(false); }} className="text-slate-400 hover:text-slate-200">?</button>
+            </div>
+            <form onSubmit={handleSubmitPo} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Nomor PO</label>
+                  <input type="text" value={poForm.nomor_po} onChange={function(e) { setPoForm({ ...poForm, nomor_po: e.target.value }); }} placeholder="PO-2026-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Ref Nomor PR</label>
+                  <input type="text" value={poForm.nomor_pr} onChange={function(e) { setPoForm({ ...poForm, nomor_pr: e.target.value }); }} placeholder="PR-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+              </div>
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Vendor / Supplier</label>
+                <input type="text" value={poForm.vendor} onChange={function(e) { setPoForm({ ...poForm, vendor: e.target.value }); }} placeholder="PT. United Tractors, dsb" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+              </div>
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Nama Barang</label>
+                <input type="text" value={poForm.nama_barang} onChange={function(e) { setPoForm({ ...poForm, nama_barang: e.target.value }); }} placeholder="Item yang dipesan" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Jumlah</label>
+                  <input type="number" min="1" value={poForm.jumlah} onChange={function(e) { setPoForm({ ...poForm, jumlah: Number(e.target.value) }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Satuan</label>
+                  <input type="text" value={poForm.satuan} onChange={function(e) { setPoForm({ ...poForm, satuan: e.target.value }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Estimasi Total (Rp)</label>
+                  <input type="number" min="0" value={poForm.estimasi_harga} onChange={function(e) { setPoForm({ ...poForm, estimasi_harga: Number(e.target.value) }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button type="button" onClick={function() { setIsPoModalOpen(false); }} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition">Batal</button>
+                <button type="submit" className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition">Terbitkan PO</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: LPB */} 
+      {isLpbModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                Pencatatan Penerimaan Barang (LPB / GRN)
+              </h3>
+              <button onClick={function() { setIsLpbModalOpen(false); }} className="text-slate-400 hover:text-slate-200">?</button>
+            </div>
+            <form onSubmit={handleSubmitLpb} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Nomor LPB</label>
+                  <input type="text" value={lpbForm.nomor_lpb} onChange={function(e) { setLpbForm({ ...lpbForm, nomor_lpb: e.target.value }); }} placeholder="LPB-2026-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Ref Nomor PO</label>
+                  <input type="text" value={lpbForm.nomor_po} onChange={function(e) { setLpbForm({ ...lpbForm, nomor_po: e.target.value }); }} placeholder="PO-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+              </div>
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Nama Barang Diterima</label>
+                <input type="text" value={lpbForm.nama_barang} onChange={function(e) { setLpbForm({ ...lpbForm, nama_barang: e.target.value }); }} placeholder="Nama sparepart / material" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Qty Diterima</label>
+                  <input type="number" min="1" value={lpbForm.jumlah_diterima} onChange={function(e) { setLpbForm({ ...lpbForm, jumlah_diterima: Number(e.target.value) }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Satuan</label>
+                  <input type="text" value={lpbForm.satuan} onChange={function(e) { setLpbForm({ ...lpbForm, satuan: e.target.value }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Kondisi Fisik</label>
+                  <select value={lpbForm.kondisi} onChange={function(e) { setLpbForm({ ...lpbForm, kondisi: e.target.value }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200">
+                    <option value="BAIK">BAIK & LENGKAP</option>
+                    <option value="RUSAK">RUSAK / CACAT</option>
+                    <option value="KURANG">KURANG / PARTIAL</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Lokasi Penyimpanan</label>
+                  <input type="text" value={lpbForm.lokasi_simpan} onChange={function(e) { setLpbForm({ ...lpbForm, lokasi_simpan: e.target.value }); }} placeholder="RAK-A1, RAK-B2, dsb" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Petugas Penerima</label>
+                  <input type="text" value={lpbForm.penerima} onChange={function(e) { setLpbForm({ ...lpbForm, penerima: e.target.value }); }} placeholder="Nama Checker Gudang" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button type="button" onClick={function() { setIsLpbModalOpen(false); }} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition">Batal</button>
+                <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition">Simpan & Update Stok</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: OPNAME */} 
+      {isOpnameModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                Penyesuaian Fisik (Stock Opname)
+              </h3>
+              <button onClick={function() { setIsOpnameModalOpen(false); }} className="text-slate-400 hover:text-slate-200">?</button>
+            </div>
+            <form onSubmit={handleSubmitOpname} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Pilih Part dari Master Stok</label>
+                <select
+                  value={opnameForm.barang_id}
+                  onChange={function(e) { handleSelectBarangOpname(e.target.value); }}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 font-semibold"
+                  required
+                >
+                  <option value="">-- Pilih Barang yang Diaudit --</option>
+                  {stokList.map(function(s) {
+                    return (
+                      <option key={s.id} value={s.id}>
+                        {s.nama_barang} ({s.part_number || s.kode_barang || "ID: " + s.id}) - Stok Sistem: {s.stok || 0}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Stok Tercatat Sistem</label>
+                  <input type="number" value={opnameForm.stok_sistem} readOnly className="w-full bg-slate-950/60 border border-slate-800 rounded-lg p-2.5 text-slate-400 font-mono font-bold" />
+                </div>
+                <div>
+                  <label className="block text-amber-400 font-semibold mb-1">Hasil Hitung Fisik Nyata</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={opnameForm.stok_fisik}
+                    onChange={function(e) { setOpnameForm({ ...opnameForm, stok_fisik: Number(e.target.value) }); }}
+                    className="w-full bg-slate-950 border border-amber-500/60 rounded-lg p-2.5 text-amber-300 font-mono font-bold text-sm"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-between">
+                <span className="text-slate-400 font-semibold">Deviasi / Selisih Penyesuaian:</span>
+                <span className={"font-mono font-bold text-sm " + (Number(opnameForm.stok_fisik) - Number(opnameForm.stok_sistem) >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                  {Number(opnameForm.stok_fisik) - Number(opnameForm.stok_sistem) > 0 ? "+" : ""}
+                  {Number(opnameForm.stok_fisik) - Number(opnameForm.stok_sistem)}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Lokasi Rak Aktual</label>
+                  <input type="text" value={opnameForm.lokasi_rak} onChange={function(e) { setOpnameForm({ ...opnameForm, lokasi_rak: e.target.value }); }} placeholder="RAK-01..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Nama Auditor</label>
+                  <input type="text" value={opnameForm.auditor} onChange={function(e) { setOpnameForm({ ...opnameForm, auditor: e.target.value }); }} placeholder="Auditor / GL Logistik" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                </div>
+              </div>
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Alasan Penyesuaian / Catatan</label>
+                <textarea value={opnameForm.alasan} onChange={function(e) { setOpnameForm({ ...opnameForm, alasan: e.target.value }); }} rows={2} placeholder="Misal: Selisih fisik audit akhir bulan / salah catat LPB sebelumnya" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required></textarea>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button type="button" onClick={function() { setIsOpnameModalOpen(false); }} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition">Batal</button>
+                <button type="submit" className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition">Rekonsiliasi & Update Stok</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* OFFICIAL DOCUMENT PRINT PREVIEW MODAL (Task #5 & #6) */}
+      {printDoc.isOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white text-slate-900 border border-slate-300 rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 print:m-0 print:p-0 print:border-none print:shadow-none">
+            
+            {/* Header Document */}
+            <div className="border-b-2 border-slate-900 pb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-black tracking-tight text-slate-900 uppercase">PT. BOSTON PPA - MLP</h2>
+                <p className="text-[11px] text-slate-600 font-semibold">MINING CONTRACTOR & HEAVY EQUIPMENT SERVICES</p>
+                <p className="text-[10px] text-slate-500">Site Project: Muara Lawa Project (MLP) � Kalimantan Timur</p>
+              </div>
+              <div className="text-right">
+                <span className="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-black tracking-wider uppercase rounded">
+                  {printDoc.docType === "DO" ? "SURAT JALAN / DO" : printDoc.docType === "PO" ? "PURCHASE ORDER (PO)" : "BAST / LPB"}
+                </span>
+                <div className="font-mono text-xs font-bold text-slate-800 mt-1">{printDoc.docNumber}</div>
+              </div>
+            </div>
+
+            {/* Meta Info */}
+            <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <div>
+                <span className="text-slate-500 font-semibold block">Tanggal Dokumen:</span>
+                <span className="font-bold text-slate-800">{printDoc.date}</span>
+                <span className="text-slate-500 font-semibold block mt-1.5">No. Referensi:</span>
+                <span className="font-mono font-bold text-slate-800">{printDoc.reference}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 font-semibold block">
+                  {printDoc.docType === "PO" ? "Ditujukan Kepada (Vendor):" : "Tujuan / Penerima:"}
+                </span>
+                <span className="font-bold text-slate-800">{printDoc.recipientOrVendor}</span>
+              </div>
+            </div>
+
+            {/* Items Table */}
+            <div>
+              <table className="w-full text-left text-xs border border-slate-300">
+                <thead className="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold">
+                  <tr>
+                    <th className="p-2.5 border-r border-slate-300 w-10 text-center">No</th>
+                    <th className="p-2.5 border-r border-slate-300">Deskripsi Barang & Part Number</th>
+                    <th className="p-2.5 border-r border-slate-300 w-20 text-center">Qty</th>
+                    <th className="p-2.5 border-r border-slate-300 w-20 text-center">Satuan</th>
+                    <th className="p-2.5">Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {printDoc.items.map(function(item, idx) {
+                    return (
+                      <tr key={idx}>
+                        <td className="p-2.5 border-r border-slate-300 text-center font-mono">{idx + 1}</td>
+                        <td className="p-2.5 border-r border-slate-300 font-semibold text-slate-900">
+                          {item.nama}
+                          {item.kode && <span className="block text-[10px] font-mono text-slate-500">{item.kode}</span>}
+                        </td>
+                        <td className="p-2.5 border-r border-slate-300 text-center font-bold font-mono text-slate-900">{item.qty}</td>
+                        <td className="p-2.5 border-r border-slate-300 text-center font-semibold text-slate-700">{item.satuan || "PCS"}</td>
+                        <td className="p-2.5 text-slate-600 text-[11px]">{item.keterangan || "-"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Catatan */}
+            {printDoc.catatan && (
+              <div className="text-[11px] text-slate-600 bg-amber-50 p-2.5 rounded border border-amber-200">
+                <span className="font-bold text-amber-900">Catatan: </span> {printDoc.catatan}
+              </div>
+            )}
+
+            {/* Signatures */}
+            <div className="grid grid-cols-3 gap-3 text-center pt-2">
+              <div className="space-y-12 border border-slate-200 p-2.5 rounded">
+                <div className="text-[10px] font-bold text-slate-600 uppercase">{printDoc.signatories.maker.title}</div>
+                <div className="font-bold text-xs text-slate-900 border-t border-slate-400 pt-1">({printDoc.signatories.maker.name})</div>
+              </div>
+              <div className="space-y-12 border border-slate-200 p-2.5 rounded">
+                <div className="text-[10px] font-bold text-slate-600 uppercase">{printDoc.signatories.checker.title}</div>
+                <div className="font-bold text-xs text-slate-900 border-t border-slate-400 pt-1">({printDoc.signatories.checker.name})</div>
+              </div>
+              <div className="space-y-12 border border-slate-200 p-2.5 rounded">
+                <div className="text-[10px] font-bold text-slate-600 uppercase">{printDoc.signatories.approver.title}</div>
+                <div className="font-bold text-xs text-slate-900 border-t border-slate-400 pt-1">({printDoc.signatories.approver.name})</div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 print:hidden">
+              <button
+                type="button"
+                onClick={function() { setPrintDoc({ ...printDoc, isOpen: false }); }}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-lg transition"
+              >
+                Tutup Preview
+              </button>
+              <button
+                type="button"
+                onClick={function() { window.print(); }}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                Cetak / Simpan PDF
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
