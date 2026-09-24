@@ -1,0 +1,15 @@
+name: Cron Reminder H-1
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+jobs:
+  send-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Reminder API
+        run: |
+          curl -f -X GET "https://portal-internal-omega.vercel.app/api/cron/reminder-h1" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
