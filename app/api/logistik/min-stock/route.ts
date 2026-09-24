@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/app/lib/supabase-admin";
+import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+);
 
 export async function GET() {
   try {
@@ -14,13 +19,13 @@ export async function GET() {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
-    const lowStockItems = (items || []).filter(function(it) {
-      var min = Number(it.min_stok || 0);
-      var current = Number(it.stok || 0);
+    const lowStockItems = (items || []).filter(function(it: any) {
+      const min = Number(it.min_stok || 0);
+      const current = Number(it.stok || 0);
       return current <= min;
-    }).map(function(it) {
-      var min = Number(it.min_stok || 0);
-      var current = Number(it.stok || 0);
+    }).map(function(it: any) {
+      const min = Number(it.min_stok || 0);
+      const current = Number(it.stok || 0);
       return {
         ...it,
         status_level: current <= 0 ? "OUT_OF_STOCK" : "LOW_STOCK",
@@ -31,16 +36,16 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       total_low_stock: lowStockItems.length,
-      critical_count: lowStockItems.filter(function(x) { return x.status_level === "OUT_OF_STOCK"; }).length,
-      warning_count: lowStockItems.filter(function(x) { return x.status_level === "LOW_STOCK"; }).length,
+      critical_count: lowStockItems.filter(function(x: any) { return x.status_level === "OUT_OF_STOCK"; }).length,
+      warning_count: lowStockItems.filter(function(x: any) { return x.status_level === "LOW_STOCK"; }).length,
       items: lowStockItems
     });
-  } catch (err) {
+  } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message || "Internal server error" }, { status: 500 });
   }
 }
 
-export async function POST(req) {
+export async function POST(req: Request) {
   try {
     const body = await req.json().catch(function() { return {}; });
     const triggeredBy = body.triggered_by || "System Automated Check";
@@ -54,7 +59,7 @@ export async function POST(req) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
-    const critical = (items || []).filter(function(it) {
+    const critical = (items || []).filter(function(it: any) {
       return Number(it.stok || 0) <= Number(it.min_stok || 0);
     });
 
@@ -66,7 +71,7 @@ export async function POST(req) {
       });
     }
 
-    var summaryNames = critical.slice(0, 3).map(function(c) { return c.nama_barang + " (" + c.stok + " " + (c.satuan || "PCS") + ")"; }).join(", ");
+    let summaryNames = critical.slice(0, 3).map(function(c: any) { return c.nama_barang + " (" + c.stok + " " + (c.satuan || "PCS") + ")"; }).join(", ");
     if (critical.length > 3) {
       summaryNames += " + " + (critical.length - 3) + " item lainnya";
     }
@@ -76,11 +81,11 @@ export async function POST(req) {
       .select("nrp, role")
       .in("role", ["logistik", "admin_logistik", "pjo", "plant_admin", "admin", "superadmin"]);
 
-    var notificationsToInsert = [];
-    var nowIso = new Date().toISOString();
+    let notificationsToInsert: any[] = [];
+    const nowIso = new Date().toISOString();
 
     if (targetUsers && targetUsers.length > 0) {
-      var uniqueNrps = Array.from(new Set(targetUsers.map(function(u) { return u.nrp; })));
+      const uniqueNrps = Array.from(new Set(targetUsers.map(function(u: any) { return u.nrp; })));
       notificationsToInsert = uniqueNrps.map(function(targetNrp) {
         return {
           nrp: targetNrp,
@@ -101,7 +106,7 @@ export async function POST(req) {
       critical_items_count: critical.length,
       dispatched: notificationsToInsert.length
     });
-  } catch (err) {
+  } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message || "Internal server error" }, { status: 500 });
   }
 }
