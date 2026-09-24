@@ -144,6 +144,7 @@ function DashboardContent() {
   'plant_katalog',
   'plant_orders',
   'plant_admin',
+  'plant_logistik',
   'hr_dashboard',
 ]
 
@@ -168,6 +169,7 @@ const AUTO_REDIRECT_MAP: Record<string, string> = {
   plant_katalog: '/parts-catalog',
   plant_orders: '/part-orders',
   plant_admin: '/partbook/admin',
+  plant_logistik: '/dashboard/logistik',
   hr_dashboard: '/dashboard/hr-dashboard',
   monitoring_cuti_tiket: '/dashboard/dashboard-cuti',
   kelola_event: '/dashboard/kelola-event',

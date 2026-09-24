@@ -328,48 +328,45 @@ export default function PartsCatalogPage() {
   // Submit bulk order
   async function submitBulkOrder() {
     if (cart.length === 0) return
-    if (!bulkMachine.trim()) { setBulkMsg('❌ Machine Unit wajib diisi'); return }
+    if (!bulkMachine.trim()) { setBulkMsg('? Machine / Unit Code wajib diisi'); return }
     setBulkSubmitting(true)
     setBulkMsg('')
 
-    let success = 0
-    let failed = 0
-
-    for (const item of cart) {
-      try {
-        const res = await fetch('/api/part-orders/submit', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+    try {
+      const res = await fetch('/api/logistik/pr/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unit_code: bulkMachine.trim().toUpperCase(),
+          prioritas: bulkPrioritas.toUpperCase() === 'URGENT' ? 'URGENT' : 'NORMAL',
+          keterangan: bulkKeterangan.trim() || ('Permintaan ' + cart.length + ' item via Parts Catalog Cart'),
+          items: cart.map(item => ({
             part_number: item.part_number,
-            part_name: item.part_name,
-            assembly_name: item.assembly_name,
-            unit_code: item.unit_code,
-            machine_unit: bulkMachine.trim(),
-            qty: item.qty,
-            keterangan: bulkKeterangan.trim(),
-            prioritas: bulkPrioritas,
-          }),
-        })
-        const json = await res.json()
-        if (json.ok) success++
-        else failed++
-      } catch (e) { failed++ }
-    }
+            part_name: item.part_name || '-',
+            qty_request: item.qty || 1,
+            satuan: 'Pcs',
+            keterangan: 'Model: ' + item.unit_code + ' | Ass: ' + item.assembly_name
+          }))
+        }),
+      })
 
-    setBulkSubmitting(false)
-    if (failed === 0) {
-      setBulkMsg(`✅ ${success} order berhasil dikirim!`)
-      setCart([])
-      setTimeout(() => {
-        setShowBulkOrder(false)
-        setBulkMsg('')
-        setBulkMachine('')
-        setBulkKeterangan('')
-      }, 1500)
-    } else {
-      setBulkMsg(`⚠️ ${success} berhasil, ${failed} gagal`)
+      const json = await res.json()
+      if (res.ok && json.success) {
+        setBulkMsg('? Tiket PR ' + json.pr_number + ' (' + cart.length + ' item) berhasil dibuat!')
+        setCart([])
+        setTimeout(() => {
+          setShowBulkOrder(false)
+          setBulkMsg('')
+          setBulkMachine('')
+          setBulkKeterangan('')
+        }, 2000)
+      } else {
+        setBulkMsg('? ' + (json.error || 'Gagal mengajukan PR massal'))
+      }
+    } catch (e: any) {
+      setBulkMsg('? ' + e.message)
+    } finally {
+      setBulkSubmitting(false)
     }
   }
 
@@ -481,39 +478,43 @@ export default function PartsCatalogPage() {
 
   async function submitOrder() {
     if (!orderPart || !selectedUnit) return
-    if (!orderMachine.trim()) { setOrderMsg('❌ Machine Unit wajib diisi'); return }
-    if (orderQty < 1) { setOrderMsg('❌ Qty minimal 1'); return }
+    if (!orderMachine.trim()) { setOrderMsg('? Machine / Unit Code wajib diisi'); return }
+    if (orderQty < 1) { setOrderMsg('? Qty minimal 1'); return }
     setOrderSubmitting(true)
     setOrderMsg('')
 
     try {
-      const res = await fetch('/api/part-orders/submit', {
+      const res = await fetch('/api/logistik/pr/submit', {
         method: 'POST',
-        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          part_number: orderPart.part_number,
-          part_name: orderPart.part_name,
-          assembly_name: selectedAssembly?.assembly_name || '',
-          unit_code: selectedUnit.unit_code,
-          machine_unit: orderMachine.trim(),
-          qty: orderQty,
-          keterangan: orderKeterangan.trim(),
-          prioritas: orderPrioritas,
+          unit_code: orderMachine.trim().toUpperCase(),
+          prioritas: orderPrioritas.toUpperCase() === 'URGENT' ? 'URGENT' : 'NORMAL',
+          keterangan: (orderKeterangan.trim() ? orderKeterangan.trim() + ' | ' : '') + 'Katalog Part: ' + selectedUnit.unit_code + ' - ' + (selectedAssembly?.assembly_name || ''),
+          items: [
+            {
+              part_number: orderPart.part_number,
+              part_name: orderPart.part_name || '-',
+              qty_request: orderQty,
+              satuan: 'Pcs',
+              keterangan: 'Assembly: ' + (selectedAssembly?.assembly_name || '-')
+            }
+          ]
         }),
       })
       const json = await res.json()
-      if (json.ok) {
-        setOrderMsg('✅ Order berhasil dikirim!')
-        setTimeout(() => closeOrderModal(), 1500)
+      if (res.ok && json.success) {
+        setOrderMsg('? Tiket PR ' + json.pr_number + ' berhasil diajukan ke GL Plant!')
+        setTimeout(() => closeOrderModal(), 2000)
       } else {
-        setOrderMsg(`❌ ${json.error || 'Gagal submit order'}`)
+        setOrderMsg('? ' + (json.error || 'Gagal mengajukan PR'))
       }
     } catch (e: any) {
-      setOrderMsg(`❌ ${e.message}`)
+      setOrderMsg('? ' + e.message)
     } finally {
       setOrderSubmitting(false)
     }
+  }
   }
 
   // Tree component (reusable untuk desktop panel & mobile drawer)
