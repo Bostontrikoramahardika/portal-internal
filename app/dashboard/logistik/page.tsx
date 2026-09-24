@@ -1,1265 +1,791 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 
-interface MasterPart {
-  part_number: string
-  part_name: string
-  kategori: string
-  sub_kategori: string
-  merk_kompatibel: string
-  model_kompatibel: string
-  satuan: string
-  min_stock: number
-  movement_category: string
-  harga_estimasi: number
-  catatan: string
-  source: string
-  is_active: boolean
-}
+export default function LogistikDashboardPage() {
+  const [activeTab, setActiveTab] = useState<
+    "pr" | "po" | "grn" | "stock" | "parts" | "opname" | "import" | "masters"
+  >("pr");
 
-interface Warehouse {
-  warehouse_code: string
-  nama_gudang: string
-  site_code: string
-  lokasi_fisik: string
-  penanggung_jawab_nama: string
-}
+  const [loading, setLoading] = useState(false);
+  const [prList, setPrList] = useState<any[]>([]);
+  const [poList, setPoList] = useState<any[]>([]);
+  const [grnList, setGrnList] = useState<any[]>([]);
+  const [stockList, setStockList] = useState<any[]>([]);
+  const [partsList, setPartsList] = useState<any[]>([]);
+  const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [opnameHistory, setOpnameHistory] = useState<any[]>([]);
 
-interface Vendor {
-  vendor_code: string
-  nama_vendor: string
-  kategori_suplai: string
-  no_telepon: string
-  email: string
-  nama_pic: string
-}
+  // Filter States
+  const [selectedWarehouse, setSelectedWarehouse] = useState("ALL");
+  const [searchPart, setSearchPart] = useState("");
+  const [actionMsg, setActionMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-interface StockItem {
-  id: number
-  warehouse_code: string
-  part_number: string
-  qty_tersedia: number
-  qty_reserved: number
-  rak_lokasi: string
-  updated_at: string
-  master_part?: {
-    part_name: string
-    kategori: string
-    merk_kompatibel: string
-    model_kompatibel: string
-    satuan: string
-    min_stock: number
-    movement_category: string
-  }
-}
+  // Stock Opname Form State
+  const [opnameForm, setOpnameForm] = useState({
+    warehouse_code: "WH-MLP",
+    part_number: "",
+    qty_fisik: "",
+    rak_lokasi: "",
+    keterangan: "Stock Opname Berkala",
+  });
+  const [opnameCurrentStock, setOpnameCurrentStock] = useState<number | null>(null);
+  const [submittingOpname, setSubmittingOpname] = useState(false);
 
-interface PRItem {
-  id?: number
-  part_number: string
-  part_name: string
-  qty_request: number
-  qty_approved?: number
-  qty_fulfilled?: number
-  satuan: string
-  keterangan?: string
-}
-
-interface PRRecord {
-  id: number
-  pr_number: string
-  requester_nrp: string
-  requester_name: string
-  requester_role: string
-  site_code: string
-  unit_code: string
-  prioritas: string
-  keterangan: string
-  status: string
-  assigned_warehouse_code: string | null
-  approved_gl_plant_by: string | null
-  approved_gl_plant_name: string | null
-  approved_gl_plant_at: string | null
-  approved_pjo_by: string | null
-  approved_pjo_name: string | null
-  approved_pjo_at: string | null
-  approved_ho_by: string | null
-  approved_ho_name: string | null
-  approved_ho_at: string | null
-  fulfilled_by: string | null
-  fulfilled_name: string | null
-  fulfilled_at: string | null
-  do_number: string | null
-  rejected_by: string | null
-  rejected_reason: string | null
-  created_at: string
-  pr_items?: PRItem[]
-}
-
-interface POItem {
-  id?: number
-  part_number: string
-  qty_ordered: number
-  qty_received: number
-  unit_price: number
-  total_price: number
-  master_part?: {
-    part_name: string
-    satuan: string
-  }
-}
-
-interface PORecord {
-  id: number
-  po_number: string
-  vendor_code: string
-  site_code: string
-  status: string
-  total_amount: number
-  catatan: string
-  created_by_name: string
-  created_at: string
-  master_vendor?: {
-    nama_vendor: string
-    kategori_suplai: string
-    no_telepon: string
-  }
-  po_items?: POItem[]
-}
-
-interface GRNRecord {
-  id: number
-  grn_number: string
-  po_id: number | null
-  warehouse_code: string
-  surat_jalan_no: string
-  received_name: string
-  received_at: string
-  catatan: string
-  warehouses?: {
-    nama_gudang: string
-    site_code: string
-  }
-  purchase_orders?: {
-    po_number: string
-  }
-  grn_items?: {
-    part_number: string
-    qty_received: number
-    master_part?: {
-      part_name: string
-      satuan: string
-    }
-  }[]
-}
-
-export default function LogistikHubPage() {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'requests' | 'po' | 'grn' | 'catalog' | 'stock' | 'import' | 'warehouse_vendor'>('requests')
-  const [loading, setLoading] = useState(false)
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null)
-
-  // PR State
-  const [prList, setPrList] = useState<PRRecord[]>([])
-  const [prMode, setPrMode] = useState<'all' | 'my' | 'pending'>('all')
-  const [prSearch, setPrSearch] = useState('')
-  const [selectedPR, setSelectedPR] = useState<PRRecord | null>(null)
-  const [showCreatePRModal, setShowCreatePRModal] = useState(false)
-  const [showActionModal, setShowActionModal] = useState(false)
-  const [actionType, setActionType] = useState<'APPROVE_GL_PLANT' | 'APPROVE_PJO' | 'APPROVE_HO' | 'FULFILL_WAREHOUSE' | 'REJECT' | null>(null)
-  const [actionWarehouse, setActionWarehouse] = useState('')
-  const [actionDoNumber, setActionDoNumber] = useState('')
-  const [actionRejectReason, setActionRejectReason] = useState('')
-
-  // PR Form
-  const [prFormUnit, setPrFormUnit] = useState('')
-  const [prFormPriority, setPrFormPriority] = useState('NORMAL')
-  const [prFormKet, setPrFormKet] = useState('')
-  const [prFormItems, setPrFormItems] = useState<PRItem[]>([
-    { part_number: '', part_name: '', qty_request: 1, satuan: 'Pcs', keterangan: '' }
-  ])
-
-  // PO State
-  const [poList, setPoList] = useState<PORecord[]>([])
-  const [poSearch, setPoSearch] = useState('')
-  const [showCreatePOModal, setShowCreatePOModal] = useState(false)
-  const [poFormVendor, setPoFormVendor] = useState('')
-  const [poFormCatatan, setPoFormCatatan] = useState('')
-  const [poFormItems, setPoFormItems] = useState<{ part_number: string; part_name: string; qty_ordered: number; unit_price: number }[]>([
-    { part_number: '', part_name: '', qty_ordered: 1, unit_price: 0 }
-  ])
-
-  // GRN State
-  const [grnList, setGrnList] = useState<GRNRecord[]>([])
-  const [showCreateGRNModal, setShowCreateGRNModal] = useState(false)
-  const [grnFormWh, setGrnFormWh] = useState('')
-  const [grnFormPoId, setGrnFormPoId] = useState<number | ''>('')
-  const [grnFormSJ, setGrnFormSJ] = useState('')
-  const [grnFormCatatan, setGrnFormCatatan] = useState('')
-  const [grnFormItems, setGrnFormItems] = useState<{ part_number: string; qty_received: number }[]>([
-    { part_number: '', qty_received: 1 }
-  ])
-
-  // Catalog State
-  const [parts, setParts] = useState<MasterPart[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filterMovement, setFilterMovement] = useState('')
-  const [filterKategori, setFilterKategori] = useState('')
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalParts, setTotalParts] = useState(0)
-
-  // Stock State
-  const [stocks, setStocks] = useState<StockItem[]>([])
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([])
-  const [vendors, setVendors] = useState<Vendor[]>([])
-  const [selectedWarehouse, setSelectedWarehouse] = useState('')
-  const [stockSearch, setStockSearch] = useState('')
-
-  // Import State
-  const [file, setFile] = useState<File | null>(null)
-  const [importWarehouse, setImportWarehouse] = useState('')
-  const [previewData, setPreviewData] = useState<any | null>(null)
-  const [importing, setImporting] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Modal Manual Part & Vendor
-  const [showAddPartModal, setShowAddPartModal] = useState(false)
-  const [showAddVendorModal, setShowAddVendorModal] = useState(false)
-  const [formDataPart, setFormDataPart] = useState({
-    part_number: '',
-    part_name: '',
-    kategori: 'Sparepart',
-    merk_kompatibel: '',
-    model_kompatibel: '',
-    satuan: 'Pcs',
-    min_stock: 1,
-    movement_category: 'FAST',
-    harga_estimasi: 0,
-    catatan: ''
-  })
-  const [formDataVendor, setFormDataVendor] = useState({
-    vendor_code: '',
-    nama_vendor: '',
-    kategori_suplai: 'Sparepart Komatsu',
-    no_telepon: '',
-    email: '',
-    nama_pic: '',
-    kontak_pic: ''
-  })
-
-  const showToast = (msg: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setToast({ msg, type })
-    setTimeout(() => setToast(null), 4000)
-  }
-
-  // Load Warehouses & Vendors
-  const fetchWarehouses = useCallback(async () => {
+  // Fetch Master Data
+  const fetchMasters = async () => {
     try {
-      const res = await fetch('/api/logistik/warehouses')
-      const json = await res.json()
-      if (json.data) {
-        setWarehouses(json.data)
-        if (json.data.length > 0 && !selectedWarehouse) {
-          setSelectedWarehouse(json.data[0].warehouse_code)
-          setActionWarehouse(json.data[0].warehouse_code)
-          setGrnFormWh(json.data[0].warehouse_code)
-        }
-      }
+      const [whRes, venRes] = await Promise.all([
+        fetch("/api/logistik/warehouses"),
+        fetch("/api/logistik/vendors"),
+      ]);
+      const whData = await whRes.json();
+      const venData = await venRes.json();
+      if (whData.warehouses) setWarehouses(whData.warehouses);
+      if (venData.vendors) setVendors(venData.vendors);
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
-  }, [selectedWarehouse])
+  };
 
-  const fetchVendors = useCallback(async () => {
+  // Fetch Tab Specific Data
+  const fetchData = async () => {
+    setLoading(true);
+    setActionMsg(null);
     try {
-      const res = await fetch('/api/logistik/vendors')
-      const json = await res.json()
-      if (json.data) {
-        setVendors(json.data)
-        if (json.data.length > 0 && !poFormVendor) {
-          setPoFormVendor(json.data[0].vendor_code)
-        }
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  }, [poFormVendor])
-
-  // Load PR List
-  const fetchPRList = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({
-        mode: prMode === 'my' ? 'my' : 'all',
-        q: prSearch,
-        limit: '50'
-      })
-      if (prMode === 'pending') params.append('status', 'PENDING_GL_PLANT')
-      const res = await fetch('/api/logistik/pr/list?' + params.toString())
-      const json = await res.json()
-      if (json.data) setPrList(json.data)
-    } catch (err: any) {
-      showToast('Gagal memuat daftar PR', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }, [prMode, prSearch])
-
-  // Load PO List
-  const fetchPOList = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/logistik/po/list?q=' + encodeURIComponent(poSearch))
-      const json = await res.json()
-      if (json.data) setPoList(json.data)
-    } catch (e) {
-      showToast('Gagal memuat daftar PO', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }, [poSearch])
-
-  // Load GRN List
-  const fetchGRNList = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/logistik/grn/list')
-      const json = await res.json()
-      if (json.data) setGrnList(json.data)
-    } catch (e) {
-      showToast('Gagal memuat riwayat penerimaan', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  // Load Master Parts
-  const fetchParts = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({
-        q: searchQuery,
-        movement: filterMovement,
-        kategori: filterKategori,
-        page: page.toString(),
-        limit: '25'
-      })
-      const res = await fetch('/api/logistik/master-part?' + params.toString())
-      const json = await res.json()
-      if (json.data) {
-        setParts(json.data)
-        setTotalPages(json.pagination.totalPages || 1)
-        setTotalParts(json.pagination.total || 0)
+      if (activeTab === "pr") {
+        const res = await fetch("/api/logistik/pr/list");
+        const d = await res.json();
+        setPrList(d.pr_list || []);
+      } else if (activeTab === "po") {
+        const res = await fetch("/api/logistik/po/list");
+        const d = await res.json();
+        setPoList(d.po_list || []);
+      } else if (activeTab === "grn") {
+        const res = await fetch("/api/logistik/grn/list");
+        const d = await res.json();
+        setGrnList(d.grn_list || []);
+      } else if (activeTab === "stock") {
+        const res = await fetch("/api/logistik/stock?warehouse_code=" + selectedWarehouse + "&search=" + searchPart);
+        const d = await res.json();
+        setStockList(d.stock || []);
+      } else if (activeTab === "parts") {
+        const res = await fetch("/api/logistik/master-part?search=" + searchPart);
+        const d = await res.json();
+        setPartsList(d.parts || []);
+      } else if (activeTab === "opname") {
+        const res = await fetch("/api/logistik/stock-opname?warehouse_code=" + selectedWarehouse);
+        const d = await res.json();
+        setOpnameHistory(d.history || []);
       }
     } catch (err: any) {
-      showToast('Gagal memuat katalog part', 'error')
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [searchQuery, filterMovement, filterKategori, page])
-
-  // Load Stocks
-  const fetchStocks = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({
-        warehouse: selectedWarehouse,
-        q: stockSearch,
-        page: '1',
-        limit: '50'
-      })
-      const res = await fetch('/api/logistik/stock?' + params.toString())
-      const json = await res.json()
-      if (json.data) setStocks(json.data)
-    } catch (e) {
-      showToast('Gagal memuat posisi stok', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }, [selectedWarehouse, stockSearch])
+  };
 
   useEffect(() => {
-    fetchWarehouses()
-    fetchVendors()
-  }, [fetchWarehouses, fetchVendors])
+    fetchMasters();
+  }, []);
 
   useEffect(() => {
-    if (activeTab === 'requests') fetchPRList()
-    if (activeTab === 'po') fetchPOList()
-    if (activeTab === 'grn') fetchGRNList()
-    if (activeTab === 'catalog') fetchParts()
-    if (activeTab === 'stock') fetchStocks()
-  }, [activeTab, fetchPRList, fetchPOList, fetchGRNList, fetchParts, fetchStocks])
+    fetchData();
+  }, [activeTab, selectedWarehouse]);
 
-  // Handle Submit New PR
-  const handleSubmitPR = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!prFormUnit.trim()) {
-      showToast('Kode unit alat wajib diisi', 'error')
-      return
-    }
-    const validItems = prFormItems.filter(it => it.part_number.trim() && it.qty_request > 0)
-    if (validItems.length === 0) {
-      showToast('Tambahkan minimal 1 part yang valid', 'error')
-      return
-    }
-
-    setLoading(true)
+  // Handle PR Action (Approval / Issue)
+  const handlePrAction = async (prId: number, action: string, extraData?: any) => {
     try {
-      const res = await fetch('/api/logistik/pr/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          unit_code: prFormUnit,
-          prioritas: prFormPriority,
-          keterangan: prFormKet,
-          items: validItems
-        })
-      })
-      const json = await res.json()
-      if (res.ok) {
-        showToast('Permintaan ' + json.pr_number + ' berhasil diajukan!', 'success')
-        setShowCreatePRModal(false)
-        setPrFormUnit('')
-        setPrFormKet('')
-        setPrFormItems([{ part_number: '', part_name: '', qty_request: 1, satuan: 'Pcs', keterangan: '' }])
-        fetchPRList()
-      } else {
-        showToast(json.error || 'Gagal mengajukan PR', 'error')
-      }
-    } catch (e) {
-      showToast('Error koneksi sistem', 'error')
-    } finally {
-      setLoading(false)
+      const res = await fetch("/api/logistik/pr/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pr_id: prId, action, ...extraData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Aksi gagal");
+      setActionMsg({ text: data.message || "Aksi berhasil diproses!", type: "success" });
+      fetchData();
+    } catch (e: any) {
+      setActionMsg({ text: e.message, type: "error" });
     }
-  }
+  };
 
-  // Handle PR Approval / Fulfill Action
-  const handleExecuteAction = async () => {
-    if (!selectedPR || !actionType) return
-    setLoading(true)
+  // Cek realtime stok sistem saat input part_number di form Opname
+  const handleOpnamePartChange = async (pNum: string) => {
+    setOpnameForm((prev) => ({ ...prev, part_number: pNum }));
+    if (!pNum || pNum.trim().length < 3) {
+      setOpnameCurrentStock(null);
+      return;
+    }
     try {
-      const res = await fetch('/api/logistik/pr/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pr_id: selectedPR.id,
-          action: actionType,
-          assigned_warehouse_code: actionWarehouse,
-          do_number: actionDoNumber,
-          rejected_reason: actionRejectReason
-        })
-      })
-      const json = await res.json()
-      if (res.ok) {
-        showToast('Aksi berhasil diproses!', 'success')
-        setShowActionModal(false)
-        setSelectedPR(null)
-        setActionType(null)
-        fetchPRList()
+      const res = await fetch("/api/logistik/stock?warehouse_code=" + opnameForm.warehouse_code + "&search=" + encodeURIComponent(pNum.trim()));
+      const d = await res.json();
+      const match = (d.stock || []).find((s: any) => s.part_number.toLowerCase() === pNum.trim().toLowerCase());
+      if (match) {
+        setOpnameCurrentStock(match.qty_tersedia);
+        if (match.rak_lokasi && !opnameForm.rak_lokasi) {
+          setOpnameForm((prev) => ({ ...prev, rak_lokasi: match.rak_lokasi }));
+        }
       } else {
-        showToast(json.error || 'Gagal memproses aksi', 'error')
+        setOpnameCurrentStock(0);
       }
-    } catch (e) {
-      showToast('Error koneksi sistem', 'error')
-    } finally {
-      setLoading(false)
+    } catch (err) {
+      setOpnameCurrentStock(null);
     }
-  }
+  };
 
-  // Handle Submit PO
-  const handleSubmitPO = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!poFormVendor) {
-      showToast('Pilih Rekanan Vendor', 'error')
-      return
-    }
-    const validItems = poFormItems.filter(it => it.part_number.trim() && it.qty_ordered > 0)
-    if (validItems.length === 0) {
-      showToast('Tambahkan minimal 1 part yang dipesan', 'error')
-      return
-    }
-
-    setLoading(true)
+  // Submit Stock Opname
+  const handleOpnameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!opnameForm.part_number || opnameForm.qty_fisik === "") return;
+    setSubmittingOpname(true);
+    setActionMsg(null);
     try {
-      const res = await fetch('/api/logistik/po/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          vendor_code: poFormVendor,
-          catatan: poFormCatatan,
-          items: validItems
-        })
-      })
-      const json = await res.json()
-      if (res.ok) {
-        showToast('Dokumen PO ' + json.po_number + ' berhasil diterbitkan!', 'success')
-        setShowCreatePOModal(false)
-        setPoFormCatatan('')
-        setPoFormItems([{ part_number: '', part_name: '', qty_ordered: 1, unit_price: 0 }])
-        fetchPOList()
-      } else {
-        showToast(json.error || 'Gagal menerbitkan PO', 'error')
-      }
-    } catch (e) {
-      showToast('Error koneksi', 'error')
+      const res = await fetch("/api/logistik/stock-opname", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(opnameForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal penyesuaian stok");
+
+      setActionMsg({
+        text: "Penyesuaian Berhasil! No: " + data.so_number + " (Selisih: " + (data.selisih > 0 ? "+" : "") + data.selisih + ")",
+        type: "success",
+      });
+
+      setOpnameForm({
+        warehouse_code: opnameForm.warehouse_code,
+        part_number: "",
+        qty_fisik: "",
+        rak_lokasi: "",
+        keterangan: "Stock Opname Berkala",
+      });
+      setOpnameCurrentStock(null);
+      fetchData();
+    } catch (err: any) {
+      setActionMsg({ text: err.message, type: "error" });
     } finally {
-      setLoading(false)
+      setSubmittingOpname(false);
     }
-  }
+  };
 
-  // Handle Submit GRN (Penerimaan Barang Masuk)
-  const handleSubmitGRN = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!grnFormWh) {
-      showToast('Pilih Gudang Penerima', 'error')
-      return
-    }
-    const validItems = grnFormItems.filter(it => it.part_number.trim() && it.qty_received > 0)
-    if (validItems.length === 0) {
-      showToast('Isi minimal 1 part fisik yang diterima', 'error')
-      return
-    }
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/logistik/grn/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          warehouse_code: grnFormWh,
-          po_id: grnFormPoId || null,
-          surat_jalan_no: grnFormSJ,
-          catatan: grnFormCatatan,
-          items: validItems
-        })
-      })
-      const json = await res.json()
-      if (res.ok) {
-        showToast('Penerimaan ' + json.grn_number + ' berhasil! Stok fisik telah bertambah.', 'success')
-        setShowCreateGRNModal(false)
-        setGrnFormSJ('')
-        setGrnFormCatatan('')
-        setGrnFormPoId('')
-        setGrnFormItems([{ part_number: '', qty_received: 1 }])
-        fetchGRNList()
-        fetchStocks()
-      } else {
-        showToast(json.error || 'Gagal menyimpan penerimaan', 'error')
-      }
-    } catch (e) {
-      showToast('Error koneksi', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Handle Save Manual Part
-  const handleSavePart = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formDataPart.part_number || !formDataPart.part_name) {
-      showToast('Part number & nama part wajib diisi', 'error')
-      return
-    }
-    setLoading(true)
-    try {
-      const res = await fetch('/api/logistik/master-part', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formDataPart)
-      })
-      const json = await res.json()
-      if (res.ok) {
-        showToast('Part ' + formDataPart.part_number + ' tersimpan!', 'success')
-        setShowAddPartModal(false)
-        fetchParts()
-      } else {
-        showToast(json.error || 'Gagal menyimpan part', 'error')
-      }
-    } catch (e) {
-      showToast('Error koneksi sistem', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Handle Save Vendor
-  const handleSaveVendor = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formDataVendor.vendor_code || !formDataVendor.nama_vendor) {
-      showToast('Kode dan Nama Vendor wajib diisi', 'error')
-      return
-    }
-    setLoading(true)
-    try {
-      const res = await fetch('/api/logistik/vendors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formDataVendor)
-      })
-      const json = await res.json()
-      if (res.ok) {
-        showToast('Vendor ' + formDataVendor.nama_vendor + ' berhasil ditambahkan!', 'success')
-        setShowAddVendorModal(false)
-        fetchVendors()
-      } else {
-        showToast(json.error || 'Gagal menyimpan vendor', 'error')
-      }
-    } catch (e) {
-      showToast('Error koneksi sistem', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Handle Preview Import
-  const handlePreviewImport = async () => {
-    if (!file) {
-      showToast('Pilih file Excel terlebih dahulu', 'error')
-      return
-    }
-    setLoading(true)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('mode', 'preview')
-      fd.append('warehouse_code', importWarehouse)
-
-      const res = await fetch('/api/logistik/import-accurate', {
-        method: 'POST',
-        body: fd
-      })
-      const json = await res.json()
-      if (res.ok) {
-        setPreviewData(json)
-        showToast('File valid! Terdeteksi ' + json.validPartsCount + ' part.', 'success')
-      } else {
-        showToast(json.error || 'Gagal validasi file Excel', 'error')
-      }
-    } catch (e) {
-      showToast('Gagal memproses file Excel', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Handle Execute Import
-  const handleExecuteImport = async () => {
-    if (!file) return
-    setImporting(true)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('mode', 'import')
-      fd.append('warehouse_code', importWarehouse)
-
-      const res = await fetch('/api/logistik/import-accurate', {
-        method: 'POST',
-        body: fd
-      })
-      const json = await res.json()
-      if (res.ok) {
-        showToast(json.message || 'Import berhasil!', 'success')
-        setFile(null)
-        setPreviewData(null)
-        if (fileInputRef.current) fileInputRef.current.value = ''
-        fetchParts()
-      } else {
-        showToast(json.error || 'Gagal mengimpor data', 'error')
-      }
-    } catch (e) {
-      showToast('Gagal mengeksekusi import batch', 'error')
-    } finally {
-      setImporting(false)
-    }
-  }
+  const selisihOpname =
+    opnameCurrentStock !== null && opnameForm.qty_fisik !== ""
+      ? parseInt(opnameForm.qty_fisik || "0", 10) - opnameCurrentStock
+      : null;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-28">
-      {/* Toast Notification */}
-      {toast && (
-        <div className={'fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg border text-sm font-medium transition-all ' + 
-          (toast.type === 'success' ? 'bg-emerald-600 text-white border-emerald-700' :
-           toast.type === 'error' ? 'bg-rose-600 text-white border-rose-700' :
-           'bg-slate-800 text-white border-slate-700')}>
-          {toast.msg}
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 pb-28">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Link
+              href="/dashboard"
+              className="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-900 border border-slate-800"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+            <h1 className="text-xl md:text-2xl font-black bg-gradient-to-r from-amber-400 via-orange-400 to-amber-200 bg-clip-text text-transparent">
+              Logistics & Procurement System
+            </h1>
+          </div>
+          <p className="text-xs text-slate-400">
+            Modul terpadu Pengadaan, Inventori Multi-Gudang & Kontrol Suku Cadang Plant
+          </p>
+        </div>
+
+        {/* Quick Link ke Parts Catalog */}
+        <Link
+          href="/parts-catalog"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold text-xs hover:bg-amber-500/20 transition-all shadow-sm"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          Buka Parts Catalog Unit
+        </Link>
+      </div>
+
+      {/* Alert Banner */}
+      {actionMsg && (
+        <div
+          className={"max-w-7xl mx-auto mb-4 p-4 rounded-xl border flex items-center justify-between " +
+            (actionMsg.type === "success"
+              ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-300"
+              : "bg-rose-950/40 border-rose-500/30 text-rose-300")}
+        >
+          <span className="text-xs md:text-sm font-medium">{actionMsg.text}</span>
+          <button onClick={() => setActionMsg(null)} className="text-slate-400 hover:text-white text-sm">
+            ?
+          </button>
         </div>
       )}
 
-      {/* Top Header */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">LOGISTIK & PART HUB</span>
-                <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">Phase 3 Full</span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Pusat Pengadaan, Permintaan Part (PR), PO, Penerimaan (GRN) & Stok Fisik</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setShowCreatePRModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm"
-            >
-              + Buat PR Part
-            </button>
-            <button
-              onClick={() => setShowCreatePOModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm"
-            >
-              + Terbitkan PO
-            </button>
-            <button
-              onClick={() => setShowCreateGRNModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-sm"
-            >
-              + Terima Barang (GRN)
-            </button>
-            <button
-              onClick={() => setShowAddPartModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm"
-            >
-              + Master Part
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex space-x-1 overflow-x-auto">
-          {[
-            { id: 'requests', label: '1. Permintaan Part (PR)' },
-            { id: 'po', label: '2. Purchase Order (PO)' },
-            { id: 'grn', label: '3. Penerimaan (GRN)' },
-            { id: 'catalog', label: '4. Master Part (' + totalParts + ')' },
-            { id: 'stock', label: '5. Stok Gudang' },
-            { id: 'import', label: '6. Import Accurate' },
-            { id: 'warehouse_vendor', label: '7. Gudang & Vendor' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={'py-3 px-3.5 border-b-2 font-medium text-xs whitespace-nowrap transition-all ' +
-                (activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-bold'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300')}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      {/* Navigation 8 Tabs */}
+      <div className="max-w-7xl mx-auto mb-6 flex gap-1.5 overflow-x-auto border-b border-slate-800 pb-2">
+        {[
+          { id: "pr", label: "Permintaan (PR)" },
+          { id: "po", label: "Purchase Order (PO)" },
+          { id: "grn", label: "Penerimaan (GRN)" },
+          { id: "stock", label: "Stok Gudang" },
+          { id: "opname", label: "Stock Opname ?" },
+          { id: "parts", label: "Master Part" },
+          { id: "import", label: "Import Accurate" },
+          { id: "masters", label: "Gudang & Vendor" },
+        ].map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setActiveTab(t.id as any)}
+            className={"px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 transition-all " +
+              (activeTab === t.id
+                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+                : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800")}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        {/* TAB 1: PERMINTAAN PART (PR) */}
-        {activeTab === 'requests' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
-              <div className="flex gap-2">
-                {[
-                  { id: 'all', label: 'Semua PR' },
-                  { id: 'my', label: 'PR Saya' },
-                  { id: 'pending', label: 'Menunggu Review' },
-                ].map(m => (
-                  <button
-                    key={m.id}
-                    onClick={() => setPrMode(m.id as any)}
-                    className={'px-3 py-1.5 rounded-lg text-xs font-semibold ' +
-                      (prMode === m.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 text-slate-600')}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="text"
-                placeholder="Cari No. PR, Unit, Pemohon..."
-                value={prSearch}
-                onChange={(e) => setPrSearch(e.target.value)}
-                className="w-full md:w-72 px-3 py-2 bg-slate-50 dark:bg-slate-800 border rounded-lg text-xs"
-              />
+      {/* TAB 1: PERMINTAAN PART (PR) */}
+      {activeTab === "pr" && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          {loading ? (
+            <div className="text-center py-12 text-slate-500 text-xs">Memuat data PR...</div>
+          ) : prList.length === 0 ? (
+            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 text-slate-500 text-xs">
+              Belum ada Permintaan Suku Cadang (PR).
             </div>
-
+          ) : (
             <div className="space-y-3">
-              {loading ? (
-                <div className="bg-white p-8 text-center text-xs text-slate-400 rounded-xl border">Memuat daftar PR...</div>
-              ) : prList.length === 0 ? (
-                <div className="bg-white p-12 text-center text-xs text-slate-500 rounded-xl border">Belum ada tiket permintaan part</div>
-              ) : (
-                prList.map((pr) => (
-                  <div key={pr.id} className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">{pr.pr_number}</span>
-                        <span className="text-xs font-bold text-slate-700">Unit: <span className="font-mono text-emerald-600">{pr.unit_code}</span></span>
-                        <span className="text-xs text-slate-400">({pr.site_code})</span>
+              {prList.map((pr) => (
+                <div
+                  key={pr.id}
+                  className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-3 hover:border-slate-700 transition-all"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-b border-slate-800/80 pb-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-amber-400 text-sm">{pr.pr_number}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold border border-slate-700">
+                          Unit: {pr.unit_code || "GENERAL"}
+                        </span>
+                        <span
+                          className={"text-[10px] font-extrabold px-2 py-0.5 rounded-full " +
+                            (pr.prioritas === "EMERGENCY_BREAKDOWN"
+                              ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                              : pr.prioritas === "URGENT"
+                              ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                              : "bg-slate-800 text-slate-400")}
+                          >
+                          {pr.prioritas}
+                        </span>
                       </div>
-                      <span className="text-[11px] font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-800">{pr.status}</span>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Diajukan oleh: <span className="text-white font-medium">{pr.requester_name}</span> ({pr.site_code}) • {new Date(pr.created_at).toLocaleDateString("id-ID")}
+                      </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                      <div>
-                        <p className="text-[11px] font-semibold text-slate-400">Pemohon: {pr.requester_name}</p>
-                        <p className="text-slate-500 text-[11px] mt-0.5">{pr.keterangan || 'Tidak ada keterangan tambahan.'}</p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold text-slate-400">Part Diminta ({pr.pr_items?.length || 0} Item):</p>
-                        <div className="space-y-1 max-h-24 overflow-y-auto">
-                          {pr.pr_items?.map((it, idx) => (
-                            <div key={idx} className="flex justify-between bg-slate-50 px-2 py-1 rounded text-[11px]">
-                              <span className="font-mono font-bold">{it.part_number} - {it.part_name}</span>
-                              <span className="font-semibold text-blue-600">{it.qty_request} {it.satuan}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Triggers */}
-                    <div className="pt-2 border-t flex items-center justify-between">
-                      <div className="text-[10px] font-semibold text-slate-400">
-                        Approval: {pr.approved_gl_plant_at ? 'GL? ' : ''}{pr.approved_pjo_at ? 'PJO? ' : ''}{pr.approved_ho_at ? 'HO? ' : ''}{pr.fulfilled_at ? 'Gudang?' : ''}
-                      </div>
-                      <div className="flex gap-2">
-                        {pr.status === 'PENDING_GL_PLANT' && (
-                          <button onClick={() => { setSelectedPR(pr); setActionType('APPROVE_GL_PLANT'); setShowActionModal(true); }} className="px-3 py-1 bg-amber-600 text-white text-[11px] font-bold rounded">Review GL Plant</button>
-                        )}
-                        {pr.status === 'PENDING_PJO' && (
-                          <button onClick={() => { setSelectedPR(pr); setActionType('APPROVE_PJO'); setShowActionModal(true); }} className="px-3 py-1 bg-blue-600 text-white text-[11px] font-bold rounded">Approve PJO</button>
-                        )}
-                        {pr.status === 'PENDING_HO' && (
-                          <button onClick={() => { setSelectedPR(pr); setActionType('APPROVE_HO'); setShowActionModal(true); }} className="px-3 py-1 bg-purple-600 text-white text-[11px] font-bold rounded">Approve HO & Tunjuk Gudang</button>
-                        )}
-                        {pr.status === 'APPROVED_READY_ISSUE' && (
-                          <button onClick={() => { setSelectedPR(pr); setActionType('FULFILL_WAREHOUSE'); setShowActionModal(true); }} className="px-3 py-1 bg-emerald-600 text-white text-[11px] font-bold rounded">Keluarkan Barang (DO)</button>
-                        )}
-                      </div>
-                    </div>
+                    <span
+                      className={"text-xs font-black px-3 py-1 rounded-xl self-start md:self-auto " +
+                        (pr.status === "FULFILLED"
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                          : pr.status === "APPROVED_READY_ISSUE"
+                          ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                          : pr.status === "REJECTED"
+                          ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                          : "bg-amber-500/20 text-amber-400 border border-amber-500/30")}
+                    >
+                      {pr.status}
+                    </span>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* TAB 2: PURCHASE ORDER (PO) */}
-        {activeTab === 'po' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
-              <span className="text-xs font-bold text-slate-700">Daftar Dokumen Purchase Order ke Vendor/Supplier</span>
-              <input
-                type="text"
-                placeholder="Cari No. PO atau Vendor..."
-                value={poSearch}
-                onChange={(e) => setPoSearch(e.target.value)}
-                className="w-full md:w-72 px-3 py-2 bg-slate-50 dark:bg-slate-800 border rounded-lg text-xs"
-              />
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 uppercase font-semibold">
-                  <tr>
-                    <th className="px-4 py-3">No. PO</th>
-                    <th className="px-4 py-3">Vendor / Supplier</th>
-                    <th className="px-4 py-3">Jumlah Item</th>
-                    <th className="px-4 py-3 text-right">Total Nilai (Rp)</th>
-                    <th className="px-4 py-3 text-center">Status Pemenuhan</th>
-                    <th className="px-4 py-3">Dibuat Oleh</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {poList.length === 0 ? (
-                    <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Belum ada dokumen PO yang diterbitkan.</td></tr>
-                  ) : (
-                    poList.map((po) => (
-                      <tr key={po.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                        <td className="px-4 py-3 font-mono font-bold text-blue-600">{po.po_number}</td>
-                        <td className="px-4 py-3 font-medium">{po.master_vendor?.nama_vendor || po.vendor_code}</td>
-                        <td className="px-4 py-3">{po.po_items?.length || 0} Part</td>
-                        <td className="px-4 py-3 text-right font-mono font-bold">Rp {Number(po.total_amount || 0).toLocaleString('id-ID')}</td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={'px-2 py-0.5 text-xs font-bold rounded ' + 
-                            (po.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-800' : 
-                             po.status === 'PARTIAL' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800')}>
-                            {po.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-slate-500">{po.created_by_name}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: PENERIMAAN BARANG (GRN) */}
-        {activeTab === 'grn' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700">Riwayat Penerimaan Barang Masuk (Barang Bertambah ke Gudang)</span>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 uppercase font-semibold">
-                  <tr>
-                    <th className="px-4 py-3">No. GRN</th>
-                    <th className="px-4 py-3">Gudang Penerima</th>
-                    <th className="px-4 py-3">No. Surat Jalan Vendor</th>
-                    <th className="px-4 py-3">Ref PO</th>
-                    <th className="px-4 py-3">Part Diterima</th>
-                    <th className="px-4 py-3">Checker Gudang</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {grnList.length === 0 ? (
-                    <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Belum ada riwayat penerimaan barang masuk.</td></tr>
-                  ) : (
-                    grnList.map((g) => (
-                      <tr key={g.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                        <td className="px-4 py-3 font-mono font-bold text-emerald-600">{g.grn_number}</td>
-                        <td className="px-4 py-3 font-medium">{g.warehouses?.nama_gudang || g.warehouse_code}</td>
-                        <td className="px-4 py-3 font-mono">{g.surat_jalan_no || '-'}</td>
-                        <td className="px-4 py-3 font-mono text-blue-600">{g.purchase_orders?.po_number || 'Penerimaan Langsung'}</td>
-                        <td className="px-4 py-3 font-semibold">{g.grn_items?.map(i => i.part_number + ' (' + i.qty_received + ')').join(', ') || '-'}</td>
-                        <td className="px-4 py-3 text-slate-500">{g.received_name}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 4: MASTER PART */}
-        {activeTab === 'catalog' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-3">
-              <input
-                type="text"
-                placeholder="Cari Part Number, Nama Part, atau Model Unit..."
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-                className="w-full pl-3 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border rounded-lg text-xs"
-              />
-              <div className="flex gap-2">
-                <select value={filterMovement} onChange={(e) => { setFilterMovement(e.target.value); setPage(1); }} className="px-3 py-2 bg-slate-50 border rounded-lg text-xs">
-                  <option value="">Semua Perputaran</option>
-                  <option value="FAST">? Fast Moving</option>
-                  <option value="SLOW">? Slow Moving</option>
-                  <option value="DEAD">?? Dead Stock</option>
-                </select>
-                <select value={filterKategori} onChange={(e) => { setFilterKategori(e.target.value); setPage(1); }} className="px-3 py-2 bg-slate-50 border rounded-lg text-xs">
-                  <option value="">Semua Kategori</option>
-                  <option value="Sparepart">Sparepart</option>
-                  <option value="Filter">Filter</option>
-                  <option value="Undercarriage">Undercarriage</option>
-                  <option value="Hydraulic">Hydraulic</option>
-                  <option value="Oli & Fluida">Oli & Fluida</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 uppercase font-semibold">
-                  <tr>
-                    <th className="px-4 py-3">Part Number</th>
-                    <th className="px-4 py-3">Nama Part</th>
-                    <th className="px-4 py-3">Kategori</th>
-                    <th className="px-4 py-3">Model Unit</th>
-                    <th className="px-4 py-3">Perputaran</th>
-                    <th className="px-4 py-3 text-center">Min Stock</th>
-                    <th className="px-4 py-3 text-right">Harga Estimasi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {parts.map((p) => (
-                    <tr key={p.part_number} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-mono font-bold text-blue-600">{p.part_number}</td>
-                      <td className="px-4 py-3 font-medium">{p.part_name}</td>
-                      <td className="px-4 py-3 text-slate-600">{p.kategori}</td>
-                      <td className="px-4 py-3 font-mono text-[11px]">{p.model_kompatibel || '-'}</td>
-                      <td className="px-4 py-3 font-semibold">{p.movement_category}</td>
-                      <td className="px-4 py-3 text-center">{p.min_stock} {p.satuan}</td>
-                      <td className="px-4 py-3 text-right font-mono">{p.harga_estimasi ? 'Rp ' + Number(p.harga_estimasi).toLocaleString('id-ID') : '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 5: STOK GUDANG */}
-        {activeTab === 'stock' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
-              <div className="flex gap-2">
-                {warehouses.map(w => (
-                  <button
-                    key={w.warehouse_code}
-                    onClick={() => setSelectedWarehouse(w.warehouse_code)}
-                    className={'px-3 py-1.5 rounded-lg text-xs font-semibold ' + 
-                      (selectedWarehouse === w.warehouse_code ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600')}
-                  >
-                    {w.nama_gudang}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="text"
-                placeholder="Cari part number di gudang ini..."
-                value={stockSearch}
-                onChange={(e) => setStockSearch(e.target.value)}
-                className="w-72 px-3 py-1.5 bg-slate-50 border rounded-lg text-xs"
-              />
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 uppercase">
-                  <tr>
-                    <th className="px-4 py-3">Part Number</th>
-                    <th className="px-4 py-3">Nama Part</th>
-                    <th className="px-4 py-3 text-center">Stok Fisik</th>
-                    <th className="px-4 py-3 text-center">Dipesan (PR)</th>
-                    <th className="px-4 py-3 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {stocks.length === 0 ? (
-                    <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Belum ada data stok tercatat pada gudang ini.</td></tr>
-                  ) : (
-                    stocks.map((stk) => (
-                      <tr key={stk.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-mono font-bold text-blue-600">{stk.part_number}</td>
-                        <td className="px-4 py-3">{stk.master_part?.part_name || '-'}</td>
-                        <td className="px-4 py-3 text-center font-bold text-sm">{stk.qty_tersedia} {stk.master_part?.satuan || 'Pcs'}</td>
-                        <td className="px-4 py-3 text-center text-slate-500">{stk.qty_reserved}</td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={'px-2 py-0.5 text-xs font-semibold rounded ' + (stk.qty_tersedia > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800')}>
-                            {stk.qty_tersedia > 0 ? 'Tersedia' : 'Habis'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 6: IMPORT ACCURATE */}
-        {activeTab === 'import' && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Import Data Excel dari Accurate</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold mb-1.5">Target Gudang Stok Awal (Opsional)</label>
-                  <select value={importWarehouse} onChange={(e) => setImportWarehouse(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border rounded-lg text-xs">
-                    <option value="">Tanpa inisialisasi stok awal</option>
-                    {warehouses.map(w => (
-                      <option key={w.warehouse_code} value={w.warehouse_code}>{w.nama_gudang}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1.5">File Excel (.xlsx)</label>
-                  <input type="file" ref={fileInputRef} accept=".xlsx, .xls" onChange={(e) => { if (e.target.files && e.target.files[0]) { setFile(e.target.files[0]); setPreviewData(null); } }} className="w-full text-xs text-slate-500" />
-                </div>
-              </div>
-              <button disabled={!file || loading} onClick={handlePreviewImport} className="px-4 py-2 bg-slate-800 text-white text-xs font-semibold rounded-lg">Preview File</button>
-            </div>
-
-            {previewData && (
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-emerald-300 shadow-sm space-y-4">
-                <span className="text-xs font-bold text-emerald-600">{previewData.validPartsCount} Part Siap Diimpor</span>
-                <button disabled={importing} onClick={handleExecuteImport} className="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-lg">{importing ? 'Memproses...' : 'Eksekusi Import'}</button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB 7: GUDANG & VENDOR */}
-        {activeTab === 'warehouse_vendor' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-sm">Daftar Rekanan Supplier / Vendor</h3>
-              <button onClick={() => setShowAddVendorModal(true)} className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg">+ Tambah Vendor</button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {vendors.map(v => (
-                <div key={v.vendor_code} className="bg-white p-4 rounded-xl border space-y-2">
-                  <div className="flex justify-between">
-                    <span className="font-mono text-xs font-bold text-blue-600">{v.vendor_code}</span>
-                    <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-semibold">{v.kategori_suplai}</span>
+                  {/* Items list */}
+                  <div className="bg-slate-950/60 rounded-xl p-3 border border-slate-800/80">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="text-slate-400 border-b border-slate-800">
+                          <th className="pb-1.5 font-medium">Part Number</th>
+                          <th className="pb-1.5 font-medium">Nama Part</th>
+                          <th className="pb-1.5 font-medium text-right">Qty Req</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-900">
+                        {(pr.pr_items || []).map((item: any) => (
+                          <tr key={item.id} className="text-slate-300">
+                            <td className="py-1.5 font-mono text-amber-300">{item.part_number}</td>
+                            <td className="py-1.5">{item.part_name}</td>
+                            <td className="py-1.5 text-right font-bold">{item.qty_request} {item.satuan}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <h4 className="font-bold text-sm">{v.nama_vendor}</h4>
-                  <p className="text-xs text-slate-500">Telp: {v.no_telepon || '-'}</p>
+
+                  {/* Action Workflow Buttons */}
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    {pr.status === "PENDING_GL_PLANT" && (
+                      <button
+                        onClick={() => handlePrAction(pr.id, "APPROVE_GL_PLANT")}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500"
+                      >
+                        ? Setujui (GL Plant)
+                      </button>
+                    )}
+                    {pr.status === "PENDING_PJO" && (
+                      <button
+                        onClick={() => handlePrAction(pr.id, "APPROVE_PJO")}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500"
+                      >
+                        ? Otorisasi (PJO Site)
+                      </button>
+                    )}
+                    {pr.status === "PENDING_HO" && (
+                      <button
+                        onClick={() => handlePrAction(pr.id, "APPROVE_HO", { assigned_warehouse_code: "WH-MLP" })}
+                        className="px-3 py-1.5 rounded-lg bg-cyan-600 text-white text-xs font-bold hover:bg-cyan-500"
+                      >
+                        ? Approve & Assign WH-MLP (HO)
+                      </button>
+                    )}
+                    {pr.status === "APPROVED_READY_ISSUE" && (
+                      <button
+                        onClick={() => handlePrAction(pr.id, "FULFILL_ISSUE")}
+                        className="px-3.5 py-1.5 rounded-lg bg-amber-500 text-slate-950 text-xs font-extrabold hover:bg-amber-400 shadow-md shadow-amber-500/20"
+                      >
+                        ? Keluarkan Barang & Potong Stok
+                      </button>
+                    )}
+                    {pr.status !== "FULFILLED" && pr.status !== "REJECTED" && (
+                      <button
+                        onClick={() => {
+                          const r = prompt("Alasan penolakan:");
+                          if (r) handlePrAction(pr.id, "REJECT", { reason: r });
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-slate-800 text-rose-400 text-xs font-bold border border-rose-500/20 hover:bg-rose-950/40"
+                      >
+                        ? Tolak PR
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* MODAL BUAT PR */}
-      {showCreatePRModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-2xl p-6 space-y-4">
-            <h3 className="font-bold text-sm">Formulir Permintaan Part (PR)</h3>
-            <form onSubmit={handleSubmitPR} className="space-y-3 text-xs">
-              <input type="text" required placeholder="Kode Unit (misal: EX-045)" value={prFormUnit} onChange={(e) => setPrFormUnit(e.target.value.toUpperCase())} className="w-full px-3 py-2 border rounded font-mono font-bold" />
-              <textarea placeholder="Keterangan perbaikan..." value={prFormKet} onChange={(e) => setPrFormKet(e.target.value)} className="w-full px-3 py-2 border rounded" rows={2} />
-              
-              <div className="space-y-2">
-                <label className="font-bold">Part Diminta:</label>
-                {prFormItems.map((it, idx) => (
-                  <div key={idx} className="flex gap-2">
-                    <input type="text" required placeholder="Part Number" value={it.part_number} onChange={(e) => { const u = [...prFormItems]; u[idx].part_number = e.target.value; setPrFormItems(u); }} className="w-1/3 px-2 py-1.5 border rounded uppercase font-mono" />
-                    <input type="text" required placeholder="Nama Part" value={it.part_name} onChange={(e) => { const u = [...prFormItems]; u[idx].part_name = e.target.value; setPrFormItems(u); }} className="w-1/2 px-2 py-1.5 border rounded" />
-                    <input type="number" min="1" value={it.qty_request} onChange={(e) => { const u = [...prFormItems]; u[idx].qty_request = parseInt(e.target.value) || 1; setPrFormItems(u); }} className="w-16 px-2 py-1.5 border rounded text-center font-bold" />
-                  </div>
-                ))}
-                <button type="button" onClick={() => setPrFormItems([...prFormItems, { part_number: '', part_name: '', qty_request: 1, satuan: 'Pcs' }])} className="text-blue-600 font-bold text-[11px]">+ Tambah Part</button>
-              </div>
-
-              <div className="pt-3 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowCreatePRModal(false)} className="px-4 py-2 bg-slate-100 rounded">Batal</button>
-                <button type="submit" disabled={loading} className="px-5 py-2 bg-emerald-600 text-white font-bold rounded">Kirim PR</button>
-              </div>
-            </form>
-          </div>
+          )}
         </div>
       )}
 
-      {/* MODAL ACTION APPROVAL PR */}
-      {showActionModal && selectedPR && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 space-y-4">
-            <h3 className="font-bold text-sm">Konfirmasi Aksi PR: {selectedPR.pr_number}</h3>
-            {actionType === 'APPROVE_HO' && (
-              <select value={actionWarehouse} onChange={(e) => setActionWarehouse(e.target.value)} className="w-full px-3 py-2 border rounded text-xs font-semibold">
-                {warehouses.map(w => (
-                  <option key={w.warehouse_code} value={w.warehouse_code}>{w.nama_gudang}</option>
-                ))}
-              </select>
-            )}
-            {actionType === 'FULFILL_WAREHOUSE' && (
-              <input type="text" placeholder="Nomor DO / Surat Jalan" value={actionDoNumber} onChange={(e) => setActionDoNumber(e.target.value)} className="w-full px-3 py-2 border rounded text-xs font-mono" />
-            )}
-            <div className="pt-3 flex justify-end gap-2">
-              <button onClick={() => setShowActionModal(false)} className="px-4 py-2 bg-slate-100 rounded text-xs">Batal</button>
-              <button disabled={loading} onClick={handleExecuteAction} className="px-5 py-2 bg-blue-600 text-white rounded text-xs font-bold">Proses Aksi</button>
+      {/* TAB 2: PURCHASE ORDER (PO) */}
+      {activeTab === "po" && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          {loading ? (
+            <div className="text-center py-12 text-slate-500 text-xs">Memuat PO...</div>
+          ) : poList.length === 0 ? (
+            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 text-slate-500 text-xs">
+              Belum ada Purchase Order (PO) yang diterbitkan.
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL TERBITKAN PO */}
-      {showCreatePOModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-2xl p-6 space-y-4">
-            <h3 className="font-bold text-sm">Penerbitan Dokumen Purchase Order (PO)</h3>
-            <form onSubmit={handleSubmitPO} className="space-y-3 text-xs">
-              <select value={poFormVendor} onChange={(e) => setPoFormVendor(e.target.value)} className="w-full px-3 py-2 border rounded">
-                {vendors.map(v => (
-                  <option key={v.vendor_code} value={v.vendor_code}>{v.nama_vendor} ({v.vendor_code})</option>
-                ))}
-              </select>
-              
-              <div className="space-y-2">
-                <label className="font-bold">Daftar Part yang Dipesan:</label>
-                {poFormItems.map((it, idx) => (
-                  <div key={idx} className="flex gap-2">
-                    <input type="text" required placeholder="Part Number" value={it.part_number} onChange={(e) => { const u = [...poFormItems]; u[idx].part_number = e.target.value; setPoFormItems(u); }} className="w-1/3 px-2 py-1.5 border rounded uppercase font-mono" />
-                    <input type="number" min="1" placeholder="Qty" value={it.qty_ordered} onChange={(e) => { const u = [...poFormItems]; u[idx].qty_ordered = parseInt(e.target.value) || 1; setPoFormItems(u); }} className="w-16 px-2 py-1.5 border rounded text-center" />
-                    <input type="number" placeholder="Harga Satuan (Rp)" value={it.unit_price} onChange={(e) => { const u = [...poFormItems]; u[idx].unit_price = parseFloat(e.target.value) || 0; setPoFormItems(u); }} className="w-1/3 px-2 py-1.5 border rounded font-mono" />
+          ) : (
+            <div className="space-y-3">
+              {poList.map((po) => (
+                <div key={po.id} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <div>
+                      <span className="font-mono font-bold text-cyan-400 text-sm">{po.po_number}</span>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Vendor: <span className="text-white font-medium">{po.master_vendor?.nama_vendor || po.vendor_code}</span>
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200">
+                      {po.status}
+                    </span>
                   </div>
-                ))}
-                <button type="button" onClick={() => setPoFormItems([...poFormItems, { part_number: '', part_name: '', qty_ordered: 1, unit_price: 0 }])} className="text-blue-600 font-bold text-[11px]">+ Tambah Part PO</button>
-              </div>
-
-              <div className="pt-3 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowCreatePOModal(false)} className="px-4 py-2 bg-slate-100 rounded">Batal</button>
-                <button type="submit" disabled={loading} className="px-5 py-2 bg-indigo-600 text-white font-bold rounded">Terbitkan PO</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL TERIMA BARANG (GRN) */}
-      {showCreateGRNModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-2xl p-6 space-y-4">
-            <h3 className="font-bold text-sm">Penerimaan Barang Masuk Gudang (GRN)</h3>
-            <form onSubmit={handleSubmitGRN} className="space-y-3 text-xs">
-              <select value={grnFormWh} onChange={(e) => setGrnFormWh(e.target.value)} className="w-full px-3 py-2 border rounded">
-                {warehouses.map(w => (
-                  <option key={w.warehouse_code} value={w.warehouse_code}>{w.nama_gudang}</option>
-                ))}
-              </select>
-              <input type="text" placeholder="Nomor Surat Jalan Vendor (Surat Pengantar)" value={grnFormSJ} onChange={(e) => setGrnFormSJ(e.target.value)} className="w-full px-3 py-2 border rounded font-mono" />
-              
-              <div className="space-y-2">
-                <label className="font-bold">Fisik Part yang Diterima (+Stok Gudang):</label>
-                {grnFormItems.map((it, idx) => (
-                  <div key={idx} className="flex gap-2">
-                    <input type="text" required placeholder="Part Number" value={it.part_number} onChange={(e) => { const u = [...grnFormItems]; u[idx].part_number = e.target.value; setGrnFormItems(u); }} className="w-2/3 px-2 py-1.5 border rounded uppercase font-mono" />
-                    <input type="number" min="1" placeholder="Qty Diterima" value={it.qty_received} onChange={(e) => { const u = [...grnFormItems]; u[idx].qty_received = parseInt(e.target.value) || 1; setGrnFormItems(u); }} className="w-1/3 px-2 py-1.5 border rounded text-center font-bold" />
+                  <div className="text-xs text-slate-300">
+                    Total Item: {po.po_items?.length || 0} • Estimasi Total: Rp {Number(po.total_amount || 0).toLocaleString("id-ID")}
                   </div>
-                ))}
-                <button type="button" onClick={() => setGrnFormItems([...grnFormItems, { part_number: '', qty_received: 1 }])} className="text-blue-600 font-bold text-[11px]">+ Tambah Part</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: PENERIMAAN BARANG (GRN) */}
+      {activeTab === "grn" && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          {loading ? (
+            <div className="text-center py-12 text-slate-500 text-xs">Memuat GRN...</div>
+          ) : grnList.length === 0 ? (
+            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 text-slate-500 text-xs">
+              Belum ada data Penerimaan Barang (GRN / LPB).
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {grnList.map((grn) => (
+                <div key={grn.id} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-2">
+                  <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <div>
+                      <span className="font-mono font-bold text-emerald-400 text-sm">{grn.grn_number}</span>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Surat Jalan: <span className="text-white font-medium">{grn.surat_jalan_no || "-"}</span> | Gudang: {grn.warehouse_code}
+                      </p>
+                    </div>
+                    <span className="text-xs text-slate-400">{new Date(grn.received_at).toLocaleDateString("id-ID")}</span>
+                  </div>
+                  <div className="text-xs text-slate-300">
+                    Diterima oleh: {grn.received_name} • Total: {grn.grn_items?.length || 0} Part Masuk
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 4: MONITORING STOK GUDANG */}
+      {activeTab === "stock" && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <select
+              value={selectedWarehouse}
+              onChange={(e) => setSelectedWarehouse(e.target.value)}
+              className="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+            >
+              <option value="ALL">Semua Gudang</option>
+              {warehouses.map((w) => (
+                <option key={w.warehouse_code} value={w.warehouse_code}>
+                  {w.warehouse_code} - {w.nama_gudang}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Cari part number atau nama part..."
+              value={searchPart}
+              onChange={(e) => setSearchPart(e.target.value)}
+              className="md:col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12 text-slate-500 text-xs">Memuat stok...</div>
+          ) : stockList.length === 0 ? (
+            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 text-slate-500 text-xs">
+              Tidak ada data stok untuk kriteria ini.
+            </div>
+          ) : (
+            <div className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                    <tr>
+                      <th className="p-3 font-medium">Gudang</th>
+                      <th className="p-3 font-medium">Part Number</th>
+                      <th className="p-3 font-medium">Nama Part</th>
+                      <th className="p-3 font-medium">Rak</th>
+                      <th className="p-3 font-medium text-right">Stok Tersedia</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {stockList.map((s) => (
+                      <tr key={s.id} className="hover:bg-slate-800/40">
+                        <td className="p-3 font-semibold text-slate-300">{s.warehouse_code}</td>
+                        <td className="p-3 font-mono font-bold text-amber-300">{s.part_number}</td>
+                        <td className="p-3 text-slate-200">{s.master_part?.part_name || "-"}</td>
+                        <td className="p-3 text-slate-400">{s.rak_lokasi || "-"}</td>
+                        <td className="p-3 text-right">
+                          <span
+                            className={"font-bold px-2 py-0.5 rounded " +
+                              (s.qty_tersedia <= (s.master_part?.min_stock || 0)
+                                ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                : "text-emerald-400")}
+                          >
+                            {s.qty_tersedia} {s.master_part?.satuan || "PCS"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 5: STOCK OPNAME & ADJUSTMENT ? */}
+      {activeTab === "opname" && (
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Form Eksekusi Opname */}
+          <form
+            onSubmit={handleOpnameSubmit}
+            className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 md:p-5 space-y-4"
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                  <span className="text-amber-400">?</span> Form Penyesuaian Fisik vs Sistem (Stock Opname)
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Input kuantitas hasil cek fisik gudang untuk menyinkronkan saldo aktual & catat kartu stok penyesuaian
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Gudang</label>
+                <select
+                  value={opnameForm.warehouse_code}
+                  onChange={(e) => {
+                    setOpnameForm({ ...opnameForm, warehouse_code: e.target.value });
+                    if (opnameForm.part_number) handleOpnamePartChange(opnameForm.part_number);
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                >
+                  {warehouses.map((w) => (
+                    <option key={w.warehouse_code} value={w.warehouse_code}>
+                      {w.warehouse_code} - {w.nama_gudang}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="pt-3 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowCreateGRNModal(false)} className="px-4 py-2 bg-slate-100 rounded">Batal</button>
-                <button type="submit" disabled={loading} className="px-5 py-2 bg-amber-600 text-white font-bold rounded">Simpan Penerimaan (+Stok)</button>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Part Number</label>
+                <input
+                  type="text"
+                  placeholder="Ketik Part Number..."
+                  value={opnameForm.part_number}
+                  onChange={(e) => handleOpnamePartChange(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
+                  required
+                />
               </div>
-            </form>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Qty Fisik Aktual</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  min="0"
+                  value={opnameForm.qty_fisik}
+                  onChange={(e) => setOpnameForm({ ...opnameForm, qty_fisik: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500 font-bold"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Posisi Rak</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: A-01-02"
+                  value={opnameForm.rak_lokasi}
+                  onChange={(e) => setOpnameForm({ ...opnameForm, rak_lokasi: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            </div>
+
+            {/* Preview Selisih Box */}
+            {opnameForm.part_number && opnameCurrentStock !== null && (
+              <div className="p-3.5 bg-slate-950/70 rounded-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <span className="text-slate-500 block">Stok Sistem:</span>
+                    <span className="font-bold text-white text-sm">{opnameCurrentStock} PCS</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Fisik Diinput:</span>
+                    <span className="font-bold text-amber-300 text-sm">
+                      {opnameForm.qty_fisik !== "" ? opnameForm.qty_fisik : "-"} PCS
+                    </span>
+                  </div>
+                  {selisihOpname !== null && (
+                    <div>
+                      <span className="text-slate-500 block">Selisih:</span>
+                      <span
+                        className={"font-black text-sm px-2 py-0.5 rounded " +
+                          (selisihOpname === 0
+                            ? "bg-slate-800 text-slate-300"
+                            : selisihOpname > 0
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            : "bg-rose-500/20 text-rose-400 border border-rose-500/30")}
+                      >
+                        {selisihOpname > 0 ? "+" + selisihOpname : selisihOpname} PCS
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 md:max-w-xs">
+                  <input
+                    type="text"
+                    placeholder="Alasan penyesuaian..."
+                    value={opnameForm.keterangan}
+                    onChange={(e) => setOpnameForm({ ...opnameForm, keterangan: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submittingOpname}
+                  className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 disabled:opacity-50 transition-all shadow-md shadow-amber-500/20 shrink-0"
+                >
+                  {submittingOpname ? "Menyimpan..." : "Simpan Penyesuaian"}
+                </button>
+              </div>
+            )}
+          </form>
+
+          {/* Riwayat Stock Opname Table */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-300">Riwayat Penyesuaian Terakhir (Audit Trail)</h3>
+            {loading ? (
+              <div className="text-center py-8 text-slate-500 text-xs">Memuat history...</div>
+            ) : opnameHistory.length === 0 ? (
+              <div className="text-center py-8 bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-500 text-xs">
+                Belum ada riwayat stock opname / adjustment.
+              </div>
+            ) : (
+              <div className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                    <tr>
+                      <th className="p-3 font-medium">Tanggal</th>
+                      <th className="p-3 font-medium">No. Ref</th>
+                      <th className="p-3 font-medium">Part Number</th>
+                      <th className="p-3 font-medium">Gudang</th>
+                      <th className="p-3 font-medium text-right">Sebelum</th>
+                      <th className="p-3 font-medium text-right">Sesudah</th>
+                      <th className="p-3 font-medium text-right">Selisih</th>
+                      <th className="p-3 font-medium">Petugas & Catatan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {opnameHistory.map((h) => (
+                      <tr key={h.id} className="hover:bg-slate-800/40">
+                        <td className="p-3 text-slate-400">{new Date(h.created_at).toLocaleDateString("id-ID")}</td>
+                        <td className="p-3 font-mono font-semibold text-cyan-400">{h.reference_id}</td>
+                        <td className="p-3 font-mono font-bold text-amber-300">{h.part_number}</td>
+                        <td className="p-3 text-slate-300">{h.warehouse_code}</td>
+                        <td className="p-3 text-right text-slate-400">{h.qty_before}</td>
+                        <td className="p-3 text-right font-bold text-white">{h.qty_after}</td>
+                        <td className="p-3 text-right">
+                          <span
+                            className={"font-bold " +
+                              (h.qty_change > 0
+                                ? "text-emerald-400"
+                                : h.qty_change < 0
+                                ? "text-rose-400"
+                                : "text-slate-400")}
+                          >
+                            {h.qty_change > 0 ? "+" + h.qty_change : h.qty_change}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-300">
+                          <div>{h.actor_nama}</div>
+                          <div className="text-[10px] text-slate-500">{h.keterangan}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* MODAL TAMBAH VENDOR */}
-      {showAddVendorModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 space-y-4">
-            <h3 className="font-bold text-sm">Tambah Rekanan Vendor Baru</h3>
-            <form onSubmit={handleSaveVendor} className="space-y-3 text-xs">
-              <input type="text" required placeholder="Kode Vendor (misal: VND-002)" value={formDataVendor.vendor_code} onChange={(e) => setFormDataVendor({ ...formDataVendor, vendor_code: e.target.value })} className="w-full px-3 py-2 border rounded font-mono uppercase" />
-              <input type="text" required placeholder="Nama Perusahaan / Vendor" value={formDataVendor.nama_vendor} onChange={(e) => setFormDataVendor({ ...formDataVendor, nama_vendor: e.target.value })} className="w-full px-3 py-2 border rounded" />
-              <input type="text" placeholder="Kategori Suplai (misal: Ban Heavy Duty)" value={formDataVendor.kategori_suplai} onChange={(e) => setFormDataVendor({ ...formDataVendor, kategori_suplai: e.target.value })} className="w-full px-3 py-2 border rounded" />
-              <input type="text" placeholder="No. Telepon / WhatsApp" value={formDataVendor.no_telepon} onChange={(e) => setFormDataVendor({ ...formDataVendor, no_telepon: e.target.value })} className="w-full px-3 py-2 border rounded" />
-              <div className="pt-3 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowAddVendorModal(false)} className="px-4 py-2 bg-slate-100 rounded">Batal</button>
-                <button type="submit" disabled={loading} className="px-5 py-2 bg-indigo-600 text-white font-bold rounded">Simpan Rekanan</button>
+      {/* TAB 6: MASTER PART */}
+      {activeTab === "parts" && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          <input
+            type="text"
+            placeholder="Cari nomor part, nama, atau kategori..."
+            value={searchPart}
+            onChange={(e) => setSearchPart(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+          />
+
+          {loading ? (
+            <div className="text-center py-12 text-slate-500 text-xs">Memuat master part...</div>
+          ) : partsList.length === 0 ? (
+            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-500 text-xs">
+              Tidak ada part ditemukan.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {partsList.map((p) => (
+                <div key={p.part_number} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <span className="font-mono font-black text-amber-300 text-sm">{p.part_number}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold">
+                      {p.movement_category || "FAST"}
+                    </span>
+                  </div>
+                  <h3 className="text-xs font-bold text-white">{p.part_name}</h3>
+                  <div className="text-[11px] text-slate-400">
+                    <div>Kategori: {p.kategori || "-"} / {p.sub_kategori || "-"}</div>
+                    <div>Model: {p.model_kompatibel || "-"}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 7: IMPORT ACCURATE */}
+      {activeTab === "import" && (
+        <div className="max-w-4xl mx-auto bg-slate-900/80 rounded-2xl border border-slate-800 p-6 space-y-4 text-xs">
+          <h2 className="text-sm font-bold text-white">Import Excel Data Accurate</h2>
+          <p className="text-slate-400">
+            Upload file .xlsx export Accurate untuk sinkronisasi massal katalog master part dan saldo awal gudang.
+          </p>
+          <div className="p-8 border-2 border-dashed border-slate-800 rounded-2xl text-center space-y-2">
+            <p className="text-slate-400">Pilih file Excel Accurate (.xlsx)</p>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              className="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* TAB 8: GUDANG & VENDOR */}
+      {activeTab === "masters" && (
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <h2 className="text-sm font-bold text-white">Daftar Gudang Multi-Site</h2>
+            {warehouses.map((w) => (
+              <div key={w.warehouse_code} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4">
+                <span className="font-mono font-bold text-amber-300 text-xs">{w.warehouse_code}</span>
+                <h3 className="text-sm font-bold text-white">{w.nama_gudang}</h3>
+                <p className="text-xs text-slate-400 mt-1">Site: {w.site_code} • Lokasi: {w.lokasi_fisik || "-"}</p>
               </div>
-            </form>
+            ))}
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="text-sm font-bold text-white">Daftar Master Vendor</h2>
+            {vendors.map((v) => (
+              <div key={v.vendor_code} className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4">
+                <span className="font-mono font-bold text-cyan-300 text-xs">{v.vendor_code}</span>
+                <h3 className="text-sm font-bold text-white">{v.nama_vendor}</h3>
+                <p className="text-xs text-slate-400 mt-1">Kategori: {v.kategori_suplai || "-"} • PIC: {v.nama_pic || "-"}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }

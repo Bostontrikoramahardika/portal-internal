@@ -90,9 +90,8 @@ export async function POST(req: NextRequest) {
       jabatan || applicant.posisi_dilamar || "OPERATOR";
 
     // 3. Insert ke master tabel employees
-    const newEmployeeData: Record<string, any> = {
+    const newEmployeeData = {
       nrp: finalNrp,
-      nama_karyawan: namaKandidat,
       nama: namaKandidat,
       jabatan: posisiFinal,
       department: department,
@@ -103,7 +102,6 @@ export async function POST(req: NextRequest) {
       email: applicant.email || "",
       perusahaan: "PT. BOSTON PPA - MLP",
       is_active: true,
-      created_at: new Date().toISOString(),
     };
 
     const { error: insertKaryawanErr } = await supabaseAdmin
