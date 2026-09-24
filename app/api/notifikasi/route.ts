@@ -216,3 +216,45 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+// ═══════════════════════════════════════════════
+// 5. PATCH: TANDAI SUDAH DIBACA (MARK AS READ)
+// ═══════════════════════════════════════════════
+export async function PATCH(req: NextRequest) {
+  try {
+    const token = req.cookies.get('session_token')?.value
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getSession(token)
+    if (!session?.nrp) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const body = await req.json()
+    const { id, markAll } = body
+
+    if (markAll) {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('nrp', session.nrp)
+        .is('read_at', null)
+
+      if (error) throw error
+      return NextResponse.json({ success: true, marked: 'all' })
+    }
+
+    if (id) {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', id)
+        .eq('nrp', session.nrp)
+
+      if (error) throw error
+      return NextResponse.json({ success: true, marked: id })
+    }
+
+    return NextResponse.json({ error: 'Missing id or markAll' }, { status: 400 })
+  } catch (err: any) {
+    console.error('Notifikasi PATCH error:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
