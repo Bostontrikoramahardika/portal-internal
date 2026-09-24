@@ -36,13 +36,13 @@ export async function GET(req: NextRequest) {
 
     const nrps = [...new Set(rosters.map((r: any) => r.nrp))];
 
-    const { data: karyawan } = await supabaseAdmin
-      .from("karyawan")
-      .select("nrp, nama")
+    const { data: employees } = await supabaseAdmin
+      .from("employees")
+      .select("nrp, nama_karyawan, nama")
       .in("nrp", nrps);
 
     const karyawanMap = new Map(
-      (karyawan || []).map((k: any) => [k.nrp, k.nama])
+      (employees || []).map((k: any) => [k.nrp, k.nama_karyawan || k.nama || k.nrp])
     );
 
     const { data: subs } = await supabaseAdmin
@@ -123,13 +123,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       date: tomorrowStr,
-      total_roster: rosters.length,
       unique_employees: nrps.length,
       push_sent: sentCount,
       notifications_created: notifCount,
     });
   } catch (err: any) {
-    console.error("Cron reminder error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

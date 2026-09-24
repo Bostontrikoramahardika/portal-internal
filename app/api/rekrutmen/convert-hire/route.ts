@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     if (!finalNrp) {
       const yearPrefix = new Date().getFullYear().toString().slice(-2); // "26"
       const { data: existingKaryawan } = await supabaseAdmin
-        .from("karyawan")
+        .from("employees")
         .select("nrp")
         .ilike("nrp", yearPrefix + "%")
         .order("nrp", { ascending: false })
@@ -69,9 +69,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Cek duplikasi NRP di karyawan
+    // Cek duplikasi NRP di employees
     const { data: dupNrp } = await supabaseAdmin
-      .from("karyawan")
+      .from("employees")
       .select("nrp")
       .eq("nrp", finalNrp)
       .single();
@@ -85,13 +85,15 @@ export async function POST(req: NextRequest) {
 
     const tglMasuk =
       tanggal_masuk || new Date().toISOString().split("T")[0];
+    const namaKandidat = applicant.nama_lengkap || applicant.nama;
     const posisiFinal =
       jabatan || applicant.posisi_dilamar || "OPERATOR";
 
-    // 3. Insert ke master tabel karyawan
-    const newEmployeeData = {
+    // 3. Insert ke master tabel employees
+    const newEmployeeData: Record<string, any> = {
       nrp: finalNrp,
-      nama: applicant.nama_lengkap || applicant.nama,
+      nama_karyawan: namaKandidat,
+      nama: namaKandidat,
       jabatan: posisiFinal,
       department: department,
       site: site,
@@ -105,11 +107,11 @@ export async function POST(req: NextRequest) {
     };
 
     const { error: insertKaryawanErr } = await supabaseAdmin
-      .from("karyawan")
+      .from("employees")
       .insert(newEmployeeData);
 
     if (insertKaryawanErr) {
-      console.error("Gagal insert karyawan:", insertKaryawanErr);
+      console.error("Gagal insert employees:", insertKaryawanErr);
       return NextResponse.json(
         { error: "Gagal membuat data karyawan: " + insertKaryawanErr.message },
         { status: 500 }
@@ -149,10 +151,10 @@ export async function POST(req: NextRequest) {
       message: "Pelamar berhasil dikonversi menjadi Karyawan!",
       employee: {
         nrp: finalNrp,
-        nama: newEmployeeData.nama,
-        jabatan: newEmployeeData.jabatan,
-        site: newEmployeeData.site,
-        department: newEmployeeData.department,
+        nama: namaKandidat,
+        jabatan: posisiFinal,
+        site: site,
+        department: department,
       },
     });
   } catch (err: any) {
