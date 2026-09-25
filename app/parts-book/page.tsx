@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 import { useEffect, useState } from 'react'
 
 interface PartsBookItem {
@@ -110,6 +111,8 @@ export default function PartsBookPage() {
 
   return (
     <div style={{ padding: 24 }}>
+      <PageHeader title="Parts Book" backUrl="/dashboard" />
+
       <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 16 }}>
         Parts Book
       </h1>

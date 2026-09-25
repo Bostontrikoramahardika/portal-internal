@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 import { useEffect, useState } from 'react'
 
 export default function OfflinePage() {
@@ -54,6 +55,8 @@ export default function OfflinePage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center p-6">
+      <PageHeader title="Offline" backUrl="/dashboard" />
+
       <div className="max-w-sm w-full">
         <div className="bg-white rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,61,121,0.12)] text-center">
           

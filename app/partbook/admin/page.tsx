@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 import { useEffect, useState, useCallback } from 'react'
 
 // ============================================
@@ -93,6 +94,8 @@ export default function AdminPartbookPage() {
 
   return (
     <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-28 px-4 max-w-6xl mx-auto">
+      <PageHeader title="Partbook Admin Console" backUrl="/parts-catalog" badge="ADMIN" />
+
       {/* ============ HERO HEADER ============ */}
       <div className="relative mb-8 mt-4">
         <div className="bg-[#003D79] rounded-[2.5rem] p-8 pt-10 pb-16 shadow-2xl relative overflow-hidden">

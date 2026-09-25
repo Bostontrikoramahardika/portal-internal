@@ -1,462 +1,848 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-
-interface Employee {
-  nrp: string;
-  nama: string;
-  jabatan?: string;
-  departemen?: string;
-  site?: string;
-  unit?: string;
-  status?: string;
-  foto_url?: string;
-}
-
-interface SiteGroup {
-  site: string;
-  mechanics: Employee[];
-}
-
-interface PRItem {
-  id: string;
-  nama_barang: string;
-  part_number: string;
-  qty: number;
-  satuan: string;
-  status: string;
-  prioritas: string;
-  created_at: string;
-  created_by: string;
-  site: string;
-  vendor?: string;
-  harga_satuan?: number;
-}
-
-interface StockItem {
-  id: string;
-  part_number: string;
-  nama_barang: string;
-  qty: number;
-  satuan: string;
-  lokasi: string;
-  min_stock: number;
-}
+import PageHeader from "@/app/components/PageHeader";
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { 
+  Users, 
+  Wrench, 
+  Truck, 
+  FileSpreadsheet, 
+  Plus, 
+  Edit3, 
+  Search, 
+  Upload, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Trash2, 
+  Save, 
+  Sliders, 
+  ExternalLink,
+  Phone,
+  HardHat,
+  Package,
+  ClipboardList,
+  BookOpen,
+  FileText,
+  RefreshCw
+} from 'lucide-react';
 
 export default function PlantDashboardPage() {
-  const [activeSubTab, setActiveSubTab] = useState("kru");
+  const [activeTab, setActiveTab] = useState<'KRU_WORKSHOP' | 'KELOLA_UNIT' | 'FORMAT_INSPEKSI' | 'ADMIN_PARTBOOK'>('KRU_WORKSHOP');
+  const [siteFilter, setSiteFilter] = useState<string>('PPA-MLP');
+  
+  // === STATE DATA KRU & WORKSHOP ===
+  const [mechanics, setMechanics] = useState<any[]>([]);
+  const [loadingMechanics, setLoadingMechanics] = useState<boolean>(true);
 
-  // === KRU STATES ===
-  const [loading, setLoading] = useState(true);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [siteGroups, setSiteGroups] = useState<SiteGroup[]>([]);
-  const [selectedSite, setSelectedSite] = useState("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // === PARTBOOK STATES ===
-  const [pbLoading, setPbLoading] = useState(false);
-  const [pbTab, setPbTab] = useState("import");
-  const [csvText, setCsvText] = useState("");
-  const [importMsg, setImportMsg] = useState("");
-  const [approvedPRs, setApprovedPRs] = useState<PRItem[]>([]);
-  const [poVendor, setPoVendor] = useState("");
-  const [poHarga, setPoHarga] = useState("");
-  const [poSelectedPR, setPoSelectedPR] = useState("");
-  const [poMsg, setPoMsg] = useState("");
-  const [stockList, setStockList] = useState<StockItem[]>([]);
-
-  useEffect(function() { fetchPlantData(); }, []);
-  useEffect(function() {
-    if (activeSubTab === "partbook") {
-      fetchApprovedPRs();
-      fetchStockList();
+  const fetchMechanics = async () => {
+    try {
+      setLoadingMechanics(true);
+      const res = await fetch('/api/plant/kru?site=' + encodeURIComponent(siteFilter));
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setMechanics(json.data);
+      }
+    } catch (err) {
+      console.error('Error fetching real crew:', err);
+    } finally {
+      setLoadingMechanics(false);
     }
-  }, [activeSubTab]);
-
-  const fetchPlantData = async function() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/employees?departemen=plant");
-      const json = await res.json();
-      if (json.success && json.data) {
-        const filtered = json.data.filter(function(e: Employee) {
-          const d = (e.departemen || "").toLowerCase();
-          const isLog = d.includes("logistik") || d.includes("warehouse") || d.includes("gudang");
-          return (d.includes("plant") || d.includes("mekanik") || d.includes("mechanic") || d.includes("workshop") || d.includes("crew")) && !isLog;
-        });
-        setEmployees(filtered);
-        const groups: Record<string, Employee[]> = {};
-        filtered.forEach(function(e: Employee) {
-          const s = e.site || "MLP";
-          if (!groups[s]) groups[s] = [];
-          groups[s].push(e);
-        });
-        setSiteGroups(Object.keys(groups).map(function(k) { return { site: k, mechanics: groups[k] }; }));
-      }
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
   };
+  const [kruSearch, setKruSearch] = useState('');
 
-  const fetchApprovedPRs = async function() {
-    try {
-      const res = await fetch("/api/plant/logistik/pr?status=APPROVED");
-      const json = await res.json();
-      setApprovedPRs(json.data || []);
-    } catch (err) { console.error(err); }
-  };
-
-  const fetchStockList = async function() {
-    try {
-      const res = await fetch("/api/plant/logistik/stok");
-      const json = await res.json();
-      setStockList(json.data || []);
-    } catch (err) { console.error(err); }
-  };
-
-  const filteredEmployees = employees.filter(function(e) {
-    const ms = selectedSite === "ALL" || (e.site || "MLP") === selectedSite;
-    const mq = !searchQuery || (e.nama || "").toLowerCase().includes(searchQuery.toLowerCase()) || (e.nrp || "").includes(searchQuery) || (e.unit || "").toLowerCase().includes(searchQuery.toLowerCase());
-    return ms && mq;
+  // === STATE KELOLA UNIT & SN ===
+  const [units, setUnits] = useState<any[]>([]);
+  const [loadingUnits, setLoadingUnits] = useState<boolean>(true);
+  const [unitSearch, setUnitSearch] = useState<string>('');
+  const [showUnitModal, setShowUnitModal] = useState<boolean>(false);
+  const [editingUnit, setEditingUnit] = useState<any | null>(null);
+  const [formUnit, setFormUnit] = useState({
+    kode_unit: '',
+    nama_unit: '',
+    merk_model: '',
+    serial_number: '',
+    kategori: 'PC 200',
+    site: 'PPA-MLP',
+    status: 'RFU'
   });
-  const uniqueSites = Array.from(new Set(employees.map(function(e) { return e.site || "MLP"; })));
 
-  // === PARTBOOK FUNCTIONS ===
-  const handleImportCSV = async function() {
-    if (!csvText.trim()) { setImportMsg("Tempel data CSV dulu!"); return; }
-    setPbLoading(true);
-    setImportMsg("");
+  // === STATE FORMAT INSPEKSI ===
+  const [selectedKey, setSelectedKey] = useState<string>('Komatsu PC-200');
+  const [checklistItems, setChecklistItems] = useState<string[]>([
+    'Oli Mesin & Level Radiator Coolant',
+    'Kebocoran Oli Hidrolik & Hose Main Pump',
+    'Sistem Swing, Reduction Gear & Pinion',
+    'Track Link, Shoe, Roller, Idler & Sprocket',
+    'Boom, Arm, Bucket & Cylinder Pin',
+    'Sistem Kelistrikan, Lampu Kerja & Horn',
+    'Kabin Operator & System AC',
+    'Emergency Stop, Safety Belt & APAR'
+  ]);
+  const [newItemText, setNewItemText] = useState<string>('');
+  const [jsonImportText, setJsonImportText] = useState<string>('');
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+
+  // === STATE ADMIN PARTBOOK ===
+  const [partbookUploads, setPartbookUploads] = useState<any[]>([]);
+  const [loadingUploads, setLoadingUploads] = useState<boolean>(false);
+  const [uploadingPdf, setUploadingPdf] = useState<boolean>(false);
+  const [pbUnitModel, setPbUnitModel] = useState<string>('Komatsu PC-200');
+
+  // Fetch Units
+  const fetchUnits = async () => {
+    setLoadingUnits(true);
     try {
-      const lines = csvText.trim().split("\n");
-      const items = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(",");
-        if (cols.length >= 3) {
-          items.push({
-            part_number: cols[0].trim(),
-            nama_barang: cols[1].trim(),
-            satuan: cols[2].trim() || "PCS",
-            qty: parseInt(cols[3]) || 0,
-            min_stock: parseInt(cols[4]) || 5,
-            lokasi: cols[5] ? cols[5].trim() : "GUDANG-UTAMA"
-          });
-        }
-      }
-      let success = 0;
-      for (const item of items) {
-        const res = await fetch("/api/plant/logistik/stok", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(item)
-        });
-        if (res.ok) success++;
-      }
-      setImportMsg("Berhasil import " + success + " dari " + items.length + " item.");
-      setCsvText("");
-      fetchStockList();
-    } catch (err) { setImportMsg("Gagal: " + String(err)); }
-    finally { setPbLoading(false); }
+      const res = await fetch(`/api/units?site=${encodeURIComponent(siteFilter)}`);
+      const json = await res.json();
+      if (json.success) setUnits(json.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingUnits(false);
+    }
   };
 
-  const handleCreatePO = async function() {
-    if (!poSelectedPR || !poVendor || !poHarga) { setPoMsg("Lengkapi semua field!"); return; }
-    setPbLoading(true);
-    setPoMsg("");
+  useEffect(() => {
+    fetchUnits();
+    fetchMechanics();
+  }, [siteFilter]);
+
+  // Fetch Format Inspeksi
+  const fetchTemplate = async (key: string) => {
     try {
-      const res = await fetch("/api/plant/logistik/pr/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pr_id: poSelectedPR,
-          action: "CREATE_PO",
-          vendor: poVendor,
-          harga_satuan: parseFloat(poHarga)
-        })
+      const res = await fetch(`/api/plant/format-inspeksi?key=${encodeURIComponent(key)}`);
+      const json = await res.json();
+      if (json.success && Array.isArray(json.items) && json.items.length > 0) {
+        setChecklistItems(json.items);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'FORMAT_INSPEKSI') {
+      fetchTemplate(selectedKey);
+    }
+  }, [selectedKey, activeTab]);
+
+  // Fetch Partbook Uploads
+  const fetchPartbookUploads = async () => {
+    setLoadingUploads(true);
+    try {
+      const res = await fetch('/api/partbook/uploads');
+      if (res.ok) {
+        const json = await res.json();
+        setPartbookUploads(json.data || json || []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingUploads(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'ADMIN_PARTBOOK') {
+      fetchPartbookUploads();
+    }
+  }, [activeTab]);
+
+  // Handle Save / Edit Unit
+  const handleSaveUnit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const method = editingUnit ? 'PUT' : 'POST';
+      const payload = editingUnit ? { ...formUnit, id: editingUnit.id } : formUnit;
+
+      const res = await fetch('/api/units', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const json = await res.json();
+
+      if (res.ok && json.success) {
+        setShowUnitModal(false);
+        setEditingUnit(null);
+        setFormUnit({ kode_unit: '', nama_unit: '', merk_model: '', serial_number: '', kategori: 'PC 200', site: 'PPA-MLP', status: 'RFU' });
+        fetchUnits();
+        alert('Data unit berhasil disimpan!');
+      } else {
+        alert('Gagal menyimpan data unit: ' + (json.message || 'Error server'));
+      }
+    } catch (err: any) {
+      alert('Terjadi kesalahan jaringan: ' + err.message);
+    }
+  };
+
+  // Handle Save Template Format
+  const handleSaveTemplate = async () => {
+    try {
+      const res = await fetch('/api/plant/format-inspeksi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template_key: selectedKey, items: checklistItems })
       });
       const json = await res.json();
-      setPoMsg(json.message || json.error || "PO berhasil dibuat!");
-      setPoSelectedPR("");
-      setPoVendor("");
-      setPoHarga("");
-      fetchApprovedPRs();
-    } catch (err) { setPoMsg("Gagal: " + String(err)); }
-    finally { setPbLoading(false); }
+      if (json.success) {
+        setImportStatus(`Format inspeksi '${selectedKey}' berhasil disimpan!`);
+        setTimeout(() => setImportStatus(null), 3000);
+      }
+    } catch (e) {
+      alert('Gagal menyimpan format inspeksi.');
+    }
   };
 
-  const subTabs = [
-    { key: "kru", label: "Kru Mekanik", icon: "👷" },
-    { key: "unit", label: "Kelola Unit", icon: "🚜" },
-    { key: "partbook", label: "Admin Partbook", icon: "📖" }
-  ];
+  // Handle Process Import Text
+  const handleProcessImport = () => {
+    try {
+      if (!jsonImportText.trim()) return;
+      if (jsonImportText.trim().startsWith('[')) {
+        const parsed = JSON.parse(jsonImportText);
+        if (Array.isArray(parsed)) {
+          setChecklistItems(parsed.map((item: any) => typeof item === 'string' ? item : (item.item || item.nama || String(item))));
+          setImportStatus('Import JSON berhasil dimuat ke editor!');
+          return;
+        }
+      }
+      const lines = jsonImportText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      setChecklistItems(lines);
+      setImportStatus(`Berhasil meng-import ${lines.length} poin inspeksi!`);
+    } catch (err) {
+      alert('Format import tidak valid.');
+    }
+  };
+
+  // Handle Upload Partbook File
+  const handlePartbookPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingPdf(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('model_unit', pbUnitModel);
+
+    try {
+      const res = await fetch('/api/partbook/upload-file', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        alert('File Partbook berhasil di-upload! Engine parser sedang mengolah halaman partbook.');
+        fetchPartbookUploads();
+      } else {
+        alert('Gagal mengupload file partbook.');
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan saat mengupload partbook.');
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
+  const filteredKru = mechanics.filter(m => {
+    const q = kruSearch.toLowerCase();
+    const nama = (m.nama || m.name || '').toLowerCase();
+    const nrp = (m.nrp || '').toLowerCase();
+    const jabatan = (m.jabatan || m.role || '').toLowerCase();
+    const dept = (m.departemen || '').toLowerCase();
+    return nama.includes(q) || nrp.includes(q) || jabatan.includes(q) || dept.includes(q);
+  });
+
+  const filteredUnits = units.filter(u => 
+    u.kode_unit.toLowerCase().includes(unitSearch.toLowerCase()) ||
+    u.nama_unit.toLowerCase().includes(unitSearch.toLowerCase()) ||
+    u.model_unit.toLowerCase().includes(unitSearch.toLowerCase()) ||
+    u.serial_number.toLowerCase().includes(unitSearch.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-6 pb-28">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-6">
-        <div className="flex items-center gap-2 text-xs font-semibold mb-2">
-          <Link href="/dashboard" className="text-amber-500 hover:underline flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-            Menu Utama
-          </Link>
-          <span className="text-slate-600">/</span>
-          <span className="text-slate-300 font-bold">Plant & Workshop</span>
-        </div>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
-          <div>
-            <h1 className="text-2xl font-black text-slate-100 flex items-center gap-2.5 tracking-tight">
-              <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 01-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-              </div>
-              Kru & Workshop Plant
-            </h1>
-            <p className="text-xs text-slate-400 mt-1">PT. Boston PPA - MLP | Kelola kru, unit, dan administrasi partbook.</p>
+    <div className="min-h-screen bg-slate-100 p-2 sm:p-4 text-slate-800 pb-20">
+      <PageHeader title="Plant Dashboard & Operations" backUrl="/dashboard" badge="PLANT" />
+
+      <div className="max-w-5xl mx-auto space-y-3">
+        
+        {/* UNIFORM BLUE HEADER */}
+        <div className="bg-blue-600 rounded-xl p-3 sm:p-4 text-white shadow-md text-center space-y-1">
+          <h1 className="text-xl sm:text-2xl font-black tracking-wide uppercase">
+            KRU & WORKSHOP PLANT
+          </h1>
+          <p className="text-xs sm:text-sm font-semibold opacity-90">PT BOSTON TRIKORA MAHARDIKA SITE PPA-MLP</p>
+          <div className="inline-block bg-blue-700/80 text-blue-100 px-3 py-0.5 rounded-full text-xs font-medium">
+            Kru Plant, Kelola Unit/SN, Format Inspeksi & Admin Partbook Catalog
           </div>
-          <button onClick={fetchPlantData} disabled={loading} className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
-            <svg className={"w-3.5 h-3.5 " + (loading ? "animate-spin" : "")} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-            Refresh
+        </div>
+
+        {/* 4 TAB NAVIGATION */}
+        <div className="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200 text-xs sm:text-sm font-bold gap-1 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('KRU_WORKSHOP')}
+            className={`flex-1 py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'KRU_WORKSHOP' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <HardHat className="w-4 h-4" /> Kru Plant
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('KELOLA_UNIT')}
+            className={`flex-1 py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'KELOLA_UNIT' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <Truck className="w-4 h-4" /> Kelola Unit & SN ({units.length})
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('FORMAT_INSPEKSI')}
+            className={`flex-1 py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'FORMAT_INSPEKSI' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <FileSpreadsheet className="w-4 h-4" /> Import Format Inspeksi
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ADMIN_PARTBOOK')}
+            className={`flex-1 py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'ADMIN_PARTBOOK' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" /> Admin Partbook
           </button>
         </div>
-      </div>
 
-      {/* Sub-Tab Buttons */}
-      <div className="max-w-7xl mx-auto mb-6 flex gap-2 overflow-x-auto pb-2">
-        {subTabs.map(function(t) {
-          return (
-            <button key={t.key} onClick={function() { setActiveSubTab(t.key); }}
-              className={"px-4 py-2.5 rounded-xl text-xs font-black tracking-wide border-2 transition-all whitespace-nowrap flex items-center gap-1.5 " + (activeSubTab === t.key ? "bg-cyan-500 text-white border-cyan-500 shadow-lg shadow-cyan-500/20" : "bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-600")}>
-              <span>{t.icon}</span> {t.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ==================== TAB: KRU MEKANIK ==================== */}
-      {activeSubTab === "kru" && (
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-            <div>
-              <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                Katalog Mekanik & Crew Plant
-              </h2>
-              <p className="text-xs text-slate-400">Total {employees.length} personel terdaftar.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="text" placeholder="Cari nama, NRP, unit..." value={searchQuery}
-                onChange={function(e) { setSearchQuery(e.target.value); }}
-                className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:border-cyan-500 focus:outline-none w-52" />
-              <select value={selectedSite} onChange={function(e) { setSelectedSite(e.target.value); }}
-                className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 font-semibold focus:border-cyan-500 focus:outline-none">
-                <option value="ALL">Semua Site</option>
-                {uniqueSites.map(function(s) { return <option key={s} value={s}>Site {s}</option>; })}
-              </select>
-            </div>
-          </div>
-          {siteGroups.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
-              <button onClick={function() { setSelectedSite("ALL"); }}
-                className={"p-3 rounded-xl border text-center transition " + (selectedSite === "ALL" ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-300" : "bg-slate-900 border-slate-800 text-slate-400")}>
-                <div className="text-xl font-black">{employees.length}</div>
-                <div className="text-[10px] font-semibold uppercase tracking-wider">Total</div>
-              </button>
-              {siteGroups.map(function(g) {
-                return (
-                  <button key={g.site} onClick={function() { setSelectedSite(g.site); }}
-                    className={"p-3 rounded-xl border text-center transition " + (selectedSite === g.site ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-300" : "bg-slate-900 border-slate-800 text-slate-400")}>
-                    <div className="text-xl font-black">{g.mechanics.length}</div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider">Site {g.site}</div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto shadow-xl">
-            <table className="w-full text-left text-xs text-slate-300 min-w-[600px]">
-              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
-                <tr><th className="p-3">NRP</th><th className="p-3">Nama</th><th className="p-3">Jabatan</th><th className="p-3">Unit</th><th className="p-3">Site</th><th className="p-3">Status</th></tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {loading ? (
-                  <tr><td colSpan={6} className="p-8 text-center text-slate-500">Memuat data...</td></tr>
-                ) : filteredEmployees.length === 0 ? (
-                  <tr><td colSpan={6} className="p-8 text-center text-slate-500">Tidak ada data.</td></tr>
-                ) : filteredEmployees.map(function(emp) {
-                  return (
-                    <tr key={emp.nrp} className="hover:bg-slate-800/40 transition">
-                      <td className="p-3 font-mono font-bold text-amber-400">{emp.nrp}</td>
-                      <td className="p-3"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[10px] font-black shrink-0">{(emp.nama || "U").charAt(0).toUpperCase()}</div><span className="font-semibold text-slate-200">{emp.nama}</span></div></td>
-                      <td className="p-3 text-slate-400">{emp.jabatan || "Mekanik"}</td>
-                      <td className="p-3 font-mono text-cyan-300 font-semibold">{emp.unit || "-"}</td>
-                      <td className="p-3"><span className="px-2 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] font-bold">{emp.site || "MLP"}</span></td>
-                      <td className="p-3"><span className={"px-2 py-0.5 rounded text-[10px] font-bold " + ((emp.status || "aktif").toLowerCase() === "aktif" ? "bg-emerald-900/60 text-emerald-300 border border-emerald-800" : "bg-slate-800 text-slate-400")}>{(emp.status || "Aktif").toUpperCase()}</span></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ==================== TAB: KELOLA UNIT ==================== */}
-      {activeSubTab === "unit" && (
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
-            <span className="text-2xl">🚜</span> Kelola Unit & Alat Berat
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link href="/dashboard/kelola-unit" className="group bg-gradient-to-br from-cyan-500/10 to-slate-900 border border-cyan-500/30 hover:border-cyan-400/60 rounded-2xl p-6 transition-all shadow-lg hover:-translate-y-0.5">
-              <div className="p-3 bg-cyan-500/20 rounded-xl text-cyan-400 w-fit mb-3">
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-              </div>
-              <h3 className="text-base font-black text-cyan-300">Master Unit & Alat Berat</h3>
-              <p className="text-xs text-slate-400 mt-1">Registrasi unit baru, assignment mekanik, dan monitoring status operasional.</p>
-              <span className="inline-block mt-3 text-xs font-bold text-cyan-400 group-hover:underline">Buka Kelola Unit →</span>
-            </Link>
-            <Link href="/dashboard/setting-unit" className="group bg-gradient-to-br from-violet-500/10 to-slate-900 border border-violet-500/30 hover:border-violet-400/60 rounded-2xl p-6 transition-all shadow-lg hover:-translate-y-0.5">
-              <div className="p-3 bg-violet-500/20 rounded-xl text-violet-400 w-fit mb-3">
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
-              </div>
-              <h3 className="text-base font-black text-violet-300">Setting Unit per Shift</h3>
-              <p className="text-xs text-slate-400 mt-1">Atur penugasan unit berdasarkan shift operasional harian.</p>
-              <span className="inline-block mt-3 text-xs font-bold text-violet-400 group-hover:underline">Buka Setting →</span>
-            </Link>
+        {/* ================= TAB 1: KRU & WORKSHOP PLANT ================= */}
+        {activeTab === 'KRU_WORKSHOP' && (
+          <div className="space-y-3">
             
-          </div>
-        </div>
-      )}
-
-      {/* ==================== TAB: ADMIN PARTBOOK ==================== */}
-      {activeSubTab === "partbook" && (
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
-            <span className="text-2xl">📖</span> Admin Partbook
-          </h2>
-
-          {/* Partbook Sub-Tabs */}
-          <div className="flex gap-2 mb-5 overflow-x-auto pb-2">
-            {[{k:"import",l:"Import Partbook"},{k:"po",l:"Kelola Pemesanan (PO)"},{k:"stok",l:"Daftar Stok Part"}].map(function(t) {
-              return (
-                <button key={t.k} onClick={function() { setPbTab(t.k); }}
-                  className={"px-3 py-1.5 rounded-lg text-[11px] font-bold border transition whitespace-nowrap " + (pbTab === t.k ? "bg-amber-500 text-white border-amber-500" : "bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500")}>
-                  {t.l}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* --- Import Partbook --- */}
-          {pbTab === "import" && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-amber-300 mb-2">Import Data Partbook (CSV)</h3>
-              <p className="text-[11px] text-slate-400 mb-3">Format CSV: <code className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-300">part_number, nama_barang, satuan, qty, min_stock, lokasi</code></p>
-              <p className="text-[11px] text-slate-500 mb-3">Baris pertama adalah header (akan di-skip). Contoh:</p>
-              <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-[11px] text-slate-300 mb-4 overflow-x-auto">{"part_number,nama_barang,satuan,qty,min_stock,lokasi\nPN-001,Filter Oli,PCS,50,10,GUDANG-UTAMA\nPN-002,V-Belt Fan,PCS,20,5,GUDANG-UTAMA"}</pre>
-              <textarea value={csvText} onChange={function(e) { setCsvText(e.target.value); }}
-                placeholder="Tempel data CSV di sini..."
-                className="w-full h-40 bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 font-mono focus:border-amber-500 focus:outline-none resize-none mb-3" />
-              <div className="flex items-center gap-3">
-                <button onClick={handleImportCSV} disabled={pbLoading}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition disabled:opacity-50">
-                  {pbLoading ? "Memproses..." : "Import Data"}
-                </button>
-                {importMsg && <span className={"text-xs font-semibold " + (importMsg.includes("Berhasil") ? "text-emerald-400" : "text-rose-400")}>{importMsg}</span>}
+            {/* Shortcuts Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <Link href="/dashboard/plant/inspeksi" className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 transition-all flex items-center gap-2 font-bold text-slate-700">
+                <ClipboardList className="w-5 h-5 text-blue-600" />
+                <span>Form Inspeksi P2H</span>
+              </Link>
+              <Link href="/dashboard/plant/logistik" className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 transition-all flex items-center gap-2 font-bold text-slate-700">
+                <Package className="w-5 h-5 text-emerald-600" />
+                <span>Logistik & Part</span>
+              </Link>
+              <Link href="/partbook/admin" className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 transition-all flex items-center gap-2 font-bold text-slate-700">
+                <BookOpen className="w-5 h-5 text-indigo-600" />
+                <span>Admin Partbook Full</span>
+              </Link>
+              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2 font-bold text-slate-700">
+                <Users className="w-5 h-5 text-amber-600" />
+                <span>Kru: {mechanics.length} Personel</span>
               </div>
             </div>
-          )}
 
-          {/* --- Kelola Pemesanan PO --- */}
-          {pbTab === "po" && (
-            <div className="space-y-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-amber-300 mb-3">Buat Purchase Order (PO) dari PR yang Sudah Approved</h3>
-                <p className="text-[11px] text-slate-400 mb-4">Pilih PR yang sudah di-approve, lalu tentukan vendor dan harga pembelian.</p>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-                  <select value={poSelectedPR} onChange={function(e) { setPoSelectedPR(e.target.value); }}
-                    className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-amber-500 focus:outline-none">
-                    <option value="">-- Pilih PR --</option>
-                    {approvedPRs.map(function(pr) {
-                      return <option key={pr.id} value={pr.id}>{pr.part_number} - {pr.nama_barang} (Qty: {pr.qty})</option>;
-                    })}
-                  </select>
-                  <input type="text" placeholder="Nama Vendor" value={poVendor}
-                    onChange={function(e) { setPoVendor(e.target.value); }}
-                    className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-amber-500 focus:outline-none" />
-                  <input type="number" placeholder="Harga Satuan (Rp)" value={poHarga}
-                    onChange={function(e) { setPoHarga(e.target.value); }}
-                    className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-amber-500 focus:outline-none" />
-                  <button onClick={handleCreatePO} disabled={pbLoading}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-50">
-                    {pbLoading ? "Memproses..." : "Buat PO"}
+            {/* Action & Search Kru */}
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs sm:text-sm">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Cari Nama Mekanik, NRP, Role..."
+                  value={kruSearch}
+                  onChange={(e) => setKruSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                />
+              </div>
+
+              <button
+                onClick={() => alert('Fitur Tambah Personel disimulasikan.')}
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" /> Tambah Personel Kru
+              </button>
+            </div>
+
+            {/* List Mekanik Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+              {loadingMechanics ? (
+            <div className="col-span-1 md:col-span-2 text-center py-10 bg-white rounded-xl border border-slate-200 shadow-sm text-slate-500 font-medium">
+              <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-amber-500" />
+              Memuat data personel Plant dari database...
+            </div>
+          ) : filteredKru.length === 0 ? (
+            <div className="col-span-1 md:col-span-2 text-center py-10 bg-white rounded-xl border border-slate-200 shadow-sm text-slate-500 font-medium">
+              Belum ada personel Plant terdaftar untuk site ini di database.
+            </div>
+          ) : (
+            filteredKru.map((m) => {
+              const displayName = m.nama || m.name || 'Personel Plant';
+              const displayNrp = m.nrp || '-';
+              const displayRole = m.jabatan || m.role || 'Plant Crew';
+              const displayDept = m.departemen || 'Plant';
+              const displaySite = m.site || siteFilter;
+              const displayPhone = m.no_hp || m.phone || '';
+              const displayStatus = m.status_karyawan || m.status || 'AKTIF';
+
+              return (
+                <div key={m.id || displayNrp} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base">{displayName}</h3>
+                      <p className="text-xs text-amber-600 font-semibold">{displayRole}</p>
+                    </div>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      {displayStatus}
+                    </span>
+                  </div>
+                  
+                  <div className="text-xs text-slate-500 space-y-1 mt-3 pt-2 border-t border-slate-100">
+                    <p className="flex justify-between">
+                      <span>NRP:</span>
+                      <strong className="font-mono text-slate-700">{displayNrp}</strong>
+                    </p>
+                    <p className="flex justify-between">
+                      <span>Departemen / Site:</span>
+                      <strong className="text-slate-700">{displayDept} ({displaySite})</strong>
+                    </p>
+                    {displayPhone && (
+                      <p className="flex justify-between text-blue-600">
+                        <span>Kontak HP:</span>
+                        <a href={"tel:" + displayPhone} className="hover:underline font-medium">📞 {displayPhone}</a>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+            </div>
+
+          </div>
+        )}
+
+        {/* ================= TAB 2: KELOLA UNIT & SN ================= */}
+        {activeTab === 'KELOLA_UNIT' && (
+          <div className="space-y-3">
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs sm:text-sm">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Cari Kode Unit, SN, Model..."
+                  value={unitSearch}
+                  onChange={(e) => setUnitSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                />
+              </div>
+
+              <button
+                onClick={() => {
+                  setEditingUnit(null);
+                  setFormUnit({ kode_unit: '', nama_unit: '', merk_model: '', serial_number: '', kategori: 'PC 200', site: 'PPA-MLP', status: 'RFU' });
+                  setShowUnitModal(true);
+                }}
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" /> Tambah Unit Baru
+              </button>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              {loadingUnits ? (
+                <p className="p-8 text-center text-xs text-slate-400">Memuat data unit site...</p>
+              ) : filteredUnits.length === 0 ? (
+                <p className="p-8 text-center text-xs text-slate-400">Tidak ada unit ditemukan.</p>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {filteredUnits.map((u) => (
+                    <div key={u.id} className="p-3 hover:bg-slate-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-slate-800 text-sm sm:text-base">{u.kode_unit}</span>
+                          <span className="text-slate-500 font-medium">({u.nama_unit})</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
+                            u.status === 'RFU' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {u.status}
+                          </span>
+                        </div>
+                        <div className="text-slate-500 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                          <span>Model: <strong className="text-slate-700">{u.model_unit}</strong></span>
+                          <span>SN: <strong className="text-blue-700">{u.serial_number}</strong></span>
+                          <span>Site: <strong className="text-slate-700">{u.site}</strong></span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setEditingUnit(u);
+                          setFormUnit({
+                            kode_unit: u.kode_unit,
+                            nama_unit: u.nama_unit,
+                            merk_model: u.model_unit,
+                            serial_number: u.serial_number,
+                            kategori: u.kategori || 'PC 200',
+                            site: u.site || 'PPA-MLP',
+                            status: u.status || 'RFU'
+                          });
+                          setShowUnitModal(true);
+                        }}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 self-end sm:self-center"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" /> Edit / SN
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ================= TAB 3: IMPORT FORMAT INSPEKSI ================= */}
+        {activeTab === 'FORMAT_INSPEKSI' && (
+          <div className="space-y-3 text-xs sm:text-sm">
+            {importStatus && (
+              <div className="bg-emerald-500 text-white p-3 rounded-lg shadow font-medium text-xs flex items-center justify-between">
+                <span>{importStatus}</span>
+                <button onClick={() => setImportStatus(null)}>?</button>
+              </div>
+            )}
+
+            <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
+                <div>
+                  <h2 className="font-bold text-slate-800 text-sm sm:text-base uppercase flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-blue-600" />
+                    Pilih Target Model Unit / Attachment
+                  </h2>
+                  <p className="text-[11px] text-slate-500">Pilih model unit yang akan disetting item format inspeksi P2H nya</p>
+                </div>
+
+                <select
+                  value={selectedKey}
+                  onChange={(e) => setSelectedKey(e.target.value)}
+                  className="p-2 border border-blue-300 rounded-lg font-bold text-blue-900 bg-blue-50 focus:ring-2 focus:ring-blue-500"
+                >
+                  <optgroup label="Model Unit Site">
+                    <option value="Komatsu PC-200">Komatsu PC-200 (Excavator)</option>
+                    <option value="Komatsu PC-300">Komatsu PC-300 (Excavator)</option>
+                    <option value="CAT 320 GX">CAT 320 GX (Excavator)</option>
+                    <option value="Komatsu D85ESS-2">Komatsu D85ESS-2 (Bulldozer)</option>
+                    <option value="Komatsu GD655-5">Komatsu GD655-5 (Motor Grader)</option>
+                    <option value="Scania P360">Scania P360 (Dump Truck)</option>
+                    <option value="GENERAL">General Unit Default</option>
+                  </optgroup>
+                  <optgroup label="Attachment">
+                    <option value="BREAKER">Attachment: Hydraulic Breaker</option>
+                    <option value="BUCKET">Attachment: Bucket Unit</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                <label className="font-bold text-slate-700 flex items-center justify-between">
+                  <span>Import Format dari File / Teks (Baris demi Baris / JSON)</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Pisahkan dengan Enter per poin inspeksi</span>
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder={`Contoh Teks Import:\nOli Mesin & Kebocoran\nAir Radiator & Undercooling\nTrack Link & Sprocket\nLampu & Klakson`}
+                  value={jsonImportText}
+                  onChange={(e) => setJsonImportText(e.target.value)}
+                  className="w-full p-2 border border-slate-300 rounded-lg bg-white font-mono text-xs"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleProcessImport}
+                    className="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs"
+                  >
+                    <Upload className="w-3.5 h-3.5" /> Proses Import ke Editor
                   </button>
                 </div>
-                {poMsg && <p className={"text-xs font-semibold " + (poMsg.includes("berhasil") ? "text-emerald-400" : "text-rose-400")}>{poMsg}</p>}
               </div>
 
-              {/* List PR Approved */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto">
-                <div className="p-4 border-b border-slate-800">
-                  <h3 className="text-sm font-bold text-slate-200">Daftar PR Menunggu PO ({approvedPRs.length})</h3>
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-slate-800">Daftar Poin Checklist ({checklistItems.length} Poin)</h3>
+                  <button
+                    type="button"
+                    onClick={handleSaveTemplate}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow"
+                  >
+                    <Save className="w-4 h-4" /> Simpan Format Inspeksi Ini
+                  </button>
                 </div>
-                <table className="w-full text-left text-xs text-slate-300 min-w-[600px]">
-                  <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
-                    <tr><th className="p-3">Part Number</th><th className="p-3">Nama Barang</th><th className="p-3">Qty</th><th className="p-3">Prioritas</th><th className="p-3">Site</th><th className="p-3">Status</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {approvedPRs.length === 0 ? (
-                      <tr><td colSpan={6} className="p-6 text-center text-slate-500">Tidak ada PR yang menunggu PO.</td></tr>
-                    ) : approvedPRs.map(function(pr) {
-                      return (
-                        <tr key={pr.id} className="hover:bg-slate-800/40">
-                          <td className="p-3 font-mono font-bold text-amber-400">{pr.part_number}</td>
-                          <td className="p-3 font-semibold text-slate-200">{pr.nama_barang}</td>
-                          <td className="p-3">{pr.qty} {pr.satuan}</td>
-                          <td className="p-3"><span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (pr.prioritas === "EMERGENCY" ? "bg-rose-900/60 text-rose-300" : pr.prioritas === "URGENT" ? "bg-amber-900/60 text-amber-300" : "bg-slate-800 text-slate-300")}>{pr.prioritas}</span></td>
-                          <td className="p-3">{pr.site}</td>
-                          <td className="p-3"><span className="px-2 py-0.5 bg-emerald-900/60 text-emerald-300 rounded text-[10px] font-bold">{pr.status}</span></td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
 
-          {/* --- Daftar Stok Part --- */}
-          {pbTab === "stok" && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto">
-              <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-200">Daftar Stok Partbook ({stockList.length} item)</h3>
-                <button onClick={fetchStockList} className="text-xs text-amber-400 hover:underline font-semibold">Refresh</button>
+                <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                  {checklistItems.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-1.5 border border-slate-200 rounded-lg bg-white">
+                      <span className="w-6 text-center text-xs font-bold text-slate-400">{idx + 1}.</span>
+                      <input
+                        type="text"
+                        value={item}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setChecklistItems(prev => prev.map((it, i) => i === idx ? val : it));
+                        }}
+                        className="flex-1 p-1 border border-slate-200 rounded text-xs focus:ring-1 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setChecklistItems(prev => prev.filter((_, i) => i !== idx))}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <input
+                    type="text"
+                    placeholder="+ Tambah Poin Inspeksi Baru"
+                    value={newItemText}
+                    onChange={(e) => setNewItemText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newItemText.trim()) {
+                        e.preventDefault();
+                        setChecklistItems(prev => [...prev, newItemText.trim()]);
+                        setNewItemText('');
+                      }
+                    }}
+                    className="flex-1 p-2 border border-slate-300 rounded-lg text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newItemText.trim()) {
+                        setChecklistItems(prev => [...prev, newItemText.trim()]);
+                        setNewItemText('');
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" /> Tambah
+                  </button>
+                </div>
               </div>
-              <table className="w-full text-left text-xs text-slate-300 min-w-[600px]">
-                <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
-                  <tr><th className="p-3">Part Number</th><th className="p-3">Nama Barang</th><th className="p-3">Qty</th><th className="p-3">Satuan</th><th className="p-3">Min Stock</th><th className="p-3">Lokasi</th><th className="p-3">Status</th></tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {stockList.length === 0 ? (
-                    <tr><td colSpan={7} className="p-6 text-center text-slate-500">Belum ada data stok. Import partbook terlebih dahulu.</td></tr>
-                  ) : stockList.map(function(s) {
-                    const isLow = s.qty <= s.min_stock;
-                    return (
-                      <tr key={s.id} className={"hover:bg-slate-800/40 " + (isLow ? "bg-rose-950/20" : "")}>
-                        <td className="p-3 font-mono font-bold text-amber-400">{s.part_number}</td>
-                        <td className="p-3 font-semibold text-slate-200">{s.nama_barang}</td>
-                        <td className="p-3 font-bold">{s.qty}</td>
-                        <td className="p-3 text-slate-400">{s.satuan}</td>
-                        <td className="p-3 text-slate-400">{s.min_stock}</td>
-                        <td className="p-3"><span className="px-2 py-0.5 bg-slate-800 rounded text-[10px] font-bold">{s.lokasi}</span></td>
-                        <td className="p-3"><span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (isLow ? "bg-rose-900/60 text-rose-300 border border-rose-800" : "bg-emerald-900/60 text-emerald-300")}>{isLow ? "MIN STOCK!" : "AMAN"}</span></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+
+        {/* ================= TAB 4: ADMIN PARTBOOK CATALOG ================= */}
+        {activeTab === 'ADMIN_PARTBOOK' && (
+          <div className="space-y-3 text-xs sm:text-sm">
+            
+            {/* Header Box & Direct Link */}
+            <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+              <div>
+                <h2 className="font-bold text-slate-800 text-sm sm:text-base uppercase flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-indigo-600" />
+                  Admin Upload Catalog Partbook
+                </h2>
+                <p className="text-[11px] text-slate-500">Upload PDF Partbook unit untuk membaca sparepart number & diagram assembly</p>
+              </div>
+
+              <Link
+                href="/partbook/admin"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 rounded-lg flex items-center gap-1.5 shadow text-xs whitespace-nowrap"
+              >
+                <span>Buka Full Admin Partbook</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            {/* Upload PDF Box */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Target Model Unit Partbook</label>
+                  <select
+                    value={pbUnitModel}
+                    onChange={(e) => setPbUnitModel(e.target.value)}
+                    className="w-full p-2 border border-slate-300 rounded-lg font-bold text-slate-800 bg-white"
+                  >
+                    <option value="Komatsu PC-200">Komatsu PC-200 (Excavator)</option>
+                    <option value="Komatsu PC-300">Komatsu PC-300 (Excavator)</option>
+                    <option value="CAT 320 GX">CAT 320 GX (Excavator)</option>
+                    <option value="Komatsu D85ESS-2">Komatsu D85ESS-2 (Bulldozer)</option>
+                    <option value="Komatsu GD655-5">Komatsu GD655-5 (Motor Grader)</option>
+                    <option value="Scania P360">Scania P360 (Dump Truck)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Pilih File Buku Catalog PDF / ZIP</label>
+                  <label className="cursor-pointer bg-blue-50 border-2 border-dashed border-blue-300 hover:bg-blue-100 p-2 rounded-lg flex items-center justify-center gap-2 text-blue-800 font-bold transition-all text-xs">
+                    <Upload className="w-4 h-4 text-blue-600" />
+                    <span>{uploadingPdf ? 'Mengupload PDF...' : 'Pilih PDF Catalog Unit'}</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.zip,.rar"
+                      onChange={handlePartbookPdfUpload}
+                      disabled={uploadingPdf}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* List Riwayat Upload Partbook */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="p-3 border-b border-slate-100 flex justify-between items-center">
+                <h3 className="font-bold text-slate-800">Daftar File Catalog Partbook Ter-upload</h3>
+                <button
+                  onClick={fetchPartbookUploads}
+                  className="text-slate-500 hover:text-blue-600 flex items-center gap-1 text-xs"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Refresh
+                </button>
+              </div>
+
+              {loadingUploads ? (
+                <p className="p-8 text-center text-xs text-slate-400">Memuat berkas partbook...</p>
+              ) : partbookUploads.length === 0 ? (
+                <div className="p-8 text-center space-y-1">
+                  <FileText className="w-8 h-8 text-slate-300 mx-auto" />
+                  <p className="text-xs text-slate-500 font-medium">Belum ada file partbook yang diupload.</p>
+                  <p className="text-[11px] text-slate-400">Gunakan form di atas untuk memasukkan catalog PDF baru.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {partbookUploads.map((pb) => (
+                    <div key={pb.id} className="p-3 flex items-center justify-between text-xs sm:text-sm hover:bg-slate-50">
+                      <div className="space-y-0.5">
+                        <p className="font-bold text-slate-800">{pb.file_name || pb.filename || 'Catalog Partbook PDF'}</p>
+                        <p className="text-slate-500 text-xs">Model: <span className="font-semibold text-blue-700">{pb.model_unit || pb.model || 'General'}</span></p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                          PROCESSED
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* MODAL INPUT / EDIT UNIT & SN */}
+        {showUnitModal && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-200">
+              <div className="bg-blue-600 p-3 text-white font-bold flex justify-between items-center text-sm sm:text-base">
+                <span>{editingUnit ? `Edit Unit: ${editingUnit.kode_unit}` : 'Tambah Unit Baru'}</span>
+                <button onClick={() => setShowUnitModal(false)} className="text-white hover:opacity-80 font-bold">?</button>
+              </div>
+
+              <form onSubmit={handleSaveUnit} className="p-4 space-y-3 text-xs sm:text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">Kode Unit *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: E201"
+                      value={formUnit.kode_unit}
+                      onChange={(e) => setFormUnit({ ...formUnit, kode_unit: e.target.value })}
+                      className="w-full p-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">Nama Unit *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: E 201 B"
+                      value={formUnit.nama_unit}
+                      onChange={(e) => setFormUnit({ ...formUnit, nama_unit: e.target.value })}
+                      className="w-full p-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">Merk / Model Unit *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Komatsu PC-200"
+                      value={formUnit.merk_model}
+                      onChange={(e) => setFormUnit({ ...formUnit, merk_model: e.target.value })}
+                      className="w-full p-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-blue-700">Serial Number (SN) Unit *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: SN-884920"
+                      value={formUnit.serial_number}
+                      onChange={(e) => setFormUnit({ ...formUnit, serial_number: e.target.value })}
+                      className="w-full p-2 border border-blue-300 rounded-lg bg-blue-50/50 font-bold text-blue-900"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">Site *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formUnit.site}
+                      onChange={(e) => setFormUnit({ ...formUnit, site: e.target.value })}
+                      className="w-full p-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">Status Unit *</label>
+                    <select
+                      value={formUnit.status}
+                      onChange={(e) => setFormUnit({ ...formUnit, status: e.target.value })}
+                      className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                    >
+                      <option value="RFU">RFU (Ready For Use)</option>
+                      <option value="BREAKDOWN">BD (Breakdown)</option>
+                      <option value="STANDBY">Standby</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowUnitModal(false)}
+                    className="px-4 py-2 border border-slate-300 rounded-lg text-slate-600 font-semibold"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold"
+                  >
+                    Simpan Unit
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }

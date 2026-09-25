@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 // ═══════════════════════════════════════════════════════════════════════════
 // KELOLA EVENT v2.0 - Chat 35
 // 4 TAB: QR Lokasi | Event/Acara | Master Perusahaan | Histori
@@ -39,6 +40,8 @@ export default function KelolaEventPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] pb-24">
+      <PageHeader title="Kelola Event" backUrl="/dashboard/kelola-event" />
+
       {/* HEADER */}
       <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center gap-3">

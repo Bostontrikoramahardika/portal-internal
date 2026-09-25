@@ -1,5 +1,6 @@
-"use client";
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
@@ -174,6 +175,8 @@ export default function HRRekrutmenPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 pb-28">
+      <PageHeader title="Rekrutmen" backUrl="/dashboard" />
+
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

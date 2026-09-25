@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 import { useState } from 'react'
 
 export default function PreviewPage() {
@@ -87,7 +88,9 @@ export default function PreviewPage() {
         .preview-badge { background: #fbbf24; color: #78350f; padding: 4px 8px; text-align: center; font-size: 11px; font-weight: 700; }
       `}</style>
 
-      <div className="preview-badge">🎨 MODE PREVIEW — Contoh Tampilan Compact (bukan halaman asli)</div>
+      <div className="preview-badge">
+      <PageHeader title="Preview" backUrl="/dashboard" />
+🎨 MODE PREVIEW — Contoh Tampilan Compact (bukan halaman asli)</div>
 
       <div className="switcher">
         <button className={page === 'kpi' ? 'active' : ''} onClick={() => setPage('kpi')}>KPI</button>

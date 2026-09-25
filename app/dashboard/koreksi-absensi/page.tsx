@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/koreksi-absensi/page.tsx — v2.0 (Revisi Waktu Absensi + Pilih Approver)
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -248,6 +249,8 @@ export default function KoreksiAbsensiPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] pb-24">
+      <PageHeader title="Koreksi Absensi" backUrl="/dashboard" />
+
       {/* HERO */}
       <div className="bg-[#003D79] px-5 pt-8 pb-16 rounded-b-[2.5rem] shadow-2xl">
         <div className="flex items-center gap-3 mb-4">

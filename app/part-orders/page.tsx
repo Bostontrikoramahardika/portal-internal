@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 import { useEffect, useState } from 'react'
 
 interface Order {
@@ -127,6 +128,8 @@ export default function PartOrdersPage() {
 
   return (
     <div className="min-h-[calc(100vh-100px)] bg-slate-50 flex flex-col">
+      <PageHeader title="Part Orders" backUrl="/dashboard" />
+
       {/* HEADER */}
       <div className="bg-white border-b px-3 py-2 flex flex-wrap items-center gap-2 sticky top-0 z-30">
         <h1 className="text-base md:text-lg font-black text-[#003D79] whitespace-nowrap">📋 Part Orders</h1>

@@ -1,4 +1,6 @@
-'use client'
+'use client';
+
+import PageHeader from "@/app/components/PageHeader";
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -145,6 +147,8 @@ export default function RekapAbsensiPage() {
   // ── RENDER ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f4f7fa] pb-16">
+      <PageHeader title="Rekap Absensi" backUrl="/dashboard" />
+
 
       {/* HERO */}
       <div className="bg-[#003D79] px-4 pt-12 pb-24 relative overflow-hidden">

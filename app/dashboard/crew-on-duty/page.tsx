@@ -1,7 +1,9 @@
+'use client';
+
+import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/crew-on-duty/page.tsx
 // Chat 30 - Crew On Duty Plant (patokan dari attendance)
 
-'use client'
 
 import { useEffect, useState, useRef } from 'react'
 import html2canvas from 'html2canvas-pro'
@@ -152,6 +154,8 @@ export default function CrewOnDutyPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
+      <PageHeader title="Crew On Duty" backUrl="/dashboard" />
+
       
       {/* HEADER */}
       <div className="bg-[#003D79] text-white p-4 lg:p-6 shadow-lg">

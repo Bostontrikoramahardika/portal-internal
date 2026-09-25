@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import SignatureCanvas from 'react-signature-canvas'
@@ -47,6 +48,8 @@ export default function ScanPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#003D79] to-[#0056b3] flex items-center justify-center p-4">
+      <PageHeader title="[qr_token]" backUrl="/dashboard" />
+
         <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-[#003D79] mb-3"></div>
           <p className="text-sm font-bold text-slate-600">Memuat info meeting...</p>

@@ -1,6 +1,8 @@
+'use client';
+
+import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/apd-saya/page.tsx
 // v1.3 — Halaman APD Saya + Tombol Request + Modal Form + Section Pending/Rejected
-'use client'
 
 import { useEffect, useState } from 'react'
 
@@ -150,6 +152,8 @@ export default function ApdSayaPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center p-6">
+      <PageHeader title="Apd Saya" backUrl="/dashboard" />
+
         <div className="text-center">
           <div className="text-4xl mb-4 animate-pulse">🦺</div>
           <div className="text-sm text-slate-500 font-medium">Memuat data APD...</div>

@@ -1,9 +1,11 @@
+'use client';
+
+import PageHeader from "@/app/components/PageHeader";
 // app/test-gdrive/page.tsx
 // Halaman test upload/list/delete Google Drive
 // URL: /test-gdrive
 // v1.0 - Chat 5
 
-'use client';
 import { useState, useEffect } from 'react';
 
 interface DriveFile {
@@ -101,6 +103,8 @@ export default function TestGDrivePage() {
 
   return (
     <div className="p-4 max-w-5xl mx-auto">
+      <PageHeader title="Test Gdrive" backUrl="/dashboard" />
+
       <h1 className="text-lg font-bold mb-3">🧪 Test Google Drive Integration</h1>
 
       {/* Upload Section */}

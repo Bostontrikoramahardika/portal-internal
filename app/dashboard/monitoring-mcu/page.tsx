@@ -1,7 +1,9 @@
+'use client';
+
+import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/monitoring-mcu/page.tsx
 // Smart Table MCU — Merge List + Matrix (Chat 21)
 // Design: BTM Luxury Mobile v1.0
-'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -128,7 +130,9 @@ function getHasilConfig(hasil: string | null) {
 function McuCell({ col }: { col: McuColumn }) {
   if (!col.tanggal) {
     return (
-      <div className="text-center text-slate-300 text-[10px]">—</div>
+      <div className="text-center text-slate-300 text-[10px]">
+      <PageHeader title="Monitoring Mcu" backUrl="/dashboard/monitoring-mcu" />
+—</div>
     )
   }
   return (

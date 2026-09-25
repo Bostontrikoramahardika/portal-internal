@@ -1,4 +1,6 @@
-'use client'
+'use client';
+
+import PageHeader from "@/app/components/PageHeader";
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -220,6 +222,8 @@ function KelolaUnitContent() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] pb-24">
+      <PageHeader title="Kelola Unit" backUrl="/dashboard" />
+
       {/* HERO */}
       <div className="bg-[#003D79] px-4 pt-12 pb-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none"

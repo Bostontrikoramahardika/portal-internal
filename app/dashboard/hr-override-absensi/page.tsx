@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
@@ -98,6 +99,8 @@ export default function HrOverrideAbsensiPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] pb-24">
+      <PageHeader title="Hr Override Absensi" backUrl="/dashboard" />
+
       <div className="bg-gradient-to-br from-purple-700 to-purple-900 px-5 pt-8 pb-16 rounded-b-[2.5rem] shadow-2xl">
         <div className="flex items-center gap-3 mb-4">
           <Link

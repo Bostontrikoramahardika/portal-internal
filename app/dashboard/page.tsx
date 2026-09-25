@@ -1,5 +1,6 @@
-﻿'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/app/lib/AuthContext'
@@ -31,6 +32,8 @@ function DashboardView({ title, data }: any) {
 
   return (
     <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-28">
+      <PageHeader title="Dashboard Central" backUrl="/dashboard" />
+
       <div className="relative mb-12">
         <div className="bg-[#003D79] rounded-[2.5rem] p-8 pt-10 pb-24 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>

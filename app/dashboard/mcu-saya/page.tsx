@@ -1,6 +1,8 @@
+'use client';
+
+import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/mcu-saya/page.tsx v2.0
 // Fix: tambah section Download Surat Rujukan per temuan (Karyawan)
-'use client'
 import { useState, useEffect } from 'react'
 import {
   HeartPulse, FileText, Upload, CheckCircle,
@@ -65,6 +67,8 @@ function RujukanCard({ finding }: { finding: Finding }) {
   if (hasRujukan) {
     return (
       <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 mb-2">
+      <PageHeader title="Mcu Saya" backUrl="/dashboard" />
+
         <div className="flex items-center gap-2 mb-2">
           <Download className="w-4 h-4 text-blue-600" />
           <span className="text-[9px] font-black uppercase tracking-widest text-blue-600">

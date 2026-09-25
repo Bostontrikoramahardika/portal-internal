@@ -1,4 +1,6 @@
-'use client'
+'use client';
+
+import PageHeader from "@/app/components/PageHeader";
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -417,6 +419,8 @@ export default function ImportRosterPage() {
   // ═══════════════════════════════════════
   return (
     <div className="min-h-screen bg-[#f4f7fa] pb-24">
+      <PageHeader title="Import Roster" backUrl="/dashboard" />
+
 
       {/* HERO */}
       <div className="bg-[#003D79] px-4 pt-12 pb-20 relative overflow-hidden">

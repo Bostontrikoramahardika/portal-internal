@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 // ═══════════════════════════════════════════════════════════════════════════
 // SCAN QR PAGE v1.0
 // Halaman scanner QR standalone — semua role bisa akses
@@ -154,6 +155,8 @@ export default function ScanQRPage() {
   // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f4f7fa] pb-24">
+      <PageHeader title="Scan Qr" backUrl="/dashboard" />
+
 
       {/* HEADER */}
       <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-4 pb-6 rounded-b-3xl shadow-lg">

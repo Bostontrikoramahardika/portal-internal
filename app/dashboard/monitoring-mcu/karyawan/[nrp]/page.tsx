@@ -1,5 +1,7 @@
+'use client';
+
+import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/monitoring-mcu/karyawan/[nrp]/page.tsx
-'use client'
 import { useState, useEffect, useCallback, use } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -101,6 +103,8 @@ export default function KaryawanMcuTimelinePage({ params }: { params: Promise<{ 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center">
+      <PageHeader title="[nrp]" backUrl="/dashboard/monitoring-mcu" />
+
         <Loader2 className="w-8 h-8 animate-spin text-[#003D79]" />
       </div>
     )

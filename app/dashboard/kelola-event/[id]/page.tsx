@@ -1,5 +1,6 @@
-'use client'
+'use client';
 
+import PageHeader from "@/app/components/PageHeader";
 // ═══════════════════════════════════════════════════════════════════════════
 // DETAIL EVENT v2.0
 // Halaman detail event: info + list peserta + TTD viewer + MoM
@@ -269,6 +270,8 @@ export default function DetailEventPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center">
+      <PageHeader title="[id]" backUrl="/dashboard/kelola-event" />
+
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-[#003D79] mb-2"></div>
           <p className="text-sm font-semibold text-slate-500">Memuat detail event...</p>
