@@ -1,4 +1,6 @@
-"use client";
+﻿const fs = require('fs');
+
+const code = `"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -127,7 +129,7 @@ export default function PlantDashboardPage() {
     setPbLoading(true);
     setImportMsg("");
     try {
-      const lines = csvText.trim().split("\n");
+      const lines = csvText.trim().split("\\n");
       const items = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(",");
@@ -304,7 +306,7 @@ export default function PlantDashboardPage() {
           <h2 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
             <span className="text-2xl">🚜</span> Kelola Unit & Alat Berat
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Link href="/dashboard/kelola-unit" className="group bg-gradient-to-br from-cyan-500/10 to-slate-900 border border-cyan-500/30 hover:border-cyan-400/60 rounded-2xl p-6 transition-all shadow-lg hover:-translate-y-0.5">
               <div className="p-3 bg-cyan-500/20 rounded-xl text-cyan-400 w-fit mb-3">
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
@@ -321,7 +323,14 @@ export default function PlantDashboardPage() {
               <p className="text-xs text-slate-400 mt-1">Atur penugasan unit berdasarkan shift operasional harian.</p>
               <span className="inline-block mt-3 text-xs font-bold text-violet-400 group-hover:underline">Buka Setting →</span>
             </Link>
-            
+            <Link href="/dashboard/plant/logistik" className="group bg-gradient-to-br from-amber-500/10 to-slate-900 border border-amber-500/30 hover:border-amber-400/60 rounded-2xl p-6 transition-all shadow-lg hover:-translate-y-0.5">
+              <div className="p-3 bg-amber-500/20 rounded-xl text-amber-400 w-fit mb-3">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+              </div>
+              <h3 className="text-base font-black text-amber-300">Logistik & Gudang</h3>
+              <p className="text-xs text-slate-400 mt-1">Akses cepat ke modul logistik: PR, stok, pengeluaran, barang masuk.</p>
+              <span className="inline-block mt-3 text-xs font-bold text-amber-400 group-hover:underline">Buka Logistik →</span>
+            </Link>
           </div>
         </div>
       )}
@@ -351,7 +360,7 @@ export default function PlantDashboardPage() {
               <h3 className="text-sm font-bold text-amber-300 mb-2">Import Data Partbook (CSV)</h3>
               <p className="text-[11px] text-slate-400 mb-3">Format CSV: <code className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-300">part_number, nama_barang, satuan, qty, min_stock, lokasi</code></p>
               <p className="text-[11px] text-slate-500 mb-3">Baris pertama adalah header (akan di-skip). Contoh:</p>
-              <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-[11px] text-slate-300 mb-4 overflow-x-auto">{"part_number,nama_barang,satuan,qty,min_stock,lokasi\nPN-001,Filter Oli,PCS,50,10,GUDANG-UTAMA\nPN-002,V-Belt Fan,PCS,20,5,GUDANG-UTAMA"}</pre>
+              <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-[11px] text-slate-300 mb-4 overflow-x-auto">{"part_number,nama_barang,satuan,qty,min_stock,lokasi\\nPN-001,Filter Oli,PCS,50,10,GUDANG-UTAMA\\nPN-002,V-Belt Fan,PCS,20,5,GUDANG-UTAMA"}</pre>
               <textarea value={csvText} onChange={function(e) { setCsvText(e.target.value); }}
                 placeholder="Tempel data CSV di sini..."
                 className="w-full h-40 bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 font-mono focus:border-amber-500 focus:outline-none resize-none mb-3" />
@@ -460,3 +469,7 @@ export default function PlantDashboardPage() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('./app/dashboard/plant/page.tsx', code, 'utf8');
+console.log("OK - app/dashboard/plant/page.tsx berhasil ditulis ulang dengan 3 sub-tab!");

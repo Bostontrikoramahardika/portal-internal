@@ -268,8 +268,9 @@ const TAB_CONFIG = [
     customMatch: (m: MenuItem) => {
       return (
         m.menu_key === 'plant_katalog' ||
-        m.menu_key === 'plant_orders' ||
-        m.menu_key === 'plant_admin'
+        m.menu_key === 'plant_logistik' ||
+        m.menu_key === 'plant_dashboard' ||
+        m.menu_key === 'plant_inspeksi'
       )
     }
   },
@@ -304,8 +305,6 @@ const TAB_CONFIG = [
         m.menu_key === 'monitoring_roster_cr' ||
         m.menu_key === 'manajemen_absensi' ||
         m.menu_key === 'kelola_unit' ||
-        m.menu_key === 'plant_katalog' ||
-        m.menu_key === 'plant_orders' ||
         m.menu_key === 'approval_center'||
         m.menu_key === 'kelola_event'
       )
@@ -834,18 +833,23 @@ async function checkAuth() {
 
   function navigateMenu(menuKey: string) {
     // Routing khusus untuk menu Plant
+    if (menuKey === 'plant_logistik') {
+      router.push('/dashboard/plant/logistik')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'plant_dashboard') {
+      router.push('/dashboard/plant')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'plant_inspeksi') {
+      router.push('/dashboard/plant/inspeksi')
+      setBottomSheetOpen(false)
+      return
+    }
     if (menuKey === 'plant_katalog') {
       router.push('/parts-catalog')
-      setBottomSheetOpen(false)
-      return
-    }
-    if (menuKey === 'plant_orders') {
-      router.push('/part-orders')
-      setBottomSheetOpen(false)
-      return
-    }
-    if (menuKey === 'plant_admin') {
-      router.push('/partbook/admin')
       setBottomSheetOpen(false)
       return
     }
