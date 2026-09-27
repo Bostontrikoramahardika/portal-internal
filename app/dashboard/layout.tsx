@@ -1,37 +1,1387 @@
-'use client';
+'use client'
 
-import React from 'react';
-import Sidebar from '@/app/components/Sidebar';
-import MobileBottomNav from '@/app/components/MobileBottomNav';
+import { useEffect, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
+import { AuthProvider } from '@/app/lib/AuthContext'
+import { saveUserCache, getUserCache, isCacheValid, saveMenusCache, getMenusCache } from '@/app/lib/auth-cache'
+import { initAutoSync } from '@/app/lib/sync-manager'
+import SyncIndicator from '@/app/dashboard/components/SyncIndicator'
+import ClockOutReminder from '@/app/dashboard/components/ClockOutReminder'
+import VerificationModal from '@/app/dashboard/components/VerificationModal'
+
+interface User {
+  nrp: string
+  nrp_login?: string
+  nama: string
+  jabatan?: string
+  departemen?: string
+  site?: string
+}
+
+interface MenuItem {
+  id: string
+  role: string
+  menu_key: string
+  menu_label: string
+  menu_icon: string
+  menu_group: string
+  sort_order: number
+  active?: boolean
+}
+
+
+
+// ═══════════════════════════════════════════════════
+// 🎯 ROLE GROUPING v3.0 — FINAL DISCUSSION DRAFT
+// ═══════════════════════════════════════════════════
+
+const ALL_ROLES = [
+  'super_admin',
+  'director_ops',
+  'business_dev',
+  'manager_ops',
+  'hr_ho',
+  'spv_she_ho',
+  'pjo_site',
+  'she_site',
+  'hr_site',
+  'gl_produksi',
+  'gl_plant',
+  'admin_site',
+  'admin_plant',
+  'employee',
+]
+
+const LEADER_ROLES = [
+  'super_admin',
+  'gl_produksi',
+  'gl_plant',
+  'pjo_site',
+]
+
+const SAFETY_ROLES = [
+  'super_admin',
+  'she_site',
+  'spv_she_ho',
+]
+
+const HR_ROLES = [
+  'super_admin',
+  'hr_site',
+  'hr_ho',
+  'admin_site', // sesuai diskusi: admin_site dekat ke HR
+]
+
+const ADMIN_ROLES = [
+  'super_admin',
+  'admin_site',
+]
+
+const PLANT_ROLES = [
+  'super_admin',
+  'gl_plant',
+  'admin_plant',
+  'pjo_site',
+]
+
+const SITE_ROLES = [
+  'super_admin',
+  'pjo_site',
+  'admin_site',
+]
+
+const HO_ROLES = [
+  'super_admin',
+  'business_dev',
+  'manager_ops',
+  'director_ops',
+]
+
+const TAB_CONFIG = [
+  // 1. BASIC — ABSENSI
+  {
+    key: 'absensi',
+    label: 'Absensi',
+    icon: '⏰',
+    roles: ALL_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'absensi_saya' ||
+        m.menu_key === 'riwayat_absensi' ||
+        m.menu_key === 'kelola_absensi' ||
+        m.menu_key === 'manajemen_absensi' ||
+        m.menu_key === 'rekap_absensi' ||
+        m.menu_key === 'monitor_absensi' ||
+        m.menu_key === 'export_absensi_matrix'
+      )
+    }
+  },
+
+  // 2. BASIC — PENGAJUAN
+  {
+    key: 'pengajuan',
+    label: 'Pengajuan',
+    icon: '📋',
+    roles: ALL_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'form_cuti' ||
+        m.menu_key === 'cuti_saya' ||
+        m.menu_key === 'form_lembur' ||
+        m.menu_key === 'riwayat_lembur' ||
+        m.menu_key === 'evident_sakit' ||
+        m.menu_key === 'kelola_cuti' ||
+        m.menu_key === 'kelola_lembur' ||
+        m.menu_key === 'koreksi_absensi'
+      )
+    }
+  },
+
+  // 3. BASIC — SAYA
+  {
+    key: 'saya',
+    label: 'Saya',
+    icon: '👤',
+    roles: ALL_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+      
+        m.menu_key === 'data_saya' ||
+        m.menu_key === 'kpi_saya' ||
+        m.menu_key === 'pkwt_saya' ||
+        m.menu_key === 'sp_saya' ||
+        m.menu_key === 'roster_saya' ||
+        m.menu_key === 'bpjs_saya' ||
+        m.menu_key === 'simper_saya' ||
+        m.menu_key === 'apd_saya' ||
+        m.menu_key === 'mcu_saya' ||
+        m.menu_key === 'ganti_password'
+      )
+    }
+  },
+
+  // 4. LEADER
+  {
+    key: 'leader',
+    label: 'Leader',
+    icon: '👥',
+    roles: LEADER_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'approval_center' ||
+        m.menu_key === 'riwayat_approval' ||
+        m.menu_key === 'approval_koreksi' ||
+        m.menu_key === 'data_bawahan' ||
+        m.menu_key === 'cuti_bawahan' ||
+        m.menu_key === 'absensi_bawahan' ||
+        m.menu_key === 'roster_bawahan' ||
+        m.menu_key === 'kpi_bawahan' ||
+        m.menu_key === 'penilaian_bawahan' ||
+        m.menu_key === 'crew_on_duty' ||
+        m.menu_key === 'setting_unit' // sementara tetap di sini sampai revisi final
+      )
+    }
+  },
+
+  // 5. SAFETY
+  {
+    key: 'safety',
+    label: 'Safety',
+    icon: '🦺',
+    roles: SAFETY_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+                m.menu_key === 'kelola_apd' ||
+        m.menu_key === 'monitoring_apd'||
+        m.menu_key === 'kelola_event'
+      )
+    }
+  },
+
+    // 6. HR
+  {
+    key: 'hr',
+    label: 'HR',
+    icon: '🗂️',
+    roles: HR_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'hr_dashboard' ||
+        m.menu_key === 'kelola_job_kategori' ||
+        m.menu_key === 'kelola_pengumuman' ||
+        m.menu_key === 'kelola_pkwt' ||
+        m.menu_key === 'kelola_sp' ||
+        m.menu_key === 'kelola_bpjs' ||
+        m.menu_key === 'kelola_mcu' ||
+        m.menu_key === 'kelola_simper' ||
+        m.menu_key === 'kelola_cuti' ||
+        m.menu_key === 'kelola_lembur' ||
+        m.menu_key === 'kelola_hak_cuti' ||
+        m.menu_key === 'data_sakit' ||
+        m.menu_key === 'monitoring_mcu' ||
+        m.menu_key === 'monitoring_cuti_tiket' ||
+        m.menu_key === 'kelola_bobot_kpi' ||
+        m.menu_key === 'import_karyawan' ||
+        m.menu_key === 'import_pkwt' ||
+        m.menu_key === 'import_kpi' ||
+        m.menu_key === 'import_sp' ||
+        m.menu_key === 'import_bpjs' ||
+        m.menu_key === 'import_mcu' ||
+        m.menu_key === 'import_mcu_bulk' ||
+        m.menu_key === 'import_simper' ||
+        m.menu_key === 'import_roster_bulk' ||
+        m.menu_key === 'kelola_event' ||
+        m.menu_key === 'rekrutmen'
+      )
+    }
+  },
+
+  // 7. ADMIN — KHUSUS ADMIN SITE
+  {
+    key: 'admin',
+    label: 'Admin',
+    icon: '🧾',
+    roles: ADMIN_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'monitoring_expired' ||
+        m.menu_key === 'hr_dashboard' ||
+        m.menu_key === 'monitoring_roster_cr' ||
+        m.menu_key === 'monitoring_cuti_tiket' ||
+        m.menu_key === 'kelola_kpi' ||
+        m.menu_key === 'kelola_sp' ||
+        m.menu_key === 'manajemen_absensi' ||
+        m.menu_key === 'approval_center' ||
+        m.menu_key === 'riwayat_approval' ||
+         m.menu_key === 'kelola_event'   
+      )
+    }
+  },
+
+  // 8. PLANT
+  {
+    key: 'plant',
+    label: 'Plant',
+    icon: '🚜',
+    roles: PLANT_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'plant_katalog' ||
+        m.menu_key === 'plant_logistik' ||
+        m.menu_key === 'plant_dashboard' ||
+        m.menu_key === 'plant_inspeksi'
+      )
+    }
+  },
+
+  // 9. SITE
+  {
+    key: 'site',
+    label: 'Site',
+    icon: '🏢',
+    roles: SITE_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'kelola_unit' ||
+        m.menu_key === 'manajemen_absensi' ||
+        m.menu_key === 'monitoring_expired'
+      )
+    }
+  },
+
+  // 10. HO
+  {
+    key: 'ho',
+    label: 'HO',
+    icon: '📊',
+    roles: HO_ROLES,
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'monitoring_expired' ||
+        m.menu_key === 'hr_dashboard' ||
+        m.menu_key === 'monitoring_cuti_tiket' ||
+        m.menu_key === 'monitoring_mcu' ||
+        m.menu_key === 'monitoring_roster_cr' ||
+        m.menu_key === 'manajemen_absensi' ||
+        m.menu_key === 'kelola_unit' ||
+        m.menu_key === 'approval_center'||
+        m.menu_key === 'kelola_event'
+      )
+    }
+  },
+
+  // 11. SYSTEM — KHUSUS SUPER ADMIN
+  {
+    key: 'system',
+    label: 'System',
+    icon: '⚙️',
+    roles: ['super_admin'],
+    customMatch: (m: MenuItem) => {
+      return (
+        m.menu_key === 'manage_permissions' ||
+        m.menu_key === 'kelola_akses' ||
+        m.menu_key === 'system_audit' ||
+        m.menu_key === 'audit_log' ||
+        m.menu_key === 'config_global' ||
+        m.menu_key === 'kelola_site_master' ||
+        m.menu_key === 'reset_password_admin' ||
+        m.menu_key === 'kelola_roles' ||
+        m.menu_key === 'role_manager' ||
+        m.menu_key === 'import_roles' ||
+        m.menu_key === 'import_matrix'
+      )
+    }
+  },
+]
+
+
+
+
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#f4f7fa] flex overflow-hidden">
-      <div className="hidden md:block w-64 flex-shrink-0">
-        <Sidebar />
-      </div>
+    <Suspense fallback={<div className="min-h-screen bg-slate-100 flex items-center justify-center text-slate-500">Memuat...</div>}>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </Suspense>
+  )
+}
 
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative">
-        <header className="md:hidden h-11 bg-[#003d79] flex items-center justify-between px-4 flex-shrink-0 z-50 shadow-md">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center border border-white/30 text-white font-bold text-xs">
-              B
+function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [userRoles, setUserRoles] = useState<string[]>([])
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false) // State baru
+  const [userPermissions, setUserPermissions] = useState<string[]>([]) // State baru
+  const [menus, setMenus] = useState<MenuItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('absensi')
+  const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
+  const [bottomSheetMenus, setBottomSheetMenus] = useState<MenuItem[]>([])
+  const [bottomSheetTitle, setBottomSheetTitle] = useState('')
+  const [notifCount, setNotifCount] = useState(0)
+  const [notifData, setNotifData] = useState<any>({ 
+  approval: { total: 0, breakdown: [] }, 
+  expired: { total: 0, critical: 0, breakdown: [] },
+  notifications: { total: 0, unread: 0, items: [] }
+})
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const [showScanTab, setShowScanTab] = useState(false)
+
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeMenu = searchParams.get('menu') || 'absensi_saya'
+
+  useEffect(() => { 
+    checkAuth()
+    fetchNotif()
+    initAutoSync()
+    setShowScanTab(true)
+
+    // ✨ Dengerin sinyal dari halaman approval untuk update lonceng
+    window.addEventListener('refreshNotif', fetchNotif);
+    return () => window.removeEventListener('refreshNotif', fetchNotif);
+  }, [])
+
+useEffect(() => {
+  // Skip auto-redirect kalau user di sub-route (bukan /dashboard root)
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname
+    if (path !== '/dashboard' && path !== '/dashboard/') {
+      return  // Sub-route seperti /dashboard/kelola-event/xxx → biarkan
+    }
+  }
+  
+  if (!loading && user && !searchParams.get('menu')) {
+    router.replace('/dashboard?menu=absensi_saya')
+  }
+}, [loading, user])
+
+  useEffect(() => {
+    if (menus.length > 0) {
+      const tab = TAB_CONFIG.find(t => {
+        const matched = menus.filter(m => t.customMatch && t.customMatch(m))
+        return matched.some(m => m.menu_key === activeMenu)
+      })
+      if (tab) setActiveTab(tab.key)
+    }
+  }, [activeMenu, menus])
+
+    // ── ✨ Silent role check di background (tidak block UI) ──
+  async function silentRoleCheck(cachedUser: any) {
+    try {
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('btm_session_token_v1')
+        : null
+
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
+      const res = await fetch('/api/auth/me', {
+        headers,
+        signal: AbortSignal.timeout(5000)
+      })
+
+      if (!res.ok) return  // silent fail, tidak ganggu user
+
+      const fresh = await res.json()
+      if (!fresh.user) return
+
+      // Bandingkan roles cache vs fresh
+      const cachedRoles = new Set((cachedUser.roles || []).sort())
+      const freshRoles  = new Set((fresh.roles || []).sort())
+
+      const rolesChanged =
+        cachedRoles.size !== freshRoles.size ||
+        [...cachedRoles].some(r => !freshRoles.has(r as string)) ||
+        [...freshRoles].some(r => !cachedRoles.has(r as string))
+
+      // Bandingkan permissions
+      const cachedPerms = new Set((cachedUser.permissions || []).sort())
+      const freshPerms  = new Set((fresh.permissions || []).sort())
+
+      const permsChanged =
+        cachedPerms.size !== freshPerms.size ||
+        [...cachedPerms].some(p => !freshPerms.has(p as string)) ||
+        [...freshPerms].some(p => !cachedPerms.has(p as string))
+
+      // Bandingkan super admin status
+      const superChanged = 
+        Boolean(cachedUser.is_super_admin) !== Boolean(fresh.user.is_super_admin)
+
+      // Kalau ada perubahan → auto refresh
+      if (rolesChanged || permsChanged || superChanged) {
+        console.log('🔄 Roles/Permissions berubah → auto refresh')
+        console.log('Cached roles:', [...cachedRoles])
+        console.log('Fresh roles:',  [...freshRoles])
+
+        // Update cache dengan data fresh
+        const newUserData = {
+          ...fresh.user,
+          roles: fresh.roles || [],
+          permissions: fresh.permissions || []
+        }
+        saveUserCache(newUserData)
+
+        // Fetch menus baru juga
+        try {
+          const menuRes = await fetch('/api/menus', {
+            headers,
+            signal: AbortSignal.timeout(5000)
+          })
+          if (menuRes.ok) {
+            const menuData = await menuRes.json()
+            const menusArr = Array.isArray(menuData) 
+              ? menuData 
+              : (menuData.menus || menuData.data || [])
+            const filtered = menusArr.filter((m: MenuItem) => {
+              if (m.active === false) return false
+              if (fresh.user?.is_super_admin) return true
+              if (m.role === '*') return true                       // ← BARU
+              return (fresh.roles || []).includes(m.role)
+            })
+            saveMenusCache({ menus: filtered })
+
+            // Update juga cache lama
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('btm_menus_v1', JSON.stringify(filtered))
+              localStorage.setItem('btm_menus_time_v1', Date.now().toString())
+            }
+          }
+        } catch {}
+
+        // Tampilkan notif kecil
+        showRoleUpdateNotification()
+
+        // Reload halaman setelah 1.5 detik biar user sadar
+        setTimeout(() => {
+          window.location.reload()
+        }, 1500)
+      }
+    } catch (err) {
+      // Silent fail, tidak ganggu user
+      console.debug('Silent role check gagal (tidak masalah)')
+    }
+  }
+
+  // Notifikasi kecil di kanan atas
+  function showRoleUpdateNotification() {
+    if (typeof window === 'undefined') return
+
+    const notif = document.createElement('div')
+    notif.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #003D79;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 13px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      z-index: 99999;
+      animation: slideIn 0.3s ease;
+    `
+    notif.innerHTML = '🔄 Menu diperbarui, memuat ulang...'
+    document.body.appendChild(notif)
+
+    // Style animation
+    const style = document.createElement('style')
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to   { transform: translateX(0);      opacity: 1; }
+      }
+    `
+    document.head.appendChild(style)
+  }
+
+async function checkAuth() {
+  // ── STEP 1: Load cache dulu (instant, tidak nunggu network) ──
+  const cachedUser      = getUserCache()
+  const cachedMenusData = getMenusCache()
+
+  if (cachedUser) {
+    setUser(cachedUser)
+    setUserRoles(Array.isArray(cachedUser.roles) ? cachedUser.roles : [])
+    setIsSuperAdmin(cachedUser.is_super_admin || false)
+    setUserPermissions(cachedUser.permissions || [])
+    if (cachedMenusData?.menus) setMenus(cachedMenusData.menus)
+  }
+
+    // ── ✨ AUTO-REFRESH: Cek perubahan roles di background ──
+  if (cachedUser && navigator.onLine) {
+    silentRoleCheck(cachedUser)
+  }
+
+  // Backward compat: cache menu lama
+  const cachedMenu     = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_v1') : null
+  const cachedMenuTime = typeof window !== 'undefined' ? localStorage.getItem('btm_menus_time_v1') : null
+  const isMenuOldValid = cachedMenuTime && (Date.now() - parseInt(cachedMenuTime)) < 3600000
+  if (cachedMenu && isMenuOldValid && !cachedMenusData) {
+    try { setMenus(JSON.parse(cachedMenu)) } catch {}
+  }
+
+  // ── STEP 2: Kalau offline → langsung pakai cache, tidak perlu fetch ──
+  if (!navigator.onLine) {
+    console.log('📴 Offline — menggunakan cache lokal')
+    if (cachedUser && isCacheValid()) {
+      setLoading(false)
+      return
+    }
+    // Tidak ada cache sama sekali → terpaksa minta login
+    router.push('/')
+    return
+  }
+
+  // ── STEP 3: Online → coba fetch dengan cookie dulu ──
+  try {
+    const controller = new AbortController()
+    const timeoutId  = setTimeout(() => controller.abort(), 8000)
+
+    const [authRes, menuRes] = await Promise.all([
+      fetch('/api/auth/me', { signal: controller.signal }),
+      fetch('/api/menus',   { signal: controller.signal })
+    ])
+
+    clearTimeout(timeoutId)
+
+    // ── STEP 4: Kalau cookie gagal → coba token dari localStorage ──
+    if (!authRes.ok) {
+      const localToken = typeof window !== 'undefined'
+        ? localStorage.getItem('btm_session_token_v1')
+        : null
+
+      if (localToken) {
+        console.log('🔄 Cookie hilang, coba token dari localStorage...')
+        try {
+          const retryRes = await fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${localToken}` },
+            signal: AbortSignal.timeout(5000)
+          })
+
+          if (retryRes.ok) {
+            // Token localStorage masih valid → set ulang cookie via renew
+            const retryData = await retryRes.json()
+            console.log('✅ Token localStorage valid, lanjut masuk')
+
+            // Panggil renew endpoint untuk set ulang cookie
+            await fetch('/api/auth/renew', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localToken}`
+              },
+              signal: AbortSignal.timeout(5000)
+            })
+
+            // Set state dari data yang didapat
+            setUser(retryData.user)
+            const roles = Array.isArray(retryData.roles) ? retryData.roles : []
+            setUserRoles(roles)
+            setIsSuperAdmin(retryData.user?.is_super_admin || false)
+            setUserPermissions(retryData.permissions || [])
+
+            // Fetch menus ulang
+            try {
+              const menuRetry = await fetch('/api/menus', {
+                headers: { 'Authorization': `Bearer ${localToken}` },
+                signal: AbortSignal.timeout(5000)
+              })
+              if (menuRetry.ok) {
+                const menuRetryData = await menuRetry.json()
+                const menusArr = Array.isArray(menuRetryData)
+                  ? menuRetryData
+                  : (menuRetryData.menus || menuRetryData.data || [])
+                const filtered = menusArr.filter((m: MenuItem) => {
+                  if (m.active === false) return false
+                  if (retryData.user?.is_super_admin) return true
+                  if (m.role === '*') return true                   // ← BARU
+                  return roles.includes(m.role)
+                })
+                setMenus(filtered)
+                saveMenusCache({ menus: filtered })
+              }
+            } catch {}
+
+            saveUserCache({ ...retryData.user, roles, permissions: retryData.permissions || [] })
+            setLoading(false)
+            return
+          }
+        } catch (retryErr) {
+          console.warn('⚠️ Retry dengan localStorage token gagal:', retryErr)
+        }
+      }
+
+      // Token localStorage juga gagal → cek cache offline
+      if (cachedUser && isCacheValid()) {
+        console.log('🔴 Session invalid, pakai cache offline')
+        setLoading(false)
+        return
+      }
+
+      // Tidak ada fallback → paksa login
+      router.push('/')
+      return
+    }
+
+    // ── STEP 5: Cookie valid → proses normal ──
+    const [data, menuData] = await Promise.all([
+      authRes.json(),
+      menuRes.json()
+    ])
+
+    setUser(data.user)
+    const roles: string[] = Array.isArray(data.roles) ? data.roles : []
+    setUserRoles(roles)
+    setIsSuperAdmin(data.user?.is_super_admin || false)
+    setUserPermissions(data.permissions || [])
+
+    const menusArray = Array.isArray(menuData)
+      ? menuData
+      : (menuData.menus || menuData.data || [])
+
+    const filtered = menusArray.filter((m: MenuItem) => {
+      if (m.active === false) return false
+      if (data.user?.is_super_admin) return true
+      if (m.role === '*') return true                 // ← BARU: wildcard match semua role
+      return roles.includes(m.role)
+    })
+
+    setMenus(filtered)
+
+    // Simpan cache lama (backward compat)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('btm_menus_v1', JSON.stringify(filtered))
+        localStorage.setItem('btm_menus_time_v1', Date.now().toString())
+      } catch {}
+    }
+
+    // Simpan cache baru
+    saveUserCache({ ...data.user, roles, permissions: data.permissions || [] })
+    saveMenusCache({ menus: filtered })
+
+    // ✅ v2.0: Pastikan token di localStorage selalu fresh
+    // (token sudah ada dari login, tapi kalau user login lama → tidak ada)
+    // Kita tidak bisa ambil token dari /api/auth/me karena httpOnly
+    // Token sudah tersimpan saat login, tidak perlu update di sini
+
+  } catch (err: any) {
+    console.error('Auth Error:', err)
+
+    const isNetworkError = err.name === 'AbortError' ||
+                           err.name === 'TypeError' ||
+                           !navigator.onLine
+
+    if (isNetworkError && cachedUser && isCacheValid()) {
+      console.log('🔴 Network error, pakai cached session')
+      setLoading(false)
+      return
+    }
+
+    router.push('/')
+  } finally {
+    setLoading(false)
+  }
+}
+
+  async function fetchNotif() {
+    try {
+      const res = await fetch('/api/notifikasi')
+      if (res.ok) {
+        const data = await res.json()
+        setNotifCount(data.total_notifikasi || 0)
+        setNotifData({
+          approval: data.approval || { total: 0, breakdown: [] },
+          expired: data.expired || { total: 0, critical: 0, breakdown: [] },
+          notifications: data.notifications || { total: 0, unread: 0, items: [] }
+        })
+      }
+    } catch (err) { console.error("Notif Error:", err) }
+  }
+
+  // ✨ NEW: Mark notification as read + navigate
+  async function handleNotifClick(item: any) {
+    // Mark as read
+    if (!item.read_at) {
+      try {
+        await fetch('/api/notifications', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: item.id })
+        })
+      } catch {}
+    }
+    
+    // Close modal & navigate
+    setIsNotifOpen(false)
+    router.push(item.url || '/dashboard')
+    
+    // Refresh notif count
+    setTimeout(fetchNotif, 500)
+  }
+
+  // ✨ NEW: Mark all notifications as read
+  async function handleMarkAllRead() {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true })
+      })
+      fetchNotif()
+    } catch {}
+  }
+
+  async function handleLogout() {
+    // ✨ Hapus semua cache offline
+    try {
+      const { clearAuthCache } = await import('@/app/lib/auth-cache')
+      clearAuthCache()
+      // Hapus cache menu lama juga
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('btm_menus_v1')
+        localStorage.removeItem('btm_menus_time_v1')
+      }
+    } catch {}
+    
+    try { await fetch('/api/auth/logout', { method: 'POST' }) } catch {}
+    router.push('/')
+}
+
+    function handleTabClick(tab: typeof TAB_CONFIG[0]) {
+        // Handle tab Plant → tampilkan bottom sheet menu
+     if (tab.key === 'scan') {
+    setActiveTab('scan')
+    router.push('/dashboard/scan-qr')
+    return
+  }
+    
+        if (tab.key === 'plant') {
+      const tabMenus = menus.filter(m => tab.customMatch(m))
+      tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      setBottomSheetMenus(tabMenus)
+      setBottomSheetTitle('Plant')
+      setActiveTab('plant')
+      setBottomSheetOpen(true)
+      return
+    }
+
+    const tabMenus = menus.filter(m => tab.customMatch(m))
+    tabMenus.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    
+    if (tab.key === 'saya' || tabMenus.length > 1) {
+      setBottomSheetMenus(tabMenus)
+      setBottomSheetTitle(tab.label)
+      setActiveTab(tab.key)
+      setBottomSheetOpen(true)
+      return
+    }
+    
+    if (tabMenus.length === 1) {
+      router.push(`/dashboard?menu=${tabMenus[0].menu_key}`)
+      setActiveTab(tab.key)
+      return
+    }
+
+    // Tambahkan ini: Jika tab diklik tapi tidak ada isinya
+    if (tabMenus.length === 0) {
+  return
+}
+  }
+
+  function navigateMenu(menuKey: string) {
+    // Routing khusus untuk menu Plant
+    if (menuKey === 'plant_logistik') {
+      router.push('/dashboard/plant/logistik')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'plant_dashboard') {
+      router.push('/dashboard/plant')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'plant_inspeksi') {
+      router.push('/dashboard/plant/inspeksi')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'plant_katalog') {
+      router.push('/parts-catalog')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    // Routing menu Koreksi Absensi (STANDALONE pages)
+    if (menuKey === 'koreksi_absensi') {
+      router.push('/dashboard/koreksi-absensi')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'approval_koreksi') {
+      router.push('/dashboard/approval-koreksi')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'manajemen_absensi') {
+  router.push('/dashboard/manajemen-absensi')
+  setBottomSheetOpen(false)
+  return
+}
+if (menuKey === 'rekap_absensi') {
+  router.push('/dashboard/rekap-absensi')
+  setBottomSheetOpen(false)
+  return
+}
+    if (menuKey === 'hr_override_absensi') {
+      router.push('/dashboard/hr-override-absensi')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    // ✨ MCU Advanced (Chat 18) ─────────────────
+    if (menuKey === 'monitoring_mcu') {
+      router.push('/dashboard/monitoring-mcu')
+      setBottomSheetOpen(false)
+      return
+    }
+    if (menuKey === 'mcu_saya') {
+      router.push('/dashboard/mcu-saya')
+      setBottomSheetOpen(false)
+      return
+    }
+    // 🦺 APD Saya (Chat 22)
+    if (menuKey === 'apd_saya') {
+      router.push('/dashboard/apd-saya')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    // 🦺 Kelola APD (Chat 22)
+    if (menuKey === 'kelola_apd') {
+      router.push('/dashboard/kelola-apd')
+      setBottomSheetOpen(false)
+      return
+    }
+        // Routing menu Kelola Akses (Batch 1 - Tab Karyawan)
+    if (menuKey === 'kelola_akses') {
+      router.push('/dashboard/kelola-akses')
+      setBottomSheetOpen(false)
+      return
+    }
+
+
+    // 📊 Monitoring APD (Chat 22)
+    if (menuKey === 'monitoring_apd') {
+      router.push('/dashboard/monitoring-apd')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    // 📥 Import MCU Massal Auto-Fill (Chat 20) ─────────────────
+    if (menuKey === 'import_mcu_bulk') {
+      router.push('/dashboard/import-mcu')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    // 📤 Import Roster Bulanan (Chat 28)
+if (menuKey === 'import_roster_bulk') {
+  router.push('/dashboard/import-roster')
+  setBottomSheetOpen(false)
+  return
+}
+
+    // 🚜 Kelola Unit (Chat 29)
+    if (menuKey === 'kelola_unit') {
+      router.push('/dashboard/kelola-unit')
+      setBottomSheetOpen(false)
+      return
+    }
+
+        // 🎯 Setting Unit per Shift (Chat 29)
+    if (menuKey === 'setting_unit') {
+      router.push('/dashboard/setting-unit')
+      setBottomSheetOpen(false)
+      return
+    }
+
+    if (menuKey === 'crew_on_duty') {
+  router.push('/dashboard/crew-on-duty')
+  setBottomSheetOpen(false)
+  return
+}
+
+    // Default: menu dashboard biasa
+    router.push(`/dashboard?menu=${menuKey}`)
+    setBottomSheetOpen(false)
+  }
+
+  if (loading || !user) return <div className="min-h-screen bg-slate-100 flex items-center justify-center animate-pulse text-slate-500">Memuat...</div>
+
+    const visibleTabs = TAB_CONFIG.filter(tab => {
+  if (tab.key === 'system' && !isSuperAdmin) return false
+
+  const roleAllowed =
+    isSuperAdmin || tab.roles.some(r => userRoles.includes(r))
+
+  if (!roleAllowed) return false
+
+  const tabMenus = menus.filter(m => tab.customMatch(m))
+  return tabMenus.length > 0
+})
+
+  return (
+    <div className="min-h-screen bg-[#F1F5F9] flex relative overflow-hidden">
+      <div 
+        className="fixed inset-0 pointer-events-none opacity-[0.03] z-0"
+        style={{ backgroundImage: `url('/bg-pattern.png')`, backgroundRepeat: 'repeat', backgroundSize: '150px' }}
+      />
+
+      {/* SIDEBAR DESKTOP */}
+      <aside className="hidden lg:flex flex-col w-64 bg-[#003D79] text-white fixed top-0 left-0 bottom-0 z-40 overflow-y-auto">
+        <div className="p-5 border-b border-white/10 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg shrink-0">
+              <Image src="/btm-fix.png" alt="BTM" width={32} height={32} className="object-contain" />
             </div>
-            <span className="text-white font-bold text-sm tracking-tight">BTM MOBILE</span>
+            <div className="min-w-0">
+              <div className="font-bold text-xs truncate">BTM Portal</div>
+              <div className="text-[10px] text-blue-200 font-black uppercase truncate leading-tight">{user.nama}</div>
+            </div>
           </div>
-          <div className="w-7 h-7 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-[10px] text-white font-medium uppercase">
-            US
-          </div>
-        </header>
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden relative pb-24 md:pb-0">
-          <div className="max-w-[1400px] mx-auto min-h-full">
-            {children}
-          </div>
-        </main>
+          <button 
+            type="button"
+            onClick={() => setIsNotifOpen(true)} 
+            className="relative w-9 h-9 flex items-center justify-center active:scale-90 transition-all cursor-pointer bg-white/10 hover:bg-white/20 rounded-xl shrink-0"
+          >
+            <span className="text-lg">🔔</span>
+            {notifCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black h-4 w-4 flex items-center justify-center rounded-full border-2 border-[#003D79] shadow-lg animate-bounce">
+                {notifCount}
+              </span>
+            )}
+          </button>
+        </div>
 
-        <MobileBottomNav />
-      </div>
+        <div className="p-4 space-y-1">
+          {visibleTabs.map(tab => (
+            <div key={tab.key}>
+              <button onClick={() => handleTabClick(tab)} className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === tab.key ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}>
+                <span className="text-lg">{tab.icon}</span><span>{tab.label}</span>
+              </button>
+              {activeTab === tab.key && menus.filter(m => tab.customMatch(m)).length > 1 && (
+                <div className="ml-9 mt-1 space-y-1 border-l border-white/10">
+                  {menus.filter(m => tab.customMatch(m)).map(m => (
+                    <button key={m.menu_key} onClick={() => navigateMenu(m.menu_key)} className={`w-full text-left px-4 py-2 rounded-xl text-xs flex items-center gap-2 transition-colors ${activeMenu === m.menu_key ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                      <span>{m.menu_icon || '•'}</span><span>{m.menu_label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+  
+          <button onClick={handleLogout} className="w-full mt-6 bg-red-600/20 text-red-400 py-2.5 rounded-xl text-xs font-bold hover:bg-red-600/30 transition-colors">🚪 Keluar</button>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1 min-w-0 lg:ml-64 pb-24 lg:pb-6">
+        <SyncIndicator />  {/* ← BARU! Badge sync indicator */}
+        <ClockOutReminder />
+        <VerificationModal />
+
+        {/* HEADER MOBILE */}
+                       <div className="lg:hidden bg-white/70 backdrop-blur-xl border-b border-white/40 px-3 py-1.5 flex items-center justify-between fixed top-0 left-0 right-0 z-[60] shadow-[0_4px_20px_rgba(0,61,121,0.05)]">
+          {/* Kiri: Logo + Nama App + Versi (Kompak) */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Image src="/btm-fix.png" alt="BTM" width={18} height={18} />
+            <div className="leading-[1.1]">
+              <h1 className="text-[10px] font-black uppercase text-[#003D79] tracking-tight">BTM Mobile</h1>
+              <p className="text-[7px] font-bold text-slate-400">v1.6.2</p>
+            </div>
+          </div>
+
+          {/* Kanan: Info Karyawan + Lonceng (Baris Rapat) */}
+          <div className="flex items-center gap-2">
+            <div className="text-right leading-[1.1] shrink-0 max-w-[140px]">
+              <div className="text-[9px] font-black text-[#003D79] uppercase truncate">{user.nama}</div>
+              <div className="text-[7px] text-slate-500 font-bold">NRP: {user.nrp_login || user.nrp}</div>
+              <div className="text-[7px] text-blue-600 font-black">{user.site || '-'}</div>
+            </div>
+            <button 
+              type="button"
+              onClick={() => setIsNotifOpen(true)} 
+              className="relative flex items-center justify-center active:scale-90 transition-all cursor-pointer z-[70] shrink-0"
+            >
+              <span className="text-2xl">🔔</span>
+              {notifCount > 0 && (
+                <>
+                  <span className="absolute -top-0.5 -right-0.5 animate-ping h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
+                  <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[7px] font-black h-3.5 w-3.5 flex items-center justify-center rounded-full border border-white shadow-lg pointer-events-none">
+                    {notifCount}
+                  </span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+                <div className="p-4 lg:p-6 pt-16 lg:pt-6">
+  <AuthProvider user={{ ...user, is_super_admin: isSuperAdmin }} permissions={userPermissions}>
+    {children}
+  </AuthProvider>
+</div>
+      </main>
+
+      {/* BOTTOM NAVIGATION MOBILE */}
+           <nav className="lg:hidden fixed bottom-3 left-3 right-3 z-50 bg-white/70 backdrop-blur-2xl border border-white/50 flex overflow-x-auto px-2 py-2 rounded-[1.8rem] shadow-[0_10px_40px_rgba(0,61,121,0.15)] no-scrollbar">
+  {(() => {
+    const half = Math.ceil(visibleTabs.length / 2)
+    const leftTabs  = visibleTabs.slice(0, half)
+    const rightTabs = visibleTabs.slice(half)
+
+    return (
+      <>
+        {/* Tab kiri */}
+        {leftTabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => handleTabClick(tab)}
+            className={`flex flex-col items-center min-w-[55px] flex-1 py-1 transition-all duration-300 ${
+              activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'
+            }`}
+          >
+            <div className={`text-base mb-0.5 ${activeTab === tab.key ? '' : 'grayscale'}`}>{tab.icon}</div>
+            <span className={`text-[8px] tracking-tighter font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>
+              {tab.label}
+            </span>
+            {activeTab === tab.key && <div className="w-1 h-1 bg-[#003D79] rounded-full mt-0.5 animate-pulse" />}
+          </button>
+        ))}
+
+        {/* ✨ TAB SCAN — tengah, ikon beda */}
+        {showScanTab && (
+          <button
+            onClick={() => {
+              setActiveTab('scan')
+              router.push('/dashboard/scan-qr')
+            }}
+            className={`flex flex-col items-center min-w-[60px] flex-shrink-0 py-1 transition-all duration-300 relative ${
+              activeTab === 'scan' ? 'scale-110' : 'opacity-80'
+            }`}
+          >
+            {/* Ikon beda: lingkaran raised */}
+            <div className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 -mt-5 border-4 border-white ${
+              activeTab === 'scan'
+                ? 'bg-gradient-to-br from-[#003D79] to-[#0056b3] scale-110'
+                : 'bg-gradient-to-br from-slate-600 to-slate-800'
+            }`}>
+              <span className="text-xl">📷</span>
+            </div>
+            <span className={`text-[8px] tracking-tighter font-black uppercase mt-0.5 ${
+              activeTab === 'scan' ? 'text-[#003D79]' : 'text-slate-400'
+            }`}>
+              Scan
+            </span>
+          </button>
+        )}
+
+        {/* Tab kanan */}
+        {rightTabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => handleTabClick(tab)}
+            className={`flex flex-col items-center min-w-[55px] flex-1 py-1 transition-all duration-300 ${
+              activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'
+            }`}
+          >
+            <div className={`text-base mb-0.5 ${activeTab === tab.key ? '' : 'grayscale'}`}>{tab.icon}</div>
+            <span className={`text-[8px] tracking-tighter font-black uppercase ${activeTab === tab.key ? 'opacity-100' : 'opacity-70'}`}>
+              {tab.label}
+            </span>
+            {activeTab === tab.key && <div className="w-1 h-1 bg-[#003D79] rounded-full mt-0.5 animate-pulse" />}
+          </button>
+        ))}
+      </>
+    )
+  })()}
+</nav>
+
+      {/* BOTTOM SHEET MENU */}
+      {bottomSheetOpen && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] lg:hidden" onClick={() => setBottomSheetOpen(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-[101] lg:hidden bg-white rounded-t-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom duration-300">
+            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" />
+            <h3 className="font-black text-lg mb-6 px-2 text-slate-800 tracking-tight uppercase text-center">{bottomSheetTitle}</h3>
+            <div className="grid grid-cols-1 gap-3 max-h-[60vh] overflow-y-auto">
+              {bottomSheetMenus.map(m => (
+                <button key={m.menu_key} onClick={() => navigateMenu(m.menu_key)} className={`w-full text-left p-5 rounded-3xl flex items-center justify-between border transition-all active:scale-95 ${activeMenu === m.menu_key ? 'bg-blue-50 border-blue-200 text-[#003D79]' : 'bg-slate-50 border-slate-100 text-slate-700'}`}>
+                  <div className="flex items-center gap-4">
+                    <span className="text-2xl">{m.menu_icon || '📄'}</span>
+                    <span className="text-sm font-bold uppercase tracking-tight">{m.menu_label}</span>
+                  </div>
+                  {activeMenu === m.menu_key && <span className="text-blue-600">✓</span>}
+                </button>
+              ))}
+              {activeTab === 'saya' && (
+  <button onClick={handleLogout} className="w-full text-left p-5 rounded-3xl flex items-center gap-4 text-red-600 bg-red-50 font-black mt-4 uppercase text-sm border border-red-100 active:scale-95 transition-all">
+    <span className="text-2xl">🚪</span><span>Keluar Aplikasi</span>
+  </button>
+)}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* MODAL NOTIFICATION */}
+      {isNotifOpen && (
+        <>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[999]" onClick={() => setIsNotifOpen(false)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[1000] overflow-hidden">
+            <div className="p-8 bg-[#003D79] text-white flex justify-between items-center">
+              <div>
+                <h3 className="font-black text-xl tracking-tight uppercase">Pusat Notifikasi</h3>
+                <p className="text-blue-200 text-[10px] font-bold uppercase tracking-[0.2em]">Update Real-time</p>
+              </div>
+              <button onClick={() => setIsNotifOpen(false)} className="bg-white/10 hover:bg-white/20 h-10 w-10 flex items-center justify-center rounded-full transition-colors">✕</button>
+            </div>
+            <div className="p-6 max-h-[70vh] overflow-y-auto bg-slate-50/50 space-y-4">
+              {notifCount === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-4 opacity-20">🏝️</div>
+                  <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Semua Aman!</p>
+                  <p className="text-slate-300 text-[10px] font-bold mt-2">Tidak ada notifikasi menunggu</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+
+                  {/* ═══════ KATEGORI 1: APPROVAL ═══════ */}
+                  {notifData.approval.total > 0 && (
+                    <div className="bg-white border-2 border-blue-100 rounded-[2rem] overflow-hidden shadow-sm">
+                      <div className="bg-blue-50 px-5 py-3 flex items-center justify-between border-b border-blue-100">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">📝</span>
+                          <span className="font-black text-[#003D79] text-xs uppercase tracking-widest">Persetujuan</span>
+                        </div>
+                        <span className="bg-blue-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+                          {notifData.approval.total}
+                        </span>
+                      </div>
+                      <div className="divide-y divide-slate-50">
+                        {notifData.approval.breakdown.map((item: any, i: number) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setIsNotifOpen(false)
+                              router.push(`/dashboard?menu=approval_center`)
+                            }}
+                            className="w-full px-5 py-3 flex items-center gap-3 hover:bg-blue-50/50 transition-all active:scale-95 text-left"
+                          >
+                            <div className="text-xl">{item.icon}</div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-black text-slate-900 text-xs">
+                                {item.count} {item.jenis.replace(/_/g, ' ')}
+                              </p>
+                              <p className="text-[10px] text-slate-500 font-bold">
+                                dari {item.site} • Tahap {item.tahap}
+                              </p>
+                            </div>
+                            <span className="text-slate-300 text-lg">›</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ═══════ KATEGORI 2: DOKUMEN EXPIRED ═══════ */}
+                  {notifData.expired.total > 0 && (
+                    <div className={`bg-white border-2 rounded-[2rem] overflow-hidden shadow-sm ${
+                      notifData.expired.critical > 0 ? 'border-rose-200' : 'border-amber-100'
+                    }`}>
+                      <div className={`px-5 py-3 flex items-center justify-between border-b ${
+                        notifData.expired.critical > 0 ? 'bg-rose-50 border-rose-100' : 'bg-amber-50 border-amber-100'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{notifData.expired.critical > 0 ? '🚨' : '⚠️'}</span>
+                          <span className={`font-black text-xs uppercase tracking-widest ${
+                            notifData.expired.critical > 0 ? 'text-rose-700' : 'text-amber-700'
+                          }`}>
+                            Dokumen Expired
+                          </span>
+                          {notifData.expired.critical > 0 && (
+                            <span className="bg-rose-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase animate-pulse">
+                              🔥 {notifData.expired.critical} Kritis
+                            </span>
+                          )}
+                        </div>
+                        <span className={`text-white text-[10px] font-black px-2.5 py-1 rounded-full ${
+                          notifData.expired.critical > 0 ? 'bg-rose-500' : 'bg-amber-500'
+                        }`}>
+                          {notifData.expired.total}
+                        </span>
+                      </div>
+                      <div className="divide-y divide-slate-50">
+                        {notifData.expired.breakdown.map((item: any, i: number) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setIsNotifOpen(false)
+                              router.push(`/dashboard?menu=monitoring_expired`)
+                            }}
+                            className="w-full px-5 py-3 flex items-center gap-3 hover:bg-amber-50/50 transition-all active:scale-95 text-left"
+                          >
+                            <div className="text-xl">{item.icon}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <p className="font-black text-slate-900 text-xs">
+                                  {item.count} {item.jenis}
+                                </p>
+                                {item.critical > 0 && (
+                                  <span className="bg-rose-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase animate-pulse">
+                                    🔥 {item.critical}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-500 font-bold">
+                                Site: {item.site}
+                              </p>
+                            </div>
+                            <span className="text-slate-300 text-lg">›</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ✨ ═══════ KATEGORI 3: MEETING & UMUM (dari tabel notifications) ═══════ */}
+                  {notifData.notifications.items.length > 0 && (
+                    <div className="bg-white border-2 border-purple-100 rounded-[2rem] overflow-hidden shadow-sm">
+                      <div className="bg-purple-50 px-5 py-3 flex items-center justify-between border-b border-purple-100">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">📨</span>
+                          <span className="font-black text-purple-700 text-xs uppercase tracking-widest">Meeting & Umum</span>
+                          {notifData.notifications.unread > 0 && (
+                            <span className="bg-purple-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase animate-pulse">
+                              {notifData.notifications.unread} Baru
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {notifData.notifications.unread > 0 && (
+                            <button
+                              onClick={handleMarkAllRead}
+                              className="text-[9px] text-purple-600 font-black uppercase hover:text-purple-800 hover:underline"
+                            >
+                              ✓ Baca Semua
+                            </button>
+                          )}
+                          <span className="bg-purple-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+                            {notifData.notifications.total}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="divide-y divide-slate-50 max-h-[300px] overflow-y-auto">
+                        {notifData.notifications.items.map((item: any) => {
+                          const isUnread = !item.read_at
+                          const createdDate = new Date(item.created_at)
+                          const now = new Date()
+                          const diffMs = now.getTime() - createdDate.getTime()
+                          const diffMin = Math.floor(diffMs / 60000)
+                          const diffHr = Math.floor(diffMin / 60)
+                          const diffDay = Math.floor(diffHr / 24)
+                          
+                          let timeAgo = 'baru saja'
+                          if (diffDay > 0) timeAgo = `${diffDay}h lalu`
+                          else if (diffHr > 0) timeAgo = `${diffHr}j lalu`
+                          else if (diffMin > 0) timeAgo = `${diffMin}m lalu`
+                          
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => handleNotifClick(item)}
+                              className={`w-full px-5 py-3 flex items-start gap-3 hover:bg-purple-50/50 transition-all active:scale-95 text-left ${
+                                isUnread ? 'bg-purple-50/30' : ''
+                              }`}
+                            >
+                              <div className="text-xl shrink-0 mt-0.5">
+                                {typeof item.icon === 'string' && item.icon.length <= 3 ? item.icon : '🔔'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <p className={`text-xs truncate ${isUnread ? 'font-black text-slate-900' : 'font-bold text-slate-600'}`}>
+                                    {item.title}
+                                  </p>
+                                  {isUnread && (
+                                    <span className="w-2 h-2 bg-purple-500 rounded-full shrink-0 animate-pulse" />
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-slate-500 font-medium line-clamp-2">
+                                  {item.body}
+                                </p>
+                                <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-wider">
+                                  {timeAgo} • {item.category}
+                                </p>
+                              </div>
+                              <span className="text-slate-300 text-lg shrink-0">›</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
-  );
+  )
 }
