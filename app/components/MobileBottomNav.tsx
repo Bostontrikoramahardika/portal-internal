@@ -38,7 +38,6 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      {/* Bottom Navigation Bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-3 py-1.5 z-[99999] shadow-[0_-2px-10px_rgba(0,0,0,0.08)]">
         <div className="flex items-center justify-between max-w-md mx-auto relative">
           {navItems.map((item, idx) => {
@@ -65,7 +64,7 @@ export default function MobileBottomNav() {
             }
 
             const Content = (
-              <div className={`flex flex-col items-center py-1 transition-colors ${isActive ? 'text-[#003d79] font-bold' : 'text-gray-500 font-normal'}`}>
+              <div className={'flex flex-col items-center py-1 transition-colors ' + (isActive ? 'text-[#003d79] font-bold' : 'text-gray-500 font-normal')}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d={item.iconPath}></path>
                 </svg>
@@ -86,7 +85,6 @@ export default function MobileBottomNav() {
         </div>
       </nav>
 
-      {/* Pure Tailwind Bottom Sheet Drawer */}
       {isOpen && (
         <div className="md:hidden fixed inset-0 z-[100000] flex flex-col justify-end">
           <div 

@@ -7,13 +7,11 @@ import MobileBottomNav from '@/app/components/MobileBottomNav';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#f4f7fa] flex overflow-hidden">
-      {/* Desktop Sidebar */}
       <div className="hidden md:block w-64 flex-shrink-0">
         <Sidebar />
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative">
-        {/* Ultra-Compact Mobile Header (h-11 / 44px) */}
         <header className="md:hidden h-11 bg-[#003d79] flex items-center justify-between px-4 flex-shrink-0 z-50 shadow-md">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center border border-white/30 text-white font-bold text-xs">
@@ -26,14 +24,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden relative pb-24 md:pb-0">
           <div className="max-w-[1400px] mx-auto min-h-full">
             {children}
           </div>
         </main>
 
-        {/* Mobile Navigation */}
         <MobileBottomNav />
       </div>
     </div>
