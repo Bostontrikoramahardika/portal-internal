@@ -1,5 +1,5 @@
-'use client'
-
+'use client';
+import MobileBottomNav from '@/app/components/MobileBottomNav';
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
@@ -1076,7 +1076,8 @@ if (menuKey === 'import_roster_bulk') {
     {children}
   </AuthProvider>
 </div>
-      </main>
+            <MobileBottomNav />
+    </main>
 
       {/* BOTTOM NAVIGATION MOBILE */}
            <nav className="lg:hidden fixed bottom-3 left-3 right-3 z-50 bg-white/70 backdrop-blur-2xl border border-white/50 flex overflow-x-auto px-2 py-2 rounded-[1.8rem] shadow-[0_10px_40px_rgba(0,61,121,0.15)] no-scrollbar">
