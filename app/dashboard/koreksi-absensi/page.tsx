@@ -252,7 +252,18 @@ export default function KoreksiAbsensiPage() {
       <PageHeader title="Koreksi Absensi" backUrl="/dashboard" />
 
       {/* HERO */}
-      
+      <div className="hidden">
+        <div className="flex items-center gap-3 mb-4">
+          <Link
+            href="/dashboard"
+            className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white text-lg"
+          >
+            ←
+          </Link>
+          <div>
+            <div className="text-white/60 text-[9px] font-black uppercase tracking-widest">
+              Pengajuan
+            </div>
             <h1 className="text-white text-xl font-black tracking-tight">
               📝 Revisi Waktu Absensi
             </h1>

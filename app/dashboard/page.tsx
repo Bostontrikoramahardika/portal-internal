@@ -35,7 +35,8 @@ function DashboardView({ title, data }: any) {
       <PageHeader title="Dashboard Central" backUrl="/dashboard" />
 
       <div className="relative mb-12">
-        
+        <div className="hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 blur-3xl"></div>
           <div className="relative z-10">
             <p className="text-blue-200/70 font-bold text-[10px] uppercase tracking-[0.3em] mb-2">{getGreeting()}</p>
             <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-white tracking-tight">{data.user_name || stats.user_name || 'Rekan BTM'} 👋</h2>
@@ -10123,13 +10124,7 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
             {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN'}
           </button>
         </div>
-      
-      {/* GLOBAL FOOTER TTD - LOCKED V1.7.0 */}
-      <footer className="mt-8 mb-24 sm:mb-8 text-center text-xs text-[#8896a7] italic opacity-70 border-t border-[#e2e8f0]/60 pt-4">
-        <p className="font-semibold text-[#5a6a7e]">BTM Mobile APP V1.7.0</p>
-        <p className="text-[10px] text-[#8896a7] mt-0.5">Powered By rck_Production</p>
-      </footer>
-</div>
+      </div>
     </>
   )
 }

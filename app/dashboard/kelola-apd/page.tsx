@@ -150,7 +150,26 @@ export default function KelolaApdPage() {
       <PageHeader title="Kelola Apd" backUrl="/dashboard" />
 
       {/* ── Header ── */}
-      
+      <div className="hidden">
+        <h1 className="text-white text-2xl font-black tracking-tight">🦺 Kelola APD</h1>
+        <p className="text-blue-200 text-sm mt-1">Manajemen Alat Pelindung Diri</p>
+
+        {/* Tab bar */}
+        <div className="flex gap-2 mt-4 overflow-x-auto pb-1 scrollbar-hide">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all
+                ${activeTab === t.key
+                  ? 'bg-white text-[#003D79] shadow-lg'
+                  : 'bg-white/20 text-white/80 hover:bg-white/30'
+                }`}
+            >
+              {t.icon}{t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Tab Content ── */}

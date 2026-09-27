@@ -116,7 +116,9 @@ export default function KaryawanMcuTimelinePage({ params }: { params: Promise<{ 
         <div className="bg-white rounded-[2rem] shadow-xl p-8 text-center max-w-md">
           <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-3" />
           <p className="font-bold text-slate-800">{error || 'Data tidak ditemukan'}</p>
-          
+          <button onClick={() => router.back()} className="mt-4 px-4 py-2 bg-[#003D79] text-white rounded-xl font-bold text-sm">
+            Kembali
+          </button>
         </div>
       </div>
     )
@@ -130,7 +132,12 @@ export default function KaryawanMcuTimelinePage({ params }: { params: Promise<{ 
 
         {/* Header */}
         <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] rounded-[2rem] shadow-2xl p-6 text-white">
-          
+          <button
+            onClick={() => router.back()}
+            className="mb-4 flex items-center gap-2 text-white/70 hover:text-white text-xs font-black uppercase tracking-widest transition"
+          >
+            <ArrowLeft className="w-4 h-4" /> Kembali ke Monitoring
+          </button>
 
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="w-20 h-20 rounded-3xl bg-white/15 backdrop-blur flex items-center justify-center shadow-lg overflow-hidden">

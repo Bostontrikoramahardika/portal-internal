@@ -133,7 +133,8 @@ export default function MonitoringApdPage() {
       <PageHeader title="Monitoring Apd" backUrl="/dashboard" />
 
       {/* HERO */}
-      
+      <div className="hidden">
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
         
         <div className="relative">

@@ -182,7 +182,34 @@ export default function ManajemenAbsensiPage() {
 
 
       {/* ── HERO ── */}
-      
+      <div className="hidden">
+        <div className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }}/>
+        <button onClick={() => router.back()}
+          className="mb-4 flex items-center gap-1.5 text-white/60 hover:text-white text-sm relative z-10">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/>
+          </svg> Kembali
+        </button>
+        <div className="relative z-10">
+          <p className="text-[9px] font-black uppercase tracking-widest text-blue-300 mb-1">
+            Matrix Kehadiran Bulanan
+          </p>
+          <h1 className="text-2xl font-black text-white tracking-tight">Manajemen Absensi</h1>
+          <p className="text-blue-200 text-sm mt-1">
+            {namaBulan}
+            {totalKaryawan > 0 && (
+              <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs font-black">
+                {totalKaryawan} karyawan
+              </span>
+            )}
+            {!canEdit && (
+              <span className="ml-2 bg-[#003d79] text-white/30 px-2 py-0.5 rounded-full text-xs font-black">
+                👁️ View Only
+              </span>
+            )}
+          </p>
+        </div>
       </div>
 
       <div className="px-4 space-y-4 relative z-10">

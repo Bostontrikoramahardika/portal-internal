@@ -281,7 +281,18 @@ export default function SettingUnitPage() {
       <PageHeader title="Setting Unit" backUrl="/dashboard" />
 
       {/* HERO */}
-      
+      <div className="hidden">
+        <div className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+        <button onClick={() => router.back()}
+          className="mb-3 flex items-center gap-1.5 text-white/60 hover:text-white text-sm relative z-10">
+          ← Kembali
+        </button>
+        <div className="relative z-10">
+          <p className="text-[9px] font-black uppercase tracking-widest text-blue-300 mb-1">GL Produksi Tools</p>
+          <h1 className="text-xl font-black text-white">🎯 Setting Unit</h1>
+          <p className="text-blue-200 text-sm mt-1">Assign operator ke unit per shift</p>
+        </div>
       </div>
 
       <div className="px-4 space-y-4 relative z-10">

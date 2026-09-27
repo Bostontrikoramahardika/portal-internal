@@ -179,7 +179,18 @@ export default function ApprovalKoreksiPage() {
       <PageHeader title="Approval Koreksi" backUrl="/dashboard" />
 
       {/* HERO */}
-      
+      <div className="hidden">
+        <div className="flex items-center gap-3 mb-4">
+          <Link
+            href="/dashboard"
+            className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white text-lg"
+          >
+            ←
+          </Link>
+          <div>
+            <div className="text-white/60 text-[9px] font-black uppercase tracking-widest">
+              Approval
+            </div>
             <h1 className="text-white text-2xl font-black tracking-tight">
               Koreksi Absensi
             </h1>

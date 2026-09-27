@@ -144,7 +144,25 @@ export default function KelolaAksesPage() {
       <PageHeader title="Kelola Akses" backUrl="/dashboard" />
 
       {/* Header */}
-      
+      <div className="hidden">
+        <h1 className="text-white text-2xl font-black tracking-tight">🔑 Kelola Akses</h1>
+        <p className="text-blue-200 text-sm mt-1">Role & Permission Terpusat</p>
+
+        <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all
+                ${activeTab === t.key
+                  ? 'bg-white text-[#003D79] shadow-lg'
+                  : 'bg-white/20 text-white/80 hover:bg-white/30'
+                }`}
+            >
+              {t.icon}{t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="px-4 py-4">
