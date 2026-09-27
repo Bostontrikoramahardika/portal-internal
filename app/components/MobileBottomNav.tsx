@@ -20,11 +20,11 @@ interface MobileBottomNavProps {
   onScanClick?: () => void
 }
 
-// ─── MASTER DEFAULT MENUS (Sistem Cadangan Agar Drawer Tidak Pernah Kosong) ───
+// ─── MASTER DEFAULT MENUS (Guaranteed Fallback Sub-menus) ───
 const FALLBACK_MENUS: Record<string, MenuItem[]> = {
   absensi: [
     { title: 'Dashboard Utama', href: '/dashboard', icon: '🏠' },
-    { title: 'Pengajuan Koreksi Absensi', href: '/dashboard/koreksi-absensi', icon: '📝' },
+    { title: 'Form Koreksi Absensi', href: '/dashboard/koreksi-absensi', icon: '📝' },
     { title: 'Approval Koreksi (Leader)', href: '/dashboard/approval-koreksi', icon: '✅', badge: 'Leader' },
     { title: 'Crew On Duty', href: '/dashboard/crew-on-duty', icon: '👥' },
     { title: 'Manajemen Absensi Matrix', href: '/dashboard/manajemen-absensi', icon: '📊', badge: 'HR' },
@@ -63,16 +63,11 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
   const pathname = rawPathname || ''
   const [activeSheet, setActiveSheet] = useState<string | null>(null)
 
-  // Ambil sub-menu: Gabungkan data API jika ada, atau gunakan master fallback jika kosong
   const getSubMenus = (tabKey: string): MenuItem[] => {
     const defaultItems = FALLBACK_MENUS[tabKey] || []
-
-    if (!Array.isArray(menus) || menus.length === 0) {
-      return defaultItems
-    }
+    if (!Array.isArray(menus) || menus.length === 0) return defaultItems
 
     let apiMatched: MenuItem[] = []
-
     if (tabKey === 'absensi') {
       apiMatched = menus.filter(m => 
         m.href.includes('/absensi') || 
@@ -106,7 +101,6 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
       apiMatched = menus.filter(m => !otherHrefs.has(m.href) && !m.href.includes('/scan-qr'))
     }
 
-    // Jika API match mengembalikan item, pakai API match. Jika tidak, pakai fallback default!
     return apiMatched.length > 0 ? apiMatched : defaultItems
   }
 
@@ -127,26 +121,32 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
     <>
       {/* ─── BOTTOM SHEET DRAWER OVERLAY ─── */}
       {activeSheet && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end sm:hidden">
+        <div className="fixed inset-0 z-[9999] flex flex-col justify-end sm:hidden">
+          {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-slate-900/70"
             onClick={closeSheet}
+            style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)' }}
           />
-          <div className="relative bg-white rounded-t-[24px] shadow-2xl border-t border-[#e2e8f0] p-4 max-h-[75vh] flex flex-col z-10 animate-in slide-in-from-bottom duration-200">
-            <div className="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-3" />
-            <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0] mb-3">
+
+          {/* Drawer Content */}
+          <div className="relative bg-white rounded-t-[24px] shadow-2xl border-t border-slate-200 p-4 max-h-[80vh] flex flex-col z-[10000] w-full">
+            <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-3 shrink-0" />
+            
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-3 shrink-0">
               <h3 className="text-xs font-black text-[#003d79] uppercase tracking-wider">
                 {getSheetTitle(activeSheet)}
               </h3>
               <button 
                 type="button"
                 onClick={closeSheet}
-                className="w-7 h-7 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center text-xs font-bold transition-colors"
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center justify-center text-sm font-bold active:scale-95 transition-all"
               >
                 ✕
               </button>
             </div>
-            <div className="overflow-y-auto space-y-1.5 max-h-[55vh] pr-0.5">
+
+            <div className="overflow-y-auto space-y-2 max-h-[60vh] pr-1 flex-1">
               {activeSheetItems.map((item, idx) => {
                 const isCurrent = pathname === item.href
                 return (
@@ -154,23 +154,17 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
                     key={item.id || item.href || idx}
                     href={item.href || '#'}
                     onClick={closeSheet}
-                    className={[
-                      'flex items-center justify-between p-3 rounded-xl transition-all text-xs',
+                    className={`flex items-center justify-between p-3 rounded-xl transition-all text-xs font-semibold ${
                       isCurrent 
-                        ? 'bg-[#003d79] text-white font-bold shadow-xs' 
-                        : 'bg-[#f4f7fa] text-slate-700 hover:bg-blue-50 hover:text-[#003d79] font-semibold'
-                    ].join(' ')}
+                        ? 'bg-[#003d79] text-white font-bold shadow-md' 
+                        : 'bg-[#f4f7fa] text-slate-800 hover:bg-blue-50 hover:text-[#003d79] border border-slate-200/60'
+                    }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={[
-                        'w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0',
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0 ${
                         isCurrent ? 'bg-white/20 text-white' : 'bg-white text-[#003d79] border border-slate-200 shadow-xs'
-                      ].join(' ')}>
-                        {item.icon ? (
-                          <span>{item.icon}</span>
-                        ) : (
-                          <span className="text-xs font-bold">📌</span>
-                        )}
+                      }`}>
+                        {item.icon || '📌'}
                       </div>
                       <div className="truncate tracking-tight">
                         {item.title}
@@ -185,64 +179,111 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
                 )
               })}
             </div>
+
             <button
               type="button"
               onClick={closeSheet}
-              className="mt-3 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+              className="mt-3 w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold shrink-0 transition-colors"
             >
-              Tutup
+              Tutup Menu
             </button>
           </div>
         </div>
       )}
 
-      {/* ─── FIXED BOTTOM NAV BAR (Dengan Icon Terlihat Jelas) ─── */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-[#e2e8f0] sm:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="flex items-center justify-around h-[60px] px-1 relative">
+      {/* ─── FIXED BOTTOM NAV BAR ─── */}
+      <nav 
+        className="fixed bottom-0 inset-x-0 z-[999] bg-white border-t border-slate-200 sm:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.1)]"
+        style={{ height: '62px' }}
+      >
+        <div className="flex items-center justify-around h-full px-1 relative">
           
           {/* TAB 1: ABSENSI */}
           <button
             type="button"
             onClick={() => setActiveSheet(activeSheet === 'absensi' ? null : 'absensi')}
-            className={[
-              'flex flex-col items-center justify-center flex-1 py-1 transition-colors',
+            className={`flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors ${
               activeSheet === 'absensi' || (pathname && (pathname.includes('/absensi') || pathname.includes('/crew-on-duty')))
                 ? 'text-[#003d79] font-bold'
-                : 'text-slate-500 hover:text-slate-800 font-medium'
-            ].join(' ')}
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
           >
-            <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg 
+              width="22" 
+              height="22" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2.2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="shrink-0 mb-0.5"
+              style={{ width: '22px', height: '22px', minWidth: '22px', minHeight: '22px' }}
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            <span className="text-[10px] leading-tight">Absensi</span>
+            <span className="text-[11px] leading-none font-semibold mt-0.5">Absensi</span>
           </button>
 
           {/* TAB 2: PENGAJUAN */}
           <button
             type="button"
             onClick={() => setActiveSheet(activeSheet === 'pengajuan' ? null : 'pengajuan')}
-            className={[
-              'flex flex-col items-center justify-center flex-1 py-1 transition-colors',
+            className={`flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors ${
               activeSheet === 'pengajuan' || (pathname && (pathname.includes('/cuti') || pathname.includes('/koreksi')))
                 ? 'text-[#003d79] font-bold'
-                : 'text-slate-500 hover:text-slate-800 font-medium'
-            ].join(' ')}
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
           >
-            <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg 
+              width="22" 
+              height="22" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2.2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="shrink-0 mb-0.5"
+              style={{ width: '22px', height: '22px', minWidth: '22px', minHeight: '22px' }}
+            >
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
-            <span className="text-[10px] leading-tight">Pengajuan</span>
+            <span className="text-[11px] leading-none font-semibold mt-0.5">Pengajuan</span>
           </button>
 
           {/* TAB 3 (CENTER FLOATING FAB): SCAN QR */}
-          <div className="flex-1 flex justify-center -mt-6">
+          <div className="flex-1 flex justify-center items-center -mt-6 shrink-0">
             <Link
               href="/dashboard/scan-qr"
-              className="w-13 h-13 rounded-full bg-[#003d79] text-white flex items-center justify-center shadow-lg shadow-[#003d79]/40 border-4 border-white active:scale-95 transition-transform"
-              title="Scan QR Scanner"
+              className="rounded-full bg-[#003d79] text-white flex items-center justify-center shadow-lg shadow-[#003d79]/40 border-4 border-white active:scale-95 transition-transform shrink-0"
+              style={{ width: '54px', height: '54px', minWidth: '54px', minHeight: '54px' }}
+              title="Scan QR"
             >
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              <svg 
+                width="26" 
+                height="26" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="white" 
+                strokeWidth="2.4" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className="shrink-0 text-white"
+                style={{ width: '26px', height: '26px', minWidth: '26px', minHeight: '26px' }}
+              >
+                <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                <rect x="7" y="7" width="10" height="10" rx="1"></rect>
               </svg>
             </Link>
           </div>
@@ -251,37 +292,61 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
           <button
             type="button"
             onClick={() => setActiveSheet(activeSheet === 'saya' ? null : 'saya')}
-            className={[
-              'flex flex-col items-center justify-center flex-1 py-1 transition-colors',
+            className={`flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors ${
               activeSheet === 'saya' || (pathname && (pathname.includes('/mcu-saya') || pathname.includes('/apd-saya')))
                 ? 'text-[#003d79] font-bold'
-                : 'text-slate-500 hover:text-slate-800 font-medium'
-            ].join(' ')}
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
           >
-            <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg 
+              width="22" 
+              height="22" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2.2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="shrink-0 mb-0.5"
+              style={{ width: '22px', height: '22px', minWidth: '22px', minHeight: '22px' }}
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            <span className="text-[10px] leading-tight">Saya</span>
+            <span className="text-[11px] leading-none font-semibold mt-0.5">Saya</span>
           </button>
 
           {/* TAB 5: MORE */}
           <button
             type="button"
             onClick={() => setActiveSheet(activeSheet === 'more' ? null : 'more')}
-            className={[
-              'flex flex-col items-center justify-center flex-1 py-1 transition-colors',
+            className={`flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors ${
               activeSheet === 'more' || (pathname && (pathname.includes('/plant') || pathname.includes('/logistik') || pathname.includes('/kelola')))
                 ? 'text-[#003d79] font-bold'
-                : 'text-slate-500 hover:text-slate-800 font-medium'
-            ].join(' ')}
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
           >
-            <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            <svg 
+              width="22" 
+              height="22" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2.2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="shrink-0 mb-0.5"
+              style={{ width: '22px', height: '22px', minWidth: '22px', minHeight: '22px' }}
+            >
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
-            <span className="text-[10px] leading-tight">More</span>
+            <span className="text-[11px] leading-none font-semibold mt-0.5">More</span>
           </button>
+
         </div>
       </nav>
     </>
-)
+  )
 }
