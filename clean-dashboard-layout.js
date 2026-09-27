@@ -1,12 +1,17 @@
-'use client';
+﻿const fs = require('fs');
+const path = require('path');
+
+const layoutPath = path.join(process.cwd(), 'app', 'dashboard', 'layout.tsx');
+
+const cleanDashboardLayoutCode = `'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { AuthProvider } from '@/app/lib/AuthContext';
-import SyncIndicator from '@/app/dashboard/components/SyncIndicator';
-import ClockOutReminder from '@/app/dashboard/components/ClockOutReminder';
-import VerificationModal from '@/app/dashboard/components/VerificationModal';
+import { AuthProvider } from '@/app/context/AuthContext';
+import SyncIndicator from '@/app/components/SyncIndicator';
+import ClockOutReminder from '@/app/components/ClockOutReminder';
+import VerificationModal from '@/app/components/VerificationModal';
 import MobileBottomNav from '@/app/components/MobileBottomNav';
 import {
   getUserCache,
@@ -351,3 +356,10 @@ export default function DashboardLayout({
     </div>
   );
 }
+`;
+
+fs.writeFileSync(layoutPath, cleanDashboardLayoutCode, 'utf8');
+console.log('=======================================================');
+console.log('🎉 SUCCESSFULLY CLEANED app/dashboard/layout.tsx!');
+console.log('Removed duplicate bottom navs, blur overlays, and floating stacked buttons.');
+console.log('=======================================================');

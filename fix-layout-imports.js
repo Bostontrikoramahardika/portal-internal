@@ -1,4 +1,9 @@
-'use client';
+﻿const fs = require('fs');
+const path = require('path');
+
+const layoutPath = path.join(process.cwd(), 'app', 'dashboard', 'layout.tsx');
+
+const cleanDashboardLayoutCode = `'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
@@ -351,3 +356,7 @@ export default function DashboardLayout({
     </div>
   );
 }
+`;
+
+fs.writeFileSync(layoutPath, cleanDashboardLayoutCode, 'utf8');
+console.log('✅ FIXED IMPORTS & RE-SAVED: app/dashboard/layout.tsx');
