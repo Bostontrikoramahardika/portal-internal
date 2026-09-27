@@ -1,0 +1,456 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTM Preview - Professional Styles</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: #0a0a0a; padding: 20px 0; }
+
+/* === WRAPPER === */
+.wrap { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; align-items: flex-start; }
+.phone { width: 380px; background: #000; border: 8px solid #1e293b; border-radius: 36px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.6); position: relative; height: 780px; overflow-y: auto; scrollbar-width: none; }
+.phone::-webkit-scrollbar { display: none; }
+
+.style-label { text-align: center; margin-bottom: 12px; padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 13px; letter-spacing: 1px; display: inline-block; }
+.phone-container { display: flex; flex-direction: column; align-items: center; }
+
+/* ═══════════════════════════════════════════════ */
+/* STYLE 1: CORPORATE DARK (Hitam + Emas)         */
+/* ═══════════════════════════════════════════════ */
+.s1 { background: #0f0f0f; color: #fafafa; padding-bottom: 80px; }
+.s1 .header { background: linear-gradient(180deg, #1a1a1a, #0f0f0f); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #d4af37; position: sticky; top: 0; z-index: 10; }
+.s1 .logo { width: 36px; height: 36px; background: linear-gradient(135deg, #d4af37, #b8860b); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #000; box-shadow: 0 4px 12px rgba(212,175,55,0.3); }
+.s1 .brand-title { font-size: 14px; font-weight: 800; color: #fafafa; letter-spacing: 1px; }
+.s1 .brand-sub { font-size: 9px; color: #d4af37; text-transform: uppercase; letter-spacing: 2px; margin-top: 1px; }
+.s1 .user-name { font-size: 11px; font-weight: 700; color: #fafafa; }
+.s1 .user-nrp { font-size: 9px; color: #d4af37; font-weight: 600; }
+.s1 .bell { font-size: 20px; color: #d4af37; }
+.s1 .page-title { padding: 16px 16px 10px; }
+.s1 .page-title h1 { font-size: 18px; font-weight: 800; color: #fafafa; letter-spacing: 0.5px; }
+.s1 .page-title .sub { font-size: 10px; color: #737373; margin-top: 3px; text-transform: uppercase; letter-spacing: 1px; }
+.s1 .divider-gold { width: 40px; height: 3px; background: #d4af37; margin-top: 6px; }
+.s1 .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; padding: 0 16px 12px; }
+.s1 .stat-box { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 10px 6px; text-align: center; border-left: 3px solid #d4af37; }
+.s1 .stat-num { font-size: 20px; font-weight: 800; color: #d4af37; }
+.s1 .stat-lbl { font-size: 8px; color: #a3a3a3; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-top: 2px; }
+.s1 .chip-row { display: flex; gap: 6px; padding: 0 16px 12px; overflow-x: auto; scrollbar-width: none; }
+.s1 .chip-row::-webkit-scrollbar { display: none; }
+.s1 .chip { padding: 7px 14px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 4px; font-size: 11px; font-weight: 700; color: #a3a3a3; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px; }
+.s1 .chip.active { background: #d4af37; color: #000; border-color: #d4af37; }
+.s1 .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 12px; margin: 0 16px 8px; display: flex; align-items: center; gap: 12px; border-left: 3px solid #d4af37; }
+.s1 .avatar { width: 40px; height: 40px; border-radius: 4px; background: linear-gradient(135deg, #d4af37, #b8860b); color: #000; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px; }
+.s1 .c-name { font-size: 13px; font-weight: 700; color: #fafafa; letter-spacing: 0.3px; }
+.s1 .c-meta { font-size: 10px; color: #737373; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+.s1 .badge { padding: 4px 10px; border-radius: 3px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+.s1 .b-pending { background: #422006; color: #fbbf24; border: 1px solid #78350f; }
+.s1 .b-score { background: #d4af37; color: #000; font-weight: 900; }
+.s1 .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; background: #0f0f0f; border-top: 2px solid #d4af37; display: flex; padding: 8px 4px; border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; }
+.s1 .nav { flex: 1; text-align: center; color: #525252; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 4px; }
+.s1 .nav.active { color: #d4af37; }
+.s1 .nav .i { font-size: 18px; display: block; margin-bottom: 2px; }
+
+/* ═══════════════════════════════════════════════ */
+/* STYLE 2: INDUSTRIAL BOLD (Hitam + Orange)      */
+/* ═══════════════════════════════════════════════ */
+.s2 { background: #171717; color: #fafafa; padding-bottom: 80px; }
+.s2 .header { background: #000; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid #ea580c; position: sticky; top: 0; z-index: 10; }
+.s2 .logo { width: 40px; height: 40px; background: #ea580c; clip-path: polygon(0 0, 100% 0, 100% 75%, 85% 100%, 0 100%); display: flex; align-items: center; justify-content: center; font-weight: 900; color: #000; font-size: 18px; }
+.s2 .brand-title { font-size: 15px; font-weight: 900; color: #fafafa; letter-spacing: 2px; }
+.s2 .brand-sub { font-size: 9px; color: #ea580c; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+.s2 .user-name { font-size: 11px; font-weight: 800; color: #fafafa; text-transform: uppercase; }
+.s2 .user-nrp { font-size: 9px; color: #ea580c; font-weight: 700; }
+.s2 .bell { font-size: 20px; color: #ea580c; }
+.s2 .page-title { padding: 14px 14px 10px; background: linear-gradient(180deg, #000, #171717); border-bottom: 1px solid #262626; }
+.s2 .page-title h1 { font-size: 20px; font-weight: 900; color: #fafafa; text-transform: uppercase; letter-spacing: 1px; }
+.s2 .page-title .sub { font-size: 10px; color: #a3a3a3; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.s2 .accent-bar { width: 60px; height: 4px; background: #ea580c; margin-top: 8px; }
+.s2 .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; padding: 12px 14px; background: #0a0a0a; }
+.s2 .stat-box { background: #171717; padding: 12px 6px; text-align: center; border-top: 3px solid #ea580c; }
+.s2 .stat-num { font-size: 22px; font-weight: 900; color: #fafafa; }
+.s2 .stat-lbl { font-size: 8px; color: #a3a3a3; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-top: 2px; }
+.s2 .chip-row { display: flex; gap: 0; padding: 0 14px 12px; overflow-x: auto; scrollbar-width: none; margin-top: 12px; }
+.s2 .chip-row::-webkit-scrollbar { display: none; }
+.s2 .chip { padding: 8px 16px; background: #262626; font-size: 11px; font-weight: 800; color: #a3a3a3; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid #0a0a0a; }
+.s2 .chip.active { background: #ea580c; color: #000; }
+.s2 .card { background: #171717; padding: 12px 14px; margin: 0 0 2px; display: flex; align-items: center; gap: 12px; border-left: 4px solid #ea580c; }
+.s2 .avatar { width: 42px; height: 42px; background: #ea580c; color: #000; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; clip-path: polygon(0 0, 100% 0, 100% 100%, 15% 100%, 0 85%); }
+.s2 .c-name { font-size: 13px; font-weight: 800; color: #fafafa; text-transform: uppercase; letter-spacing: 0.5px; }
+.s2 .c-meta { font-size: 10px; color: #737373; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.s2 .badge { padding: 5px 10px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
+.s2 .b-pending { background: #fbbf24; color: #000; }
+.s2 .b-score { background: #ea580c; color: #000; }
+.s2 .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; background: #000; border-top: 4px solid #ea580c; display: flex; padding: 8px 0; border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; }
+.s2 .nav { flex: 1; text-align: center; color: #525252; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 4px; }
+.s2 .nav.active { color: #ea580c; }
+.s2 .nav .i { font-size: 18px; display: block; margin-bottom: 2px; }
+
+/* ═══════════════════════════════════════════════ */
+/* STYLE 3: MILITARY TACTICAL (Hijau + Kuning)    */
+/* ═══════════════════════════════════════════════ */
+.s3 { background: #0c1410; color: #d1fae5; padding-bottom: 80px; font-family: "Consolas", monospace; }
+.s3 .header { background: #1a2e1a; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #84cc16; position: sticky; top: 0; z-index: 10; }
+.s3 .logo { width: 40px; height: 40px; background: #84cc16; border: 2px solid #d1fae5; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #000; font-size: 16px; }
+.s3 .brand-title { font-size: 14px; font-weight: 800; color: #d1fae5; letter-spacing: 2px; }
+.s3 .brand-sub { font-size: 9px; color: #84cc16; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
+.s3 .user-name { font-size: 11px; font-weight: 800; color: #d1fae5; text-transform: uppercase; }
+.s3 .user-nrp { font-size: 9px; color: #84cc16; font-weight: 700; }
+.s3 .bell { font-size: 20px; color: #84cc16; }
+.s3 .page-title { padding: 14px 14px 10px; background: #14251c; border-bottom: 1px dashed #84cc16; }
+.s3 .page-title h1 { font-size: 17px; font-weight: 900; color: #d1fae5; text-transform: uppercase; letter-spacing: 2px; }
+.s3 .page-title .sub { font-size: 10px; color: #6ee7b7; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+.s3 .page-title .sub::before { content: ">> "; color: #84cc16; }
+.s3 .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; padding: 12px 14px; }
+.s3 .stat-box { background: #1a2e1a; border: 1px solid #365314; padding: 10px 4px; text-align: center; }
+.s3 .stat-num { font-size: 20px; font-weight: 900; color: #84cc16; font-family: "Consolas", monospace; }
+.s3 .stat-lbl { font-size: 8px; color: #a7f3d0; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.s3 .chip-row { display: flex; gap: 4px; padding: 0 14px 12px; overflow-x: auto; scrollbar-width: none; }
+.s3 .chip-row::-webkit-scrollbar { display: none; }
+.s3 .chip { padding: 6px 12px; background: #1a2e1a; border: 1px solid #365314; font-size: 10px; font-weight: 700; color: #a7f3d0; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; }
+.s3 .chip.active { background: #84cc16; color: #000; border-color: #d1fae5; }
+.s3 .card { background: #14251c; border: 1px solid #365314; padding: 10px 12px; margin: 0 14px 6px; display: flex; align-items: center; gap: 10px; border-left: 3px solid #84cc16; }
+.s3 .avatar { width: 38px; height: 38px; background: #84cc16; border: 2px solid #d1fae5; color: #000; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; }
+.s3 .c-name { font-size: 12px; font-weight: 800; color: #d1fae5; text-transform: uppercase; letter-spacing: 1px; }
+.s3 .c-meta { font-size: 9px; color: #6ee7b7; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+.s3 .c-meta::before { content: "// "; color: #84cc16; }
+.s3 .badge { padding: 4px 8px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+.s3 .b-pending { background: #422006; color: #fbbf24; border: 1px solid #78350f; }
+.s3 .b-score { background: #84cc16; color: #000; }
+.s3 .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; background: #1a2e1a; border-top: 2px solid #84cc16; display: flex; padding: 8px 0; border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; }
+.s3 .nav { flex: 1; text-align: center; color: #4d7c0f; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 4px; }
+.s3 .nav.active { color: #84cc16; }
+.s3 .nav .i { font-size: 18px; display: block; margin-bottom: 2px; }
+
+/* Style label colors */
+.lbl1 { background: #d4af37; color: #000; }
+.lbl2 { background: #ea580c; color: #000; }
+.lbl3 { background: #84cc16; color: #000; }
+
+.title-main { text-align: center; color: white; margin-bottom: 20px; }
+.title-main h1 { font-size: 20px; font-weight: 900; color: #fafafa; letter-spacing: 2px; }
+.title-main p { font-size: 12px; color: #a3a3a3; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div class="title-main">
+  <h1>🎨 3 REFERENSI TAMPILAN PROFESIONAL BTM</h1>
+  <p>Bandingkan langsung mana yang paling cocok untuk PT. Boston PPA - MLP</p>
+</div>
+
+<div class="wrap">
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- STYLE 1: CORPORATE DARK                        -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="phone-container">
+    <div class="style-label lbl1">STYLE 1 · CORPORATE DARK</div>
+    <div class="phone">
+      <div class="s1">
+        <div class="header">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="logo">B</div>
+            <div>
+              <div class="brand-title">BTM PORTAL</div>
+              <div class="brand-sub">PT. Boston PPA</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="text-align:right;">
+              <div class="user-name">FERRY A.</div>
+              <div class="user-nrp">0420124</div>
+            </div>
+            <div class="bell">🔔</div>
+          </div>
+        </div>
+        <div class="page-title">
+          <h1>KPI & Penilaian</h1>
+          <div class="sub">Periode Juli 2026 · 21 Bawahan</div>
+          <div class="divider-gold"></div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-num">21</div><div class="stat-lbl">Total</div></div>
+          <div class="stat-box"><div class="stat-num">0</div><div class="stat-lbl">Dinilai</div></div>
+          <div class="stat-box"><div class="stat-num">21</div><div class="stat-lbl">Pending</div></div>
+          <div class="stat-box"><div class="stat-num">—</div><div class="stat-lbl">Rata²</div></div>
+        </div>
+        <div class="chip-row">
+          <div class="chip active">Semua 21</div>
+          <div class="chip">Plant 21</div>
+          <div class="chip">Produksi 0</div>
+        </div>
+        <div class="card">
+          <div class="avatar">A</div>
+          <div style="flex:1">
+            <div class="c-name">Andi Baramuli</div>
+            <div class="c-meta">Helper · 0740724</div>
+          </div>
+          <span class="badge b-pending">Pending</span>
+        </div>
+        <div class="card">
+          <div class="avatar">B</div>
+          <div style="flex:1">
+            <div class="c-name">Budi Santoso</div>
+            <div class="c-meta">Welder · 0850324</div>
+          </div>
+          <span class="badge b-score">85</span>
+        </div>
+        <div class="card">
+          <div class="avatar">C</div>
+          <div style="flex:1">
+            <div class="c-name">Charlie Wijaya</div>
+            <div class="c-meta">Mekanik · 0930524</div>
+          </div>
+          <span class="badge b-pending">Pending</span>
+        </div>
+        <div class="card">
+          <div class="avatar">D</div>
+          <div style="flex:1">
+            <div class="c-name">Dedi Kurniawan</div>
+            <div class="c-meta">Helper · 0410624</div>
+          </div>
+          <span class="badge b-score">78</span>
+        </div>
+        <div class="card">
+          <div class="avatar">E</div>
+          <div style="flex:1">
+            <div class="c-name">Eko Prasetyo</div>
+            <div class="c-meta">Welder · 0620324</div>
+          </div>
+          <span class="badge b-pending">Pending</span>
+        </div>
+        <div class="card">
+          <div class="avatar">F</div>
+          <div style="flex:1">
+            <div class="c-name">Fahri Rahman</div>
+            <div class="c-meta">Mekanik · 0710124</div>
+          </div>
+          <span class="badge b-score">90</span>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav"><span class="i">⏰</span>ABSEN</div>
+          <div class="nav"><span class="i">📋</span>AJUAN</div>
+          <div class="nav active"><span class="i">👥</span>TIM</div>
+          <div class="nav"><span class="i">✅</span>APR</div>
+          <div class="nav"><span class="i">🚜</span>PLANT</div>
+        </div>
+      </div>
+    </div>
+    <div style="color:white; text-align:center; margin-top:12px; font-size:11px; max-width:380px;">
+      <b style="color:#d4af37">Karakter:</b> Elegan · Mewah · Formal<br>
+      <b style="color:#d4af37">Cocok untuk:</b> Manajemen atas, laporan eksekutif, kesan premium
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- STYLE 2: INDUSTRIAL BOLD                       -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="phone-container">
+    <div class="style-label lbl2">STYLE 2 · INDUSTRIAL BOLD</div>
+    <div class="phone">
+      <div class="s2">
+        <div class="header">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="logo">B</div>
+            <div>
+              <div class="brand-title">BTM</div>
+              <div class="brand-sub">MINING · HEAVY EQUIPMENT</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="text-align:right;">
+              <div class="user-name">FERRY A.</div>
+              <div class="user-nrp">0420124</div>
+            </div>
+            <div class="bell">🔔</div>
+          </div>
+        </div>
+        <div class="page-title">
+          <h1>KPI PENILAIAN</h1>
+          <div class="sub">JULI 2026 // 21 BAWAHAN</div>
+          <div class="accent-bar"></div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-num">21</div><div class="stat-lbl">TOTAL</div></div>
+          <div class="stat-box"><div class="stat-num">0</div><div class="stat-lbl">DINILAI</div></div>
+          <div class="stat-box"><div class="stat-num">21</div><div class="stat-lbl">PENDING</div></div>
+          <div class="stat-box"><div class="stat-num">—</div><div class="stat-lbl">AVG</div></div>
+        </div>
+        <div class="chip-row">
+          <div class="chip active">SEMUA</div>
+          <div class="chip">PLANT</div>
+          <div class="chip">PRODUKSI</div>
+        </div>
+        <div class="card">
+          <div class="avatar">A</div>
+          <div style="flex:1">
+            <div class="c-name">ANDI BARAMULI</div>
+            <div class="c-meta">HELPER · 0740724</div>
+          </div>
+          <span class="badge b-pending">PEND</span>
+        </div>
+        <div class="card">
+          <div class="avatar">B</div>
+          <div style="flex:1">
+            <div class="c-name">BUDI SANTOSO</div>
+            <div class="c-meta">WELDER · 0850324</div>
+          </div>
+          <span class="badge b-score">85</span>
+        </div>
+        <div class="card">
+          <div class="avatar">C</div>
+          <div style="flex:1">
+            <div class="c-name">CHARLIE WIJAYA</div>
+            <div class="c-meta">MEKANIK · 0930524</div>
+          </div>
+          <span class="badge b-pending">PEND</span>
+        </div>
+        <div class="card">
+          <div class="avatar">D</div>
+          <div style="flex:1">
+            <div class="c-name">DEDI KURNIAWAN</div>
+            <div class="c-meta">HELPER · 0410624</div>
+          </div>
+          <span class="badge b-score">78</span>
+        </div>
+        <div class="card">
+          <div class="avatar">E</div>
+          <div style="flex:1">
+            <div class="c-name">EKO PRASETYO</div>
+            <div class="c-meta">WELDER · 0620324</div>
+          </div>
+          <span class="badge b-pending">PEND</span>
+        </div>
+        <div class="card">
+          <div class="avatar">F</div>
+          <div style="flex:1">
+            <div class="c-name">FAHRI RAHMAN</div>
+            <div class="c-meta">MEKANIK · 0710124</div>
+          </div>
+          <span class="badge b-score">90</span>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav"><span class="i">⏰</span>ABSEN</div>
+          <div class="nav"><span class="i">📋</span>AJUAN</div>
+          <div class="nav active"><span class="i">👥</span>TIM</div>
+          <div class="nav"><span class="i">✅</span>APR</div>
+          <div class="nav"><span class="i">🚜</span>PLANT</div>
+        </div>
+      </div>
+    </div>
+    <div style="color:white; text-align:center; margin-top:12px; font-size:11px; max-width:380px;">
+      <b style="color:#ea580c">Karakter:</b> Tegas · Powerful · Industrial<br>
+      <b style="color:#ea580c">Cocok untuk:</b> Mining, heavy equipment, foreman lapangan (SEPERTI CAT/JCB/KOMATSU)
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- STYLE 3: MILITARY TACTICAL                     -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="phone-container">
+    <div class="style-label lbl3">STYLE 3 · MILITARY TACTICAL</div>
+    <div class="phone">
+      <div class="s3">
+        <div class="header">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="logo">B</div>
+            <div>
+              <div class="brand-title">BTM-OPS</div>
+              <div class="brand-sub">TACTICAL SYSTEM</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="text-align:right;">
+              <div class="user-name">FERRY.A</div>
+              <div class="user-nrp">ID:0420124</div>
+            </div>
+            <div class="bell">🔔</div>
+          </div>
+        </div>
+        <div class="page-title">
+          <h1>KPI · UNIT REPORT</h1>
+          <div class="sub">JULI 2026 - 21 UNIT ACTIVE</div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-num">21</div><div class="stat-lbl">TOTAL</div></div>
+          <div class="stat-box"><div class="stat-num">00</div><div class="stat-lbl">DONE</div></div>
+          <div class="stat-box"><div class="stat-num">21</div><div class="stat-lbl">WAIT</div></div>
+          <div class="stat-box"><div class="stat-num">--</div><div class="stat-lbl">AVG</div></div>
+        </div>
+        <div class="chip-row">
+          <div class="chip active">[ALL]</div>
+          <div class="chip">[PLANT]</div>
+          <div class="chip">[PRODUKSI]</div>
+        </div>
+        <div class="card">
+          <div class="avatar">A</div>
+          <div style="flex:1">
+            <div class="c-name">ANDI BARAMULI</div>
+            <div class="c-meta">HELPER-0740724</div>
+          </div>
+          <span class="badge b-pending">WAIT</span>
+        </div>
+        <div class="card">
+          <div class="avatar">B</div>
+          <div style="flex:1">
+            <div class="c-name">BUDI SANTOSO</div>
+            <div class="c-meta">WELDER-0850324</div>
+          </div>
+          <span class="badge b-score">85</span>
+        </div>
+        <div class="card">
+          <div class="avatar">C</div>
+          <div style="flex:1">
+            <div class="c-name">CHARLIE WIJAYA</div>
+            <div class="c-meta">MEKANIK-0930524</div>
+          </div>
+          <span class="badge b-pending">WAIT</span>
+        </div>
+        <div class="card">
+          <div class="avatar">D</div>
+          <div style="flex:1">
+            <div class="c-name">DEDI KURNIAWAN</div>
+            <div class="c-meta">HELPER-0410624</div>
+          </div>
+          <span class="badge b-score">78</span>
+        </div>
+        <div class="card">
+          <div class="avatar">E</div>
+          <div style="flex:1">
+            <div class="c-name">EKO PRASETYO</div>
+            <div class="c-meta">WELDER-0620324</div>
+          </div>
+          <span class="badge b-pending">WAIT</span>
+        </div>
+        <div class="card">
+          <div class="avatar">F</div>
+          <div style="flex:1">
+            <div class="c-name">FAHRI RAHMAN</div>
+            <div class="c-meta">MEKANIK-0710124</div>
+          </div>
+          <span class="badge b-score">90</span>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav"><span class="i">⏰</span>ABSEN</div>
+          <div class="nav"><span class="i">📋</span>AJUAN</div>
+          <div class="nav active"><span class="i">👥</span>TIM</div>
+          <div class="nav"><span class="i">✅</span>APR</div>
+          <div class="nav"><span class="i">🚜</span>PLANT</div>
+        </div>
+      </div>
+    </div>
+    <div style="color:white; text-align:center; margin-top:12px; font-size:11px; max-width:380px;">
+      <b style="color:#84cc16">Karakter:</b> Sangat Tegas · Command & Control<br>
+      <b style="color:#84cc16">Cocok untuk:</b> Safety officer, security, operasional lapangan intens
+    </div>
+  </div>
+
+</div>
+
+<div style="text-align:center; color:white; margin-top:30px; padding:20px; font-size:12px;">
+  <p style="color:#a3a3a3;">Scroll di setiap frame untuk lihat semua konten · Bandingkan side-by-side</p>
+</div>
+
+</body>
+</html>

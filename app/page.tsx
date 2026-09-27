@@ -206,7 +206,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 relative overflow-hidden bg-[#F8FAFC]">
+    <div className="min-h-screen pb-24 sm:pb-8  w-full flex flex-col items-center justify-center p-6 relative overflow-hidden bg-[#F8FAFC]">
       <div
         className="fixed inset-0 pointer-events-none opacity-[0.01] z-0"
         style={{
@@ -216,11 +216,11 @@ export default function LoginPage() {
         }}
       />
 
-      <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[120px] pointer-events-none z-[1]" />
+      <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-[#003d79]/15 rounded-full blur-[120px] pointer-events-none z-[1]" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-[#003D79]/10 rounded-full blur-[120px] pointer-events-none z-[1]" />
 
       <div className="relative z-10 w-full max-w-[360px] flex flex-col items-center">
-        <div className="fixed top-8 right-8 text-slate-400 text-[10px] font-bold tracking-widest opacity-50">
+        <div className="fixed top-8 right-8 text-[#5a6a7e] text-[10px] font-bold tracking-widest opacity-50">
           V.1.7.0
         </div>
 
@@ -229,7 +229,7 @@ export default function LoginPage() {
             <Image src="/btm-fix.png" alt="Logo BTM" width={180} height={180} priority className="object-contain" />
           </div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight">BTM Mobile App</h1>
-          <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.5em] mt-3 opacity-60">
+          <p className="text-[#5a6a7e] text-[9px] font-black uppercase tracking-[0.5em] mt-3 opacity-60">
             INTERNAL PRODUCTION
           </p>
         </div>
@@ -241,38 +241,38 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="flex items-center bg-slate-100/50 border-2 border-transparent rounded-2xl px-5 py-4 focus-within:border-[#003D79] focus-within:bg-white transition-all group">
-              <span className="text-slate-400 group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">👤</span>
+              <span className="text-[#5a6a7e] group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">👤</span>
               <input
                 type="text"
                 placeholder="NRP Pengguna"
                 value={nrp}
                 onChange={(e) => setNrp(e.target.value)}
-                className="w-full bg-transparent outline-none font-bold text-sm text-slate-700 placeholder:text-slate-400"
+                className="w-full bg-transparent outline-none font-bold text-sm text-slate-700 placeholder:text-[#5a6a7e]"
                 required
               />
             </div>
 
             <div className="flex items-center bg-slate-100/50 border-2 border-transparent rounded-2xl px-5 py-4 focus-within:border-[#003D79] focus-within:bg-white transition-all group">
-              <span className="text-slate-400 group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">🔒</span>
+              <span className="text-[#5a6a7e] group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">🔒</span>
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-transparent outline-none font-bold text-sm text-slate-700 placeholder:text-slate-400"
+                className="w-full bg-transparent outline-none font-bold text-sm text-slate-700 placeholder:text-[#5a6a7e]"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-slate-400 hover:text-[#003D79] transition-colors ml-2 text-lg active:scale-90"
+                className="text-[#5a6a7e] hover:text-[#003D79] transition-colors ml-2 text-lg active:scale-90"
               >
                 {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
 
             <div className="flex items-center bg-slate-100/50 border-2 border-transparent rounded-2xl px-5 py-4 focus-within:border-[#003D79] focus-within:bg-white transition-all group">
-              <span className="text-slate-400 group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">🏢</span>
+              <span className="text-[#5a6a7e] group-focus-within:text-[#003D79] transition-colors mr-3 text-lg">🏢</span>
               <select
                 value={site}
                 onChange={(e) => setSite(e.target.value)}
@@ -284,7 +284,7 @@ export default function LoginPage() {
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
-              <span className="text-slate-400 text-[10px]">▼</span>
+              <span className="text-[#5a6a7e] text-[10px]">▼</span>
             </div>
 
             <button
@@ -314,7 +314,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-12 text-center px-6">
-          <p className="text-[9px] text-slate-400 leading-relaxed mb-6 font-medium">
+          <p className="text-[9px] text-[#5a6a7e] leading-relaxed mb-6 font-medium">
             Sistem Informasi SDM Terpadu <br />
             <span className="text-[#003D79] font-bold cursor-pointer">PT Boston Trikora Mahardika</span>
           </p>
@@ -324,7 +324,7 @@ export default function LoginPage() {
       {showHelp && (
         <>
           <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[998]"
+            className="fixed inset-0 bg-[#f4f7fa]/60 backdrop-blur-md z-[998]"
             onClick={() => setShowHelp(false)}
           />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[999] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -401,6 +401,12 @@ export default function LoginPage() {
           </div>
         </>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

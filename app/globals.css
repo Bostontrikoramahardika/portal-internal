@@ -222,3 +222,106 @@ body {
    Contoh: lg:text-base lg:text-base lg:text-base...
    Browser abaikan duplikat class secara otomatis
    ═══════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════ */
+/* BTM DESIGN SYSTEM — NAVY CORPORATE (Auto-generated)   */
+/* ═══════════════════════════════════════════════════════ */
+
+/* Font: Plus Jakarta Sans (Local, Offline-ready) */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-ExtraBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-Italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-MediumItalic.woff2') format('woff2');
+}
+
+/* Design Tokens */
+:root {
+  --btm-navy: #003d79;
+  --btm-navy-dark: #002a57;
+  --btm-navy-deep: #001f3f;
+  --btm-navy-light: #0056b3;
+  --btm-navy-50: #e8f0f8;
+  --btm-navy-100: #d1e1f1;
+  --btm-bg: #f4f7fa;
+  --btm-card: #ffffff;
+  --btm-text: #1a2332;
+  --btm-text-sub: #5a6a7e;
+  --btm-text-muted: #8896a7;
+  --btm-border: #e2e8f0;
+  --btm-success: #0d7a3e;
+  --btm-success-bg: #e6f5ed;
+  --btm-warning: #b45309;
+  --btm-warning-bg: #fef3c7;
+  --btm-danger: #b91c1c;
+  --btm-danger-bg: #fee2e2;
+  --btm-info: #0369a1;
+  --btm-info-bg: #e0f2fe;
+  --btm-radius-sm: 10px;
+  --btm-radius-md: 14px;
+  --btm-radius-lg: 20px;
+  --btm-radius-xl: 24px;
+  --btm-shadow-sm: 0 1px 3px rgba(0,61,121,0.06);
+  --btm-shadow-md: 0 4px 16px rgba(0,61,121,0.08);
+  --btm-shadow-lg: 0 8px 32px rgba(0,61,121,0.12);
+  --btm-font: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Global Reset */
+body {
+  font-family: var(--btm-font) !important;
+  background: var(--btm-bg);
+  color: var(--btm-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.2px;
+}
+
+/* Scrollbar halus */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }

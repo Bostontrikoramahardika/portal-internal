@@ -218,7 +218,7 @@ function RujukanSection({
               />
               <div className={`text-center py-1.5 rounded-lg text-xs font-bold ${
                 uploading
-                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  ? 'bg-slate-200 text-[#5a6a7e] cursor-not-allowed'
                   : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}>
                 {uploading ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : '🔄 Ganti File'}
@@ -248,7 +248,7 @@ function RujukanSection({
             />
             <div className={`text-center py-2.5 rounded-xl text-xs font-black border-2 border-dashed transition ${
               uploading
-                ? 'border-slate-200 bg-slate-50 text-slate-400'
+                ? 'border-slate-200 bg-slate-50 text-[#5a6a7e]'
                 : 'border-blue-300 bg-white text-blue-700 hover:bg-blue-50 hover:border-blue-500'
             }`}>
               {uploading ? (
@@ -365,7 +365,7 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center">
+      <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-[#003D79]" />
       </div>
     )
@@ -374,12 +374,12 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
   if (error || !mcu) {
     const isNotFound = error?.includes('tidak ditemukan') || !mcu
     return (
-      <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center px-4">
+      <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa] flex items-center justify-center px-4">
         <div className="bg-white rounded-[2rem] shadow-xl border border-slate-100 p-8 max-w-md w-full text-center">
           <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
             isNotFound ? 'bg-amber-50' : 'bg-rose-50'
           }`}>
-            <AlertCircle className={`w-8 h-8 ${isNotFound ? 'text-amber-500' : 'text-rose-500'}`} />
+            <AlertCircle className={`w-8 h-8 ${isNotFound ? 'text-[#003d79]' : 'text-rose-500'}`} />
           </div>
           <h2 className="text-lg font-black text-slate-800 mb-1">
             {isNotFound ? 'MCU Tidak Ditemukan' : 'Terjadi Kesalahan'}
@@ -424,7 +424,7 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa]" style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+    <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa]" style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
 
         {/* Header */}
@@ -450,7 +450,7 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
             <div className="flex-1">
               <div className="font-black text-slate-800 text-lg">{mcu.nama_karyawan}</div>
               <div className="text-sm text-slate-500">{mcu.employees?.jabatan} · {mcu.employees?.departemen}</div>
-              <div className="text-sm text-slate-400">{mcu.employees?.site}</div>
+              <div className="text-sm text-[#5a6a7e]">{mcu.employees?.site}</div>
             </div>
           </div>
 
@@ -464,7 +464,7 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
               { label: 'Berlaku s/d', value: mcu.tanggal_expired ? new Date(mcu.tanggal_expired).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-' },
             ].map(item => (
               <div key={item.label}>
-                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{item.label}</div>
+                <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] mb-0.5">{item.label}</div>
                 <div className="text-sm font-semibold text-slate-700">{item.value}</div>
               </div>
             ))}
@@ -472,7 +472,7 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
 
           {mcu.catatan_hrga && (
             <div className="mt-4 p-3 bg-slate-50 rounded-xl">
-              <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Catatan HRGA</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] mb-1">Catatan HRGA</div>
               <div className="text-sm text-slate-600">{mcu.catatan_hrga}</div>
             </div>
           )}
@@ -537,7 +537,7 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
 
           {/* Findings List */}
           {mcu.mcu_findings.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
+            <div className="text-center py-8 text-[#5a6a7e]">
               <HeartPulse className="w-10 h-10 mx-auto mb-2 opacity-30" />
               <p className="text-sm">Tidak ada temuan</p>
             </div>
@@ -607,7 +607,7 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
                         )}
                       </div>
                       {f.verified_note && <p className="text-xs text-slate-600">{f.verified_note}</p>}
-                      <p className="text-[10px] text-slate-400 mt-1">
+                      <p className="text-[10px] text-[#5a6a7e] mt-1">
                         {new Date(f.verified_at).toLocaleString('id-ID')}
                       </p>
                     </div>
@@ -647,7 +647,7 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
                   <div>
                     <div className="font-semibold text-slate-700">{log.action.replace(/_/g, ' ')}</div>
                     <div className="text-slate-500 text-xs">{log.actor_name} · {log.note}</div>
-                    <div className="text-slate-400 text-xs">{new Date(log.created_at).toLocaleString('id-ID')}</div>
+                    <div className="text-[#5a6a7e] text-xs">{new Date(log.created_at).toLocaleString('id-ID')}</div>
                   </div>
                 </div>
               ))}
@@ -688,6 +688,12 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

@@ -54,7 +54,7 @@ export default function OfflinePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center p-6">
+    <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa] flex items-center justify-center p-6">
       <PageHeader title="Offline" backUrl="/dashboard" />
 
       <div className="max-w-sm w-full">
@@ -89,7 +89,7 @@ export default function OfflinePage() {
           `}>
             <span className={`
               w-2 h-2 rounded-full animate-pulse
-              ${isOnline ? 'bg-emerald-600' : 'bg-amber-600'}
+              ${isOnline ? 'bg-emerald-600' : 'bg-[#002a57] text-white'}
             `}></span>
             {isOnline ? 'Koneksi Kembali!' : 'Tidak Ada Koneksi'}
           </div>
@@ -134,11 +134,17 @@ export default function OfflinePage() {
           </button>
 
           {/* Footer */}
-          <p className="text-[10px] text-slate-400 mt-6 uppercase tracking-widest font-bold">
+          <p className="text-[10px] text-[#5a6a7e] mt-6 uppercase tracking-widest font-bold">
             BTM Portal · PT. Boston Trikorama Hardika
           </p>
         </div>
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

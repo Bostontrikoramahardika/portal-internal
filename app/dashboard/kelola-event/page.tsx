@@ -248,7 +248,7 @@ function HistoriTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
           <button
             onClick={fetchHistori}
-            className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#002a57] transition-all"
+            className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#003d79] transition-all"
           >
             🔄 Refresh
           </button>
@@ -329,7 +329,7 @@ function HistoriTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                       )}
                     </>
                   ) : mom && mom.total === 0 ? (
-                    <span className="bg-slate-50 text-slate-400 px-2.5 py-1 rounded-full text-[11px] font-bold border">
+                    <span className="bg-slate-50 text-[#5a6a7e] px-2.5 py-1 rounded-full text-[11px] font-bold border">
                       📋 Tanpa MoM
                     </span>
                   ) : null}
@@ -337,7 +337,7 @@ function HistoriTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
                 {/* Footer */}
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-[#5a6a7e]">
                     oleh {ev.created_by_nama || ev.created_by}
                   </span>
                   <div className="flex gap-2">
@@ -349,7 +349,7 @@ function HistoriTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                     </a>
                     <a
                       href={`/dashboard/kelola-event/${ev.id}`}
-                      className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-[10px] font-bold hover:bg-[#002a57] transition-all"
+                      className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-[10px] font-bold hover:bg-[#003d79] transition-all"
                     >
                       Lihat Detail →
                     </a>
@@ -398,7 +398,7 @@ function QRLokasiTab() {
       <div className="flex justify-between items-center">
         <h2 className="text-sm font-black text-slate-700 uppercase tracking-wide">📱 QR Lokasi ({locations.length})</h2>
         <button onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#002a57] transition-all shadow-lg">
+          className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#003d79] transition-all shadow-lg">
           ➕ Buat QR Baru
         </button>
       </div>
@@ -416,10 +416,10 @@ function QRLokasiTab() {
                   <p className="text-[11px] text-slate-500 mt-1">🏢 {loc.site || '-'} • 📋 {loc.total_event} event</p>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-400 mb-3 font-mono break-all">Token: {loc.qr_token}</p>
+              <p className="text-[10px] text-[#5a6a7e] mb-3 font-mono break-all">Token: {loc.qr_token}</p>
               <div className="flex gap-2">
                 <button onClick={() => setQrModal(loc)}
-                  className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-[11px] font-bold hover:bg-blue-700">
+                  className="flex-1 px-3 py-2 bg-[#003d79] text-white rounded-lg text-[11px] font-bold hover:bg-[#003d79]">
                   📱 Lihat QR
                 </button>
                 <button onClick={() => handleDelete(loc.id)}
@@ -544,7 +544,7 @@ function EventTab() {
           ))}
         </div>
         <button onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#002a57] shadow-lg">
+          className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#003d79] shadow-lg">
           ➕ Buat Event
         </button>
       </div>
@@ -599,7 +599,7 @@ function EventTab() {
                   <span className="bg-blue-50 text-[#003D79] px-2.5 py-1 rounded-full text-[11px] font-black">
                     👥 {ev.total_hadir} hadir
                   </span>
-                  <span className="text-[10px] text-slate-400">oleh {ev.created_by_nama || ev.created_by}</span>
+                  <span className="text-[10px] text-[#5a6a7e]">oleh {ev.created_by_nama || ev.created_by}</span>
                 </div>
               </div>
 
@@ -713,7 +713,7 @@ function MasterPerusahaanTab() {
             className="flex-1 border-2 border-slate-100 rounded-xl px-3 py-2 text-sm focus:border-blue-500 outline-none"
           />
           <button onClick={handleAdd} disabled={saving || !newName.trim()}
-            className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#002a57] disabled:opacity-50 whitespace-nowrap">
+            className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#003d79] disabled:opacity-50 whitespace-nowrap">
             {saving ? '...' : '➕ Tambah'}
           </button>
         </div>
@@ -804,7 +804,7 @@ function CreateQRModal({ sites, onClose, onSuccess }: {
             Batal
           </button>
           <button type="submit" disabled={saving}
-            className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57] disabled:opacity-50">
+            className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#003d79] disabled:opacity-50">
             {saving ? 'Menyimpan...' : '✅ BUAT QR'}
           </button>
         </div>
@@ -864,7 +864,7 @@ function CreateEventModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               <option key={l.id} value={l.id}>📍 {l.nama_lokasi} ({l.site})</option>
             ))}
           </select>
-          <p className="text-[10px] text-slate-400 mt-1">Pilih lokasi agar 1 QR bisa dipakai banyak event</p>
+          <p className="text-[10px] text-[#5a6a7e] mt-1">Pilih lokasi agar 1 QR bisa dipakai banyak event</p>
         </div>
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1">Nama Event *</label>
@@ -933,7 +933,7 @@ function CreateEventModal({ onClose, onSuccess }: { onClose: () => void; onSucce
             Batal
           </button>
           <button type="submit" disabled={saving}
-            className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57] disabled:opacity-50">
+            className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#003d79] disabled:opacity-50">
             {saving ? 'Menyimpan...' : '✅ BUAT EVENT'}
           </button>
         </div>
@@ -1082,7 +1082,7 @@ function TemplateTab() {
           🔁 Template Recurring ({templates.length})
         </h2>
         <button onClick={() => { setEditing(null); setShowForm(true) }}
-          className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#002a57] shadow-lg">
+          className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#003d79] shadow-lg">
           ➕ Template Baru
         </button>
       </div>
@@ -1133,7 +1133,7 @@ function TemplateTab() {
               {/* Actions */}
               <div className="flex gap-2">
                 <button onClick={() => setGenerating(tpl)}
-                  className="flex-1 px-3 py-2 bg-[#003D79] text-white rounded-lg text-[11px] font-bold hover:bg-[#002a57] flex items-center justify-center gap-1">
+                  className="flex-1 px-3 py-2 bg-[#003D79] text-white rounded-lg text-[11px] font-bold hover:bg-[#003d79] flex items-center justify-center gap-1">
                   🚀 Generate
                 </button>
                 <button onClick={() => { setEditing(tpl); setShowForm(true) }}
@@ -1257,7 +1257,7 @@ function TemplateFormModal({ template, onClose, onSuccess }: {
               </button>
             ))}
           </div>
-          <p className="text-[10px] text-slate-400 mt-1">
+          <p className="text-[10px] text-[#5a6a7e] mt-1">
             {form.recurring_days.length === 0
               ? 'Belum pilih hari'
               : `Setiap: ${form.recurring_days.map(d => DAY_FULL[d]).join(', ')}`
@@ -1321,7 +1321,7 @@ function TemplateFormModal({ template, onClose, onSuccess }: {
             Batal
           </button>
           <button type="submit" disabled={saving}
-            className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57] disabled:opacity-50">
+            className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#003d79] disabled:opacity-50">
             {saving ? 'Menyimpan...' : (template ? '✅ Update' : '✅ Simpan')}
           </button>
         </div>
@@ -1413,7 +1413,7 @@ function GenerateEventsModal({ template, onClose, onSuccess }: {
           ℹ️ Akan generate {preview.length} events:
         </div>
         {preview.length === 0 ? (
-          <div className="text-xs text-slate-400 italic">Tidak ada tanggal match untuk bulan ini</div>
+          <div className="text-xs text-[#5a6a7e] italic">Tidak ada tanggal match untuk bulan ini</div>
         ) : (
           <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-700 font-bold max-h-32 overflow-y-auto">
             {preview.map((d, i) => (
@@ -1433,7 +1433,7 @@ function GenerateEventsModal({ template, onClose, onSuccess }: {
           Batal
         </button>
         <button onClick={handleGenerate} disabled={generating || preview.length === 0}
-          className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57] disabled:opacity-50 flex items-center justify-center gap-2">
+          className="flex-1 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#003d79] disabled:opacity-50 flex items-center justify-center gap-2">
           {generating ? '...' : '🚀 Generate'}
         </button>
       </div>
@@ -1469,7 +1469,13 @@ function EmptyState({ icon, msg }: { icon: string; msg: string }) {
     <div className="text-center py-10 bg-white rounded-2xl border shadow-sm">
       <div className="text-3xl mb-2">{icon}</div>
       <p className="text-sm text-gray-500">{msg}</p>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }
 

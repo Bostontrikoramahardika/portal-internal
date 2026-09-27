@@ -379,7 +379,7 @@ export default function CrewOnDutyPage() {
                         className="flex items-center justify-between px-4 py-3 bg-white hover:bg-slate-50 transition-colors"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <span className="text-slate-400 text-xs font-black w-6">{idx + 1}.</span>
+                          <span className="text-[#5a6a7e] text-xs font-black w-6">{idx + 1}.</span>
                           <p className="font-black text-sm lg:text-base truncate text-slate-800">
                             {m.nama}
                           </p>
@@ -397,8 +397,8 @@ export default function CrewOnDutyPage() {
             </div>
 
             {/* POSTER FOOTER */}
-            <div className="bg-slate-900 text-white p-4 text-center">
-              <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <div className="bg-[#f4f7fa] text-white p-4 text-center">
+              <p className="text-[9px] lg:text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest">
                 Dibuat via BTM Mobile · {new Date(data.generated_at).toLocaleString('id-ID')}
               </p>
               <p className="text-[9px] lg:text-[10px] font-bold text-slate-500 mt-1">
@@ -408,6 +408,12 @@ export default function CrewOnDutyPage() {
           </div>
         )}
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

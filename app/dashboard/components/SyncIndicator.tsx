@@ -181,7 +181,7 @@ export default function SyncIndicator() {
             </div>
             <button
               onClick={() => setLastResult(null)}
-              className="text-slate-400 hover:text-slate-600 text-lg leading-none"
+              className="text-[#5a6a7e] hover:text-slate-600 text-lg leading-none"
             >
               ×
             </button>

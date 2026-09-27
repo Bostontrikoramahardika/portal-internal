@@ -300,12 +300,12 @@ export default function SettingUnitPage() {
         <div className="bg-white rounded-2xl shadow-xl p-4 space-y-3">
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">📅 Tanggal</label>
+              <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">📅 Tanggal</label>
               <input type="date" value={tanggal} onChange={e => setTanggal(e.target.value)}
                 className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs bg-slate-50 font-bold" />
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">☀️/🌙 Shift</label>
+              <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">☀️/🌙 Shift</label>
               <select value={shift} onChange={e => setShift(e.target.value as any)}
                 className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs bg-slate-50 font-bold">
                 <option value="S">☀️ SIANG</option>
@@ -313,7 +313,7 @@ export default function SettingUnitPage() {
               </select>
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">🏗️ Site</label>
+              <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">🏗️ Site</label>
               <select value={site} onChange={e => setSite(e.target.value)}
                 className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs bg-slate-50 font-bold">
                 {siteList.map(s => <option key={s} value={s}>{s}</option>)}
@@ -337,7 +337,7 @@ export default function SettingUnitPage() {
               </div>
               <div className="bg-amber-50 rounded-xl p-2 text-center">
                 <p className="text-lg font-black text-amber-700">{stats.totalKosong}</p>
-                <p className="text-[8px] font-black text-amber-500 uppercase">Kosong</p>
+                <p className="text-[8px] font-black text-[#003d79] uppercase">Kosong</p>
               </div>
               <div className="bg-rose-50 rounded-xl p-2 text-center">
                 <p className="text-lg font-black text-rose-700">{stats.totalBD}</p>
@@ -360,14 +360,14 @@ export default function SettingUnitPage() {
 
         {/* TABLE UNIT ASSIGNMENT */}
         {loading ? (
-          <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-xs">
+          <div className="bg-white rounded-2xl p-8 text-center text-[#5a6a7e] text-xs">
             ⏳ Memuat data...
           </div>
         ) : totalUnit === 0 ? (
           <div className="bg-white rounded-2xl p-8 text-center">
-            <p className="text-slate-400 text-xs mb-3">📭 Belum ada unit terdaftar di site ini</p>
+            <p className="text-[#5a6a7e] text-xs mb-3">📭 Belum ada unit terdaftar di site ini</p>
             <button onClick={() => router.push(`/dashboard/kelola-unit?site=${encodeURIComponent(site)}`)}
-              className="bg-amber-600 text-white px-4 py-2 rounded-lg font-black text-xs">
+              className="bg-[#002a57] text-white text-white px-4 py-2 rounded-lg font-black text-xs">
               🚜 Kelola Master Unit
             </button>
           </div>
@@ -396,7 +396,7 @@ export default function SettingUnitPage() {
                     return (
                       <div key={u.id} className={`p-2.5 ${isBD ? 'bg-rose-50/50' : ''}`}>
                         <div className="flex items-start gap-2">
-                          <div className="flex-shrink-0 w-6 text-center pt-1.5 text-[10px] font-black text-slate-400">
+                          <div className="flex-shrink-0 w-6 text-center pt-1.5 text-[10px] font-black text-[#5a6a7e]">
                             {idx + 1}
                           </div>
                           <div className="flex-1 min-w-0 space-y-1.5">
@@ -533,13 +533,19 @@ export default function SettingUnitPage() {
               <button onClick={() => setShowCopyModal(false)}
                 className="flex-1 bg-slate-200 text-slate-700 py-2.5 rounded-lg font-black text-xs">Batal</button>
               <button onClick={handleCopy} disabled={copying}
-                className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-black text-xs disabled:opacity-50">
+                className="flex-1 bg-[#003d79] text-white py-2.5 rounded-lg font-black text-xs disabled:opacity-50">
                 {copying ? '⏳' : '📋 Copy'}
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

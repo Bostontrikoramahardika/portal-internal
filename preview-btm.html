@@ -1,0 +1,375 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTM Preview - Compact</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #f1f5f9; color: #0f172a; font-size: 14px; padding-bottom: 70px; }
+
+/* ═══ HEADER (52px) ═══ */
+.header { background: #fff; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 10; }
+.header-left { display: flex; align-items: center; gap: 8px; }
+.header-logo { width: 28px; height: 28px; background: #1e40af; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; }
+.header-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+.header-sub { font-size: 10px; color: #64748b; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.header-user { text-align: right; }
+.header-name { font-size: 11px; font-weight: 600; color: #0f172a; }
+.header-nrp { font-size: 9px; color: #2563eb; font-weight: 500; }
+.bell { font-size: 18px; }
+
+/* ═══ PAGE TITLE ═══ */
+.page-title { padding: 12px 12px 8px; }
+.page-title h1 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.page-title .sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+/* ═══ FILTER BAR ═══ */
+.filter-bar { display: flex; gap: 6px; padding: 0 12px 8px; }
+.filter-select { flex: 1; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-size: 12px; font-weight: 500; }
+
+/* ═══ INLINE STATS ═══ */
+.inline-stats { display: flex; align-items: center; justify-content: space-around; background: white; margin: 0 12px 8px; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; }
+.stat-item { text-align: center; }
+.stat-label { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }
+.stat-value { font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px; }
+.stat-value.green { color: #16a34a; }
+.stat-value.orange { color: #ea580c; }
+.stat-value.blue { color: #2563eb; }
+.stat-divider { width: 1px; height: 24px; background: #e2e8f0; }
+
+/* ═══ CHIPS (horizontal scroll) ═══ */
+.chips { display: flex; gap: 6px; padding: 0 12px 8px; overflow-x: auto; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { padding: 6px 12px; border-radius: 20px; background: white; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 600; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+.chip.active { background: #1e40af; color: white; border-color: #1e40af; }
+.chip .count { background: rgba(0,0,0,0.15); padding: 1px 6px; border-radius: 10px; font-size: 10px; }
+.chip.active .count { background: rgba(255,255,255,0.25); }
+
+/* ═══ SEARCH ═══ */
+.search-box { margin: 0 12px 8px; padding: 8px 12px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px; color: #94a3b8; }
+
+/* ═══ CARD LIST ═══ */
+.list { padding: 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #1e293b; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+.card-body { flex: 1; min-width: 0; }
+.card-name { font-size: 13px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-meta { font-size: 11px; color: #64748b; margin-top: 1px; }
+.card-badge { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; flex-shrink: 0; }
+.badge-pending { background: #fef3c7; color: #92400e; }
+.badge-done { background: #dcfce7; color: #166534; }
+.badge-score { background: #dbeafe; color: #1e40af; font-weight: 700; padding: 3px 10px; }
+
+/* ═══ SECTION DIVIDER ═══ */
+.section-title { padding: 12px 12px 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+
+/* ═══ MENU LIST (Pengajuan style) ═══ */
+.menu-list { padding: 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.menu-item { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+.menu-icon { width: 32px; height: 32px; border-radius: 8px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.menu-text { flex: 1; font-size: 13px; font-weight: 600; color: #0f172a; }
+.menu-arrow { color: #cbd5e1; font-size: 14px; }
+
+/* ═══ APPROVAL BANNER ═══ */
+.banner { margin: 0 12px 8px; background: linear-gradient(135deg, #1e3a8a, #1e40af); color: white; padding: 10px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; }
+.banner-left { display: flex; align-items: center; gap: 8px; }
+.banner-icon { font-size: 20px; }
+.banner-title { font-size: 10px; opacity: 0.8; text-transform: uppercase; font-weight: 600; }
+.banner-value { font-size: 13px; font-weight: 700; margin-top: 1px; }
+.banner-btn { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+
+/* ═══ TAB BAR ═══ */
+.tabs { display: flex; margin: 0 12px 8px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 3px; }
+.tab { flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: #64748b; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.tab.active { background: #1e40af; color: white; }
+.tab .count { background: rgba(0,0,0,0.15); padding: 1px 6px; border-radius: 10px; font-size: 10px; }
+.tab.active .count { background: rgba(255,255,255,0.25); }
+
+/* ═══ BOTTOM NAV (60px) ═══ */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e2e8f0; display: flex; padding: 6px 4px; z-index: 20; }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; color: #94a3b8; }
+.nav-item.active { color: #2563eb; }
+.nav-icon { font-size: 18px; }
+.nav-label { font-size: 9px; font-weight: 600; }
+
+/* ═══ SWITCHER (Tombol switch halaman di pojok kanan atas) ═══ */
+.switcher { position: fixed; top: 60px; right: 8px; z-index: 100; display: flex; flex-direction: column; gap: 4px; }
+.switcher button { padding: 6px 10px; background: #1e40af; color: white; border: none; border-radius: 6px; font-size: 10px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer; }
+.switcher button.active { background: #16a34a; }
+
+.page { display: none; }
+.page.active { display: block; }
+
+.detail-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin: 0 12px 6px; }
+.detail-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; }
+.detail-label { color: #64748b; }
+.detail-value { font-weight: 600; color: #0f172a; }
+.action-row { display: flex; gap: 6px; margin-top: 8px; }
+.btn { flex: 1; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600; text-align: center; border: none; cursor: pointer; }
+.btn-approve { background: #16a34a; color: white; }
+.btn-reject { background: #dc2626; color: white; }
+.btn-detail { background: #e2e8f0; color: #0f172a; }
+
+/* Pembungkus preview agar di layar laptop terasa seperti HP */
+.mobile-wrapper {
+  max-width: 430px;
+  margin: 20px auto;
+  background: #f1f5f9;
+  min-height: 844px;
+  border: 8px solid #334155;
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  position: relative;
+}
+</style>
+</head>
+<body style="background: #0f172a; padding: 20px 0;">
+
+<div style="text-align: center; color: white; margin-bottom: 12px;">
+  <h2 style="font-size: 16px; font-weight: bold; color: #f59e0b;">📱 PREVIEW TAMPILAN BTM (SIMULASI HP)</h2>
+  <p style="font-size: 12px; color: #94a3b8;">Klik tombol hijau/biru di samping kanan atas frame untuk ganti halaman</p>
+</div>
+
+<div class="mobile-wrapper">
+  <div class="switcher">
+    <button class="active" onclick="show('kpi', this)">KPI</button>
+    <button onclick="show('pengajuan', this)">Pengajuan</button>
+    <button onclick="show('approval', this)">Approval</button>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">🚛</div>
+      <div>
+        <div class="header-title">BTM MOBILE</div>
+        <div class="header-sub">v1.7.0</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-user">
+        <div class="header-name">FERRY ANGGRIAWAN</div>
+        <div class="header-nrp">0420124 · PPA-MLP</div>
+      </div>
+      <div class="bell">🔔</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ HALAMAN KPI ═══════════ -->
+  <div class="page active" id="kpi">
+    <div class="page-title">
+      <h1>📊 KPI & Penilaian</h1>
+      <div class="sub">Periode: JULI 2026 · 21 bawahan</div>
+    </div>
+
+    <div class="filter-bar">
+      <select class="filter-select"><option>Juli</option></select>
+      <select class="filter-select"><option>2026</option></select>
+      <select class="filter-select"><option>Semua Site</option></select>
+    </div>
+
+    <div class="inline-stats">
+      <div class="stat-item"><div class="stat-label">Total</div><div class="stat-value">21</div></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><div class="stat-label">✅ Dinilai</div><div class="stat-value green">0</div></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><div class="stat-label">⏳ Pending</div><div class="stat-value orange">21</div></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><div class="stat-label">⭐ Rata²</div><div class="stat-value blue">—</div></div>
+    </div>
+
+    <div class="chips">
+      <div class="chip active">📋 Semua <span class="count">21</span></div>
+      <div class="chip">🔧 Plant <span class="count">21</span></div>
+      <div class="chip">👷 Produksi <span class="count">0</span></div>
+    </div>
+
+    <div class="search-box">🔍 Cari Nama / NRP...</div>
+
+    <div class="list">
+      <div class="card">
+        <div class="avatar">A</div>
+        <div class="card-body">
+          <div class="card-name">Andi Baramuli</div>
+          <div class="card-meta">Helper Plant · 0740724</div>
+        </div>
+        <span class="card-badge badge-pending">⏳ Belum</span>
+      </div>
+      <div class="card">
+        <div class="avatar" style="background:#0369a1">B</div>
+        <div class="card-body">
+          <div class="card-name">Budi Santoso</div>
+          <div class="card-meta">Welder · 0850324</div>
+        </div>
+        <span class="card-badge badge-score">85</span>
+      </div>
+      <div class="card">
+        <div class="avatar" style="background:#7c3aed">C</div>
+        <div class="card-body">
+          <div class="card-name">Charlie Wijaya</div>
+          <div class="card-meta">Mekanik · 0930524</div>
+        </div>
+        <span class="card-badge badge-pending">⏳ Belum</span>
+      </div>
+      <div class="card">
+        <div class="avatar" style="background:#059669">D</div>
+        <div class="card-body">
+          <div class="card-name">Dedi Kurniawan</div>
+          <div class="card-meta">Helper Plant · 0410624</div>
+        </div>
+        <span class="card-badge badge-score">78</span>
+      </div>
+      <div class="card">
+        <div class="avatar" style="background:#dc2626">E</div>
+        <div class="card-body">
+          <div class="card-name">Eko Prasetyo</div>
+          <div class="card-meta">Welder · 0620324</div>
+        </div>
+        <span class="card-badge badge-pending">⏳ Belum</span>
+      </div>
+      <div class="card">
+        <div class="avatar" style="background:#ea580c">F</div>
+        <div class="card-body">
+          <div class="card-name">Fahri Rahman</div>
+          <div class="card-meta">Mekanik · 0710124</div>
+        </div>
+        <span class="card-badge badge-score">90</span>
+      </div>
+      <div class="card">
+        <div class="avatar" style="background:#0891b2">G</div>
+        <div class="card-body">
+          <div class="card-name">Gunawan Setiadi</div>
+          <div class="card-meta">Helper Plant · 0530824</div>
+        </div>
+        <span class="card-badge badge-pending">⏳ Belum</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ HALAMAN PENGAJUAN ═══════════ -->
+  <div class="page" id="pengajuan">
+    <div class="page-title">
+      <h1>📝 Pengajuan</h1>
+      <div class="sub">Ajukan cuti, lembur, sakit, atau revisi absensi</div>
+    </div>
+
+    <div class="menu-list">
+      <div class="menu-item">
+        <div class="menu-icon">🏖️</div>
+        <div class="menu-text">Ajukan Cuti</div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-icon">🤒</div>
+        <div class="menu-text">Pengajuan Eviden Sakit/Izin</div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-icon">⏰</div>
+        <div class="menu-text">Ajukan Lembur</div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-icon">✏️</div>
+        <div class="menu-text">Revisi Waktu Absensi</div>
+        <div class="menu-arrow">›</div>
+      </div>
+    </div>
+
+    <div class="section-title">Riwayat Pengajuan</div>
+    <div class="list">
+      <div class="card">
+        <div class="menu-icon">🏖️</div>
+        <div class="card-body">
+          <div class="card-name">Cuti Reguler · 3 hari</div>
+          <div class="card-meta">25-27 Jul 2026 · Diajukan 20/07</div>
+        </div>
+        <span class="card-badge badge-done">✅ Disetujui</span>
+      </div>
+      <div class="card">
+        <div class="menu-icon">⏰</div>
+        <div class="card-body">
+          <div class="card-name">Lembur · 4 jam</div>
+          <div class="card-meta">26 Jul 2026 · Menunggu atasan</div>
+        </div>
+        <span class="card-badge badge-pending">⏳ Proses</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ HALAMAN APPROVAL ═══════════ -->
+  <div class="page" id="approval">
+    <div class="page-title">
+      <h1>✅ Approval Center</h1>
+      <div class="sub">1 pengajuan menunggu persetujuan Anda</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active">📋 Pengajuan <span class="count">1</span></div>
+      <div class="tab">✏️ Revisi Absen <span class="count">0</span></div>
+    </div>
+
+    <div class="banner">
+      <div class="banner-left">
+        <div class="banner-icon">📥</div>
+        <div>
+          <div class="banner-title">Menunggu</div>
+          <div class="banner-value">1 Pengajuan</div>
+        </div>
+      </div>
+      <div class="banner-btn">🔄 Refresh</div>
+    </div>
+
+    <div class="chips">
+      <div class="chip active">Semua <span class="count">1</span></div>
+      <div class="chip">🏖️ Cuti <span class="count">1</span></div>
+      <div class="chip">⏰ Lembur <span class="count">0</span></div>
+      <div class="chip">🤒 Sakit <span class="count">0</span></div>
+      <div class="chip">⚠️ Izin Potongan <span class="count">0</span></div>
+      <div class="chip">✅ Izin Bayar <span class="count">0</span></div>
+    </div>
+
+    <div class="detail-card">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <div class="menu-icon" style="background:#dbeafe">🏖️</div>
+        <div style="flex:1">
+          <div style="font-size:13px; font-weight:700;">Cuti Reguler/Roster</div>
+          <div style="font-size:11px; color:#64748b;">Yudi Eko Purnomo · Welder · PPA-MLP</div>
+        </div>
+        <span class="card-badge badge-pending">Cuti</span>
+      </div>
+      <div class="detail-row"><span class="detail-label">📅 Tanggal</span><span class="detail-value">25 Jul — 08 Agu 2026</span></div>
+      <div class="detail-row"><span class="detail-label">⏱️ Durasi</span><span class="detail-value">15 hari</span></div>
+      <div class="detail-row"><span class="detail-label">💬 Alasan</span><span class="detail-value">Cuti reguler/roster</span></div>
+      <div class="action-row">
+        <button class="btn btn-detail">👁️ Detail</button>
+        <button class="btn btn-reject">❌ Tolak</button>
+        <button class="btn btn-approve">✅ Setujui</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav" style="position: absolute; border-bottom-left-radius: 28px; border-bottom-right-radius: 28px;">
+    <div class="nav-item"><div class="nav-icon">⏰</div><div class="nav-label">ABSENSI</div></div>
+    <div class="nav-item"><div class="nav-icon">📋</div><div class="nav-label">PENGAJUAN</div></div>
+    <div class="nav-item active"><div class="nav-icon">👥</div><div class="nav-label">TIM</div></div>
+    <div class="nav-item"><div class="nav-icon">✅</div><div class="nav-label">APPROVAL</div></div>
+    <div class="nav-item"><div class="nav-icon">👤</div><div class="nav-label">PROFILE</div></div>
+    <div class="nav-item"><div class="nav-icon">🚜</div><div class="nav-label">PLANT</div></div>
+  </div>
+</div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.switcher button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

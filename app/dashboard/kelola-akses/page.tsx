@@ -181,7 +181,7 @@ function TabPlaceholder({ label, msg }: { label: string; msg: string }) {
     <div className="text-center py-20 px-6">
       <div className="text-6xl mb-4">🔧</div>
       <div className="text-slate-500 text-lg font-bold">{msg}</div>
-      <div className="text-slate-400 text-sm mt-2">Fokus Chat 23: Tab Karyawan dulu</div>
+      <div className="text-[#5a6a7e] text-sm mt-2">Fokus Chat 23: Tab Karyawan dulu</div>
     </div>
   )
 }
@@ -324,7 +324,7 @@ function TabKaryawan() {
       {/* Filter */}
       <div className="space-y-2">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5a6a7e]" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -395,7 +395,7 @@ function TabKaryawan() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Memuat data...</div>
+        <div className="text-center py-12 text-[#5a6a7e]">Memuat data...</div>
       ) : data.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-4xl mb-2">🔍</div>
@@ -411,10 +411,10 @@ function TabKaryawan() {
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    {emp.is_super_admin && <Crown size={14} className="text-amber-500 flex-shrink-0" />}
+                    {emp.is_super_admin && <Crown size={14} className="text-[#003d79] flex-shrink-0" />}
                     <span className="font-black text-[#003D79] text-sm truncate">{emp.nama}</span>
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
+                  <div className="text-[10px] text-[#5a6a7e] mt-0.5">
                     {emp.nrp} · {emp.site} · {emp.departemen}
                   </div>
                   <div className="flex gap-1 mt-1.5 flex-wrap">
@@ -445,7 +445,7 @@ function TabKaryawan() {
                     )}
                   </div>
                 </div>
-                {expanded === emp.nrp ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+                {expanded === emp.nrp ? <ChevronUp size={18} className="text-[#5a6a7e]" /> : <ChevronDown size={18} className="text-[#5a6a7e]" />}
               </button>
 
               {/* Detail expand */}
@@ -465,7 +465,7 @@ function TabKaryawan() {
                       </button>
                     </div>
                     {emp.roles.length === 0 ? (
-                      <div className="text-xs text-slate-400 italic">Belum ada role</div>
+                      <div className="text-xs text-[#5a6a7e] italic">Belum ada role</div>
                     ) : (
                       <div className="space-y-1.5">
                         {emp.roles.map(r => (
@@ -499,7 +499,7 @@ function TabKaryawan() {
                       </button>
                     </div>
                     {emp.permissions.length === 0 ? (
-                      <div className="text-xs text-slate-400 italic">Tidak ada permission tambahan</div>
+                      <div className="text-xs text-[#5a6a7e] italic">Tidak ada permission tambahan</div>
                     ) : (
                       <div className="space-y-1.5 max-h-40 overflow-y-auto">
                         {emp.permissions.map(p => (
@@ -534,7 +534,7 @@ function TabKaryawan() {
                           <div className="text-xs font-bold text-slate-700">
                             Izin Connect Google
                           </div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">
+                          <div className="text-[10px] text-[#5a6a7e] mt-0.5">
                             Calendar, Tasks, Gmail
                           </div>
                         </div>
@@ -618,7 +618,7 @@ function TabKaryawan() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-[2rem] w-full max-w-sm p-6 shadow-2xl">
             <div className="text-center mb-4">
-              <AlertTriangle size={40} className="text-amber-500 mx-auto mb-2" />
+              <AlertTriangle size={40} className="text-[#003d79] mx-auto mb-2" />
               <h3 className="font-black text-[#003D79]">
                 Hapus {confirmRemove.type === 'role' ? 'Role' : 'Permission'}?
               </h3>
@@ -669,10 +669,10 @@ function ModalAddRole({ emp, roleList, onClose, onSubmit, processing }: ModalAdd
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
       <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl">
         <h3 className="font-black text-[#003D79] text-lg mb-1">➕ Tambah Role</h3>
-        <p className="text-xs text-slate-400 mb-4">{emp.nama} ({emp.nrp})</p>
+        <p className="text-xs text-[#5a6a7e] mb-4">{emp.nama} ({emp.nrp})</p>
 
         {availableRoles.length === 0 ? (
-          <div className="text-center py-6 text-slate-400 text-sm">
+          <div className="text-center py-6 text-[#5a6a7e] text-sm">
             Semua role sudah dimiliki karyawan ini
           </div>
         ) : (
@@ -695,7 +695,7 @@ function ModalAddRole({ emp, roleList, onClose, onSubmit, processing }: ModalAdd
                       {r.role_desc}
                     </div>
                   )}
-                  <div className={`text-[10px] ${selectedRole === r.role_key ? 'text-blue-200' : 'text-slate-400'}`}>
+                  <div className={`text-[10px] ${selectedRole === r.role_key ? 'text-blue-200' : 'text-[#5a6a7e]'}`}>
                     {r.role_key} · Level {r.level}
                   </div>
                 </div>
@@ -746,17 +746,17 @@ function ModalAddPerm({ emp, masterPerms, onClose, onSubmit, processing }: Modal
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
       <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl">
         <h3 className="font-black text-[#003D79] text-lg mb-1">🔐 Tambah Permission</h3>
-        <p className="text-xs text-slate-400 mb-4">{emp.nama} ({emp.nrp})</p>
+        <p className="text-xs text-[#5a6a7e] mb-4">{emp.nama} ({emp.nrp})</p>
 
         <div className="relative mb-3">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5a6a7e]" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Cari permission..."
             className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-[1.2rem] text-sm outline-none" />
         </div>
 
         {available.length === 0 ? (
-          <div className="text-center py-6 text-slate-400 text-sm">
+          <div className="text-center py-6 text-[#5a6a7e] text-sm">
             {existing.length > 0 ? 'Tidak ada permission lain' : 'Master permission kosong'}
           </div>
         ) : (
@@ -845,7 +845,7 @@ function TabSite() {
     return (
       <div className="text-center py-20">
         <div className="text-4xl mb-3 animate-pulse">🏗️</div>
-        <div className="text-slate-400 text-sm">Memuat data site...</div>
+        <div className="text-[#5a6a7e] text-sm">Memuat data site...</div>
       </div>
     )
   }
@@ -889,7 +889,7 @@ function TabSite() {
                 <span className="text-xl">{site.is_pusat ? '🏛️' : '🏗️'}</span>
                 <div>
                   <div className="font-black text-[#003D79] text-sm">{site.nama_site}</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
+                  <div className="text-[10px] text-[#5a6a7e] mt-0.5">
                     {site.kode_site || '—'} · {site.alamat || 'Alamat belum diisi'}
                   </div>
                 </div>
@@ -918,8 +918,8 @@ function TabSite() {
                 {site.active ? 'AKTIF' : 'NON-AKTIF'}
               </span>
               {expanded === site.id
-                ? <ChevronUp size={18} className="text-slate-400" />
-                : <ChevronDown size={18} className="text-slate-400" />
+                ? <ChevronUp size={18} className="text-[#5a6a7e]" />
+                : <ChevronDown size={18} className="text-[#5a6a7e]" />
               }
             </div>
           </button>
@@ -1011,7 +1011,7 @@ function TabSite() {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-400 italic bg-white rounded-[1.2rem] p-3">
+                  <div className="text-xs text-[#5a6a7e] italic bg-white rounded-[1.2rem] p-3">
                     📍 GPS belum dikonfigurasi untuk site ini
                   </div>
                 )}
@@ -1031,13 +1031,13 @@ function TabSite() {
                           <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${pic.color}`}>
                             {pic.icon} {pic.label}
                           </span>
-                          <span className="text-[9px] text-slate-400 font-bold">
+                          <span className="text-[9px] text-[#5a6a7e] font-bold">
                             {members.length} orang
                           </span>
                         </div>
 
                         {members.length === 0 ? (
-                          <div className="text-xs text-slate-400 italic">Belum ada yang ditugaskan</div>
+                          <div className="text-xs text-[#5a6a7e] italic">Belum ada yang ditugaskan</div>
                         ) : (
                           <div className="space-y-1">
                             {members.map(m => (
@@ -1047,7 +1047,7 @@ function TabSite() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-xs font-bold text-slate-700 truncate">{m.nama}</div>
-                                  <div className="text-[9px] text-slate-400">{m.nrp} · {m.jabatan || '—'}</div>
+                                  <div className="text-[9px] text-[#5a6a7e]">{m.nrp} · {m.jabatan || '—'}</div>
                                 </div>
                               </div>
                             ))}
@@ -1185,7 +1185,7 @@ function TabTemplate() {
     return (
       <div className="text-center py-20">
         <div className="text-4xl mb-3 animate-pulse">📋</div>
-        <div className="text-slate-400 text-sm">Memuat template...</div>
+        <div className="text-[#5a6a7e] text-sm">Memuat template...</div>
       </div>
     )
   }
@@ -1235,7 +1235,7 @@ function TabTemplate() {
                 <span className="text-lg">{getRoleIcon(tpl.role_key)}</span>
                 <div>
                   <div className="font-black text-[#003D79] text-sm">{tpl.role_label}</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">{tpl.role_desc}</div>
+                  <div className="text-[10px] text-[#5a6a7e] mt-0.5">{tpl.role_desc}</div>
                 </div>
               </div>
 
@@ -1254,8 +1254,8 @@ function TabTemplate() {
 
             <div className="ml-2 flex-shrink-0">
               {expanded === tpl.role_key
-                ? <ChevronUp size={18} className="text-slate-400" />
-                : <ChevronDown size={18} className="text-slate-400" />
+                ? <ChevronUp size={18} className="text-[#5a6a7e]" />
+                : <ChevronDown size={18} className="text-[#5a6a7e]" />
               }
             </div>
           </button>
@@ -1270,7 +1270,7 @@ function TabTemplate() {
                   🔐 Permission Bawaan ({tpl.permissions_count})
                 </div>
                 {tpl.permissions.length === 0 ? (
-                  <div className="text-xs text-slate-400 italic">Template ini belum punya permission</div>
+                  <div className="text-xs text-[#5a6a7e] italic">Template ini belum punya permission</div>
                 ) : (
                   <div className="grid grid-cols-1 gap-1 max-h-48 overflow-y-auto">
                     {tpl.permissions.sort().map(p => (
@@ -1304,14 +1304,14 @@ function TabTemplate() {
             <p className="text-xs text-slate-500 mb-1">
               Template: <strong className="text-[#003D79]">{applyModal.role_label}</strong>
             </p>
-            <p className="text-[10px] text-slate-400 mb-4">
+            <p className="text-[10px] text-[#5a6a7e] mb-4">
               Akan menambah role <strong>{applyModal.role_key}</strong> + {applyModal.permissions_count} permission.
               Akses lama karyawan <strong>tidak akan dihapus</strong>.
             </p>
 
             {/* Search karyawan */}
             <div className="relative mb-3">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5a6a7e]" />
               <input
                 value={searchEmp}
                 onChange={e => { setSearchEmp(e.target.value); setSelectedEmp(null) }}
@@ -1338,9 +1338,9 @@ function TabTemplate() {
             {!selectedEmp && searchEmp.length >= 2 && (
               <div className="mb-4">
                 {searchingEmp ? (
-                  <div className="text-xs text-slate-400 text-center py-4">Mencari...</div>
+                  <div className="text-xs text-[#5a6a7e] text-center py-4">Mencari...</div>
                 ) : empResults.length === 0 ? (
-                  <div className="text-xs text-slate-400 text-center py-4">
+                  <div className="text-xs text-[#5a6a7e] text-center py-4">
                     Tidak ditemukan karyawan &quot;{searchEmp}&quot;
                   </div>
                 ) : (
@@ -1352,7 +1352,7 @@ function TabTemplate() {
                         className="w-full p-3 rounded-[1.2rem] text-left bg-slate-50 hover:bg-slate-100 transition-colors"
                       >
                         <div className="font-bold text-sm text-[#003D79]">{e.nama}</div>
-                        <div className="text-[10px] text-slate-400">
+                        <div className="text-[10px] text-[#5a6a7e]">
                           {e.nrp} · {e.site || '—'} · {e.jabatan || '—'}
                         </div>
                       </button>
@@ -1380,6 +1380,12 @@ function TabTemplate() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

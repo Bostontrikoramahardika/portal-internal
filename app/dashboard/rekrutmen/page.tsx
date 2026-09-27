@@ -174,7 +174,7 @@ export default function HRRekrutmenPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 pb-28">
+    <div className="min-h-screen bg-[#f4f7fa] text-[#1a2332] p-4 pb-28">
       <PageHeader title="Rekrutmen" backUrl="/dashboard" />
 
       {/* Header */}
@@ -183,7 +183,7 @@ export default function HRRekrutmenPage() {
           <div className="flex items-center gap-2 mb-1">
             <Link
               href="/dashboard"
-              className="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-900 border border-slate-800"
+              className="text-[#5a6a7e] hover:text-white p-1 rounded-lg bg-[#f4f7fa] border border-[#e2e8f0]"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
@@ -193,7 +193,7 @@ export default function HRRekrutmenPage() {
               Recruitment Center & 1-Click Hire
             </h1>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[#5a6a7e]">
             Kelola lowongan publik & konversi pelamar lulus langsung menjadi Karyawan resmi
           </p>
         </div>
@@ -203,7 +203,7 @@ export default function HRRekrutmenPage() {
           href="/rekrutmen"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold text-xs hover:bg-amber-500/20 transition-all shadow-sm"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#003d79] text-white/10 border border-amber-500/30 text-amber-300 font-semibold text-xs hover:bg-[#003d79] text-white/20 transition-all shadow-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -221,20 +221,20 @@ export default function HRRekrutmenPage() {
               : "bg-rose-950/40 border-rose-500/30 text-rose-300")}
         >
           <span className="text-xs md:text-sm font-medium">{actionMsg.text}</span>
-          <button onClick={() => setActionMsg(null)} className="text-slate-400 hover:text-white text-sm">
+          <button onClick={() => setActionMsg(null)} className="text-[#5a6a7e] hover:text-white text-sm">
             ?
           </button>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="max-w-6xl mx-auto mb-6 flex gap-2 border-b border-slate-800 pb-2">
+      <div className="max-w-6xl mx-auto mb-6 flex gap-2 border-b border-[#e2e8f0] pb-2">
         <button
           onClick={() => setActiveTab("applicants")}
           className={"px-4 py-2 rounded-xl text-xs font-bold transition-all " +
             (activeTab === "applicants"
-              ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
-              : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800")}
+              ? "bg-[#003d79] text-white text-slate-950 shadow-md shadow-amber-500/20"
+              : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-white border border-[#e2e8f0]")}
         >
           Daftar Pelamar ({applicants.length})
         </button>
@@ -242,8 +242,8 @@ export default function HRRekrutmenPage() {
           onClick={() => setActiveTab("positions")}
           className={"px-4 py-2 rounded-xl text-xs font-bold transition-all " +
             (activeTab === "positions"
-              ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
-              : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800")}
+              ? "bg-[#003d79] text-white text-slate-950 shadow-md shadow-amber-500/20"
+              : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-white border border-[#e2e8f0]")}
         >
           Kelola Lowongan ({positions.length})
         </button>
@@ -259,7 +259,7 @@ export default function HRRekrutmenPage() {
               placeholder="Cari nama, posisi, atau email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              className="px-3.5 py-2.5 rounded-xl bg-[#f4f7fa] border border-[#e2e8f0] text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
             />
             <div className="flex gap-1 overflow-x-auto md:col-span-2">
               {["ALL", "PENDING", "INTERVIEW", "MCU", "LULUS", "HIRED", "DITOLAK"].map((st) => (
@@ -269,7 +269,7 @@ export default function HRRekrutmenPage() {
                   className={"px-3 py-1.5 rounded-lg text-[11px] font-bold shrink-0 transition-all " +
                     (filterStatus === st
                       ? "bg-slate-200 text-slate-950"
-                      : "bg-slate-900 text-slate-400 border border-slate-800 hover:text-white")}
+                      : "bg-[#f4f7fa] text-[#5a6a7e] border border-[#e2e8f0] hover:text-white")}
                 >
                   {st}
                 </button>
@@ -281,7 +281,7 @@ export default function HRRekrutmenPage() {
           {loading ? (
             <div className="text-center py-12 text-slate-500 text-xs">Memuat data pelamar...</div>
           ) : filteredApplicants.length === 0 ? (
-            <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800/80 p-6 text-slate-500 text-xs">
+            <div className="text-center py-12 bg-[#f4f7fa]/50 rounded-2xl border border-[#e2e8f0]/80 p-6 text-slate-500 text-xs">
               Belum ada data pelamar untuk filter ini.
             </div>
           ) : (
@@ -289,12 +289,12 @@ export default function HRRekrutmenPage() {
               {filteredApplicants.map((app) => (
                 <div
                   key={app.id}
-                  className="bg-slate-900/80 rounded-2xl border border-slate-800/80 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:border-slate-700 transition-all"
+                  className="bg-[#f4f7fa]/80 rounded-2xl border border-[#e2e8f0]/80 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:border-[#e2e8f0] transition-all"
                 >
                   <div className="space-y-1.5 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-sm text-white">{app.nama_lengkap}</span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-amber-500/20">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-amber-300 border border-amber-500/20">
                         {app.posisi_dilamar}
                       </span>
                       <span
@@ -305,17 +305,17 @@ export default function HRRekrutmenPage() {
                             ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                             : app.status === "DITOLAK"
                             ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                            : "bg-amber-500/20 text-amber-400 border border-amber-500/30")}
+                            : "bg-[#003d79] text-white/20 text-[#003d79] border border-amber-500/30")}
                       >
                         {app.status}
                       </span>
                       {app.hired_nrp && (
-                        <span className="text-[10px] font-mono bg-slate-800 px-2 py-0.5 rounded text-emerald-300">
+                        <span className="text-[10px] font-mono bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm px-2 py-0.5 rounded text-emerald-300">
                           NRP: {app.hired_nrp}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-slate-400 flex-wrap">
+                    <div className="flex items-center gap-4 text-xs text-[#5a6a7e] flex-wrap">
                       <span>?? {app.email || "-"}</span>
                       <span>?? {app.no_hp || "-"}</span>
                       <span>?? {new Date(app.created_at).toLocaleDateString("id-ID")}</span>
@@ -326,7 +326,7 @@ export default function HRRekrutmenPage() {
                           href={app.ktp_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-[11px] text-amber-400 hover:underline"
+                          className="text-[11px] text-[#003d79] hover:underline"
                         >
                           ?? Lihat KTP
                         </a>
@@ -336,7 +336,7 @@ export default function HRRekrutmenPage() {
                           href={app.cv_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-[11px] text-amber-400 hover:underline"
+                          className="text-[11px] text-[#003d79] hover:underline"
                         >
                           ?? Lihat CV
                         </a>
@@ -345,12 +345,12 @@ export default function HRRekrutmenPage() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-2 flex-wrap border-t border-slate-800/80 pt-3 md:pt-0 md:border-none">
+                  <div className="flex items-center gap-2 flex-wrap border-t border-[#e2e8f0]/80 pt-3 md:pt-0 md:border-none">
                     {/* Status Dropdown */}
                     <select
                       value={app.status}
                       onChange={(e) => updateApplicantStatus(app.id, e.target.value)}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                      className="px-2.5 py-1.5 rounded-lg bg-[#f4f7fa] border border-[#e2e8f0] text-xs text-[#1a2332] focus:outline-none focus:border-amber-500"
                     >
                       <option value="PENDING">PENDING</option>
                       <option value="INTERVIEW">INTERVIEW</option>
@@ -386,7 +386,7 @@ export default function HRRekrutmenPage() {
           {/* Create Form */}
           <form
             onSubmit={handleCreatePosition}
-            className="bg-slate-900/80 rounded-2xl border border-slate-800/80 p-4 md:p-5"
+            className="bg-[#f4f7fa]/80 rounded-2xl border border-[#e2e8f0]/80 p-4 md:p-5"
           >
             <h2 className="text-sm font-bold text-white mb-3">Tambah Lowongan Baru</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -395,13 +395,13 @@ export default function HRRekrutmenPage() {
                 placeholder="Judul Posisi (contoh: Mekanik HD)"
                 value={newPosTitle}
                 onChange={(e) => setNewPosTitle(e.target.value)}
-                className="md:col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="md:col-span-2 px-3.5 py-2.5 rounded-xl bg-[#f4f7fa] border border-[#e2e8f0] text-xs text-white focus:outline-none focus:border-amber-500"
                 required
               />
               <select
                 value={newPosDept}
                 onChange={(e) => setNewPosDept(e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="px-3.5 py-2.5 rounded-xl bg-[#f4f7fa] border border-[#e2e8f0] text-xs text-white focus:outline-none focus:border-amber-500"
               >
                 <option value="PLANT">PLANT</option>
                 <option value="OPERATIONAL">OPERATIONAL</option>
@@ -412,7 +412,7 @@ export default function HRRekrutmenPage() {
               </select>
               <button
                 type="submit"
-                className="px-4 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 hover:bg-amber-400 transition-all"
+                className="px-4 py-2.5 rounded-xl bg-[#003d79] text-white text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 hover:bg-amber-400 transition-all"
               >
                 + Buka Lowongan
               </button>
@@ -424,11 +424,11 @@ export default function HRRekrutmenPage() {
             {positions.map((pos) => (
               <div
                 key={pos.id}
-                className="bg-slate-900/80 rounded-2xl border border-slate-800/80 p-4 flex items-center justify-between gap-3"
+                className="bg-[#f4f7fa]/80 rounded-2xl border border-[#e2e8f0]/80 p-4 flex items-center justify-between gap-3"
               >
                 <div>
                   <h3 className="text-sm font-bold text-white">{pos.judul_posisi}</h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-[#5a6a7e]">
                     Dept: {pos.departemen} | Site: {pos.site}
                   </p>
                 </div>
@@ -437,7 +437,7 @@ export default function HRRekrutmenPage() {
                   className={"px-3 py-1.5 rounded-xl text-xs font-bold transition-all " +
                     (pos.is_active
                       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                      : "bg-slate-800 text-slate-400 border border-slate-700")}
+                      : "bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e] border border-[#e2e8f0]")}
                 >
                   {pos.is_active ? "? Buka" : "? Tutup"}
                 </button>
@@ -449,48 +449,48 @@ export default function HRRekrutmenPage() {
 
       {/* MODAL 1-CLICK HIRE */}
       {hireModalOpen && selectedApplicant && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 bg-[#f4f7fa]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0]">
               <h2 className="text-base font-black text-white flex items-center gap-2">
                 <span className="text-emerald-400">?</span> Konversi Jadi Karyawan
               </h2>
               <button
                 onClick={() => setHireModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-[#5a6a7e] hover:text-white"
               >
                 ?
               </button>
             </div>
 
-            <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 text-xs space-y-1">
-              <p className="text-slate-300">
+            <div className="bg-[#f4f7fa]/60 p-3 rounded-xl border border-[#e2e8f0]/80 text-xs space-y-1">
+              <p className="text-[#5a6a7e]">
                 <span className="text-slate-500">Nama:</span> <span className="font-bold text-white">{selectedApplicant.nama_lengkap}</span>
               </p>
-              <p className="text-slate-300">
+              <p className="text-[#5a6a7e]">
                 <span className="text-slate-500">Posisi:</span> {selectedApplicant.posisi_dilamar}
               </p>
             </div>
 
             <form onSubmit={handleConvertHire} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 mb-1 font-medium">NRP Karyawan (Kosongkan utk Auto-Gen)</label>
+                <label className="block text-[#5a6a7e] mb-1 font-medium">NRP Karyawan (Kosongkan utk Auto-Gen)</label>
                 <input
                   type="text"
                   placeholder="Otomatis (contoh: 2600001)"
                   value={hireForm.custom_nrp}
                   onChange={(e) => setHireForm({ ...hireForm, custom_nrp: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 rounded-xl bg-[#f4f7fa] border border-[#e2e8f0] text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Site Penempatan</label>
+                  <label className="block text-[#5a6a7e] mb-1 font-medium">Site Penempatan</label>
                   <select
                     value={hireForm.site}
                     onChange={(e) => setHireForm({ ...hireForm, site: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 rounded-xl bg-[#f4f7fa] border border-[#e2e8f0] text-white focus:outline-none focus:border-amber-500"
                   >
                     <option value="PPA-MLP">PPA-MLP</option>
                     <option value="HO PUSAT">HO PUSAT</option>
@@ -499,11 +499,11 @@ export default function HRRekrutmenPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Departemen</label>
+                  <label className="block text-[#5a6a7e] mb-1 font-medium">Departemen</label>
                   <select
                     value={hireForm.department}
                     onChange={(e) => setHireForm({ ...hireForm, department: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 rounded-xl bg-[#f4f7fa] border border-[#e2e8f0] text-white focus:outline-none focus:border-amber-500"
                   >
                     <option value="PLANT">PLANT</option>
                     <option value="OPERATIONAL">OPERATIONAL</option>
@@ -517,11 +517,11 @@ export default function HRRekrutmenPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Status Kerja</label>
+                  <label className="block text-[#5a6a7e] mb-1 font-medium">Status Kerja</label>
                   <select
                     value={hireForm.status_kerja}
                     onChange={(e) => setHireForm({ ...hireForm, status_kerja: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 rounded-xl bg-[#f4f7fa] border border-[#e2e8f0] text-white focus:outline-none focus:border-amber-500"
                   >
                     <option value="PKWT">PKWT</option>
                     <option value="PROBATION">PROBATION</option>
@@ -529,12 +529,12 @@ export default function HRRekrutmenPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Tanggal Masuk</label>
+                  <label className="block text-[#5a6a7e] mb-1 font-medium">Tanggal Masuk</label>
                   <input
                     type="date"
                     value={hireForm.tanggal_masuk}
                     onChange={(e) => setHireForm({ ...hireForm, tanggal_masuk: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 rounded-xl bg-[#f4f7fa] border border-[#e2e8f0] text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
@@ -543,7 +543,7 @@ export default function HRRekrutmenPage() {
                 <button
                   type="button"
                   onClick={() => setHireModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-all"
+                  className="flex-1 py-2.5 rounded-xl bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e] font-bold hover:bg-slate-700 transition-all"
                 >
                   Batal
                 </button>
@@ -559,6 +559,12 @@ export default function HRRekrutmenPage() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   );
 }

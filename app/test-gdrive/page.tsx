@@ -120,7 +120,7 @@ export default function TestGDrivePage() {
           <button
             onClick={handleUpload}
             disabled={!file || uploading}
-            className="px-3 py-1 text-xs bg-blue-600 text-white rounded disabled:bg-gray-400"
+            className="px-3 py-1 text-xs bg-[#003d79] text-white rounded disabled:bg-gray-400"
           >
             {uploading ? 'Uploading...' : 'Upload'}
           </button>
@@ -198,6 +198,12 @@ export default function TestGDrivePage() {
       <div className="text-xs text-gray-500 mt-3">
         💡 Test page. Nanti akan dihapus setelah UI Parts Book selesai.
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   );
 }

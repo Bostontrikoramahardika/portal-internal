@@ -41,7 +41,7 @@ const STATUS_CFG: Record<string, { bg: string; text: string; dot: string; badge:
   'ALPHA':           { bg: 'bg-rose-50',    text: 'text-rose-700',    dot: 'bg-rose-500',    badge: 'bg-rose-100'    },
   'IZIN':            { bg: 'bg-blue-50',    text: 'text-blue-700',    dot: 'bg-blue-500',    badge: 'bg-blue-100'    },
   'SAKIT':           { bg: 'bg-purple-50',  text: 'text-purple-700',  dot: 'bg-purple-500',  badge: 'bg-purple-100'  },
-  'TIDAK CLOCK OUT': { bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-500',   badge: 'bg-amber-100'   },
+  'TIDAK CLOCK OUT': { bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-[#003d79] text-white',   badge: 'bg-amber-100'   },
   'LIBUR':           { bg: 'bg-slate-50',   text: 'text-slate-500',   dot: 'bg-slate-400',   badge: 'bg-slate-100'   },
 }
 
@@ -185,14 +185,14 @@ export default function RekapAbsensiPage() {
 
         {/* FILTER CARD */}
         <div className="bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,61,121,0.12)] p-5 space-y-4">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+          <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">
             🔍 Filter Data
           </p>
 
           {/* Row 1: Bulan + Site */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1.5">
                 📅 Bulan
               </label>
               <input type="month" value={bulan}
@@ -201,7 +201,7 @@ export default function RekapAbsensiPage() {
               />
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1.5">
                 🏗️ Site
               </label>
               <select value={site} onChange={e => setSite(e.target.value)}
@@ -215,7 +215,7 @@ export default function RekapAbsensiPage() {
           {/* Row 2: Nama + Role */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1.5">
                 👤 Nama
               </label>
               <div className="relative">
@@ -227,14 +227,14 @@ export default function RekapAbsensiPage() {
                 />
                 {namaInput && (
                   <button onClick={() => { setNamaInput(''); setNama('') }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-sm font-bold">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5a6a7e] hover:text-rose-500 text-sm font-bold">
                     ✕
                   </button>
                 )}
               </div>
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1.5">
                 🎭 Role
               </label>
               <select value={role} onChange={e => setRole(e.target.value)}
@@ -287,17 +287,17 @@ export default function RekapAbsensiPage() {
 
             <div className="bg-white rounded-[1.5rem] shadow-xl p-4 flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Rata-rata Jam Kerja</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Rata-rata Jam Kerja</p>
                 <p className="text-2xl font-black text-[#003D79]">{fmtJam(summary.rataJamKerja)}</p>
               </div>
               <div className="h-10 w-px bg-slate-100" />
               <div className="text-right">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Records</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Total Records</p>
                 <p className="text-2xl font-black text-slate-700">{summary.totalRows.toLocaleString()}</p>
               </div>
               <div className="h-10 w-px bg-slate-100" />
               <div className="text-right">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Jam</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Total Jam</p>
                 <p className="text-2xl font-black text-slate-700">{Math.floor(summary.totalJamKerja / 60)}j</p>
               </div>
             </div>
@@ -317,7 +317,7 @@ export default function RekapAbsensiPage() {
           <div className="bg-white rounded-[2rem] shadow-xl p-12 text-center">
             <div className="text-6xl mb-4">📭</div>
             <p className="text-slate-600 font-black text-lg">Tidak ada data</p>
-            <p className="text-slate-400 text-sm mt-1">Coba ubah filter pencarian</p>
+            <p className="text-[#5a6a7e] text-sm mt-1">Coba ubah filter pencarian</p>
           </div>
         )}
 
@@ -434,6 +434,12 @@ export default function RekapAbsensiPage() {
           </div>
         )}
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

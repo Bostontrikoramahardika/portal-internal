@@ -224,13 +224,13 @@ function MonitorTab({ showToast }: {
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
             📥 Import Terbaru
           </p>
-          <span className="text-[9px] font-black text-slate-400 uppercase">
+          <span className="text-[9px] font-black text-[#5a6a7e] uppercase">
             {recentUploads.length} file
           </span>
         </div>
 
         {loading ? (
-          <div className="text-center py-10 text-slate-400 text-sm font-bold">
+          <div className="text-center py-10 text-[#5a6a7e] text-sm font-bold">
             Memuat data...
           </div>
         ) : recentUploads.length === 0 ? (
@@ -239,7 +239,7 @@ function MonitorTab({ showToast }: {
             <p className="text-slate-500 font-black uppercase tracking-widest text-xs">
               Belum ada import
             </p>
-            <p className="text-slate-400 text-xs mt-1">
+            <p className="text-[#5a6a7e] text-xs mt-1">
               Buka tab Import untuk mulai upload
             </p>
           </div>
@@ -264,7 +264,7 @@ function StatCard({ label, value, color }: {
   const colorMap = {
     blue:    { bg: 'bg-white', text: 'text-[#003D79]',    labelText: 'text-blue-400' },
     emerald: { bg: 'bg-white', text: 'text-emerald-600',  labelText: 'text-emerald-400' },
-    amber:   { bg: 'bg-white', text: 'text-amber-600',    labelText: 'text-amber-400' },
+    amber:   { bg: 'bg-white', text: 'text-amber-600',    labelText: 'text-[#003d79]' },
     rose:    { bg: 'bg-rose-50', text: 'text-rose-600',   labelText: 'text-rose-400' },
   }
   const c = colorMap[color]
@@ -341,7 +341,7 @@ function UploadCard({ upload, onReload }: {
       )}
 
       <div className="flex items-center justify-between">
-        <p className="text-[9px] text-slate-400 font-medium">
+        <p className="text-[9px] text-[#5a6a7e] font-medium">
           {formatDate(upload.created_at)}
         </p>
         {canProcess && (
@@ -753,7 +753,7 @@ function ManageUnits({ showToast }: {
       )}
 
       {loading ? (
-        <div className="text-center py-10 text-slate-400 text-sm font-bold">Memuat...</div>
+        <div className="text-center py-10 text-[#5a6a7e] text-sm font-bold">Memuat...</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {units.map(u => (
@@ -767,7 +767,7 @@ function ManageUnits({ showToast }: {
                   <p className="text-[10px] text-slate-500 truncate">{u.unit_name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] font-black text-slate-400 uppercase">Assy</p>
+                  <p className="text-[9px] font-black text-[#5a6a7e] uppercase">Assy</p>
                   <p className="font-black text-[#003D79] text-sm">{u.assembly_count}</p>
                 </div>
               </div>
@@ -901,7 +901,7 @@ function EditTab({ showToast }: {
             placeholder="Part number atau nama assembly..."
             className="w-full px-4 py-3 rounded-[1.2rem] border-2 border-slate-100 text-sm bg-slate-50 focus:border-[#003D79] focus:outline-none"
           />
-          <p className="text-[10px] text-slate-400 mt-3 text-center italic">
+          <p className="text-[10px] text-[#5a6a7e] mt-3 text-center italic">
             🚧 Fitur search sedang dikembangkan
           </p>
         </div>
@@ -933,7 +933,7 @@ function EditTab({ showToast }: {
                 Pilih Assembly ({assemblies.length})
               </p>
               {loading ? (
-                <p className="text-center py-6 text-slate-400 text-sm font-bold">Memuat...</p>
+                <p className="text-center py-6 text-[#5a6a7e] text-sm font-bold">Memuat...</p>
               ) : (
                 <div className="max-h-96 overflow-y-auto space-y-1">
                   {assemblies.map(a => (
@@ -998,14 +998,14 @@ function EditTab({ showToast }: {
             <div className="max-h-64 overflow-y-auto space-y-1">
               {items.slice(0, 20).map(i => (
                 <div key={i.id} className="text-[10px] flex gap-2 py-1 border-b border-slate-200">
-                  <span className="w-8 text-slate-400 font-mono">{i.ref_no || '-'}</span>
+                  <span className="w-8 text-[#5a6a7e] font-mono">{i.ref_no || '-'}</span>
                   <span className="w-32 font-mono font-bold text-slate-700">{i.part_number}</span>
                   <span className="flex-1 text-slate-600 truncate">{i.part_name}</span>
-                  <span className="text-slate-400">×{i.qty}</span>
+                  <span className="text-[#5a6a7e]">×{i.qty}</span>
                 </div>
               ))}
               {items.length > 20 && (
-                <p className="text-[10px] text-slate-400 text-center italic pt-2">
+                <p className="text-[10px] text-[#5a6a7e] text-center italic pt-2">
                   ... dan {items.length - 20} part lainnya
                 </p>
               )}
@@ -1013,6 +1013,12 @@ function EditTab({ showToast }: {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

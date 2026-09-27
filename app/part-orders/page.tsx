@@ -196,9 +196,9 @@ export default function PartOrdersPage() {
       {/* ORDERS LIST */}
       <div className="flex-1 overflow-auto p-2">
         {loading ? (
-          <div className="text-center py-10 text-slate-400 text-sm">Loading...</div>
+          <div className="text-center py-10 text-[#5a6a7e] text-sm">Loading...</div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-10 text-slate-400 text-sm">
+          <div className="text-center py-10 text-[#5a6a7e] text-sm">
             {mode === 'my' ? 'Belum ada order dari kamu' : 'Belum ada order'}
           </div>
         ) : (
@@ -226,32 +226,32 @@ export default function PartOrdersPage() {
 
                 <div className="space-y-1 text-[11px] text-slate-600 border-t pt-2">
                   <div className="flex justify-between gap-2">
-                    <span className="text-slate-400">Unit:</span>
+                    <span className="text-[#5a6a7e]">Unit:</span>
                     <span className="font-bold text-right">{o.unit_code}</span>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <span className="text-slate-400">Machine:</span>
+                    <span className="text-[#5a6a7e]">Machine:</span>
                     <span className="font-bold text-right truncate">{o.machine_unit}</span>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <span className="text-slate-400">Qty:</span>
+                    <span className="text-[#5a6a7e]">Qty:</span>
                     <span className="font-bold text-right">{o.qty}</span>
                   </div>
                   {mode === 'all' && (
                     <div className="flex justify-between gap-2">
-                      <span className="text-slate-400">Requester:</span>
+                      <span className="text-[#5a6a7e]">Requester:</span>
                       <span className="font-bold text-right truncate">{o.requester_name}</span>
                     </div>
                   )}
                   <div className="flex justify-between gap-2">
-                    <span className="text-slate-400">Diminta:</span>
+                    <span className="text-[#5a6a7e]">Diminta:</span>
                     <span className="text-right">{fmtDate(o.created_at)}</span>
                   </div>
                 </div>
 
                 {o.keterangan && (
                   <div className="mt-2 pt-2 border-t">
-                    <div className="text-[10px] text-slate-400 font-bold mb-0.5">KETERANGAN:</div>
+                    <div className="text-[10px] text-[#5a6a7e] font-bold mb-0.5">KETERANGAN:</div>
                     <div className="text-[11px] text-slate-700 italic">{o.keterangan}</div>
                   </div>
                 )}
@@ -282,7 +282,7 @@ export default function PartOrdersPage() {
       {/* UPDATE STATUS MODAL */}
       {editOrder && (
         <>
-          <div className="fixed inset-0 bg-slate-900/60 z-50" onClick={closeEditModal} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/60 z-50" onClick={closeEditModal} />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-2xl shadow-2xl z-50 overflow-hidden">
             <div className="bg-[#003D79] text-white px-5 py-3 flex justify-between items-center">
               <h3 className="font-bold">✏️ Update Order Status</h3>
@@ -361,6 +361,12 @@ export default function PartOrdersPage() {
           </div>
         </>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

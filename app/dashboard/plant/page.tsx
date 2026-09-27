@@ -268,12 +268,12 @@ export default function PlantDashboardPage() {
       <div className="max-w-5xl mx-auto space-y-3">
         
         {/* UNIFORM BLUE HEADER */}
-        <div className="bg-blue-600 rounded-xl p-3 sm:p-4 text-white shadow-md text-center space-y-1">
+        <div className="bg-[#003d79] rounded-xl p-3 sm:p-4 text-white shadow-md text-center space-y-1">
           <h1 className="text-xl sm:text-2xl font-black tracking-wide uppercase">
             KRU & WORKSHOP PLANT
           </h1>
           <p className="text-xs sm:text-sm font-semibold opacity-90">PT BOSTON TRIKORA MAHARDIKA SITE PPA-MLP</p>
-          <div className="inline-block bg-blue-700/80 text-blue-100 px-3 py-0.5 rounded-full text-xs font-medium">
+          <div className="inline-block bg-[#003d79]/80 text-blue-100 px-3 py-0.5 rounded-full text-xs font-medium">
             Kru Plant, Kelola Unit/SN, Format Inspeksi & Admin Partbook Catalog
           </div>
         </div>
@@ -283,7 +283,7 @@ export default function PlantDashboardPage() {
           <button
             onClick={() => setActiveTab('KRU_WORKSHOP')}
             className={`flex-1 py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'KRU_WORKSHOP' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
+              activeTab === 'KRU_WORKSHOP' ? 'bg-[#003d79] text-white shadow' : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
             <HardHat className="w-4 h-4" /> Kru Plant
@@ -292,7 +292,7 @@ export default function PlantDashboardPage() {
           <button
             onClick={() => setActiveTab('KELOLA_UNIT')}
             className={`flex-1 py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'KELOLA_UNIT' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
+              activeTab === 'KELOLA_UNIT' ? 'bg-[#003d79] text-white shadow' : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
             <Truck className="w-4 h-4" /> Kelola Unit & SN ({units.length})
@@ -301,7 +301,7 @@ export default function PlantDashboardPage() {
           <button
             onClick={() => setActiveTab('FORMAT_INSPEKSI')}
             className={`flex-1 py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'FORMAT_INSPEKSI' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
+              activeTab === 'FORMAT_INSPEKSI' ? 'bg-[#003d79] text-white shadow' : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
             <FileSpreadsheet className="w-4 h-4" /> Import Format Inspeksi
@@ -310,7 +310,7 @@ export default function PlantDashboardPage() {
           <button
             onClick={() => setActiveTab('ADMIN_PARTBOOK')}
             className={`flex-1 py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'ADMIN_PARTBOOK' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
+              activeTab === 'ADMIN_PARTBOOK' ? 'bg-[#003d79] text-white shadow' : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
             <BookOpen className="w-4 h-4" /> Admin Partbook
@@ -344,7 +344,7 @@ export default function PlantDashboardPage() {
             {/* Action & Search Kru */}
             <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs sm:text-sm">
               <div className="relative w-full sm:w-72">
-                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#5a6a7e]" />
                 <input
                   type="text"
                   placeholder="Cari Nama Mekanik, NRP, Role..."
@@ -356,7 +356,7 @@ export default function PlantDashboardPage() {
 
               <button
                 onClick={() => alert('Fitur Tambah Personel disimulasikan.')}
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto bg-[#003d79] hover:bg-[#003d79] text-white font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5"
               >
                 <Plus className="w-4 h-4" /> Tambah Personel Kru
               </button>
@@ -366,7 +366,7 @@ export default function PlantDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               {loadingMechanics ? (
             <div className="col-span-1 md:col-span-2 text-center py-10 bg-white rounded-xl border border-slate-200 shadow-sm text-slate-500 font-medium">
-              <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-amber-500" />
+              <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#003d79]" />
               Memuat data personel Plant dari database...
             </div>
           ) : filteredKru.length === 0 ? (
@@ -425,7 +425,7 @@ export default function PlantDashboardPage() {
           <div className="space-y-3">
             <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs sm:text-sm">
               <div className="relative w-full sm:w-72">
-                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#5a6a7e]" />
                 <input
                   type="text"
                   placeholder="Cari Kode Unit, SN, Model..."
@@ -441,7 +441,7 @@ export default function PlantDashboardPage() {
                   setFormUnit({ kode_unit: '', nama_unit: '', merk_model: '', serial_number: '', kategori: 'PC 200', site: 'PPA-MLP', status: 'RFU' });
                   setShowUnitModal(true);
                 }}
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto bg-[#003d79] hover:bg-[#003d79] text-white font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5"
               >
                 <Plus className="w-4 h-4" /> Tambah Unit Baru
               </button>
@@ -449,9 +449,9 @@ export default function PlantDashboardPage() {
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               {loadingUnits ? (
-                <p className="p-8 text-center text-xs text-slate-400">Memuat data unit site...</p>
+                <p className="p-8 text-center text-xs text-[#5a6a7e]">Memuat data unit site...</p>
               ) : filteredUnits.length === 0 ? (
-                <p className="p-8 text-center text-xs text-slate-400">Tidak ada unit ditemukan.</p>
+                <p className="p-8 text-center text-xs text-[#5a6a7e]">Tidak ada unit ditemukan.</p>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {filteredUnits.map((u) => (
@@ -543,7 +543,7 @@ export default function PlantDashboardPage() {
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                 <label className="font-bold text-slate-700 flex items-center justify-between">
                   <span>Import Format dari File / Teks (Baris demi Baris / JSON)</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Pisahkan dengan Enter per poin inspeksi</span>
+                  <span className="text-[10px] text-[#5a6a7e] font-normal">Pisahkan dengan Enter per poin inspeksi</span>
                 </label>
                 <textarea
                   rows={4}
@@ -556,7 +556,7 @@ export default function PlantDashboardPage() {
                   <button
                     type="button"
                     onClick={handleProcessImport}
-                    className="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs"
+                    className="bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm hover:bg-[#f4f7fa] text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs"
                   >
                     <Upload className="w-3.5 h-3.5" /> Proses Import ke Editor
                   </button>
@@ -578,7 +578,7 @@ export default function PlantDashboardPage() {
                 <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
                   {checklistItems.map((item, idx) => (
                     <div key={idx} className="flex items-center gap-2 p-1.5 border border-slate-200 rounded-lg bg-white">
-                      <span className="w-6 text-center text-xs font-bold text-slate-400">{idx + 1}.</span>
+                      <span className="w-6 text-center text-xs font-bold text-[#5a6a7e]">{idx + 1}.</span>
                       <input
                         type="text"
                         value={item}
@@ -622,7 +622,7 @@ export default function PlantDashboardPage() {
                         setNewItemText('');
                       }
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1"
+                    className="bg-[#003d79] hover:bg-[#003d79] text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center gap-1"
                   >
                     <Plus className="w-4 h-4" /> Tambah
                   </button>
@@ -704,12 +704,12 @@ export default function PlantDashboardPage() {
               </div>
 
               {loadingUploads ? (
-                <p className="p-8 text-center text-xs text-slate-400">Memuat berkas partbook...</p>
+                <p className="p-8 text-center text-xs text-[#5a6a7e]">Memuat berkas partbook...</p>
               ) : partbookUploads.length === 0 ? (
                 <div className="p-8 text-center space-y-1">
-                  <FileText className="w-8 h-8 text-slate-300 mx-auto" />
+                  <FileText className="w-8 h-8 text-[#5a6a7e] mx-auto" />
                   <p className="text-xs text-slate-500 font-medium">Belum ada file partbook yang diupload.</p>
-                  <p className="text-[11px] text-slate-400">Gunakan form di atas untuk memasukkan catalog PDF baru.</p>
+                  <p className="text-[11px] text-[#5a6a7e]">Gunakan form di atas untuk memasukkan catalog PDF baru.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
@@ -736,9 +736,9 @@ export default function PlantDashboardPage() {
 
         {/* MODAL INPUT / EDIT UNIT & SN */}
         {showUnitModal && (
-          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+          <div className="fixed inset-0 bg-[#f4f7fa]/50 backdrop-blur-sm z-50 flex items-center justify-center p-3">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-200">
-              <div className="bg-blue-600 p-3 text-white font-bold flex justify-between items-center text-sm sm:text-base">
+              <div className="bg-[#003d79] p-3 text-white font-bold flex justify-between items-center text-sm sm:text-base">
                 <span>{editingUnit ? `Edit Unit: ${editingUnit.kode_unit}` : 'Tambah Unit Baru'}</span>
                 <button onClick={() => setShowUnitModal(false)} className="text-white hover:opacity-80 font-bold">?</button>
               </div>
@@ -832,7 +832,7 @@ export default function PlantDashboardPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold"
+                    className="px-4 py-2 bg-[#003d79] hover:bg-[#003d79] text-white rounded-lg font-bold"
                   >
                     Simpan Unit
                   </button>
@@ -843,6 +843,12 @@ export default function PlantDashboardPage() {
         )}
 
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   );
 }

@@ -112,7 +112,7 @@ export default function MonitoringApdPage() {
 
   const statusColor = (status: string) => {
     if (status === 'AMAN') return { bg: 'bg-emerald-500', text: 'text-white', ring: 'ring-emerald-200', label: 'Aman' }
-    if (status === 'SEGERA_GANTI') return { bg: 'bg-amber-500', text: 'text-white', ring: 'ring-amber-200', label: 'Ganti' }
+    if (status === 'SEGERA_GANTI') return { bg: 'bg-[#003d79] text-white', text: 'text-white', ring: 'ring-amber-200', label: 'Ganti' }
     if (status === 'EXPIRED') return { bg: 'bg-rose-500', text: 'text-white', ring: 'ring-rose-200', label: 'Expired' }
     return { bg: 'bg-slate-200', text: 'text-slate-500', ring: 'ring-slate-100', label: 'Belum' }
   }
@@ -171,8 +171,8 @@ export default function MonitoringApdPage() {
               </button>
               <button
                 onClick={() => setFilterStatus(filterStatus === 'SEGERA_GANTI' ? 'ALL' : 'SEGERA_GANTI')}
-                className={`bg-amber-500/20 backdrop-blur-md rounded-2xl p-3 border transition-all ${
-                  filterStatus === 'SEGERA_GANTI' ? 'border-amber-400/60 bg-amber-500/30' : 'border-amber-400/30 hover:bg-amber-500/25'
+                className={`bg-[#003d79] text-white/20 backdrop-blur-md rounded-2xl p-3 border transition-all ${
+                  filterStatus === 'SEGERA_GANTI' ? 'border-amber-400/60 bg-[#003d79] text-white/30' : 'border-amber-400/30 hover:bg-[#003d79] text-white/25'
                 }`}
               >
                 <div className="text-[9px] font-black uppercase tracking-widest text-amber-100 mb-1">Ganti</div>
@@ -191,7 +191,7 @@ export default function MonitoringApdPage() {
           )}
 
           {summary && summary.totalPending > 0 && (
-            <div className="mt-3 bg-amber-500 text-white rounded-2xl px-3 py-2 text-center text-[11px] font-black">
+            <div className="mt-3 bg-[#003d79] text-white text-white rounded-2xl px-3 py-2 text-center text-[11px] font-black">
               ⏳ {summary.totalPending} request menunggu verifikasi di Kelola APD
             </div>
           )}
@@ -308,13 +308,13 @@ export default function MonitoringApdPage() {
                           <div className="font-black text-slate-900 text-[11px]">
                             {r.nama}
                             {r.pendingCount > 0 && (
-                              <span className="ml-2 bg-amber-500 text-white rounded-full px-1.5 py-0.5 text-[8px]">
+                              <span className="ml-2 bg-[#003d79] text-white text-white rounded-full px-1.5 py-0.5 text-[8px]">
                                 {r.pendingCount}
                               </span>
                             )}
                           </div>
                           <div className="text-[10px] text-slate-500 font-medium">{r.nrp}</div>
-                          <div className="text-[9px] text-slate-400 truncate max-w-[150px]">{r.jabatan}</div>
+                          <div className="text-[9px] text-[#5a6a7e] truncate max-w-[150px]">{r.jabatan}</div>
                         </td>
                         <td className="px-2 py-3 text-[10px] text-slate-600 font-medium">{r.site}</td>
                         {jenisList.map((j) => {
@@ -367,7 +367,7 @@ export default function MonitoringApdPage() {
                             {r.nama}
                           </div>
                           {r.pendingCount > 0 && (
-                            <span className="bg-amber-500 text-white rounded-full px-1.5 py-0.5 text-[9px] font-black">
+                            <span className="bg-[#003d79] text-white text-white rounded-full px-1.5 py-0.5 text-[9px] font-black">
                               ⏳ {r.pendingCount}
                             </span>
                           )}
@@ -375,7 +375,7 @@ export default function MonitoringApdPage() {
                         <div className="text-[10px] text-slate-500 font-medium">
                           NRP {r.nrp} • {r.site}
                         </div>
-                        <div className="text-[9px] text-slate-400 truncate">
+                        <div className="text-[9px] text-[#5a6a7e] truncate">
                           {r.jabatan}
                         </div>
                       </div>
@@ -433,7 +433,7 @@ export default function MonitoringApdPage() {
                   <span className="text-slate-600 font-medium">Aman</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-amber-500 ring-2 ring-amber-200"></div>
+                  <div className="w-3 h-3 rounded-full bg-[#003d79] text-white ring-2 ring-amber-200"></div>
                   <span className="text-slate-600 font-medium">Segera Ganti (≤60hr)</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -473,19 +473,19 @@ export default function MonitoringApdPage() {
               <div className="bg-slate-50 rounded-2xl p-3">
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   <div>
-                    <div className="text-slate-400 font-black uppercase tracking-widest">Jabatan</div>
+                    <div className="text-[#5a6a7e] font-black uppercase tracking-widest">Jabatan</div>
                     <div className="font-black text-slate-900">{selectedRow.jabatan || '-'}</div>
                   </div>
                   <div>
-                    <div className="text-slate-400 font-black uppercase tracking-widest">Departemen</div>
+                    <div className="text-[#5a6a7e] font-black uppercase tracking-widest">Departemen</div>
                     <div className="font-black text-slate-900">{selectedRow.departemen || '-'}</div>
                   </div>
                   <div>
-                    <div className="text-slate-400 font-black uppercase tracking-widest">Site</div>
+                    <div className="text-[#5a6a7e] font-black uppercase tracking-widest">Site</div>
                     <div className="font-black text-slate-900">{selectedRow.site || '-'}</div>
                   </div>
                   <div>
-                    <div className="text-slate-400 font-black uppercase tracking-widest">Progress</div>
+                    <div className="text-[#5a6a7e] font-black uppercase tracking-widest">Progress</div>
                     <div className="font-black text-slate-900">
                       {selectedRow.totalPunya}/{selectedRow.totalMaster}
                       <span className="text-slate-500 ml-1">
@@ -529,28 +529,28 @@ export default function MonitoringApdPage() {
                         </div>
 
                         {cell.status === 'BELUM_TERIMA' ? (
-                          <div className="text-[10px] text-slate-400 italic">Belum pernah menerima</div>
+                          <div className="text-[10px] text-[#5a6a7e] italic">Belum pernah menerima</div>
                         ) : (
                           <div className="grid grid-cols-2 gap-2 mt-2 text-[10px]">
                             <div>
-                              <div className="text-slate-400">Terima</div>
+                              <div className="text-[#5a6a7e]">Terima</div>
                               <div className="font-black text-slate-900">{formatDate(cell.tanggal)}</div>
                             </div>
                             <div>
-                              <div className="text-slate-400">Expired</div>
+                              <div className="text-[#5a6a7e]">Expired</div>
                               <div className="font-black text-slate-900">{formatDate(cell.expired)}</div>
                             </div>
                             <div>
-                              <div className="text-slate-400">Ukuran</div>
+                              <div className="text-[#5a6a7e]">Ukuran</div>
                               <div className="font-black text-slate-900">{cell.ukuran || '-'}</div>
                             </div>
                             <div>
-                              <div className="text-slate-400">Jumlah</div>
+                              <div className="text-[#5a6a7e]">Jumlah</div>
                               <div className="font-black text-slate-900">{cell.jumlah || '-'} pcs</div>
                             </div>
                             {cell.days !== null && (
                               <div className="col-span-2">
-                                <div className="text-slate-400">Status Waktu</div>
+                                <div className="text-[#5a6a7e]">Status Waktu</div>
                                 <div className={`font-black ${c.text.replace('text-white', 'text-slate-900')}`}>
                                   {cell.days < 0 
                                     ? `Expired ${Math.abs(cell.days)} hari lalu`
@@ -579,6 +579,12 @@ export default function MonitoringApdPage() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

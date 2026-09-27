@@ -280,12 +280,12 @@ export default function FormInspeksiPage() {
       <div className="max-w-4xl mx-auto space-y-3">
         
         {/* Header Title Section */}
-        <div className="bg-blue-600 rounded-xl p-3 sm:p-4 text-white shadow-md text-center space-y-1">
+        <div className="bg-[#003d79] rounded-xl p-3 sm:p-4 text-white shadow-md text-center space-y-1">
           <h1 className="text-xl sm:text-2xl font-black tracking-wide uppercase">
             FORM INSPEKSI UNIT
           </h1>
           <p className="text-xs sm:text-sm font-semibold opacity-90">{userInfo.site}</p>
-          <div className="inline-block bg-blue-700/80 text-blue-100 px-3 py-0.5 rounded-full text-xs font-medium">
+          <div className="inline-block bg-[#003d79]/80 text-blue-100 px-3 py-0.5 rounded-full text-xs font-medium">
             Periode {currentPeriod}
           </div>
         </div>
@@ -452,7 +452,7 @@ export default function FormInspeksiPage() {
           {/* Prompt Pilih Unit */}
           {!selectedUnit && (
             <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-200 text-center space-y-2">
-              <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto" />
+              <AlertTriangle className="w-10 h-10 text-[#003d79] mx-auto" />
               <p className="text-slate-700 font-semibold text-sm sm:text-base">
                 Pilih No. Lambung di atas untuk menampilkan checklist inspeksi unit.
               </p>
@@ -467,7 +467,7 @@ export default function FormInspeksiPage() {
             <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200 space-y-3">
               <div className="border-b pb-2 flex items-center justify-between">
                 <h2 className="font-bold text-slate-800 text-sm sm:text-base uppercase flex items-center gap-2">
-                  <span className="bg-blue-600 text-white rounded px-2 py-0.5 text-xs">I</span>
+                  <span className="bg-[#003d79] text-white rounded px-2 py-0.5 text-xs">I</span>
                   Checklist General Inspeksi ({selectedUnit.kode_unit} - {selectedUnit.model_unit})
                 </h2>
               </div>
@@ -576,7 +576,7 @@ export default function FormInspeksiPage() {
             <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200 space-y-3">
               <div className="flex items-center justify-between border-b pb-2">
                 <h2 className="font-bold text-slate-800 text-sm sm:text-base uppercase flex items-center gap-2">
-                  <span className="bg-amber-500 text-white rounded px-2 py-0.5 text-xs">III</span>
+                  <span className="bg-[#003d79] text-white text-white rounded px-2 py-0.5 text-xs">III</span>
                   Catatan Temuan & Tindakan Perbaikan
                 </h2>
                 <button
@@ -589,7 +589,7 @@ export default function FormInspeksiPage() {
               </div>
 
               {catatanTemuan.length === 0 ? (
-                <p className="text-xs text-slate-400 italic text-center py-2">Tidak ada catatan temuan awal.</p>
+                <p className="text-xs text-[#5a6a7e] italic text-center py-2">Tidak ada catatan temuan awal.</p>
               ) : (
                 <div className="space-y-2">
                   {catatanTemuan.map((tm, idx) => (
@@ -669,7 +669,7 @@ export default function FormInspeksiPage() {
               </div>
 
               {backlogItems.length === 0 ? (
-                <p className="text-xs text-slate-400 italic text-center py-2">Tidak ada sparepart yang perlu di-request untuk backlog ini.</p>
+                <p className="text-xs text-[#5a6a7e] italic text-center py-2">Tidak ada sparepart yang perlu di-request untuk backlog ini.</p>
               ) : (
                 <div className="space-y-2">
                   {backlogItems.map((item, idx) => (
@@ -755,7 +755,7 @@ export default function FormInspeksiPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm sm:text-base uppercase tracking-wider"
+                className="w-full bg-[#003d79] hover:bg-[#003d79] text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm sm:text-base uppercase tracking-wider"
               >
                 {submitting ? (
                   <span>Menyimpan & Memproses PR...</span>
@@ -772,6 +772,12 @@ export default function FormInspeksiPage() {
         </form>
 
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   );
 }

@@ -345,7 +345,7 @@ export default function DetailEventPage() {
             </div>
             <button
               onClick={() => setShowInviteModal(true)}
-              className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#002a57] transition-colors"
+              className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#003d79] transition-colors"
             >
               + Undang
             </button>
@@ -393,7 +393,7 @@ export default function DetailEventPage() {
             <div className="text-center py-10">
               <div className="text-3xl mb-2">📭</div>
               <p className="text-sm text-slate-500">Belum ada undangan</p>
-              <p className="text-xs text-slate-400 mt-1">Klik "+ Undang" untuk undang peserta</p>
+              <p className="text-xs text-[#5a6a7e] mt-1">Klik "+ Undang" untuk undang peserta</p>
             </div>
           ) : (
             <div className="divide-y max-h-96 overflow-y-auto">
@@ -442,7 +442,7 @@ export default function DetailEventPage() {
         {/* ── ACTIONS ── */}
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setQrModal(true)}
-            className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#002a57] shadow-lg">
+            className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-xs font-bold hover:bg-[#003d79] shadow-lg">
             📱 Lihat QR
           </button>
           <a href={`/api/events/${eventId}/export`}
@@ -516,7 +516,7 @@ export default function DetailEventPage() {
                             <button onClick={() => setTtdModal(a)}
                               className="text-blue-600 hover:text-blue-800 text-lg">👁️</button>
                           ) : (
-                            <span className="text-gray-300">—</span>
+                            <span className="text-[#5a6a7e]">—</span>
                           )}
                         </td>
                       </tr>
@@ -572,7 +572,7 @@ export default function DetailEventPage() {
               )}
             </div>
             <button onClick={openAddMom}
-              className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#002a57] transition-colors">
+              className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#003d79] transition-colors">
               + Tambah Item
             </button>
           </div>
@@ -659,7 +659,7 @@ export default function DetailEventPage() {
                 {/* Due Date */}
                 <div>
                   <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wide mb-1">
-                    Due Date <span className="text-slate-400 font-normal normal-case">(opsional)</span>
+                    Due Date <span className="text-[#5a6a7e] font-normal normal-case">(opsional)</span>
                   </label>
                   <input
                     type="date"
@@ -704,7 +704,7 @@ export default function DetailEventPage() {
               {/* Form Buttons */}
               <div className="flex gap-2 mt-3">
                 <button onClick={saveMom} disabled={momSaving}
-                  className="px-4 py-2 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#002a57] disabled:opacity-50 transition-colors">
+                  className="px-4 py-2 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#003d79] disabled:opacity-50 transition-colors">
                   {momSaving ? '⏳ Menyimpan...' : editingMomId ? '💾 Update' : '✅ Simpan'}
                 </button>
                 <button onClick={cancelMomForm} disabled={momSaving}
@@ -725,7 +725,7 @@ export default function DetailEventPage() {
             <div className="text-center py-10">
               <div className="text-3xl mb-2">📝</div>
               <p className="text-sm text-slate-500">Belum ada Minutes of Meeting</p>
-              <p className="text-xs text-slate-400 mt-1">Klik "+ Tambah Item" untuk mulai mencatat</p>
+              <p className="text-xs text-[#5a6a7e] mt-1">Klik "+ Tambah Item" untuk mulai mencatat</p>
             </div>
           ) : (
             <>
@@ -751,7 +751,7 @@ export default function DetailEventPage() {
                         <td className="px-3 py-2 font-bold text-slate-800 max-w-[140px]">
                           <div className="truncate" title={item.topik}>{item.topik}</div>
                           {item.catatan && (
-                            <div className="text-slate-400 font-normal truncate text-[10px] mt-0.5" title={item.catatan}>
+                            <div className="text-[#5a6a7e] font-normal truncate text-[10px] mt-0.5" title={item.catatan}>
                               📌 {item.catatan}
                             </div>
                           )}
@@ -812,14 +812,14 @@ export default function DetailEventPage() {
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="text-[10px] font-black text-slate-400">#{item.no_urut}</span>
+                          <span className="text-[10px] font-black text-[#5a6a7e]">#{item.no_urut}</span>
                           <span className="font-bold text-sm text-slate-800 truncate">{item.topik}</span>
                         </div>
                         {item.action_item && (
                           <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{item.action_item}</p>
                         )}
                         {item.catatan && (
-                          <p className="text-[10px] text-slate-400 mt-0.5">📌 {item.catatan}</p>
+                          <p className="text-[10px] text-[#5a6a7e] mt-0.5">📌 {item.catatan}</p>
                         )}
                       </div>
                       <div className="flex gap-1 shrink-0">
@@ -1116,7 +1116,7 @@ function InviteModal({ eventId, eventSite, existingNrps, onClose, onSuccess }: {
         <div className="p-3 border-b flex gap-2 flex-wrap bg-slate-50">
           {[
             { key: 'ALL' as const, label: '👥 Semua', color: 'bg-[#003D79]' },
-            { key: 'LEADER' as const, label: '👑 Leader', color: 'bg-blue-600' },
+            { key: 'LEADER' as const, label: '👑 Leader', color: 'bg-[#003d79]' },
             { key: 'STAFF' as const, label: '👤 Staff', color: 'bg-emerald-600' },
           ].map(p => (
             <button key={p.key} onClick={() => setPreset(p.key)}
@@ -1213,12 +1213,18 @@ function InviteModal({ eventId, eventSite, existingNrps, onClose, onSuccess }: {
             Batal
           </button>
           <button onClick={handleSubmit} disabled={saving || selected.size === 0}
-            className="flex-1 py-2.5 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#002a57] disabled:opacity-50">
+            className="flex-1 py-2.5 bg-[#003D79] text-white rounded-lg text-xs font-bold hover:bg-[#003d79] disabled:opacity-50">
             {saving ? '⏳ Mengirim...' : `✅ Undang (${selected.size})`}
           </button>
         </div>
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }
 

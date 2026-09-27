@@ -205,7 +205,7 @@ export default function PublicRecruitmentPage() {
   // Halaman Sukses
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen pb-24 sm:pb-8  bg-slate-50 flex items-center justify-center p-4">
       <PageHeader title="Rekrutmen" backUrl="/dashboard" />
 
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-slate-100">
@@ -252,7 +252,7 @@ export default function PublicRecruitmentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-200 py-8 px-4 sm:px-6">
+    <div className="min-h-screen pb-24 sm:pb-8  bg-gradient-to-b from-slate-100 to-slate-200 py-8 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
         {/* Header Banner */}
         <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 text-white text-center">
@@ -260,7 +260,7 @@ export default function PublicRecruitmentPage() {
             E-Recruitment Portal
           </div>
           <h1 className="text-2xl font-black tracking-tight">PT. BOSTON PPA - MLP</h1>
-          <p className="text-slate-300 text-sm mt-1">Formulir Pendaftaran Calon Karyawan</p>
+          <p className="text-[#5a6a7e] text-sm mt-1">Formulir Pendaftaran Calon Karyawan</p>
         </div>
 
         {/* Form Body */}
@@ -474,6 +474,12 @@ export default function PublicRecruitmentPage() {
           </button>
         </form>
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   );
 }

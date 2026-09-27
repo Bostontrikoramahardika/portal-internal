@@ -189,7 +189,7 @@ export default function GoogleIntegrationCard() {
               <span>Hubungkan Akun Google</span>
             </button>
 
-            <p className="text-[10px] text-slate-400 text-center mt-2">
+            <p className="text-[10px] text-[#5a6a7e] text-center mt-2">
               Anda akan diarahkan ke Google untuk otorisasi
             </p>
           </div>
@@ -213,13 +213,13 @@ export default function GoogleIntegrationCard() {
 
             <button
               disabled
-              className="w-full py-3 bg-slate-100 border-2 border-slate-200 rounded-xl text-sm font-black text-slate-400 cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 bg-slate-100 border-2 border-slate-200 rounded-xl text-sm font-black text-[#5a6a7e] cursor-not-allowed flex items-center justify-center gap-2"
             >
               <span className="text-lg opacity-50">🔒</span>
               <span>Belum Diizinkan</span>
             </button>
 
-            <p className="text-[10px] text-slate-400 text-center mt-2">
+            <p className="text-[10px] text-[#5a6a7e] text-center mt-2">
               Hubungi admin untuk info lebih lanjut
             </p>
           </div>

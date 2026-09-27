@@ -1010,13 +1010,13 @@ if (menuKey === 'import_roster_bulk') {
         <div className="p-4 space-y-1">
           {visibleTabs.map(tab => (
             <div key={tab.key}>
-              <button onClick={() => handleTabClick(tab)} className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === tab.key ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-slate-400 hover:bg-white/5'}`}>
+              <button onClick={() => handleTabClick(tab)} className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-3 transition-all ${activeTab === tab.key ? 'bg-white/10 border-l-4 border-white text-white font-bold' : 'text-[#5a6a7e] hover:bg-white/5'}`}>
                 <span className="text-lg">{tab.icon}</span><span>{tab.label}</span>
               </button>
               {activeTab === tab.key && menus.filter(m => tab.customMatch(m)).length > 1 && (
                 <div className="ml-9 mt-1 space-y-1 border-l border-white/10">
                   {menus.filter(m => tab.customMatch(m)).map(m => (
-                    <button key={m.menu_key} onClick={() => navigateMenu(m.menu_key)} className={`w-full text-left px-4 py-2 rounded-xl text-xs flex items-center gap-2 transition-colors ${activeMenu === m.menu_key ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <button key={m.menu_key} onClick={() => navigateMenu(m.menu_key)} className={`w-full text-left px-4 py-2 rounded-xl text-xs flex items-center gap-2 transition-colors ${activeMenu === m.menu_key ? 'text-[#003d79] font-bold' : 'text-[#5a6a7e] hover:text-white'}`}>
                       <span>{m.menu_icon || '•'}</span><span>{m.menu_label}</span>
                     </button>
                   ))}
@@ -1042,7 +1042,7 @@ if (menuKey === 'import_roster_bulk') {
             <Image src="/btm-fix.png" alt="BTM" width={18} height={18} />
             <div className="leading-[1.1]">
               <h1 className="text-[10px] font-black uppercase text-[#003D79] tracking-tight">BTM Mobile</h1>
-              <p className="text-[7px] font-bold text-slate-400">v1.6.2</p>
+              <p className="text-[7px] font-bold text-[#5a6a7e]">V1.7.0</p>
             </div>
           </div>
 
@@ -1093,7 +1093,7 @@ if (menuKey === 'import_roster_bulk') {
             key={tab.key}
             onClick={() => handleTabClick(tab)}
             className={`flex flex-col items-center min-w-[55px] flex-1 py-1 transition-all duration-300 ${
-              activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'
+              activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-[#5a6a7e] opacity-60'
             }`}
           >
             <div className={`text-base mb-0.5 ${activeTab === tab.key ? '' : 'grayscale'}`}>{tab.icon}</div>
@@ -1124,7 +1124,7 @@ if (menuKey === 'import_roster_bulk') {
               <span className="text-xl">📷</span>
             </div>
             <span className={`text-[8px] tracking-tighter font-black uppercase mt-0.5 ${
-              activeTab === 'scan' ? 'text-[#003D79]' : 'text-slate-400'
+              activeTab === 'scan' ? 'text-[#003D79]' : 'text-[#5a6a7e]'
             }`}>
               Scan
             </span>
@@ -1137,7 +1137,7 @@ if (menuKey === 'import_roster_bulk') {
             key={tab.key}
             onClick={() => handleTabClick(tab)}
             className={`flex flex-col items-center min-w-[55px] flex-1 py-1 transition-all duration-300 ${
-              activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-slate-400 opacity-60'
+              activeTab === tab.key ? 'text-[#003D79] scale-110' : 'text-[#5a6a7e] opacity-60'
             }`}
           >
             <div className={`text-base mb-0.5 ${activeTab === tab.key ? '' : 'grayscale'}`}>{tab.icon}</div>
@@ -1155,7 +1155,7 @@ if (menuKey === 'import_roster_bulk') {
       {/* BOTTOM SHEET MENU */}
       {bottomSheetOpen && (
         <>
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] lg:hidden" onClick={() => setBottomSheetOpen(false)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/60 backdrop-blur-sm z-[100] lg:hidden" onClick={() => setBottomSheetOpen(false)} />
           <div className="fixed bottom-0 left-0 right-0 z-[101] lg:hidden bg-white rounded-t-[3rem] p-8 shadow-2xl animate-in slide-in-from-bottom duration-300">
             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" />
             <h3 className="font-black text-lg mb-6 px-2 text-slate-800 tracking-tight uppercase text-center">{bottomSheetTitle}</h3>
@@ -1182,7 +1182,7 @@ if (menuKey === 'import_roster_bulk') {
       {/* MODAL NOTIFICATION */}
       {isNotifOpen && (
         <>
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[999]" onClick={() => setIsNotifOpen(false)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/60 backdrop-blur-md z-[999]" onClick={() => setIsNotifOpen(false)} />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[1000] overflow-hidden">
             <div className="p-8 bg-[#003D79] text-white flex justify-between items-center">
               <div>
@@ -1195,8 +1195,8 @@ if (menuKey === 'import_roster_bulk') {
               {notifCount === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-5xl mb-4 opacity-20">🏝️</div>
-                  <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Semua Aman!</p>
-                  <p className="text-slate-300 text-[10px] font-bold mt-2">Tidak ada notifikasi menunggu</p>
+                  <p className="text-[#5a6a7e] text-xs font-black uppercase tracking-widest">Semua Aman!</p>
+                  <p className="text-[#5a6a7e] text-[10px] font-bold mt-2">Tidak ada notifikasi menunggu</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1209,7 +1209,7 @@ if (menuKey === 'import_roster_bulk') {
                           <span className="text-lg">📝</span>
                           <span className="font-black text-[#003D79] text-xs uppercase tracking-widest">Persetujuan</span>
                         </div>
-                        <span className="bg-blue-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+                        <span className="bg-[#003d79] text-white text-[10px] font-black px-2.5 py-1 rounded-full">
                           {notifData.approval.total}
                         </span>
                       </div>
@@ -1232,7 +1232,7 @@ if (menuKey === 'import_roster_bulk') {
                                 dari {item.site} • Tahap {item.tahap}
                               </p>
                             </div>
-                            <span className="text-slate-300 text-lg">›</span>
+                            <span className="text-[#5a6a7e] text-lg">›</span>
                           </button>
                         ))}
                       </div>
@@ -1261,7 +1261,7 @@ if (menuKey === 'import_roster_bulk') {
                           )}
                         </div>
                         <span className={`text-white text-[10px] font-black px-2.5 py-1 rounded-full ${
-                          notifData.expired.critical > 0 ? 'bg-rose-500' : 'bg-amber-500'
+                          notifData.expired.critical > 0 ? 'bg-rose-500' : 'bg-[#003d79] text-white'
                         }`}>
                           {notifData.expired.total}
                         </span>
@@ -1292,7 +1292,7 @@ if (menuKey === 'import_roster_bulk') {
                                 Site: {item.site}
                               </p>
                             </div>
-                            <span className="text-slate-300 text-lg">›</span>
+                            <span className="text-[#5a6a7e] text-lg">›</span>
                           </button>
                         ))}
                       </div>
@@ -1364,11 +1364,11 @@ if (menuKey === 'import_roster_bulk') {
                                 <p className="text-[10px] text-slate-500 font-medium line-clamp-2">
                                   {item.body}
                                 </p>
-                                <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-wider">
+                                <p className="text-[9px] text-[#5a6a7e] font-bold mt-1 uppercase tracking-wider">
                                   {timeAgo} • {item.category}
                                 </p>
                               </div>
-                              <span className="text-slate-300 text-lg shrink-0">›</span>
+                              <span className="text-[#5a6a7e] text-lg shrink-0">›</span>
                             </button>
                           )
                         })}

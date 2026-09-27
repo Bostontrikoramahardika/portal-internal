@@ -261,7 +261,7 @@ function TabVerifikasi() {
           <button key={s} onClick={() => setFilterStatus(s)}
             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all
               ${filterStatus === s
-                ? s === 'PENDING' ? 'bg-amber-500 text-white'
+                ? s === 'PENDING' ? 'bg-[#003d79] text-white text-white'
                   : s === 'VERIFIED' ? 'bg-emerald-600 text-white'
                   : 'bg-rose-600 text-white'
                 : 'bg-white text-slate-600 shadow'}`}>
@@ -274,7 +274,7 @@ function TabVerifikasi() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Memuat data...</div>
+        <div className="text-center py-12 text-[#5a6a7e]">Memuat data...</div>
       ) : data.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-4xl mb-2">📭</div>
@@ -288,7 +288,7 @@ function TabVerifikasi() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-black text-[#003D79] text-sm">{item.nama_karyawan}</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{item.nrp}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">{item.nrp}</span>
                     <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase
                       ${item.status === 'PENDING' ? 'bg-amber-100 text-amber-700'
                         : item.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-700'
@@ -302,7 +302,7 @@ function TabVerifikasi() {
                     {item.warna && ` · ${item.warna}`}
                     {` · ${item.jumlah} pcs`}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
+                  <div className="text-[10px] text-[#5a6a7e] mt-0.5">
                     Terima: {formatTgl(item.tanggal_terima)}
                     {item.keterangan && ` · "${item.keterangan}"`}
                   </div>
@@ -346,21 +346,21 @@ function TabVerifikasi() {
                 : '📋 Detail Request'}
             </h3>
             <div className="space-y-2 text-sm mb-4">
-              <div><span className="text-slate-400 text-xs">Karyawan</span>
+              <div><span className="text-[#5a6a7e] text-xs">Karyawan</span>
                 <div className="font-bold">{modalItem.nama_karyawan} ({modalItem.nrp})</div>
               </div>
-              <div><span className="text-slate-400 text-xs">APD</span>
+              <div><span className="text-[#5a6a7e] text-xs">APD</span>
                 <div className="font-bold">{modalItem.jenis_apd}
                   {modalItem.ukuran && ` · ${modalItem.ukuran}`}
                   {modalItem.warna && ` · ${modalItem.warna}`}
                   {` · ${modalItem.jumlah} pcs`}
                 </div>
               </div>
-              <div><span className="text-slate-400 text-xs">Tgl Terima</span>
+              <div><span className="text-[#5a6a7e] text-xs">Tgl Terima</span>
                 <div className="font-bold">{formatTgl(modalItem.tanggal_terima)}</div>
               </div>
               {modalItem.keterangan && (
-                <div><span className="text-slate-400 text-xs">Keterangan</span>
+                <div><span className="text-[#5a6a7e] text-xs">Keterangan</span>
                   <div className="font-bold">{modalItem.keterangan}</div>
                 </div>
               )}
@@ -453,7 +453,7 @@ function TabMonitoring() {
             <div key={s.label} className="bg-white rounded-[1.5rem] shadow-xl p-4">
               <div className="text-2xl">{s.icon}</div>
               <div className={`text-2xl font-black ${s.cls}`}>{s.val}</div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{s.label}</div>
+              <div className="text-[10px] text-[#5a6a7e] font-bold uppercase tracking-widest">{s.label}</div>
             </div>
           ))}
         </div>
@@ -462,7 +462,7 @@ function TabMonitoring() {
       {/* Filter */}
       <div className="flex gap-2">
         <div className="flex-1 relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5a6a7e]" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Cari nama / NRP..."
             className="w-full pl-9 pr-4 py-2.5 bg-white rounded-[1.2rem] text-sm shadow border-0 outline-none" />
@@ -475,7 +475,7 @@ function TabMonitoring() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Memuat data...</div>
+        <div className="text-center py-12 text-[#5a6a7e]">Memuat data...</div>
       ) : (
         <div className="space-y-2">
           {data.map(row => (
@@ -484,7 +484,7 @@ function TabMonitoring() {
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <div className="font-black text-[#003D79] text-sm">{row.name}</div>
-                  <div className="text-[10px] text-slate-400">{row.nrp} · {row.site}</div>
+                  <div className="text-[10px] text-[#5a6a7e]">{row.nrp} · {row.site}</div>
                 </div>
                 <div className="flex gap-1 flex-wrap justify-end max-w-[120px]">
                   {row.apd_status?.slice(0, 6).map((s: any, i: number) => (
@@ -497,7 +497,7 @@ function TabMonitoring() {
                 <div className="h-full bg-emerald-400 rounded-full transition-all"
                   style={{ width: `${row.pct_aman || 0}%` }} />
               </div>
-              <div className="text-[9px] text-slate-400 mt-0.5">{row.pct_aman || 0}% APD aman</div>
+              <div className="text-[9px] text-[#5a6a7e] mt-0.5">{row.pct_aman || 0}% APD aman</div>
             </button>
           ))}
         </div>
@@ -510,13 +510,13 @@ function TabMonitoring() {
             onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
             <h3 className="font-black text-[#003D79] text-lg">{drawerItem.name}</h3>
-            <p className="text-xs text-slate-400 mb-4">{drawerItem.nrp} · {drawerItem.site} · {drawerItem.departemen}</p>
+            <p className="text-xs text-[#5a6a7e] mb-4">{drawerItem.nrp} · {drawerItem.site} · {drawerItem.departemen}</p>
             <div className="space-y-2">
               {drawerItem.apd_status?.map((s: any) => (
                 <div key={s.jenis} className="flex items-center justify-between py-2 border-b border-slate-50">
                   <div>
                     <div className="text-sm font-bold">{s.icon} {s.jenis}</div>
-                    <div className="text-[10px] text-slate-400">
+                    <div className="text-[10px] text-[#5a6a7e]">
                       {s.last_terima ? `Terima: ${formatTgl(s.last_terima)}` : 'Belum pernah terima'}
                       {s.expired_at && ` · Exp: ${formatTgl(s.expired_at)}`}
                     </div>
@@ -683,7 +683,7 @@ function TabMaster() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-black text-[#003D79]">Master APD</h2>
-          <p className="text-xs text-slate-400">{data.length} jenis terdaftar</p>
+          <p className="text-xs text-[#5a6a7e]">{data.length} jenis terdaftar</p>
         </div>
         <button onClick={openAdd}
           className="flex items-center gap-1.5 bg-[#003D79] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
@@ -692,7 +692,7 @@ function TabMaster() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Memuat data...</div>
+        <div className="text-center py-12 text-[#5a6a7e]">Memuat data...</div>
       ) : (
         <div className="space-y-3">
           {data.map(item => (
@@ -713,17 +713,17 @@ function TabMaster() {
                     ⏱ Lifetime: <strong>{item.life_time_bulan} bulan</strong>
                   </div>
                   {item.ukuran_tersedia?.length > 0 && (
-                    <div className="text-[10px] text-slate-400 mt-1">
+                    <div className="text-[10px] text-[#5a6a7e] mt-1">
                       Ukuran: {item.ukuran_tersedia.join(', ')}
                     </div>
                   )}
                   {item.warna_tersedia?.length > 0 && (
-                    <div className="text-[10px] text-slate-400">
+                    <div className="text-[10px] text-[#5a6a7e]">
                       Warna: {item.warna_tersedia.join(', ')}
                     </div>
                   )}
                   {item.keterangan && (
-                    <div className="text-[10px] text-slate-400 italic mt-0.5">{item.keterangan}</div>
+                    <div className="text-[10px] text-[#5a6a7e] italic mt-0.5">{item.keterangan}</div>
                   )}
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -760,7 +760,7 @@ function TabMaster() {
               <div className="space-y-4">
                 {/* Icon picker */}
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Icon</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-2">Icon</label>
                   <div className="flex gap-2 flex-wrap">
                     {ICON_OPTIONS.map(ic => (
                       <button key={ic} onClick={() => setForm(f => ({ ...f, icon: ic }))}
@@ -777,7 +777,7 @@ function TabMaster() {
 
                 {/* Nama */}
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Nama APD *</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Nama APD *</label>
                   <input value={form.jenis_apd} onChange={e => setForm(f => ({ ...f, jenis_apd: e.target.value }))}
                     placeholder="contoh: Helm Safety"
                     className="w-full border border-slate-200 rounded-[1.2rem] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#003D79]/20" />
@@ -785,7 +785,7 @@ function TabMaster() {
 
                 {/* Lifetime */}
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">
                     Lifetime (bulan) *
                   </label>
                   <input type="number" min={1} value={form.life_time_bulan}
@@ -795,7 +795,7 @@ function TabMaster() {
 
                 {/* Ukuran */}
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">
                     Ukuran Tersedia
                   </label>
                   <div className="flex gap-2 mb-2">
@@ -823,7 +823,7 @@ function TabMaster() {
 
                 {/* Warna */}
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">
                     Warna Tersedia
                   </label>
                   <div className="flex gap-2 mb-2">
@@ -851,7 +851,7 @@ function TabMaster() {
 
                 {/* Keterangan */}
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Keterangan</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Keterangan</label>
                   <textarea value={form.keterangan} onChange={e => setForm(f => ({ ...f, keterangan: e.target.value }))}
                     placeholder="Opsional..."
                     className="w-full border border-slate-200 rounded-[1.2rem] px-4 py-3 text-sm outline-none resize-none"
@@ -1037,7 +1037,7 @@ function TabDistribusi() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-black text-[#003D79]">Distribusi APD</h2>
-          <p className="text-xs text-slate-400">Input langsung → VERIFIED</p>
+          <p className="text-xs text-[#5a6a7e]">Input langsung → VERIFIED</p>
         </div>
         <button onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 bg-[#003D79] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
@@ -1056,11 +1056,11 @@ function TabDistribusi() {
 
       {/* Riwayat */}
       {loadingRiwayat ? (
-        <div className="text-center py-8 text-slate-400">Memuat...</div>
+        <div className="text-center py-8 text-[#5a6a7e]">Memuat...</div>
       ) : riwayat.length === 0 ? (
         <div className="text-center py-10">
           <div className="text-3xl mb-2">📦</div>
-          <div className="text-slate-400 text-sm">Belum ada distribusi bulan ini</div>
+          <div className="text-[#5a6a7e] text-sm">Belum ada distribusi bulan ini</div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -1069,14 +1069,14 @@ function TabDistribusi() {
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1">
                   <div className="font-black text-[#003D79] text-sm">{item.nama_karyawan}</div>
-                  <div className="text-[10px] text-slate-400">{item.nrp}</div>
+                  <div className="text-[10px] text-[#5a6a7e]">{item.nrp}</div>
                   <div className="text-xs text-slate-600 mt-1">
                     <span className="font-bold">{item.jenis_apd}</span>
                     {item.ukuran && ` · ${item.ukuran}`}
                     {item.warna && ` · ${item.warna}`}
                     {` · ${item.jumlah} pcs`}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">{formatTgl(item.tanggal_terima)}</div>
+                  <div className="text-[10px] text-[#5a6a7e] mt-0.5">{formatTgl(item.tanggal_terima)}</div>
                 </div>
                 <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black rounded-full uppercase">
                   HR Input
@@ -1098,12 +1098,12 @@ function TabDistribusi() {
               {/* Tanggal + Keterangan */}
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Tanggal</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Tanggal</label>
                   <input type="date" value={tanggal} onChange={e => setTanggal(e.target.value)}
                     className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm outline-none" />
                 </div>
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Keterangan</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Keterangan</label>
                   <input value={keterangan} onChange={e => setKeterangan(e.target.value)}
                     placeholder="Opsional"
                     className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm outline-none" />
@@ -1119,7 +1119,7 @@ function TabDistribusi() {
                 </button>
                 <div>
                   <div className="text-xs font-bold text-slate-700">Kurangi stok otomatis</div>
-                  <div className="text-[9px] text-slate-400">
+                  <div className="text-[9px] text-[#5a6a7e]">
                     {kurangiStok ? 'Stok berkurang saat save' : 'Stok tidak berkurang'}
                   </div>
                 </div>
@@ -1129,13 +1129,13 @@ function TabDistribusi() {
               <div className="space-y-3 mb-4">
                 {rows.map((row, idx) => (
                   <div key={idx} className="bg-slate-50 rounded-[1.5rem] p-4 relative">
-                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] mb-2">
                       Baris {idx + 1}
                     </div>
 
                     {/* Karyawan search */}
                     <div className="relative mb-2">
-                      <label className="text-[9px] font-black text-slate-400 block mb-1">Karyawan *</label>
+                      <label className="text-[9px] font-black text-[#5a6a7e] block mb-1">Karyawan *</label>
                       <input
                         value={row.empSearch}
                         onChange={e => {
@@ -1152,7 +1152,7 @@ function TabDistribusi() {
                             <button key={emp.nrp} onClick={() => selectEmp(emp, idx)}
                               className="w-full px-4 py-2.5 text-left hover:bg-blue-50 transition-colors">
                               <div className="text-sm font-bold text-[#003D79]">{emp.name}</div>
-                              <div className="text-[10px] text-slate-400">{emp.nrp} · {emp.site}</div>
+                              <div className="text-[10px] text-[#5a6a7e]">{emp.nrp} · {emp.site}</div>
                             </button>
                           ))}
                         </div>
@@ -1162,7 +1162,7 @@ function TabDistribusi() {
                     <div className="grid grid-cols-2 gap-2">
                       {/* Jenis APD */}
                       <div>
-                        <label className="text-[9px] font-black text-slate-400 block mb-1">Jenis APD *</label>
+                        <label className="text-[9px] font-black text-[#5a6a7e] block mb-1">Jenis APD *</label>
                         <select value={row.jenis_apd} onChange={e => updateRow(idx, 'jenis_apd', e.target.value)}
                           className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none">
                           <option value="">-- Pilih --</option>
@@ -1171,14 +1171,14 @@ function TabDistribusi() {
                       </div>
                       {/* Jumlah */}
                       <div>
-                        <label className="text-[9px] font-black text-slate-400 block mb-1">Jumlah *</label>
+                        <label className="text-[9px] font-black text-[#5a6a7e] block mb-1">Jumlah *</label>
                         <input type="number" min={1} value={row.jumlah}
                           onChange={e => updateRow(idx, 'jumlah', e.target.value)}
                           className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none" />
                       </div>
                       {/* Ukuran */}
                       <div>
-                        <label className="text-[9px] font-black text-slate-400 block mb-1">Ukuran</label>
+                        <label className="text-[9px] font-black text-[#5a6a7e] block mb-1">Ukuran</label>
                         {getUkuranOptions(row.jenis_apd).length > 0 ? (
                           <select value={row.ukuran} onChange={e => updateRow(idx, 'ukuran', e.target.value)}
                             className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none">
@@ -1193,7 +1193,7 @@ function TabDistribusi() {
                       </div>
                       {/* Warna */}
                       <div>
-                        <label className="text-[9px] font-black text-slate-400 block mb-1">Warna</label>
+                        <label className="text-[9px] font-black text-[#5a6a7e] block mb-1">Warna</label>
                         {getWarnaOptions(row.jenis_apd).length > 0 ? (
                           <select value={row.warna} onChange={e => updateRow(idx, 'warna', e.target.value)}
                             className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none">
@@ -1334,7 +1334,7 @@ function TabStok() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-black text-[#003D79]">Stok APD</h2>
-          <p className="text-xs text-slate-400">Gudang & Mutasi</p>
+          <p className="text-xs text-[#5a6a7e]">Gudang & Mutasi</p>
         </div>
         <button onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
@@ -1354,7 +1354,7 @@ function TabStok() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Memuat data...</div>
+        <div className="text-center py-12 text-[#5a6a7e]">Memuat data...</div>
       ) : viewMode === 'summary' ? (
         /* Summary View */
         <div className="space-y-3">
@@ -1387,8 +1387,8 @@ function TabStok() {
                       <div key={i} className="flex items-center justify-between py-1.5 px-3 bg-slate-50 rounded-xl">
                         <div className="text-xs text-slate-600">
                           {r.ukuran !== '-' && <span className="font-bold mr-2">{r.ukuran}</span>}
-                          {r.warna !== '-' && <span className="text-slate-400">{r.warna}</span>}
-                          {r.ukuran === '-' && r.warna === '-' && <span className="text-slate-400">Stok umum</span>}
+                          {r.warna !== '-' && <span className="text-[#5a6a7e]">{r.warna}</span>}
+                          {r.ukuran === '-' && r.warna === '-' && <span className="text-[#5a6a7e]">Stok umum</span>}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="font-black text-sm">{r.qty}</span>
@@ -1399,7 +1399,7 @@ function TabStok() {
                       </div>
                     ))}
                     {item.rows.every(r => r.qty === 0) && (
-                      <div className="text-center text-xs text-slate-400 py-2">Stok kosong</div>
+                      <div className="text-center text-xs text-[#5a6a7e] py-2">Stok kosong</div>
                     )}
                   </div>
                 </div>
@@ -1411,7 +1411,7 @@ function TabStok() {
         /* Log View */
         <div className="space-y-2">
           {log.length === 0 ? (
-            <div className="text-center py-10 text-slate-400">Belum ada mutasi stok</div>
+            <div className="text-center py-10 text-[#5a6a7e]">Belum ada mutasi stok</div>
           ) : log.map(item => (
             <div key={item.id} className="bg-white rounded-[1.5rem] shadow-xl p-4">
               <div className="flex items-center justify-between gap-2">
@@ -1423,7 +1423,7 @@ function TabStok() {
                   </div>
                   <div>
                     <div className="font-bold text-sm text-[#003D79]">{item.jenis_apd}</div>
-                    <div className="text-[10px] text-slate-400">
+                    <div className="text-[10px] text-[#5a6a7e]">
                       {item.ukuran && `${item.ukuran} · `}
                       {item.warna && `${item.warna} · `}
                       {formatTgl(item.tanggal)}
@@ -1434,13 +1434,13 @@ function TabStok() {
                   <div className={`text-lg font-black ${item.tipe === 'masuk' ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {item.tipe === 'masuk' ? '+' : '-'}{item.qty}
                   </div>
-                  <div className="text-[9px] text-slate-400">
+                  <div className="text-[9px] text-[#5a6a7e]">
                     {item.ref_type || item.tipe}
                   </div>
                 </div>
               </div>
               {item.keterangan && (
-                <div className="text-[10px] text-slate-400 mt-2 italic">{item.keterangan}</div>
+                <div className="text-[10px] text-[#5a6a7e] mt-2 italic">{item.keterangan}</div>
               )}
             </div>
           ))}
@@ -1457,12 +1457,12 @@ function TabStok() {
 
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Tanggal</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Tanggal</label>
                   <input type="date" value={formTanggal} onChange={e => setFormTanggal(e.target.value)}
                     className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm outline-none" />
                 </div>
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Keterangan</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Keterangan</label>
                   <input value={formKet} onChange={e => setFormKet(e.target.value)}
                     placeholder="No PO, Supplier..."
                     className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm outline-none" />
@@ -1472,10 +1472,10 @@ function TabStok() {
               <div className="space-y-3 mb-4">
                 {formRows.map((row, idx) => (
                   <div key={idx} className="bg-slate-50 rounded-[1.5rem] p-4 relative">
-                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Item {idx + 1}</div>
+                    <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] mb-2">Item {idx + 1}</div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="col-span-2">
-                        <label className="text-[9px] font-black text-slate-400 block mb-1">Jenis APD *</label>
+                        <label className="text-[9px] font-black text-[#5a6a7e] block mb-1">Jenis APD *</label>
                         <select value={row.jenis_apd} onChange={e => updateFormRow(idx, 'jenis_apd', e.target.value)}
                           className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none">
                           <option value="">-- Pilih --</option>
@@ -1483,7 +1483,7 @@ function TabStok() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-[9px] font-black text-slate-400 block mb-1">Ukuran</label>
+                        <label className="text-[9px] font-black text-[#5a6a7e] block mb-1">Ukuran</label>
                         {masterList.find(m => m.jenis_apd === row.jenis_apd)?.ukuran_tersedia?.length
                           ? (
                             <select value={row.ukuran} onChange={e => updateFormRow(idx, 'ukuran', e.target.value)}
@@ -1498,7 +1498,7 @@ function TabStok() {
                           )}
                       </div>
                       <div>
-                        <label className="text-[9px] font-black text-slate-400 block mb-1">Qty *</label>
+                        <label className="text-[9px] font-black text-[#5a6a7e] block mb-1">Qty *</label>
                         <input type="number" min={1} value={row.qty} onChange={e => updateFormRow(idx, 'qty', e.target.value)}
                           className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-white outline-none" />
                       </div>
@@ -1629,7 +1629,7 @@ function TabPlan() {
       {/* Header + Filter */}
       <div>
         <h2 className="font-black text-[#003D79]">Plan Bulanan</h2>
-        <p className="text-xs text-slate-400">Auto-generate dari lifetime APD</p>
+        <p className="text-xs text-[#5a6a7e]">Auto-generate dari lifetime APD</p>
       </div>
 
       <div className="flex gap-2">
@@ -1659,19 +1659,19 @@ function TabPlan() {
             <div key={s.label} className="bg-white rounded-[1.5rem] shadow-xl p-3 text-center">
               <div className="text-lg">{s.icon}</div>
               <div className={`text-xl font-black ${s.cls}`}>{s.val}</div>
-              <div className="text-[8px] text-slate-400 font-bold uppercase tracking-widest leading-tight">{s.label}</div>
+              <div className="text-[8px] text-[#5a6a7e] font-bold uppercase tracking-widest leading-tight">{s.label}</div>
             </div>
           ))}
         </div>
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Memuat plan...</div>
+        <div className="text-center py-12 text-[#5a6a7e]">Memuat plan...</div>
       ) : data.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-4xl mb-2">🎉</div>
           <div className="text-slate-500 text-sm font-bold">Tidak ada APD yang perlu diganti</div>
-          <div className="text-xs text-slate-400 mt-1">Semua karyawan APD-nya masih aman untuk bulan ini</div>
+          <div className="text-xs text-[#5a6a7e] mt-1">Semua karyawan APD-nya masih aman untuk bulan ini</div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -1682,7 +1682,7 @@ function TabPlan() {
                 onClick={() => setExpandedNrp(expandedNrp === row.nrp ? null : row.nrp)}>
                 <div className="text-left">
                   <div className="font-black text-[#003D79] text-sm">{row.name}</div>
-                  <div className="text-[10px] text-slate-400">{row.nrp} · {row.site} · {row.departemen}</div>
+                  <div className="text-[10px] text-[#5a6a7e]">{row.nrp} · {row.site} · {row.departemen}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="bg-amber-100 text-amber-700 text-xs font-black px-2 py-1 rounded-full">
@@ -1708,7 +1708,7 @@ function TabPlan() {
                                 {badge.label}
                               </span>
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5">
+                            <div className="text-[10px] text-[#5a6a7e] mt-0.5">
                               Qty: {item.qty}
                               {item.last_terima && ` · Terakhir: ${formatTgl(item.last_terima)}`}
                               {item.expired_at && ` · Exp: ${formatTgl(item.expired_at)}`}
@@ -1748,14 +1748,14 @@ function TabPlan() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
           <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl">
             <h3 className="font-black text-[#003D79] text-lg mb-1">⚙️ Override Plan</h3>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs text-[#5a6a7e] mb-4">
               {overrideModal.name} · {overrideModal.jenis_apd}
             </p>
 
             <div className="space-y-4">
               {/* Action */}
               <div>
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Aksi</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-2">Aksi</label>
                 <div className="flex gap-2">
                   {(['REMOVE', 'ADD', 'EDIT_QTY'] as const).map(a => (
                     <button key={a} onClick={() => setOverrideAction(a)}
@@ -1763,7 +1763,7 @@ function TabPlan() {
                         ${overrideAction === a
                           ? a === 'REMOVE' ? 'bg-rose-600 text-white'
                             : a === 'ADD' ? 'bg-emerald-600 text-white'
-                            : 'bg-amber-500 text-white'
+                            : 'bg-[#003d79] text-white text-white'
                           : 'bg-slate-100 text-slate-600'}`}>
                       {a === 'REMOVE' ? '❌ Hapus' : a === 'ADD' ? '➕ Tambah' : '✏️ Edit Qty'}
                     </button>
@@ -1773,14 +1773,14 @@ function TabPlan() {
 
               {overrideAction !== 'REMOVE' && (
                 <div>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Qty</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Qty</label>
                   <input type="number" min={1} value={overrideQty} onChange={e => setOverrideQty(e.target.value)}
                     className="w-full border border-slate-200 rounded-[1.2rem] px-4 py-3 text-sm outline-none" />
                 </div>
               )}
 
               <div>
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Keterangan</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Keterangan</label>
                 <input value={overrideKet} onChange={e => setOverrideKet(e.target.value)}
                   placeholder="Alasan override..."
                   className="w-full border border-slate-200 rounded-[1.2rem] px-4 py-3 text-sm outline-none" />
@@ -1801,6 +1801,12 @@ function TabPlan() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

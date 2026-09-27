@@ -443,7 +443,7 @@ export default function ImportRosterPage() {
         {step === 'upload' && (
           <div className="bg-white rounded-2xl shadow-xl p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">📥 Download Template</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#5a6a7e]">📥 Download Template</p>
               <button onClick={() => setShowCatModal(true)}
                 className="text-[10px] font-black text-blue-600 hover:underline">
                 ⚙️ Kelola Kategori ({categories.filter(c => c.active).length})
@@ -452,12 +452,12 @@ export default function ImportRosterPage() {
 
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">Bulan</label>
+                <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">Bulan</label>
                 <input type="month" value={dlBulan} onChange={e => setDlBulan(e.target.value)}
                   className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs bg-slate-50" />
               </div>
               <div>
-                <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">Site</label>
+                <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">Site</label>
                 <select value={dlSite} onChange={e => setDlSite(e.target.value)}
                   className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs bg-slate-50">
                   <option value="">Semua</option>
@@ -465,7 +465,7 @@ export default function ImportRosterPage() {
                 </select>
               </div>
               <div>
-                <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">Mode</label>
+                <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">Mode</label>
                 <select value={String(dlWithData)} onChange={e => setDlWithData(e.target.value === 'true')}
                   className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs bg-slate-50">
                   <option value="true">Auto-fill</option>
@@ -475,7 +475,7 @@ export default function ImportRosterPage() {
             </div>
 
             <button onClick={handleDownloadTemplate} disabled={dlLoading}
-              className="w-full bg-blue-600 text-white py-2.5 rounded-xl font-black text-xs disabled:opacity-50 active:scale-95 transition-all">
+              className="w-full bg-[#003d79] text-white py-2.5 rounded-xl font-black text-xs disabled:opacity-50 active:scale-95 transition-all">
               {dlLoading ? '⏳ Generating...' : '📥 DOWNLOAD TEMPLATE'}
             </button>
           </div>
@@ -484,7 +484,7 @@ export default function ImportRosterPage() {
         {/* ═══ STEP 1: UPLOAD ═══ */}
         {step === 'upload' && (
           <div className="bg-white rounded-2xl shadow-xl p-5 space-y-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">📤 Upload Roster</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#5a6a7e]">📤 Upload Roster</p>
 
             {error && (
               <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-rose-700 text-xs font-bold">
@@ -494,12 +494,12 @@ export default function ImportRosterPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">📅 Bulan</label>
+                <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">📅 Bulan</label>
                 <input type="month" value={bulan} onChange={e => setBulan(e.target.value)}
                   className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50" />
               </div>
               <div>
-                <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">🏗️ Site</label>
+                <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">🏗️ Site</label>
                 <select value={site} onChange={e => setSite(e.target.value)}
                   className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50">
                   <option value="">Semua Site</option>
@@ -509,7 +509,7 @@ export default function ImportRosterPage() {
             </div>
 
             <div>
-              <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">📎 File Excel (.xlsx)</label>
+              <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">📎 File Excel (.xlsx)</label>
               <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50 relative">
                 <input type="file" accept=".xlsx,.xls"
                   onChange={e => setFile(e.target.files?.[0] || null)}
@@ -517,13 +517,13 @@ export default function ImportRosterPage() {
                 {file ? (
                   <div>
                     <p className="text-emerald-600 font-black text-sm">✅ {file.name}</p>
-                    <p className="text-slate-400 text-[10px] mt-1">{(file.size / 1024).toFixed(1)} KB</p>
+                    <p className="text-[#5a6a7e] text-[10px] mt-1">{(file.size / 1024).toFixed(1)} KB</p>
                   </div>
                 ) : (
                   <div>
                     <p className="text-3xl mb-2">📊</p>
                     <p className="text-slate-500 text-xs font-bold">Klik untuk pilih file</p>
-                    <p className="text-slate-400 text-[9px] mt-1">Multi-sheet supported</p>
+                    <p className="text-[#5a6a7e] text-[9px] mt-1">Multi-sheet supported</p>
                   </div>
                 )}
               </div>
@@ -540,7 +540,7 @@ export default function ImportRosterPage() {
         {step === 'upload' && (
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="p-4 bg-slate-50 border-b flex items-center justify-between">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#5a6a7e]">
                 📊 Roster Tersimpan ({history.length})
               </p>
               <button onClick={loadHistory}
@@ -564,9 +564,9 @@ export default function ImportRosterPage() {
             </div>
 
             {historyLoading ? (
-              <div className="p-8 text-center text-slate-400 text-xs">⏳ Memuat...</div>
+              <div className="p-8 text-center text-[#5a6a7e] text-xs">⏳ Memuat...</div>
             ) : history.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs">
+              <div className="p-8 text-center text-[#5a6a7e] text-xs">
                 📭 Belum ada roster tersimpan
               </div>
             ) : (
@@ -587,7 +587,7 @@ export default function ImportRosterPage() {
                           {item.totalUnit > 0 && <span>🚜 {item.totalUnit} unit</span>}
                         </div>
                         {item.lastUpdate && (
-                          <p className="text-[9px] text-slate-400 mt-1">
+                          <p className="text-[9px] text-[#5a6a7e] mt-1">
                             📝 {new Date(item.lastUpdate).toLocaleString('id-ID', {
                               day: '2-digit', month: 'short', year: 'numeric',
                               hour: '2-digit', minute: '2-digit'
@@ -619,7 +619,7 @@ export default function ImportRosterPage() {
         {step === 'preview' && preview && (
           <div className="space-y-4">
             <div className="bg-white rounded-2xl shadow-xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Preview</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#5a6a7e] mb-3">Preview</p>
 
               {error && (
                 <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-rose-700 text-xs font-bold mb-3">
@@ -642,7 +642,7 @@ export default function ImportRosterPage() {
                 </div>
                 <div className="bg-amber-50 rounded-xl p-2 text-center">
                   <p className="text-lg font-black text-amber-700">{preview.totalRow}</p>
-                  <p className="text-[8px] font-black text-amber-500 uppercase">Shift</p>
+                  <p className="text-[8px] font-black text-[#003d79] uppercase">Shift</p>
                 </div>
               </div>
 
@@ -655,7 +655,7 @@ export default function ImportRosterPage() {
             {preview.sheetSummaries?.length > 0 && (
               <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="p-3 bg-slate-50 border-b">
-                  <p className="text-[10px] font-black uppercase text-slate-400">📑 Per Sheet ({preview.sheetSummaries.length})</p>
+                  <p className="text-[10px] font-black uppercase text-[#5a6a7e]">📑 Per Sheet ({preview.sheetSummaries.length})</p>
                 </div>
                 <div className="divide-y divide-slate-100">
                   {preview.sheetSummaries.map((s: any, i: number) => (
@@ -682,7 +682,7 @@ export default function ImportRosterPage() {
 
             {preview.uniqueUnits?.length > 0 && (
               <div className="bg-white rounded-2xl shadow-xl p-4">
-                <p className="text-[10px] font-black uppercase text-slate-400 mb-2">🚜 Unit ({preview.uniqueUnits.length})</p>
+                <p className="text-[10px] font-black uppercase text-[#5a6a7e] mb-2">🚜 Unit ({preview.uniqueUnits.length})</p>
                 <div className="flex flex-wrap gap-1.5">
                   {preview.uniqueUnits.map((u: string, i: number) => (
                     <span key={i} className={`px-2 py-1 rounded-lg text-[10px] font-black ${u === 'SPARE' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'}`}>{u}</span>
@@ -706,7 +706,7 @@ export default function ImportRosterPage() {
             {preview.parsedEmployees?.length > 0 && (
               <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="p-3 bg-slate-50 border-b flex items-center justify-between">
-                  <p className="text-[10px] font-black uppercase text-slate-400">✅ Karyawan ({preview.totalKaryawan})</p>
+                  <p className="text-[10px] font-black uppercase text-[#5a6a7e]">✅ Karyawan ({preview.totalKaryawan})</p>
                   {preview.totalKaryawan > 10 && (
                     <button onClick={() => setShowAllEmployees(!showAllEmployees)} className="text-[9px] font-black text-blue-600">
                       {showAllEmployees ? '▲' : '▼'}
@@ -718,7 +718,7 @@ export default function ImportRosterPage() {
                     <div key={i} className="flex items-center justify-between px-3 py-2 border-b border-slate-50 text-xs">
                       <div className="flex-1 min-w-0">
                         <p className="font-black text-slate-800 truncate">{e.nama}</p>
-                        <p className="text-[9px] text-slate-400">{e.nrp} · {e.jabatan}{e.unit && ` · 🚜 ${e.unit}`}</p>
+                        <p className="text-[9px] text-[#5a6a7e]">{e.nrp} · {e.jabatan}{e.unit && ` · 🚜 ${e.unit}`}</p>
                       </div>
                       <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[9px] font-black ml-2">
                         {e.total_shift} shift
@@ -745,7 +745,7 @@ export default function ImportRosterPage() {
                       <div className="flex items-start gap-2">
                         {e.sheet && <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[8px] font-black">{e.sheet.slice(0, 10)}</span>}
                         <div className="flex-1 min-w-0">
-                          <span className="text-slate-400">Baris {e.baris}:</span>{' '}
+                          <span className="text-[#5a6a7e]">Baris {e.baris}:</span>{' '}
                           <span className="font-bold text-slate-700">{e.nama || e.nrp}</span>
                           <p className="text-rose-600 italic mt-0.5">{e.alasan}</p>
                         </div>
@@ -873,14 +873,14 @@ export default function ImportRosterPage() {
                     <button onClick={() => { setEditCat(null); setCatForm({kode:'',nama_sheet:'',judul_header:'',tipe:'operator',filter_jabatan:'',urutan:0}) }}
                       className="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg font-black text-xs">Batal</button>
                     <button onClick={handleSaveCat} disabled={catLoading}
-                      className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-black text-xs disabled:opacity-50">
+                      className="flex-1 bg-[#003d79] text-white py-2 rounded-lg font-black text-xs disabled:opacity-50">
                       {catLoading ? '⏳' : '💾 Simpan'}
                     </button>
                   </div>
                 </div>
               ) : (
                 <button onClick={() => setCatForm({...catForm, kode: '_new'})}
-                  className="w-full bg-blue-600 text-white py-2.5 rounded-xl font-black text-xs active:scale-95">
+                  className="w-full bg-[#003d79] text-white py-2.5 rounded-xl font-black text-xs active:scale-95">
                   ➕ TAMBAH KATEGORI BARU
                 </button>
               )}
@@ -904,7 +904,7 @@ export default function ImportRosterPage() {
                         </div>
                         <p className="text-[9px] text-slate-500 mt-0.5">📝 {cat.judul_header}</p>
                         {cat.filter_jabatan?.length > 0 && (
-                          <p className="text-[9px] text-slate-400 mt-0.5 truncate">🔍 {cat.filter_jabatan.join(', ')}</p>
+                          <p className="text-[9px] text-[#5a6a7e] mt-0.5 truncate">🔍 {cat.filter_jabatan.join(', ')}</p>
                         )}
                       </div>
                       <div className="flex flex-col gap-1">
@@ -927,13 +927,19 @@ export default function ImportRosterPage() {
 
             <div className="p-3 border-t bg-slate-50">
               <button onClick={() => setShowCatModal(false)}
-                className="w-full bg-slate-800 text-white py-2 rounded-lg font-black text-xs">
+                className="w-full bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-white py-2 rounded-lg font-black text-xs">
                 ✕ Tutup
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

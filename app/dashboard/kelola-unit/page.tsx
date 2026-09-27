@@ -244,14 +244,14 @@ function KelolaUnitContent() {
         <div className="bg-white rounded-2xl shadow-xl p-4 space-y-3">
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">Site</label>
+              <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">Site</label>
               <select value={site} onChange={e => setSite(e.target.value)}
                 className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs bg-slate-50 font-bold">
                 {siteList.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">Kategori</label>
+              <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">Kategori</label>
               <select value={filterKategori} onChange={e => setFilterKategori(e.target.value)}
                 className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs bg-slate-50">
                 <option value="">Semua</option>
@@ -259,7 +259,7 @@ function KelolaUnitContent() {
               </select>
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">Status</label>
+              <label className="text-[9px] font-black uppercase text-[#5a6a7e] block mb-1">Status</label>
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
                 className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs bg-slate-50">
                 <option value="">Semua</option>
@@ -285,7 +285,7 @@ function KelolaUnitContent() {
               </div>
               <div className="bg-amber-50 rounded-xl p-2 text-center">
                 <p className="text-lg font-black text-amber-700">{stats.totalSpare}</p>
-                <p className="text-[8px] font-black text-amber-500 uppercase">Spare</p>
+                <p className="text-[8px] font-black text-[#003d79] uppercase">Spare</p>
               </div>
             </div>
           )}
@@ -298,11 +298,11 @@ function KelolaUnitContent() {
 
         {/* LIST UNIT PER KATEGORI */}
         {loading ? (
-          <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-xs">
+          <div className="bg-white rounded-2xl p-8 text-center text-[#5a6a7e] text-xs">
             ⏳ Memuat unit...
           </div>
         ) : Object.keys(grouped).length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-xs">
+          <div className="bg-white rounded-2xl p-8 text-center text-[#5a6a7e] text-xs">
             📭 Belum ada unit
           </div>
         ) : (
@@ -310,7 +310,7 @@ function KelolaUnitContent() {
             <div key={kategori} className="bg-white rounded-2xl shadow-xl overflow-hidden">
               <div className="p-3 bg-slate-50 border-b flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#5a6a7e]">
                     📦 {kategori}
                   </p>
                   <p className="text-[9px] text-slate-500 mt-0.5">
@@ -479,7 +479,13 @@ function KelolaUnitContent() {
 
 export default function KelolaUnitPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-400 text-xs">⏳ Memuat...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-[#5a6a7e] text-xs">⏳ Memuat...
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>}>
       <KelolaUnitContent />
     </Suspense>
   )

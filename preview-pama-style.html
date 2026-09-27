@@ -1,0 +1,1039 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTM Preview - PAMA Inspired Style</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif; }
+
+body {
+  background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+  min-height: 100vh;
+  padding: 24px 16px;
+  color: #1e293b;
+}
+
+.main-title {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.main-title h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0c4a6e;
+  letter-spacing: -0.5px;
+}
+.main-title p {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Layout: HP kiri, Laptop kanan */
+.showcase {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.device-label {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0369a1;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* ═══ HP FRAME ═══ */
+.phone {
+  width: 390px;
+  height: 800px;
+  background: #fff;
+  border: 10px solid #1e293b;
+  border-radius: 44px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(15,23,42,0.25);
+  position: relative;
+}
+.phone-inner { height: 100%; overflow-y: auto; scrollbar-width: none; }
+.phone-inner::-webkit-scrollbar { display: none; }
+
+/* ═══ LAPTOP FRAME ═══ */
+.laptop {
+  width: 720px;
+  background: #fff;
+  border: 12px solid #1e293b;
+  border-radius: 20px 20px 4px 4px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(15,23,42,0.25);
+  position: relative;
+  height: 500px;
+}
+.laptop-stand {
+  width: 800px;
+  height: 20px;
+  background: #1e293b;
+  border-radius: 0 0 12px 12px;
+  margin: 0 auto;
+  position: relative;
+}
+.laptop-stand::before {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 6px;
+  background: #334155;
+  border-radius: 0 0 8px 8px;
+}
+.laptop-inner { height: 100%; overflow-y: auto; scrollbar-width: none; background: #f0f9ff; }
+.laptop-inner::-webkit-scrollbar { display: none; }
+
+/* ═══════════════════════════════════════════ */
+/* PAMA-INSPIRED THEME                        */
+/* ═══════════════════════════════════════════ */
+
+/* Header */
+.p-header {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #fff;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+  box-shadow: 0 4px 20px rgba(2,132,199,0.25);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.p-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.p-logo {
+  width: 42px;
+  height: 42px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 900;
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(10px);
+}
+.p-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.p-sub {
+  font-size: 10px;
+  opacity: 0.85;
+  font-weight: 500;
+}
+.p-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.p-user-info { text-align: right; }
+.p-user-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+.p-user-nrp {
+  font-size: 9px;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+.p-user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fde68a, #f59e0b);
+  color: #78350f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  border: 2px solid rgba(255,255,255,0.4);
+}
+.p-bell {
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  position: relative;
+}
+.p-bell::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #0369a1;
+}
+
+/* Content Area */
+.p-content {
+  background: #f0f9ff;
+  min-height: calc(100% - 200px);
+  padding: 20px 16px 90px;
+}
+
+/* Greeting Card */
+.p-greeting {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  border-radius: 20px;
+  padding: 18px 20px;
+  color: #fff;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(2,132,199,0.2);
+}
+.p-greeting::before {
+  content: "";
+  position: absolute;
+  right: -30px;
+  top: -30px;
+  width: 120px;
+  height: 120px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+}
+.p-greeting::after {
+  content: "";
+  position: absolute;
+  right: 20px;
+  bottom: -40px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 50%;
+}
+.p-greet-hi { font-size: 12px; opacity: 0.9; }
+.p-greet-name { font-size: 18px; font-weight: 800; margin-top: 2px; }
+.p-greet-desc { font-size: 11px; opacity: 0.85; margin-top: 4px; }
+.p-greet-shift {
+  display: inline-block;
+  margin-top: 10px;
+  background: rgba(255,255,255,0.25);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+}
+
+/* Quick Stats */
+.p-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.p-stat-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px 12px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+  border: 1px solid #e0f2fe;
+}
+.p-stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin: 0 auto 8px;
+}
+.p-stat-icon.blue { background: #dbeafe; color: #1e40af; }
+.p-stat-icon.green { background: #d1fae5; color: #047857; }
+.p-stat-icon.amber { background: #fef3c7; color: #b45309; }
+.p-stat-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+.p-stat-lbl {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Section Title */
+.p-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+.p-section-title h3 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.p-section-title a {
+  font-size: 11px;
+  color: #0284c7;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Menu Grid (Quick Access) */
+.p-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.p-menu-item {
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px 6px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+  border: 1px solid #e0f2fe;
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+.p-menu-item:hover { transform: translateY(-2px); }
+.p-menu-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  font-size: 18px;
+}
+.p-menu-icon.b1 { background: linear-gradient(135deg, #dbeafe, #93c5fd); color: #1e40af; }
+.p-menu-icon.b2 { background: linear-gradient(135deg, #d1fae5, #86efac); color: #047857; }
+.p-menu-icon.b3 { background: linear-gradient(135deg, #fef3c7, #fcd34d); color: #b45309; }
+.p-menu-icon.b4 { background: linear-gradient(135deg, #fce7f3, #f9a8d4); color: #be185d; }
+.p-menu-icon.b5 { background: linear-gradient(135deg, #ede9fe, #c4b5fd); color: #6d28d9; }
+.p-menu-icon.b6 { background: linear-gradient(135deg, #cffafe, #67e8f9); color: #0e7490; }
+.p-menu-icon.b7 { background: linear-gradient(135deg, #ffedd5, #fdba74); color: #c2410c; }
+.p-menu-icon.b8 { background: linear-gradient(135deg, #e0e7ff, #a5b4fc); color: #3730a3; }
+.p-menu-text {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+/* Task/Notification Card */
+.p-task-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+  border: 1px solid #e0f2fe;
+  border-left: 4px solid #0284c7;
+}
+.p-task-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.p-task-body { flex: 1; min-width: 0; }
+.p-task-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.p-task-meta {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+.p-task-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.badge-pending { background: #fef3c7; color: #b45309; }
+.badge-done { background: #d1fae5; color: #047857; }
+.badge-urgent { background: #fee2e2; color: #b91c1c; }
+
+/* Bottom Nav */
+.p-bottom-nav {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: #fff;
+  padding: 8px 12px 12px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1px solid #e0f2fe;
+  border-bottom-left-radius: 34px;
+  border-bottom-right-radius: 34px;
+  box-shadow: 0 -4px 20px rgba(15,23,42,0.06);
+}
+.p-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.p-nav-item.active {
+  color: #0284c7;
+}
+.p-nav-item.center {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #fff;
+  width: 52px;
+  height: 52px;
+  border-radius: 20px;
+  margin-top: -20px;
+  box-shadow: 0 6px 16px rgba(2,132,199,0.4);
+  border: 4px solid #fff;
+  justify-content: center;
+}
+.p-nav-icon { font-size: 20px; }
+.p-nav-item.center .p-nav-icon { font-size: 24px; }
+.p-nav-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.p-nav-item.center .p-nav-label { display: none; }
+
+/* ═══════════════════════════════════════════ */
+/* LAPTOP VERSION (Desktop layout)            */
+/* ═══════════════════════════════════════════ */
+.dt-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  height: 100%;
+}
+.dt-sidebar {
+  background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+  padding: 20px 12px;
+  color: #fff;
+}
+.dt-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+.dt-sidebar-logo .p-logo { width: 36px; height: 36px; font-size: 16px; border-radius: 12px; }
+.dt-sidebar-logo-text {
+  font-size: 13px;
+  font-weight: 800;
+}
+.dt-sidebar-logo-sub {
+  font-size: 9px;
+  opacity: 0.8;
+}
+.dt-sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dt-sidebar-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dt-sidebar-item:hover { background: rgba(255,255,255,0.1); }
+.dt-sidebar-item.active {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  font-weight: 700;
+}
+.dt-sidebar-item .i { font-size: 16px; }
+
+.dt-main { padding: 20px 24px; background: #f0f9ff; overflow-y: auto; }
+.dt-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.dt-topbar h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.dt-topbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.dt-search {
+  padding: 8px 14px;
+  background: #fff;
+  border: 1px solid #e0f2fe;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #94a3b8;
+  min-width: 200px;
+}
+.dt-btn-primary {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(2,132,199,0.25);
+}
+
+.dt-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.dt-stat-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #e0f2fe;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+}
+.dt-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.dt-stat-lbl {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+.dt-stat-icon-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+.dt-stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+.dt-stat-trend {
+  font-size: 10px;
+  color: #16a34a;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.dt-cards-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.dt-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #e0f2fe;
+}
+.dt-card h4 {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+.dt-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.dt-list-item:last-child { border-bottom: none; }
+.dt-list-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #dbeafe, #93c5fd);
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.dt-list-body { flex: 1; }
+.dt-list-name { font-size: 12px; font-weight: 700; color: #0f172a; }
+.dt-list-meta { font-size: 10px; color: #64748b; }
+.dt-list-badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.info-box {
+  max-width: 720px;
+  margin: 32px auto 0;
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid #e0f2fe;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(15,23,42,0.05);
+}
+.info-box h3 {
+  color: #0284c7;
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+.info-box .features {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+.info-item {
+  padding: 12px;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border-radius: 14px;
+  border: 1px solid #bae6fd;
+}
+.info-item .ic {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.info-item .tt {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0369a1;
+}
+.info-item .dd {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+}
+</style>
+</head>
+<body>
+
+<div class="main-title">
+  <h1>🎨 BTM PORTAL — PAMA-INSPIRED STYLE</h1>
+  <p>Modern · Rounded · Elegan · Corporate Blue · Responsive HP & Laptop</p>
+</div>
+
+<div class="showcase">
+
+  <!-- ═══════════ HP VERSION ═══════════ -->
+  <div>
+    <div class="device-label">📱 MOBILE VIEW</div>
+    <div class="phone">
+      <div class="phone-inner">
+
+        <!-- Header -->
+        <div class="p-header">
+          <div class="p-brand">
+            <div class="p-logo">B</div>
+            <div>
+              <div class="p-title">BTM PORTAL</div>
+              <div class="p-sub">PT. Boston PPA · MLP</div>
+            </div>
+          </div>
+          <div class="p-user">
+            <div class="p-user-info">
+              <div class="p-user-name">Ferry A.</div>
+              <div class="p-user-nrp">0420124</div>
+            </div>
+            <div class="p-bell">🔔</div>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-content">
+
+          <!-- Greeting -->
+          <div class="p-greeting">
+            <div class="p-greet-hi">Selamat Pagi 👋</div>
+            <div class="p-greet-name">Ferry Anggriawan</div>
+            <div class="p-greet-desc">Semangat bekerja hari ini!</div>
+            <div class="p-greet-shift">🌅 SHIFT PAGI · 06:00 - 18:00</div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="p-stats">
+            <div class="p-stat-card">
+              <div class="p-stat-icon blue">⏱️</div>
+              <div class="p-stat-num">08:42</div>
+              <div class="p-stat-lbl">Clock In</div>
+            </div>
+            <div class="p-stat-card">
+              <div class="p-stat-icon green">✅</div>
+              <div class="p-stat-num">18</div>
+              <div class="p-stat-lbl">Hadir</div>
+            </div>
+            <div class="p-stat-card">
+              <div class="p-stat-icon amber">📋</div>
+              <div class="p-stat-num">3</div>
+              <div class="p-stat-lbl">Tugas</div>
+            </div>
+          </div>
+
+          <!-- Section: Menu -->
+          <div class="p-section-title">
+            <h3>Menu Utama</h3>
+            <a href="#">Lihat Semua ›</a>
+          </div>
+
+          <div class="p-menu-grid">
+            <div class="p-menu-item">
+              <div class="p-menu-icon b1">⏰</div>
+              <div class="p-menu-text">Absensi</div>
+            </div>
+            <div class="p-menu-item">
+              <div class="p-menu-icon b2">📋</div>
+              <div class="p-menu-text">Pengajuan</div>
+            </div>
+            <div class="p-menu-item">
+              <div class="p-menu-icon b3">✅</div>
+              <div class="p-menu-text">Approval</div>
+            </div>
+            <div class="p-menu-item">
+              <div class="p-menu-icon b4">👥</div>
+              <div class="p-menu-text">Tim Saya</div>
+            </div>
+            <div class="p-menu-item">
+              <div class="p-menu-icon b5">🚜</div>
+              <div class="p-menu-text">Plant</div>
+            </div>
+            <div class="p-menu-item">
+              <div class="p-menu-icon b6">📦</div>
+              <div class="p-menu-text">Logistik</div>
+            </div>
+            <div class="p-menu-item">
+              <div class="p-menu-icon b7">🎓</div>
+              <div class="p-menu-text">MCU</div>
+            </div>
+            <div class="p-menu-item">
+              <div class="p-menu-icon b8">🦺</div>
+              <div class="p-menu-text">APD Saya</div>
+            </div>
+          </div>
+
+          <!-- Notifikasi/Task -->
+          <div class="p-section-title">
+            <h3>Perlu Perhatian</h3>
+            <a href="#">Semua ›</a>
+          </div>
+
+          <div class="p-task-card">
+            <div class="p-task-icon">📥</div>
+            <div class="p-task-body">
+              <div class="p-task-title">1 Pengajuan Cuti</div>
+              <div class="p-task-meta">Yudi Eko · Menunggu approval</div>
+            </div>
+            <div class="p-task-badge badge-urgent">Baru</div>
+          </div>
+
+          <div class="p-task-card" style="border-left-color:#f59e0b;">
+            <div class="p-task-icon" style="background:linear-gradient(135deg,#fef3c7,#fcd34d);">🔧</div>
+            <div class="p-task-body">
+              <div class="p-task-title">Inspeksi P2H Unit E212</div>
+              <div class="p-task-meta">Belum diisi hari ini</div>
+            </div>
+            <div class="p-task-badge badge-pending">Pending</div>
+          </div>
+
+          <div class="p-task-card" style="border-left-color:#10b981;">
+            <div class="p-task-icon" style="background:linear-gradient(135deg,#d1fae5,#86efac);">✅</div>
+            <div class="p-task-body">
+              <div class="p-task-title">Cuti Anda Disetujui</div>
+              <div class="p-task-meta">25-27 Juli 2026 · 3 hari</div>
+            </div>
+            <div class="p-task-badge badge-done">Done</div>
+          </div>
+
+        </div>
+
+        <!-- Bottom Nav dengan center button (khas modern app) -->
+        <div class="p-bottom-nav">
+          <div class="p-nav-item active">
+            <div class="p-nav-icon">🏠</div>
+            <div class="p-nav-label">Home</div>
+          </div>
+          <div class="p-nav-item">
+            <div class="p-nav-icon">📋</div>
+            <div class="p-nav-label">Ajuan</div>
+          </div>
+          <div class="p-nav-item center">
+            <div class="p-nav-icon">📷</div>
+            <div class="p-nav-label">Scan</div>
+          </div>
+          <div class="p-nav-item">
+            <div class="p-nav-icon">✅</div>
+            <div class="p-nav-label">Approval</div>
+          </div>
+          <div class="p-nav-item">
+            <div class="p-nav-icon">👤</div>
+            <div class="p-nav-label">Profil</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ LAPTOP VERSION ═══════════ -->
+  <div>
+    <div class="device-label">💻 DESKTOP VIEW</div>
+    <div class="laptop">
+      <div class="laptop-inner">
+        <div class="dt-layout">
+
+          <!-- Sidebar -->
+          <div class="dt-sidebar">
+            <div class="dt-sidebar-logo">
+              <div class="p-logo">B</div>
+              <div>
+                <div class="dt-sidebar-logo-text">BTM PORTAL</div>
+                <div class="dt-sidebar-logo-sub">v1.7.0</div>
+              </div>
+            </div>
+            <div class="dt-sidebar-menu">
+              <div class="dt-sidebar-item active"><span class="i">🏠</span> Dashboard</div>
+              <div class="dt-sidebar-item"><span class="i">⏰</span> Absensi</div>
+              <div class="dt-sidebar-item"><span class="i">📋</span> Pengajuan</div>
+              <div class="dt-sidebar-item"><span class="i">✅</span> Approval</div>
+              <div class="dt-sidebar-item"><span class="i">👥</span> Tim Saya</div>
+              <div class="dt-sidebar-item"><span class="i">🚜</span> Plant</div>
+              <div class="dt-sidebar-item"><span class="i">📦</span> Logistik</div>
+              <div class="dt-sidebar-item"><span class="i">🎓</span> MCU</div>
+              <div class="dt-sidebar-item"><span class="i">👤</span> Profile</div>
+            </div>
+          </div>
+
+          <!-- Main Content -->
+          <div class="dt-main">
+            <div class="dt-topbar">
+              <div>
+                <h2>Selamat Pagi, Ferry! 👋</h2>
+                <div style="font-size:11px; color:#64748b; margin-top:2px;">Kamis, 30 Oktober 2025 · SHIFT PAGI</div>
+              </div>
+              <div class="dt-topbar-actions">
+                <input class="dt-search" placeholder="🔍 Cari...">
+                <button class="dt-btn-primary">+ Ajuan Baru</button>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="dt-stats">
+              <div class="dt-stat-card">
+                <div class="dt-stat-header">
+                  <div class="dt-stat-lbl">Karyawan Aktif</div>
+                  <div class="dt-stat-icon-sm" style="background:#dbeafe; color:#1e40af;">👥</div>
+                </div>
+                <div class="dt-stat-value">111</div>
+                <div class="dt-stat-trend">↑ 3 minggu ini</div>
+              </div>
+              <div class="dt-stat-card">
+                <div class="dt-stat-header">
+                  <div class="dt-stat-lbl">Hadir Hari Ini</div>
+                  <div class="dt-stat-icon-sm" style="background:#d1fae5; color:#047857;">✅</div>
+                </div>
+                <div class="dt-stat-value">98</div>
+                <div class="dt-stat-trend">88.3% attendance</div>
+              </div>
+              <div class="dt-stat-card">
+                <div class="dt-stat-header">
+                  <div class="dt-stat-lbl">Pending Approval</div>
+                  <div class="dt-stat-icon-sm" style="background:#fef3c7; color:#b45309;">⏳</div>
+                </div>
+                <div class="dt-stat-value">7</div>
+                <div class="dt-stat-trend" style="color:#dc2626;">Perlu ditinjau</div>
+              </div>
+              <div class="dt-stat-card">
+                <div class="dt-stat-header">
+                  <div class="dt-stat-lbl">Unit RFU</div>
+                  <div class="dt-stat-icon-sm" style="background:#fce7f3; color:#be185d;">🚜</div>
+                </div>
+                <div class="dt-stat-value">28<span style="font-size:14px; color:#64748b;">/30</span></div>
+                <div class="dt-stat-trend">93.3% availability</div>
+              </div>
+            </div>
+
+            <!-- 2 Column Cards -->
+            <div class="dt-cards-row">
+              <div class="dt-card">
+                <h4>📥 Pengajuan Terbaru</h4>
+                <div class="dt-list-item">
+                  <div class="dt-list-avatar">Y</div>
+                  <div class="dt-list-body">
+                    <div class="dt-list-name">Yudi Eko Purnomo</div>
+                    <div class="dt-list-meta">Cuti Reguler · 15 hari</div>
+                  </div>
+                  <div class="dt-list-badge badge-pending">Pending</div>
+                </div>
+                <div class="dt-list-item">
+                  <div class="dt-list-avatar" style="background:linear-gradient(135deg,#fef3c7,#fcd34d); color:#b45309;">A</div>
+                  <div class="dt-list-body">
+                    <div class="dt-list-name">Ahmad Ridwan</div>
+                    <div class="dt-list-meta">Lembur · 4 jam</div>
+                  </div>
+                  <div class="dt-list-badge badge-pending">Pending</div>
+                </div>
+                <div class="dt-list-item">
+                  <div class="dt-list-avatar" style="background:linear-gradient(135deg,#d1fae5,#86efac); color:#047857;">B</div>
+                  <div class="dt-list-body">
+                    <div class="dt-list-name">Budi Santoso</div>
+                    <div class="dt-list-meta">Izin sakit · 2 hari</div>
+                  </div>
+                  <div class="dt-list-badge badge-done">Approved</div>
+                </div>
+              </div>
+
+              <div class="dt-card">
+                <h4>🚜 Status Unit Plant</h4>
+                <div class="dt-list-item">
+                  <div class="dt-list-avatar">E1</div>
+                  <div class="dt-list-body">
+                    <div class="dt-list-name">E212 - Komatsu PC-210</div>
+                    <div class="dt-list-meta">Breaker · HM: 12.485</div>
+                  </div>
+                  <div class="dt-list-badge badge-done">RFU</div>
+                </div>
+                <div class="dt-list-item">
+                  <div class="dt-list-avatar">E2</div>
+                  <div class="dt-list-body">
+                    <div class="dt-list-name">E201 - Komatsu PC-200</div>
+                    <div class="dt-list-meta">Bucket · HM: 8.230</div>
+                  </div>
+                  <div class="dt-list-badge badge-done">RFU</div>
+                </div>
+                <div class="dt-list-item">
+                  <div class="dt-list-avatar" style="background:linear-gradient(135deg,#fee2e2,#fca5a5); color:#b91c1c;">E3</div>
+                  <div class="dt-list-body">
+                    <div class="dt-list-name">E208 - Komatsu PC-200</div>
+                    <div class="dt-list-meta">Repair · Backlog PR</div>
+                  </div>
+                  <div class="dt-list-badge badge-urgent">BS</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="laptop-stand"></div>
+  </div>
+
+</div>
+
+<!-- Info Box -->
+<div class="info-box">
+  <h3>✨ Karakteristik Style PAMA-Inspired</h3>
+  <p style="font-size:12px; color:#64748b;">Design system yang saya siapkan untuk BTM Portal</p>
+  <div class="features">
+    <div class="info-item">
+      <div class="ic">🌊</div>
+      <div class="tt">Corporate Blue</div>
+      <div class="dd">Warna biru laut yang menenangkan & professional</div>
+    </div>
+    <div class="info-item">
+      <div class="ic">⭕</div>
+      <div class="tt">Rounded & Oval</div>
+      <div class="dd">Border radius 16-24px, elegan & modern</div>
+    </div>
+    <div class="info-item">
+      <div class="ic">✨</div>
+      <div class="tt">Soft Gradient</div>
+      <div class="dd">Efek gradient halus, tidak berlebihan</div>
+    </div>
+    <div class="info-item">
+      <div class="ic">⚡</div>
+      <div class="tt">Lightweight</div>
+      <div class="dd">Tanpa animasi berat, load cepat di HP</div>
+    </div>
+    <div class="info-item">
+      <div class="ic">📱</div>
+      <div class="tt">Mobile First</div>
+      <div class="dd">Bottom nav dengan center button (scan)</div>
+    </div>
+    <div class="info-item">
+      <div class="ic">💻</div>
+      <div class="tt">Desktop Ready</div>
+      <div class="dd">Sidebar navigation + grid dashboard</div>
+    </div>
+    <div class="info-item">
+      <div class="ic">🎨</div>
+      <div class="tt">Colorful Icons</div>
+      <div class="dd">Tiap menu punya warna khas, mudah dikenali</div>
+    </div>
+    <div class="info-item">
+      <div class="ic">🚀</div>
+      <div class="tt">Elegant Yet Tegas</div>
+      <div class="dd">Font bold, tapi warna soft, tidak menyakitkan mata</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

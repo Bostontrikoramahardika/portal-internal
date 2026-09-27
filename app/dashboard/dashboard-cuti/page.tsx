@@ -619,7 +619,7 @@ function PengajuanTable({ data, totalRaw }: { data: PengajuanItem[]; totalRaw: n
                     <td className="px-3 py-2 text-center">
                       {p.butuh_tiket
                         ? <span className="text-indigo-600 font-black">✈️</span>
-                        : <span className="text-gray-300">—</span>}
+                        : <span className="text-[#5a6a7e]">—</span>}
                     </td>
                   </tr>
                 ))}
@@ -790,7 +790,7 @@ function ActionButtons({ t, onUpdate, disabled }: any) {
     <div className="flex flex-wrap gap-1 justify-center">
       {t.status === 'MENUNGGU_PEMESANAN' && (
         <button onClick={() => onUpdate(t.id, 'SUDAH_DIPESAN')} disabled={disabled}
-          className="px-2 py-1 bg-blue-600 text-white rounded text-[10px] font-bold hover:bg-blue-700 disabled:opacity-50">
+          className="px-2 py-1 bg-[#003d79] text-white rounded text-[10px] font-bold hover:bg-[#003d79] disabled:opacity-50">
           ✅ Pesan
         </button>
       )}
@@ -832,7 +832,13 @@ function EmptyState({ icon, msg }: { icon: string; msg: string }) {
     <div className="text-center py-10 text-gray-500">
       <div className="text-3xl mb-2">{icon}</div>
       <p className="text-sm">{msg}</p>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }
 

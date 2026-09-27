@@ -1,0 +1,648 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTM Preview - Final Navy Corporate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #003d79;
+  --navy-dark: #002a57;
+  --navy-deeper: #001f3f;
+  --navy-light: #0056b3;
+  --navy-50: #e8f0f8;
+  --navy-100: #d1e1f1;
+  --bg: #f4f7fa;
+  --card: #ffffff;
+  --text: #1a2332;
+  --text-sub: #5a6a7e;
+  --text-muted: #8896a7;
+  --border: #e2e8f0;
+  --success: #0d7a3e;
+  --success-bg: #e6f5ed;
+  --warning: #b45309;
+  --warning-bg: #fef3c7;
+  --danger: #b91c1c;
+  --danger-bg: #fee2e2;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --shadow-sm: 0 1px 3px rgba(0,61,121,0.06);
+  --shadow-md: 0 4px 16px rgba(0,61,121,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,61,121,0.12);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif;
+  background: #e8ecf1;
+  min-height: 100vh;
+  padding: 28px 16px;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.main-title { text-align: center; margin-bottom: 28px; }
+.main-title h1 { font-size: 20px; font-weight: 800; color: var(--navy); letter-spacing: -0.5px; }
+.main-title p { font-size: 12px; color: var(--text-sub); margin-top: 4px; font-weight: 500; }
+
+.showcase { display: flex; gap: 36px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+.device-label { text-align: center; font-size: 11px; font-weight: 700; color: var(--navy); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+
+/* ═══ PHONE ═══ */
+.phone {
+  width: 390px; height: 820px;
+  background: var(--card);
+  border: 10px solid #1a2332;
+  border-radius: 48px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0,30,63,0.2);
+  position: relative;
+}
+.phone-inner { height: 100%; overflow-y: auto; scrollbar-width: none; background: var(--bg); }
+.phone-inner::-webkit-scrollbar { display: none; }
+
+/* ═══ LAPTOP ═══ */
+.laptop {
+  width: 740px;
+  background: var(--card);
+  border: 12px solid #1a2332;
+  border-radius: 16px 16px 4px 4px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0,30,63,0.2);
+  height: 500px;
+}
+.laptop-stand {
+  width: 820px; height: 18px;
+  background: #1a2332;
+  border-radius: 0 0 10px 10px;
+  margin: 0 auto;
+}
+.laptop-stand::after {
+  content: ""; display: block;
+  width: 100px; height: 5px;
+  background: #2d3a4a;
+  border-radius: 0 0 6px 6px;
+  margin: 0 auto;
+}
+.laptop-inner { height: 100%; overflow-y: auto; scrollbar-width: none; background: var(--bg); }
+.laptop-inner::-webkit-scrollbar { display: none; }
+
+/* ═══ SVG ICONS ═══ */
+.ic { display: inline-flex; align-items: center; justify-content: center; }
+.ic svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ═══════════════════════════════════════ */
+/* HEADER                                 */
+/* ═══════════════════════════════════════ */
+.m-header {
+  background: var(--navy);
+  color: #fff;
+  padding: 16px 20px 20px;
+  border-bottom-left-radius: var(--radius-xl);
+  border-bottom-right-radius: var(--radius-xl);
+  position: sticky; top: 0; z-index: 20;
+}
+.m-header-top {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.m-brand { display: flex; align-items: center; gap: 12px; }
+.m-logo {
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: #fff;
+}
+.m-brand-text h2 { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+.m-brand-text span { font-size: 10px; opacity: 0.7; font-weight: 500; }
+.m-header-right { display: flex; align-items: center; gap: 12px; }
+.m-bell {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.12);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; position: relative;
+}
+.m-bell-dot {
+  position: absolute; top: 7px; right: 7px;
+  width: 7px; height: 7px;
+  background: #ef4444; border-radius: 50%;
+  border: 1.5px solid var(--navy);
+}
+.m-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c9a84c, #e8c84a);
+  color: #3d2e00;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+/* Greeting inside header */
+.m-greeting { margin-top: 16px; }
+.m-greeting small { font-size: 11px; opacity: 0.75; font-weight: 500; }
+.m-greeting h3 { font-size: 17px; font-weight: 700; margin-top: 2px; letter-spacing: -0.3px; }
+
+/* ═══════════════════════════════════════ */
+/* CONTENT                                */
+/* ═══════════════════════════════════════ */
+.m-content { padding: 16px 16px 100px; }
+
+/* Stats Row */
+.m-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+.m-stat {
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+.m-stat-ic {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 8px;
+  color: var(--navy);
+}
+.m-stat-ic.c1 { background: var(--navy-50); }
+.m-stat-ic.c2 { background: var(--success-bg); color: var(--success); }
+.m-stat-ic.c3 { background: var(--warning-bg); color: var(--warning); }
+.m-stat-num { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.m-stat-lbl { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+
+/* Section */
+.m-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 2px; }
+.m-section h3 { font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+.m-section a { font-size: 11px; color: var(--navy); font-weight: 600; text-decoration: none; }
+
+/* Menu Grid */
+.m-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 22px; }
+.m-menu {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: 16px 6px 12px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+.m-menu:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.m-menu-ic {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 8px;
+  color: var(--navy);
+}
+.m-menu-ic.v1 { background: var(--navy-50); }
+.m-menu-ic.v2 { background: #e6f5ed; color: var(--success); }
+.m-menu-ic.v3 { background: var(--warning-bg); color: var(--warning); }
+.m-menu-ic.v4 { background: #f0e6f6; color: #6d28d9; }
+.m-menu-ic.v5 { background: #e6f0f5; color: #0e7490; }
+.m-menu-ic.v6 { background: #fce8e8; color: var(--danger); }
+.m-menu-ic.v7 { background: #e8f0e6; color: #3f6212; }
+.m-menu-ic.v8 { background: #f0ece6; color: #92400e; }
+.m-menu span { font-size: 10px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
+
+/* Task Cards */
+.m-task {
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--navy);
+}
+.m-task-ic {
+  width: 42px; height: 42px;
+  border-radius: var(--radius-sm);
+  background: var(--navy-50);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--navy); flex-shrink: 0;
+}
+.m-task-body { flex: 1; min-width: 0; }
+.m-task-title { font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
+.m-task-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-weight: 500; }
+.m-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: -0.2px;
+}
+.m-badge.pending { background: var(--warning-bg); color: var(--warning); }
+.m-badge.done { background: var(--success-bg); color: var(--success); }
+.m-badge.urgent { background: var(--danger-bg); color: var(--danger); }
+
+/* Bottom Nav */
+.m-bottom {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: var(--card);
+  padding: 6px 16px 14px;
+  display: flex; justify-content: space-around; align-items: flex-end;
+  border-top: 1px solid var(--border);
+  border-bottom-left-radius: 38px;
+  border-bottom-right-radius: 38px;
+  box-shadow: 0 -4px 20px rgba(0,61,121,0.06);
+}
+.m-nav {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 4px; color: var(--text-muted); cursor: pointer;
+}
+.m-nav.active { color: var(--navy); }
+.m-nav .ic { width: 22px; height: 22px; }
+.m-nav small { font-size: 9px; font-weight: 700; letter-spacing: 0.3px; }
+.m-nav-center {
+  width: 52px; height: 52px;
+  background: var(--navy);
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  margin-top: -22px;
+  box-shadow: 0 6px 20px rgba(0,61,121,0.35);
+  border: 4px solid var(--card);
+  cursor: pointer;
+}
+.m-nav-center .ic { width: 24px; height: 24px; }
+
+/* ═══════════════════════════════════════ */
+/* DESKTOP                                */
+/* ═══════════════════════════════════════ */
+.dt { display: grid; grid-template-columns: 220px 1fr; height: 100%; }
+.dt-side {
+  background: var(--navy);
+  padding: 20px 14px;
+  color: #fff;
+}
+.dt-side-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; padding: 0 6px; }
+.dt-side-brand .m-logo { width: 34px; height: 34px; font-size: 15px; border-radius: var(--radius-sm); }
+.dt-side-brand h3 { font-size: 14px; font-weight: 800; letter-spacing: -0.3px; }
+.dt-side-brand small { font-size: 9px; opacity: 0.65; font-weight: 500; }
+.dt-menu { display: flex; flex-direction: column; gap: 2px; }
+.dt-menu-item {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.dt-menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.dt-menu-item.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 700; }
+.dt-menu-item .ic { width: 18px; height: 18px; }
+
+.dt-main { padding: 20px 24px; overflow-y: auto; }
+.dt-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.dt-top h2 { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.4px; }
+.dt-top small { font-size: 11px; color: var(--text-muted); font-weight: 500; display: block; margin-top: 2px; }
+.dt-actions { display: flex; gap: 10px; align-items: center; }
+.dt-search {
+  padding: 9px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px; color: var(--text-muted);
+  min-width: 200px;
+  font-family: inherit; font-weight: 500;
+}
+.dt-btn {
+  padding: 9px 18px;
+  background: var(--navy);
+  color: #fff; border: none;
+  border-radius: 20px;
+  font-size: 12px; font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: -0.2px;
+  box-shadow: 0 4px 12px rgba(0,61,121,0.2);
+}
+
+.dt-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+.dt-stat {
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.dt-stat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.dt-stat-lbl { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.dt-stat-ic {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+}
+.dt-stat-ic .ic { width: 16px; height: 16px; }
+.dt-stat-val { font-size: 24px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.dt-stat-trend { font-size: 10px; font-weight: 600; margin-top: 4px; }
+.trend-up { color: var(--success); }
+.trend-warn { color: var(--danger); }
+
+.dt-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.dt-card {
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.dt-card h4 { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 14px; letter-spacing: -0.3px; }
+.dt-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; }
+.dt-item:last-child { border-bottom: none; }
+.dt-item-av {
+  width: 34px; height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--navy-50);
+  color: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 12px; flex-shrink: 0;
+}
+.dt-item-body { flex: 1; }
+.dt-item-name { font-size: 12px; font-weight: 700; color: var(--text); }
+.dt-item-meta { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+.dt-item-badge { padding: 3px 8px; border-radius: 12px; font-size: 9px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="main-title">
+  <h1>BTM PORTAL — NAVY CORPORATE FINAL</h1>
+  <p>Warna #003d79 (sama dengan aplikasi) · Plus Jakarta Sans · SVG Line Icons · Rounded Elegant</p>
+</div>
+
+<div class="showcase">
+
+  <!-- ═══════════ HP ═══════════ -->
+  <div>
+    <div class="device-label">📱 Mobile</div>
+    <div class="phone">
+      <div class="phone-inner">
+
+        <div class="m-header">
+          <div class="m-header-top">
+            <div class="m-brand">
+              <div class="m-logo">B</div>
+              <div class="m-brand-text">
+                <h2>BTM Portal</h2>
+                <span>PT. Boston PPA · MLP</span>
+              </div>
+            </div>
+            <div class="m-header-right">
+              <div class="m-bell">
+                <span class="ic" style="width:18px;height:18px;"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+                <span class="m-bell-dot"></span>
+              </div>
+              <div class="m-avatar">FA</div>
+            </div>
+          </div>
+          <div class="m-greeting">
+            <small>Selamat Pagi</small>
+            <h3>Ferry Anggriawan</h3>
+          </div>
+        </div>
+
+        <div class="m-content">
+
+          <div class="m-stats">
+            <div class="m-stat">
+              <div class="m-stat-ic c1"><span class="ic" style="width:18px;height:18px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span></div>
+              <div class="m-stat-num">08:42</div>
+              <div class="m-stat-lbl">Clock In</div>
+            </div>
+            <div class="m-stat">
+              <div class="m-stat-ic c2"><span class="ic" style="width:18px;height:18px;"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span></div>
+              <div class="m-stat-num">18</div>
+              <div class="m-stat-lbl">Hadir</div>
+            </div>
+            <div class="m-stat">
+              <div class="m-stat-ic c3"><span class="ic" style="width:18px;height:18px;"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span></div>
+              <div class="m-stat-num">3</div>
+              <div class="m-stat-lbl">Tugas</div>
+            </div>
+          </div>
+
+          <div class="m-section"><h3>Menu Utama</h3><a href="#">Lihat Semua</a></div>
+
+          <div class="m-grid">
+            <div class="m-menu">
+              <div class="m-menu-ic v1"><span class="ic" style="width:22px;height:22px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span></div>
+              <span>Absensi</span>
+            </div>
+            <div class="m-menu">
+              <div class="m-menu-ic v2"><span class="ic" style="width:22px;height:22px;"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span></div>
+              <span>Pengajuan</span>
+            </div>
+            <div class="m-menu">
+              <div class="m-menu-ic v3"><span class="ic" style="width:22px;height:22px;"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span></div>
+              <span>Approval</span>
+            </div>
+            <div class="m-menu">
+              <div class="m-menu-ic v4"><span class="ic" style="width:22px;height:22px;"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span></div>
+              <span>Tim Saya</span>
+            </div>
+            <div class="m-menu">
+              <div class="m-menu-ic v5"><span class="ic" style="width:22px;height:22px;"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span></div>
+              <span>Plant</span>
+            </div>
+            <div class="m-menu">
+              <div class="m-menu-ic v6"><span class="ic" style="width:22px;height:22px;"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span></div>
+              <span>Logistik</span>
+            </div>
+            <div class="m-menu">
+              <div class="m-menu-ic v7"><span class="ic" style="width:22px;height:22px;"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span></div>
+              <span>MCU</span>
+            </div>
+            <div class="m-menu">
+              <div class="m-menu-ic v8"><span class="ic" style="width:22px;height:22px;"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span></div>
+              <span>APD</span>
+            </div>
+          </div>
+
+          <div class="m-section"><h3>Perlu Perhatian</h3><a href="#">Semua</a></div>
+
+          <div class="m-task">
+            <div class="m-task-ic"><span class="ic" style="width:20px;height:20px;"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span></div>
+            <div class="m-task-body">
+              <div class="m-task-title">1 Pengajuan Cuti</div>
+              <div class="m-task-meta">Yudi Eko · Menunggu approval</div>
+            </div>
+            <span class="m-badge urgent">Baru</span>
+          </div>
+
+          <div class="m-task" style="border-left-color: var(--warning);">
+            <div class="m-task-ic" style="background: var(--warning-bg); color: var(--warning);"><span class="ic" style="width:20px;height:20px;"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span></div>
+            <div class="m-task-body">
+              <div class="m-task-title">Inspeksi P2H Unit E212</div>
+              <div class="m-task-meta">Belum diisi hari ini</div>
+            </div>
+            <span class="m-badge pending">Pending</span>
+          </div>
+
+          <div class="m-task" style="border-left-color: var(--success);">
+            <div class="m-task-ic" style="background: var(--success-bg); color: var(--success);"><span class="ic" style="width:20px;height:20px;"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span></div>
+            <div class="m-task-body">
+              <div class="m-task-title">Cuti Anda Disetujui</div>
+              <div class="m-task-meta">25-27 Juli 2026 · 3 hari</div>
+            </div>
+            <span class="m-badge done">Done</span>
+          </div>
+
+        </div>
+
+        <div class="m-bottom">
+          <div class="m-nav active">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+            <small>Home</small>
+          </div>
+          <div class="m-nav">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+            <small>Ajuan</small>
+          </div>
+          <div class="m-nav-center">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+          </div>
+          <div class="m-nav">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+            <small>Approval</small>
+          </div>
+          <div class="m-nav">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <small>Profil</small>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ LAPTOP ═══════════ -->
+  <div>
+    <div class="device-label">💻 Desktop</div>
+    <div class="laptop">
+      <div class="laptop-inner">
+        <div class="dt">
+          <div class="dt-side">
+            <div class="dt-side-brand">
+              <div class="m-logo">B</div>
+              <div><h3>BTM Portal</h3><small>v1.7.0</small></div>
+            </div>
+            <div class="dt-menu">
+              <div class="dt-menu-item active"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Dashboard</div>
+              <div class="dt-menu-item"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Absensi</div>
+              <div class="dt-menu-item"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span> Pengajuan</div>
+              <div class="dt-menu-item"><span class="ic"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span> Approval</div>
+              <div class="dt-menu-item"><span class="ic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span> Tim Saya</div>
+              <div class="dt-menu-item"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span> Plant</div>
+              <div class="dt-menu-item"><span class="ic"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg></span> Logistik</div>
+              <div class="dt-menu-item"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Profile</div>
+            </div>
+          </div>
+
+          <div class="dt-main">
+            <div class="dt-top">
+              <div>
+                <h2>Selamat Pagi, Ferry</h2>
+                <small>Kamis, 30 Oktober 2025 · Shift Pagi</small>
+              </div>
+              <div class="dt-actions">
+                <input class="dt-search" placeholder="Cari menu, data...">
+                <button class="dt-btn">+ Ajuan Baru</button>
+              </div>
+            </div>
+
+            <div class="dt-stats">
+              <div class="dt-stat">
+                <div class="dt-stat-top">
+                  <div class="dt-stat-lbl">Karyawan Aktif</div>
+                  <div class="dt-stat-ic" style="background:var(--navy-50); color:var(--navy);"><span class="ic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span></div>
+                </div>
+                <div class="dt-stat-val">111</div>
+                <div class="dt-stat-trend trend-up">+3 minggu ini</div>
+              </div>
+              <div class="dt-stat">
+                <div class="dt-stat-top">
+                  <div class="dt-stat-lbl">Hadir Hari Ini</div>
+                  <div class="dt-stat-ic" style="background:var(--success-bg); color:var(--success);"><span class="ic"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span></div>
+                </div>
+                <div class="dt-stat-val">98</div>
+                <div class="dt-stat-trend trend-up">88.3% attendance</div>
+              </div>
+              <div class="dt-stat">
+                <div class="dt-stat-top">
+                  <div class="dt-stat-lbl">Pending Approval</div>
+                  <div class="dt-stat-ic" style="background:var(--warning-bg); color:var(--warning);"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span></div>
+                </div>
+                <div class="dt-stat-val">7</div>
+                <div class="dt-stat-trend trend-warn">Perlu ditinjau</div>
+              </div>
+              <div class="dt-stat">
+                <div class="dt-stat-top">
+                  <div class="dt-stat-lbl">Unit RFU</div>
+                  <div class="dt-stat-ic" style="background:#fce8e8; color:var(--danger);"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span></div>
+                </div>
+                <div class="dt-stat-val">28<span style="font-size:14px; color:var(--text-muted);">/30</span></div>
+                <div class="dt-stat-trend trend-up">93.3% ready</div>
+              </div>
+            </div>
+
+            <div class="dt-row">
+              <div class="dt-card">
+                <h4>Pengajuan Terbaru</h4>
+                <div class="dt-item">
+                  <div class="dt-item-av">YE</div>
+                  <div class="dt-item-body"><div class="dt-item-name">Yudi Eko Purnomo</div><div class="dt-item-meta">Cuti Reguler · 15 hari</div></div>
+                  <span class="dt-item-badge m-badge pending">Pending</span>
+                </div>
+                <div class="dt-item">
+                  <div class="dt-item-av" style="background:var(--warning-bg); color:var(--warning);">AR</div>
+                  <div class="dt-item-body"><div class="dt-item-name">Ahmad Ridwan</div><div class="dt-item-meta">Lembur · 4 jam</div></div>
+                  <span class="dt-item-badge m-badge pending">Pending</span>
+                </div>
+                <div class="dt-item">
+                  <div class="dt-item-av" style="background:var(--success-bg); color:var(--success);">BS</div>
+                  <div class="dt-item-body"><div class="dt-item-name">Budi Santoso</div><div class="dt-item-meta">Izin sakit · 2 hari</div></div>
+                  <span class="dt-item-badge m-badge done">Approved</span>
+                </div>
+              </div>
+              <div class="dt-card">
+                <h4>Status Unit Plant</h4>
+                <div class="dt-item">
+                  <div class="dt-item-av">E1</div>
+                  <div class="dt-item-body"><div class="dt-item-name">E212 · Komatsu PC-210</div><div class="dt-item-meta">Breaker · HM 12.485</div></div>
+                  <span class="dt-item-badge m-badge done">RFU</span>
+                </div>
+                <div class="dt-item">
+                  <div class="dt-item-av">E2</div>
+                  <div class="dt-item-body"><div class="dt-item-name">E201 · Komatsu PC-200</div><div class="dt-item-meta">Bucket · HM 8.230</div></div>
+                  <span class="dt-item-badge m-badge done">RFU</span>
+                </div>
+                <div class="dt-item">
+                  <div class="dt-item-av" style="background:var(--danger-bg); color:var(--danger);">E3</div>
+                  <div class="dt-item-body"><div class="dt-item-name">E208 · Komatsu PC-200</div><div class="dt-item-meta">Repair · Backlog PR</div></div>
+                  <span class="dt-item-badge m-badge urgent">BS</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="laptop-stand"></div>
+  </div>
+
+</div>
+
+</body>
+</html>

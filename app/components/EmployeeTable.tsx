@@ -26,7 +26,7 @@ function StatusBadge({ value }: any) {
     Nonaktif: 'bg-slate-100 text-slate-500 border-slate-200'
   }
   return (
-    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${m[value] || 'bg-slate-50 text-slate-400 border-slate-100'}`}>
+    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${m[value] || 'bg-slate-50 text-[#5a6a7e] border-slate-100'}`}>
       {value}
     </span>
   )
@@ -61,12 +61,12 @@ function formatColumnName(col: string) {
 // ═══════════════════════════════════════════════════════════════
 function renderCell(col: string, val: any) {
   if (val === null || val === undefined) {
-    return <span className="text-slate-200 italic font-bold text-[10px]">EMPTY</span>
+    return <span className="text-[#1a2332] italic font-bold text-[10px]">EMPTY</span>
   }
   if (typeof val === 'boolean') {
     return val 
       ? <span className="text-emerald-500 font-black">YES</span>
-      : <span className="text-slate-300 font-black">NO</span>
+      : <span className="text-[#5a6a7e] font-black">NO</span>
   }
   if (col.includes('status')) return <StatusBadge value={String(val)} />
   if (col === 'persen') return <span className="font-black text-slate-900">{val}%</span>
@@ -335,7 +335,7 @@ function TableView({ data, onReload }: any) {
                     value={columnFilters[c] || ''}
                     onChange={e => handleColumnFilter(c, e.target.value)}
                     onClick={e => e.stopPropagation()}
-                    className="w-full px-1.5 py-0.5 rounded text-[10px] font-medium bg-white border border-blue-200 focus:outline-none focus:ring-1 focus:ring-[#003D79] focus:border-[#003D79] text-slate-700 placeholder:text-slate-300"
+                    className="w-full px-1.5 py-0.5 rounded text-[10px] font-medium bg-white border border-blue-200 focus:outline-none focus:ring-1 focus:ring-[#003D79] focus:border-[#003D79] text-slate-700 placeholder:text-[#5a6a7e]"
                   />
                 </th>
               ))}
@@ -345,7 +345,7 @@ function TableView({ data, onReload }: any) {
           <tbody>
             {dataRows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="px-4 py-6 lg:py-8 text-center text-slate-300 font-black uppercase tracking-widest text-[11px] italic">
+                <td colSpan={columns.length + 1} className="px-4 py-6 lg:py-8 text-center text-[#5a6a7e] font-black uppercase tracking-widest text-[11px] italic">
                   Tidak ada data
                 </td>
               </tr>
@@ -380,7 +380,7 @@ function TableView({ data, onReload }: any) {
                         )}
                         <button
                           onClick={() => setFormModal({ mode: 'edit', row: r })}
-                          className="bg-amber-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-amber-600 shadow-sm"
+                          className="bg-[#003d79] text-white text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-[#002a57] text-white shadow-sm"
                           title="Edit"
                         >
                           ✏️
@@ -405,7 +405,7 @@ function TableView({ data, onReload }: any) {
       </div>
       {dataRows.length > 0 && (
         <div className="px-3 py-1.5 lg:px-4 lg:py-2 border-t border-slate-100 bg-slate-50">
-          <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
+          <p className="text-[9px] lg:text-[10px] font-bold text-[#5a6a7e] text-center uppercase tracking-wider">
             {dataRows.length} Data
           </p>
         </div>
@@ -419,7 +419,7 @@ function TableView({ data, onReload }: any) {
       <div className="bg-white rounded-xl lg:rounded-2xl p-2.5 lg:p-4 border border-slate-100 shadow-sm">
         <div className="flex flex-col lg:flex-row gap-1.5 lg:gap-2">
           <div className="relative flex-1">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6a7e] text-xs">🔍</span>
             <input
               type="text"
               placeholder="Cari data..."
@@ -469,7 +469,7 @@ function TableView({ data, onReload }: any) {
         </div>
 
         <div className="flex items-center justify-between mt-1.5">
-          <p className="text-[9px] lg:text-[10px] font-bold text-slate-400">
+          <p className="text-[9px] lg:text-[10px] font-bold text-[#5a6a7e]">
             Menampilkan <span className="text-[#003D79] font-black">{displayRows.length}</span> dari {rows.length} data
           </p>
           {sortConfig && (
@@ -571,23 +571,23 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   }
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[99] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-[#f4f7fa]/60 backdrop-blur-md z-[99] flex items-center justify-center p-4">
       <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border-4 border-white">
         <div className="p-8 border-b bg-slate-50 flex justify-between items-center">
           <div>
             <h3 className="font-black text-2xl text-slate-900 tracking-tight">
               {mode === 'create' ? '➕ Input Data Baru' : '✏️ Perbarui Data'}
             </h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Tabel: {table}</p>
+            <p className="text-[10px] text-[#5a6a7e] font-bold uppercase tracking-widest mt-1">Tabel: {table}</p>
           </div>
-          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white border-2 border-slate-100 text-2xl text-slate-400 hover:text-rose-500 hover:border-rose-100 transition-all">
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white border-2 border-slate-100 text-2xl text-[#5a6a7e] hover:text-rose-500 hover:border-rose-100 transition-all">
             &times;
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-8 space-y-5 overflow-y-auto flex-1">
           {fields.map(f => (
             <div key={f.key}>
-              <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+              <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
                 {f.label}{f.required && <span className="text-rose-500 ml-1">*</span>}
               </label>
               {f.type === 'select' ? (
@@ -631,7 +631,7 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-4 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+              className="flex-1 py-4 bg-[#003d79] text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-[#003d79] active:scale-95 transition-all disabled:opacity-50"
             >
               {saving ? 'PROSES...' : '💾 SIMPAN DATA'}
             </button>
@@ -701,7 +701,7 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
   }
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[99] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-[#f4f7fa]/60 backdrop-blur-md z-[99] flex items-center justify-center p-4">
       <div className="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl border-4 border-white">
         <div className={`p-6 ${isResign ? 'bg-orange-500' : 'bg-emerald-500'} text-white`}>
           <div className="flex items-center gap-3">
@@ -719,19 +719,19 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
           <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100">
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase">Jabatan</p>
+                <p className="text-[9px] font-black text-[#5a6a7e] uppercase">Jabatan</p>
                 <p className="font-bold text-slate-800">{row.jabatan || '-'}</p>
               </div>
               <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase">Site</p>
+                <p className="text-[9px] font-black text-[#5a6a7e] uppercase">Site</p>
                 <p className="font-bold text-slate-800">{row.site || '-'}</p>
               </div>
               <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase">Tgl Masuk</p>
+                <p className="text-[9px] font-black text-[#5a6a7e] uppercase">Tgl Masuk</p>
                 <p className="font-bold text-slate-800">{row.tanggal_masuk || '-'}</p>
               </div>
               <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase">Masa Kerja</p>
+                <p className="text-[9px] font-black text-[#5a6a7e] uppercase">Masa Kerja</p>
                 <p className="font-bold text-blue-600">{row._masa_kerja || '-'}</p>
               </div>
             </div>
@@ -740,7 +740,7 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
           {isResign ? (
             <>
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+                <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
                   Tanggal Resign <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -753,7 +753,7 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
               </div>
 
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+                <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
                   Alasan Resign <span className="text-rose-500">*</span>
                 </label>
                 <select

@@ -102,7 +102,7 @@ export default function KaryawanMcuTimelinePage({ params }: { params: Promise<{ 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center">
+      <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa] flex items-center justify-center">
       <PageHeader title="[nrp]" backUrl="/dashboard/monitoring-mcu" />
 
         <Loader2 className="w-8 h-8 animate-spin text-[#003D79]" />
@@ -112,7 +112,7 @@ export default function KaryawanMcuTimelinePage({ params }: { params: Promise<{ 
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center p-4">
+      <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa] flex items-center justify-center p-4">
         <div className="bg-white rounded-[2rem] shadow-xl p-8 text-center max-w-md">
           <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-3" />
           <p className="font-bold text-slate-800">{error || 'Data tidak ditemukan'}</p>
@@ -127,7 +127,7 @@ export default function KaryawanMcuTimelinePage({ params }: { params: Promise<{ 
   const { employee, stats, timeline, findings_summary } = data
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa]" style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+    <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa]" style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
         {/* Header */}
@@ -217,7 +217,7 @@ export default function KaryawanMcuTimelinePage({ params }: { params: Promise<{ 
           </h2>
 
           {timeline.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">
+            <div className="text-center py-12 text-[#5a6a7e]">
               <HeartPulse className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>Belum ada MCU tercatat</p>
             </div>
@@ -233,10 +233,10 @@ export default function KaryawanMcuTimelinePage({ params }: { params: Promise<{ 
                     <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-black uppercase text-slate-400 tracking-widest">
+                          <span className="text-xs font-black uppercase text-[#5a6a7e] tracking-widest">
                             MCU #{mcu.mcu_number}
                           </span>
-                          <span className="text-xs text-slate-400">•</span>
+                          <span className="text-xs text-[#5a6a7e]">•</span>
                           <span className="text-xs font-bold text-slate-600">{mcu.jenis_mcu}</span>
                         </div>
                         <div className="text-lg font-black text-slate-800">{formatDate(mcu.tanggal_mcu)}</div>
@@ -329,6 +329,12 @@ export default function KaryawanMcuTimelinePage({ params }: { params: Promise<{ 
           )}
         </div>
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

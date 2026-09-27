@@ -270,7 +270,7 @@ export default function ApdSayaPage() {
                     🟡 PENDING
                   </div>
                 </div>
-                <div className="text-[10px] text-slate-400 font-medium mb-3">
+                <div className="text-[10px] text-[#5a6a7e] font-medium mb-3">
                   Diajukan: {formatDate(p.tanggal_terima)}
                 </div>
                 <div className="flex gap-2">
@@ -332,7 +332,7 @@ export default function ApdSayaPage() {
 
       {/* LIST APD VERIFIED */}
       <div className="px-4 mt-4">
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 px-2">
+        <div className="text-[10px] font-black uppercase tracking-widest text-[#5a6a7e] mb-3 px-2">
           📋 Perlengkapan Anda ({totalJenis} Jenis)
         </div>
 
@@ -367,19 +367,19 @@ export default function ApdSayaPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-[11px]">
                         <div>
-                          <div className="text-slate-400 mb-0.5">Tanggal</div>
+                          <div className="text-[#5a6a7e] mb-0.5">Tanggal</div>
                           <div className="font-black text-slate-900">{formatDate(item.latest.tanggal_terima)}</div>
                         </div>
                         <div>
-                          <div className="text-slate-400 mb-0.5">Ukuran</div>
+                          <div className="text-[#5a6a7e] mb-0.5">Ukuran</div>
                           <div className="font-black text-slate-900">{item.latest.ukuran || '-'}</div>
                         </div>
                         <div>
-                          <div className="text-slate-400 mb-0.5">Jumlah</div>
+                          <div className="text-[#5a6a7e] mb-0.5">Jumlah</div>
                           <div className="font-black text-slate-900">{item.latest.jumlah || '-'} pcs</div>
                         </div>
                         <div>
-                          <div className="text-slate-400 mb-0.5">Warna</div>
+                          <div className="text-[#5a6a7e] mb-0.5">Warna</div>
                           <div className="font-black text-slate-900">{item.latest.warna || '-'}</div>
                         </div>
                       </div>
@@ -405,9 +405,9 @@ export default function ApdSayaPage() {
                               <div className="text-[10px] text-slate-500 font-medium">{formatDate(h.tanggal_terima)}</div>
                             </div>
                             <div className="grid grid-cols-3 gap-2 mt-2">
-                              <div className="text-[10px]"><span className="text-slate-400">Ukuran:</span> <span className="font-black text-slate-700">{h.ukuran || '-'}</span></div>
-                              <div className="text-[10px]"><span className="text-slate-400">Jumlah:</span> <span className="font-black text-slate-700">{h.jumlah || '-'}</span></div>
-                              <div className="text-[10px]"><span className="text-slate-400">Warna:</span> <span className="font-black text-slate-700">{h.warna || '-'}</span></div>
+                              <div className="text-[10px]"><span className="text-[#5a6a7e]">Ukuran:</span> <span className="font-black text-slate-700">{h.ukuran || '-'}</span></div>
+                              <div className="text-[10px]"><span className="text-[#5a6a7e]">Jumlah:</span> <span className="font-black text-slate-700">{h.jumlah || '-'}</span></div>
+                              <div className="text-[10px]"><span className="text-[#5a6a7e]">Warna:</span> <span className="font-black text-slate-700">{h.warna || '-'}</span></div>
                             </div>
                           </div>
                         ))}
@@ -580,6 +580,12 @@ export default function ApdSayaPage() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

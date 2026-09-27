@@ -118,10 +118,16 @@ function ComingSoon({ label }: { label: string }) {
     <div className="text-center py-16 px-6">
       <div className="text-6xl mb-4">🚧</div>
       <div className="text-slate-600 text-lg font-black uppercase tracking-wide">{label}</div>
-      <div className="text-slate-400 text-sm mt-2">Fitur ini sedang dalam pengembangan</div>
+      <div className="text-[#5a6a7e] text-sm mt-2">Fitur ini sedang dalam pengembangan</div>
       <div className="mt-6 inline-block bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-xs font-black">
         Coming Soon
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

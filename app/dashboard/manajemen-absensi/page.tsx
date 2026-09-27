@@ -32,7 +32,7 @@ interface Group { departemen: string; rows: Row[] }
 const CELL_STYLE: Record<string, { bg: string; text: string; label: string }> = {
   'DS':  { bg: 'bg-sky-100',      text: 'text-sky-800',      label: 'Day Shift' },
   'NS':  { bg: 'bg-violet-100',   text: 'text-violet-800',   label: 'Night Shift' },
-  'OFF': { bg: 'bg-slate-800',    text: 'text-white',        label: 'Off/Libur' },
+  'OFF': { bg: 'bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm',    text: 'text-white',        label: 'Off/Libur' },
   'CR':  { bg: 'bg-yellow-200',   text: 'text-yellow-900',   label: 'Cuti Roster' },
   'CT':  { bg: 'bg-orange-200',   text: 'text-orange-900',   label: 'Cuti Tahunan' },
   'SCK': { bg: 'bg-emerald-200',  text: 'text-emerald-900',  label: 'Shift Cuti Kompensasi' },
@@ -43,7 +43,7 @@ const CELL_STYLE: Record<string, { bg: string; text: string; label: string }> = 
   'I':   { bg: 'bg-pink-100',     text: 'text-pink-800',     label: 'Izin Potongan' },
   'IR':  { bg: 'bg-rose-100',     text: 'text-rose-800',     label: 'Izin Resmi' },
   'A':   { bg: 'bg-red-400',      text: 'text-white',        label: 'Alfa' },
-  '-':   { bg: 'bg-white',        text: 'text-slate-300',    label: 'Kosong' },
+  '-':   { bg: 'bg-white',        text: 'text-[#5a6a7e]',    label: 'Kosong' },
 }
 const ROSTER_OPTIONS = ['S','M','OFF','CR','CT','ID','TR','LV']
 const STATUS_OPTIONS = ['HADIR','ALPHA','IZIN','SAKIT','TIDAK CLOCK OUT','LIBUR']
@@ -204,7 +204,7 @@ export default function ManajemenAbsensiPage() {
               </span>
             )}
             {!canEdit && (
-              <span className="ml-2 bg-amber-500/30 px-2 py-0.5 rounded-full text-xs font-black">
+              <span className="ml-2 bg-[#003d79] text-white/30 px-2 py-0.5 rounded-full text-xs font-black">
                 👁️ View Only
               </span>
             )}
@@ -216,15 +216,15 @@ export default function ManajemenAbsensiPage() {
 
         {/* ── FILTER ── */}
         <div className="bg-white rounded-[2rem] shadow-xl p-5 space-y-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">🔍 Filter</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">🔍 Filter</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">📅 Bulan</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">📅 Bulan</label>
               <input type="month" value={bulan} onChange={e => setBulan(e.target.value)}
                 className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-[#003D79]/30"/>
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">🏗️ Site</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">🏗️ Site</label>
               <select value={site} onChange={e => setSite(e.target.value)}
                 className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-[#003D79]/30">
                 <option value="">Semua Site</option>
@@ -234,7 +234,7 @@ export default function ManajemenAbsensiPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">🏷️ Golongan</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">🏷️ Golongan</label>
               <select value={departemen} onChange={e => setDepartemen(e.target.value)}
                 className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-[#003D79]/30">
                 <option value="">Semua</option>
@@ -244,7 +244,7 @@ export default function ManajemenAbsensiPage() {
               </select>
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">👤 Nama</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">👤 Nama</label>
               <div className="relative">
                 <input type="text" placeholder="Cari nama..."
                   value={namaInput} onChange={e => setNamaInput(e.target.value)}
@@ -252,7 +252,7 @@ export default function ManajemenAbsensiPage() {
                   className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-[#003D79]/30 pr-8"/>
                 {namaInput && (
                   <button onClick={() => { setNamaInput(''); setNama('') }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">✕</button>
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5a6a7e] text-sm">✕</button>
                 )}
               </div>
             </div>
@@ -310,7 +310,7 @@ export default function ManajemenAbsensiPage() {
 
         {/* ── LEGENDA ── */}
         <div className="bg-white rounded-[1.5rem] shadow-xl p-4">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Legenda Kode</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] mb-2">Legenda Kode</p>
           <div className="grid grid-cols-4 gap-1.5 text-[10px]">
             {Object.entries(CELL_STYLE).filter(([k]) => k !== '-').map(([code, s]) => (
               <div key={code} className="flex items-center gap-1">
@@ -350,7 +350,7 @@ export default function ManajemenAbsensiPage() {
           <div className="bg-white rounded-[2rem] shadow-xl p-12 text-center">
             <div className="text-6xl mb-3">📭</div>
             <p className="text-slate-600 font-black">Tidak ada data</p>
-            <p className="text-slate-400 text-sm mt-1">Coba ubah filter</p>
+            <p className="text-[#5a6a7e] text-sm mt-1">Coba ubah filter</p>
           </div>
         )}
 
@@ -395,7 +395,7 @@ export default function ManajemenAbsensiPage() {
                           <td className="px-2 py-1.5 sticky left-0 bg-white z-10 text-slate-500 font-bold">{idx + 1}</td>
                           <td className="px-2 py-1.5 sticky left-[40px] bg-white z-10">
                             <div className="font-bold text-slate-800 leading-tight">{row.nama}</div>
-                            <div className="text-[9px] text-slate-400">{row.nrp}</div>
+                            <div className="text-[9px] text-[#5a6a7e]">{row.nrp}</div>
                           </td>
                           <td className="px-2 py-1.5 text-slate-600">{row.jabatan}</td>
                           {row.days.map(d => {
@@ -523,11 +523,11 @@ export default function ManajemenAbsensiPage() {
                     {/* Shift Info */}
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-slate-50 rounded-xl p-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Roster</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Roster</p>
                         <p className="text-sm font-black text-slate-800 mt-0.5">{day.roster || '-'}</p>
                       </div>
                       <div className="bg-slate-50 rounded-xl p-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Aktual</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Aktual</p>
                         <p className="text-sm font-black text-slate-800 mt-0.5">
                           {isDS ? 'Day Shift' : isNS ? 'Night Shift' : s.label}
                         </p>
@@ -562,7 +562,7 @@ export default function ManajemenAbsensiPage() {
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">📍 Lokasi Clock In</p>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">📍 Lokasi Clock In</p>
                             <p className="text-xs font-mono text-slate-700 mt-0.5">
                               {Number(day.clock_in_lat).toFixed(4)}, {Number(day.clock_in_lng).toFixed(4)}
                             </p>
@@ -588,7 +588,7 @@ export default function ManajemenAbsensiPage() {
                             setEditCell({ row, day })
                             setDetailCell(null)
                           }}
-                          className="flex-1 bg-amber-500 text-white py-2.5 rounded-xl text-xs font-black hover:bg-amber-600"
+                          className="flex-1 bg-[#003d79] text-white text-white py-2.5 rounded-xl text-xs font-black hover:bg-[#002a57] text-white"
                         >
                           ✏️ Edit
                         </button>
@@ -802,7 +802,7 @@ function EditCellModal({ row, day, onClose, onSaved }: any) {
           )}
 
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Roster</label>
+            <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Roster</label>
             <select value={rosterShift} onChange={e => setRosterShift(e.target.value)}
               className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50">
               <option value="">-- Kosong --</option>
@@ -811,7 +811,7 @@ function EditCellModal({ row, day, onClose, onSaved }: any) {
           </div>
 
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Status</label>
+            <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Status</label>
             <select value={status} onChange={e => setStatus(e.target.value)}
               className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50">
               <option value="">-- Kosong --</option>
@@ -821,19 +821,19 @@ function EditCellModal({ row, day, onClose, onSaved }: any) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Clock In</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Clock In</label>
               <input type="time" value={clockIn} onChange={e => setClockIn(e.target.value)}
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50"/>
             </div>
             <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Clock Out</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Clock Out</label>
               <input type="time" value={clockOut} onChange={e => setClockOut(e.target.value)}
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50"/>
             </div>
           </div>
 
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Alasan</label>
+            <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Alasan</label>
             <textarea value={keterangan} onChange={e => setKeterangan(e.target.value)}
               placeholder="Alasan koreksi..." rows={2}
               className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50"/>
@@ -921,7 +921,7 @@ function ResignModal({ row, onClose, onSaved }: any) {
               )}
 
               <div>
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">
                   Tanggal Resign
                 </label>
                 <input type="date" value={tanggalResign}
@@ -930,7 +930,7 @@ function ResignModal({ row, onClose, onSaved }: any) {
               </div>
 
               <div>
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">
                   Alasan (Opsional)
                 </label>
                 <textarea value={alasan} onChange={e => setAlasan(e.target.value)}
@@ -978,6 +978,12 @@ function ResignModal({ row, onClose, onSaved }: any) {
           )}
         </div>
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

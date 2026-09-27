@@ -81,7 +81,7 @@ function getExpiredConfig(status: string, days: number | null) {
       return {
         bg: 'bg-amber-50 border-amber-200',
         badge: 'bg-amber-100 text-amber-700 border-amber-300',
-        dot: 'bg-amber-500',
+        dot: 'bg-[#003d79] text-white',
         label: days !== null ? `${days}h lagi` : 'SEGERA',
         icon: <Clock className="w-3 h-3" />
       }
@@ -130,7 +130,7 @@ function getHasilConfig(hasil: string | null) {
 function McuCell({ col }: { col: McuColumn }) {
   if (!col.tanggal) {
     return (
-      <div className="text-center text-slate-300 text-[10px]">
+      <div className="text-center text-[#5a6a7e] text-[10px]">
       <PageHeader title="Monitoring Mcu" backUrl="/dashboard/monitoring-mcu" />
 —</div>
     )
@@ -173,21 +173,21 @@ function AccordionDetail({
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tanggal MCU</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Tanggal MCU</div>
               <div className="font-bold text-slate-700">{formatDate(lastMcu.tanggal)}</div>
             </div>
             <div>
-              <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Hasil</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Hasil</div>
               <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${getHasilConfig(lastMcu.hasil)}`}>
                 {lastMcu.hasil || '-'}
               </span>
             </div>
             <div>
-              <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Masa Berlaku</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Masa Berlaku</div>
               <div className="font-bold text-slate-700">{formatDate(row.masa_berlaku)}</div>
             </div>
             <div>
-              <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total MCU</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Total MCU</div>
               <div className="font-bold text-slate-700">{row.total_mcu}x</div>
             </div>
           </div>
@@ -206,9 +206,9 @@ function AccordionDetail({
         </div>
       ) : (
         <div className="bg-slate-50 rounded-2xl p-4 text-center">
-          <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <div className="text-sm font-bold text-slate-400">Belum ada data MCU</div>
-          <div className="text-xs text-slate-400">Karyawan ini belum pernah MCU</div>
+          <AlertCircle className="w-8 h-8 text-[#5a6a7e] mx-auto mb-2" />
+          <div className="text-sm font-bold text-[#5a6a7e]">Belum ada data MCU</div>
+          <div className="text-xs text-[#5a6a7e]">Karyawan ini belum pernah MCU</div>
         </div>
       )}
 
@@ -353,7 +353,7 @@ export default function MonitoringMcuPage() {
 
   // ─── Render ──────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#f4f7fa]" style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+    <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa]" style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
 
         {/* ── Header ── */}
@@ -417,7 +417,7 @@ export default function MonitoringMcuPage() {
         <div className="bg-white rounded-[1.5rem] shadow-md p-4 border border-slate-100 space-y-3">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5a6a7e]" />
             <input
               type="text"
               placeholder="Cari nama atau NRP..."
@@ -503,9 +503,9 @@ export default function MonitoringMcuPage() {
             {/* Empty State */}
             {filtered.length === 0 && (
               <div className="p-12 text-center">
-                <HeartPulse className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                <div className="text-sm font-bold text-slate-400">Tidak ada data</div>
-                <div className="text-xs text-slate-400">Coba ubah filter pencarian</div>
+                <HeartPulse className="w-12 h-12 text-[#1a2332] mx-auto mb-3" />
+                <div className="text-sm font-bold text-[#5a6a7e]">Tidak ada data</div>
+                <div className="text-xs text-[#5a6a7e]">Coba ubah filter pencarian</div>
               </div>
             )}
 
@@ -562,8 +562,8 @@ export default function MonitoringMcuPage() {
                           {cfg.label}
                         </span>
                         {isExpanded
-                          ? <ChevronUp className="w-3 h-3 text-slate-400" />
-                          : <ChevronDown className="w-3 h-3 text-slate-400" />
+                          ? <ChevronUp className="w-3 h-3 text-[#5a6a7e]" />
+                          : <ChevronDown className="w-3 h-3 text-[#5a6a7e]" />
                         }
                       </div>
                     </div>
@@ -594,8 +594,8 @@ export default function MonitoringMcuPage() {
                           {cfg.label}
                         </span>
                         {isExpanded
-                          ? <ChevronUp className="w-4 h-4 text-slate-400" />
-                          : <ChevronDown className="w-4 h-4 text-slate-400" />
+                          ? <ChevronUp className="w-4 h-4 text-[#5a6a7e]" />
+                          : <ChevronDown className="w-4 h-4 text-[#5a6a7e]" />
                         }
                       </div>
                     </div>
@@ -620,6 +620,12 @@ export default function MonitoringMcuPage() {
           </div>
         )}
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

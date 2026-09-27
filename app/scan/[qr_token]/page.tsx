@@ -47,7 +47,7 @@ export default function ScanPage() {
   // ─── LOADING ───────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#003D79] to-[#0056b3] flex items-center justify-center p-4">
+      <div className="min-h-screen pb-24 sm:pb-8  bg-gradient-to-br from-[#003D79] to-[#0056b3] flex items-center justify-center p-4">
       <PageHeader title="[qr_token]" backUrl="/dashboard" />
 
         <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
@@ -61,7 +61,7 @@ export default function ScanPage() {
   // ─── ERROR ─────────────────────────────────────────
   if (!info || !info.success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center p-4">
+      <div className="min-h-screen pb-24 sm:pb-8  bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
           <div className="text-6xl mb-4">❌</div>
           <h1 className="text-lg font-black text-red-700 mb-2">QR Tidak Valid</h1>
@@ -74,7 +74,7 @@ export default function ScanPage() {
   // ─── SUCCESS SCREEN ────────────────────────────────
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center p-4">
+      <div className="min-h-screen pb-24 sm:pb-8  bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
           <div className="text-6xl mb-4">✅</div>
           <h1 className="text-xl font-black text-green-700 mb-2">Kehadiran Tercatat!</h1>
@@ -92,7 +92,7 @@ export default function ScanPage() {
               setSuccess(null)
               setSelectedEventId('')
             }}
-            className="w-full px-4 py-3 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57]">
+            className="w-full px-4 py-3 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#003d79]">
             🔄 Scan Lagi (Peserta Lain)
           </button>
         </div>
@@ -106,7 +106,7 @@ export default function ScanPage() {
     // Tidak ada meeting hari ini
     if (!info.events?.length) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center p-4">
+        <div className="min-h-screen pb-24 sm:pb-8  bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
             <div className="text-6xl mb-4">📭</div>
             <h1 className="text-lg font-black text-amber-700 mb-2">Tidak Ada Meeting Hari Ini</h1>
@@ -114,7 +114,7 @@ export default function ScanPage() {
               Belum ada meeting yang dijadwalkan hari ini
               {info.qr_location?.site ? ` di site ${info.qr_location.site}` : ''}.
             </p>
-            <p className="text-xs text-slate-400">Hubungi admin untuk informasi lebih lanjut.</p>
+            <p className="text-xs text-[#5a6a7e]">Hubungi admin untuk informasi lebih lanjut.</p>
           </div>
         </div>
       )
@@ -157,12 +157,12 @@ export default function ScanPage() {
                         {ev.nama_event}
                       </h3>
                       {ev.deskripsi && (
-                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">{ev.deskripsi}</p>
+                        <p className="text-[11px] text-[#5a6a7e] mt-0.5 truncate">{ev.deskripsi}</p>
                       )}
                     </div>
                     {ev.already_scanned
                       ? <span className="shrink-0 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-black">✅ Hadir</span>
-                      : <span className="shrink-0 text-slate-300 text-lg">›</span>
+                      : <span className="shrink-0 text-[#5a6a7e] text-lg">›</span>
                     }
                   </div>
 
@@ -188,7 +188,7 @@ export default function ScanPage() {
             {/* Info user login */}
             {info.is_logged_in && (
               <div className="mt-4 pt-3 border-t border-slate-100">
-                <p className="text-[10px] text-slate-400 text-center">
+                <p className="text-[10px] text-[#5a6a7e] text-center">
                   Login sebagai <strong className="text-slate-600">{info.user?.nama}</strong>
                 </p>
               </div>
@@ -209,7 +209,7 @@ export default function ScanPage() {
   // Internal sudah scan (qr_event mode)
   if (info.mode === 'qr_event' && info.already_scanned) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center p-4">
+      <div className="min-h-screen pb-24 sm:pb-8  bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
           <div className="text-6xl mb-4">✅</div>
           <h1 className="text-lg font-black text-blue-700 mb-2">Anda Sudah Hadir!</h1>
@@ -462,7 +462,7 @@ function ScanForm({ event, isLoggedIn, user, lastSignature, perusahaan, qrToken,
             <button
               type="submit"
               disabled={submitting}
-              className="w-full px-4 py-3 bg-[#003D79] text-white rounded-xl text-sm font-black hover:bg-[#002a57] shadow-lg disabled:opacity-50 transition-all active:scale-[0.98]">
+              className="w-full px-4 py-3 bg-[#003D79] text-white rounded-xl text-sm font-black hover:bg-[#003d79] shadow-lg disabled:opacity-50 transition-all active:scale-[0.98]">
               {submitting ? '⏳ Menyimpan...' : '✅ KONFIRMASI HADIR'}
             </button>
           </form>
@@ -484,7 +484,13 @@ function FormInput({ label, value, onChange, type = 'text', placeholder = '', re
         placeholder={placeholder}
         required={required}
         className="w-full border-2 border-slate-100 rounded-xl px-3 py-2.5 text-sm focus:border-blue-500 outline-none" />
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }
 

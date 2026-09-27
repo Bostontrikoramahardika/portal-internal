@@ -190,7 +190,7 @@ export default function ScanQRPage() {
           <div className="bg-white rounded-3xl shadow-sm border p-8 text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#003D79] mb-4"></div>
             <p className="text-sm font-bold text-slate-600">Membuka kamera...</p>
-            <p className="text-xs text-slate-400 mt-1">Izinkan akses kamera jika diminta</p>
+            <p className="text-xs text-[#5a6a7e] mt-1">Izinkan akses kamera jika diminta</p>
           </div>
         )}
 
@@ -268,7 +268,7 @@ export default function ScanQRPage() {
             <h2 className="text-base font-black text-green-700 mb-1">QR Terdeteksi!</h2>
             <p className="text-xs text-slate-500 mb-2">Mengalihkan ke halaman absensi...</p>
             <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-[10px] font-mono text-slate-400 break-all">{detectedUrl}</p>
+              <p className="text-[10px] font-mono text-[#5a6a7e] break-all">{detectedUrl}</p>
             </div>
             <div className="mt-4 flex justify-center">
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#003D79]"></div>
@@ -284,7 +284,7 @@ export default function ScanQRPage() {
             <p className="text-xs text-slate-500 mb-2">QR Code ini bukan QR event BTM Portal.</p>
             {detectedUrl && (
               <div className="bg-slate-50 rounded-xl p-3 mb-4">
-                <p className="text-[10px] font-mono text-slate-400 break-all">{detectedUrl}</p>
+                <p className="text-[10px] font-mono text-[#5a6a7e] break-all">{detectedUrl}</p>
               </div>
             )}
             <button
@@ -308,7 +308,7 @@ export default function ScanQRPage() {
             >
               🔄 Coba Lagi
             </button>
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-[#5a6a7e]">
               Pastikan browser mendapat izin kamera di pengaturan.
             </p>
           </div>
@@ -328,6 +328,12 @@ export default function ScanQRPage() {
         )}
 
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

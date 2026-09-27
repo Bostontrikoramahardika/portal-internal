@@ -85,14 +85,14 @@ export default function ClockOutReminder() {
                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${
                   isDanger
                     ? 'bg-rose-600 text-white shadow-lg shadow-rose-200'
-                    : 'bg-amber-500 text-white shadow-lg shadow-amber-200'
+                    : 'bg-[#003d79] text-white text-white shadow-lg shadow-amber-200'
                 }`}
               >
                 Clock Out Sekarang
               </button>
               <button
                 onClick={() => setDismissed(true)}
-                className="px-3 py-2 rounded-xl text-[10px] font-bold text-slate-400 hover:bg-slate-100 transition-all"
+                className="px-3 py-2 rounded-xl text-[10px] font-bold text-[#5a6a7e] hover:bg-slate-100 transition-all"
               >
                 Nanti
               </button>
@@ -102,7 +102,7 @@ export default function ClockOutReminder() {
           {reminder.type === 'auto_clockout_notice' && (
             <button
               onClick={() => setDismissed(true)}
-              className="mt-2 px-3 py-1.5 rounded-xl text-[10px] font-bold text-slate-400 hover:bg-slate-100 transition-all"
+              className="mt-2 px-3 py-1.5 rounded-xl text-[10px] font-bold text-[#5a6a7e] hover:bg-slate-100 transition-all"
             >
               Mengerti
             </button>

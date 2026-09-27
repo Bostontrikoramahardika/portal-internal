@@ -527,7 +527,7 @@ export default function PartsCatalogPage() {
     return (
       <>
         {units.length === 0 && (
-          <div className="p-4 text-sm text-slate-400 text-center">
+          <div className="p-4 text-sm text-[#5a6a7e] text-center">
             Belum ada unit.<br />
             {isSuperAdmin && 'Klik Import untuk mulai.'}
           </div>
@@ -550,9 +550,9 @@ export default function PartsCatalogPage() {
             {expandedUnitId === u.id && selectedUnit?.id === u.id && (
               <div className="bg-slate-50 border-b">
                 {loadingAsm ? (
-                  <div className="p-3 text-xs text-slate-400">Loading...</div>
+                  <div className="p-3 text-xs text-[#5a6a7e]">Loading...</div>
                 ) : assemblies.length === 0 ? (
-                  <div className="p-3 text-xs text-slate-400">Belum ada assembly</div>
+                  <div className="p-3 text-xs text-[#5a6a7e]">Belum ada assembly</div>
                 ) : (
                   assemblies.map(a => (
                     <button
@@ -595,9 +595,9 @@ export default function PartsCatalogPage() {
           <button
             onClick={handleBackCatalog}
             type="button"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-200 border border-slate-700 text-xs font-semibold transition-all mr-2 shrink-0"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm hover:bg-[#003d79] text-white hover:text-slate-950 text-[#1a2332] border border-[#e2e8f0] text-xs font-semibold transition-all mr-2 shrink-0"
           >
-            <span className="text-amber-400 font-bold">←</span>
+            <span className="text-[#003d79] font-bold">←</span>
             <span className="hidden sm:inline">Kembali</span>
           </button>
           <input
@@ -621,7 +621,7 @@ export default function PartsCatalogPage() {
         {/* Desktop only: Orders + Import */}
         <a
           href="/part-orders"
-          className="hidden md:inline-flex px-3 py-1.5 bg-amber-500 text-white rounded-lg text-sm font-bold hover:bg-amber-600 whitespace-nowrap items-center"
+          className="hidden md:inline-flex px-3 py-1.5 bg-[#003d79] text-white text-white rounded-lg text-sm font-bold hover:bg-[#002a57] text-white whitespace-nowrap items-center"
         >
           📋 Orders
         </a>
@@ -652,7 +652,7 @@ export default function PartsCatalogPage() {
         </button>
 <a
   href="/part-orders"
-  className="flex-1 bg-amber-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
+  className="flex-1 bg-[#003d79] text-white text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
 >
   🛒 Orders
 </a>
@@ -677,7 +677,7 @@ export default function PartsCatalogPage() {
           <div className="bg-white border-b px-3 py-2 text-xs flex items-center justify-between">
             <div className="flex-1 truncate">
               <span className="text-slate-500">{selectedUnit?.unit_code}</span>
-              <span className="text-slate-400 mx-1">›</span>
+              <span className="text-[#5a6a7e] mx-1">›</span>
               <span className="font-bold text-amber-600">{selectedAssembly.assembly_name}</span>
             </div>
             <button
@@ -706,7 +706,7 @@ export default function PartsCatalogPage() {
                 alt={selectedAssembly.assembly_name}
               />
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+              <div className="h-full flex items-center justify-center text-[#5a6a7e] text-sm">
                 Tidak ada gambar
               </div>
             )}
@@ -715,7 +715,7 @@ export default function PartsCatalogPage() {
 
         {/* Kalau belum pilih assembly */}
         {!selectedAssembly && (
-          <div className="flex-1 flex items-center justify-center text-slate-400 text-sm p-4 text-center">
+          <div className="flex-1 flex items-center justify-center text-[#5a6a7e] text-sm p-4 text-center">
             Klik ☰ Browse untuk pilih assembly
           </div>
         )}
@@ -756,9 +756,9 @@ export default function PartsCatalogPage() {
             {/* Parts List Compact */}
             <div className="flex-1 bg-white pb-24">
               {loadingItems ? (
-                <div className="p-4 text-sm text-slate-400 text-center">Loading...</div>
+                <div className="p-4 text-sm text-[#5a6a7e] text-center">Loading...</div>
               ) : items.length === 0 ? (
-                <div className="p-4 text-sm text-slate-400 text-center">Tidak ada parts</div>
+                <div className="p-4 text-sm text-[#5a6a7e] text-center">Tidak ada parts</div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {items.map(it => {
@@ -812,7 +812,7 @@ export default function PartsCatalogPage() {
                             openOrderModal(it)
                           }}
                           disabled={!it.part_number}
-                          className="w-8 h-8 flex items-center justify-center bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white rounded text-sm flex-shrink-0"
+                          className="w-8 h-8 flex items-center justify-center bg-[#003d79] text-white hover:bg-[#002a57] text-white disabled:bg-slate-300 text-white rounded text-sm flex-shrink-0"
                           title="Order langsung 1 part"
                         >
                           🛒
@@ -873,7 +873,7 @@ export default function PartsCatalogPage() {
           </div>
           <div className="flex-1 relative bg-slate-100 min-h-[300px]">
             {!selectedAssembly ? (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">
+              <div className="absolute inset-0 flex items-center justify-center text-[#5a6a7e] text-sm">
                 Pilih assembly di panel kiri
               </div>
             ) : getImageSrc(selectedAssembly) ? (
@@ -882,7 +882,7 @@ export default function PartsCatalogPage() {
                 alt={selectedAssembly.assembly_name}
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">
+              <div className="absolute inset-0 flex items-center justify-center text-[#5a6a7e] text-sm">
                 Tidak ada gambar
               </div>
             )}
@@ -896,11 +896,11 @@ export default function PartsCatalogPage() {
           </div>
           <div className="flex-1 overflow-auto">
             {loadingItems ? (
-              <div className="p-4 text-sm text-slate-400">Loading...</div>
+              <div className="p-4 text-sm text-[#5a6a7e]">Loading...</div>
             ) : !selectedAssembly ? (
-              <div className="p-4 text-sm text-slate-400">Pilih assembly</div>
+              <div className="p-4 text-sm text-[#5a6a7e]">Pilih assembly</div>
             ) : items.length === 0 ? (
-              <div className="p-4 text-sm text-slate-400">Tidak ada parts</div>
+              <div className="p-4 text-sm text-[#5a6a7e]">Tidak ada parts</div>
             ) : (
               <table className="w-full text-xs">
                 <thead className="bg-slate-100 sticky top-0">
@@ -923,7 +923,7 @@ export default function PartsCatalogPage() {
                         <button
                           onClick={() => openOrderModal(it)}
                           disabled={!it.part_number}
-                          className="px-2 py-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white rounded text-[10px] font-bold"
+                          className="px-2 py-1 bg-[#003d79] text-white hover:bg-[#002a57] text-white disabled:bg-slate-300 text-white rounded text-[10px] font-bold"
                         >
                           🛒
                         </button>
@@ -940,7 +940,7 @@ export default function PartsCatalogPage() {
       {/* ═══════ MOBILE BROWSE DRAWER ═══════ */}
       {browseOpen && (
         <>
-          <div className="fixed inset-0 bg-slate-900/60 z-50" onClick={() => setBrowseOpen(false)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/60 z-50" onClick={() => setBrowseOpen(false)} />
           <div className="fixed top-0 left-0 bottom-0 w-[85%] max-w-sm bg-white z-50 flex flex-col shadow-2xl">
             <div className="bg-[#003D79] text-white px-4 py-3 flex justify-between items-center">
               <h3 className="font-bold text-sm">📁 Pilih Unit / Assembly</h3>
@@ -956,7 +956,7 @@ export default function PartsCatalogPage() {
       {/* ═══════ SEARCH MODAL ═══════ */}
       {showSearch && (
         <>
-          <div className="fixed inset-0 bg-slate-900/60 z-50" onClick={() => setShowSearch(false)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/60 z-50" onClick={() => setShowSearch(false)} />
           <div className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-xl bg-white rounded-2xl shadow-2xl z-50 overflow-hidden max-h-[85vh] flex flex-col">
             <div className="bg-[#003D79] text-white px-4 py-3 flex justify-between items-center">
               <h3 className="font-bold text-sm">🔍 Cari Part</h3>
@@ -981,9 +981,9 @@ export default function PartsCatalogPage() {
             </div>
             <div className="flex-1 overflow-y-auto">
               {searching ? (
-                <div className="p-6 text-center text-slate-400 text-sm">Mencari...</div>
+                <div className="p-6 text-center text-[#5a6a7e] text-sm">Mencari...</div>
               ) : searchResults.length === 0 ? (
-                <div className="p-6 text-center text-slate-400 text-sm">
+                <div className="p-6 text-center text-[#5a6a7e] text-sm">
                   {search ? 'Tidak ditemukan' : 'Ketik untuk mencari...'}
                 </div>
               ) : (
@@ -1012,7 +1012,7 @@ export default function PartsCatalogPage() {
       {/* ═══════ IMPORT MODAL ═══════ */}
       {showImport && (
         <>
-          <div className="fixed inset-0 bg-slate-900/60 z-50" onClick={() => !importing && setShowImport(false)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/60 z-50" onClick={() => !importing && setShowImport(false)} />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-lg bg-white rounded-2xl shadow-2xl z-50 overflow-hidden">
             <div className="bg-[#003D79] text-white px-5 py-3 flex justify-between items-center">
               <h3 className="font-bold">📥 Import Excel</h3>
@@ -1066,7 +1066,7 @@ export default function PartsCatalogPage() {
       {/* ═══════ ORDER MODAL ═══════ */}
       {orderPart && (
         <>
-          <div className="fixed inset-0 bg-slate-900/60 z-50" onClick={closeOrderModal} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/60 z-50" onClick={closeOrderModal} />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-2xl shadow-2xl z-50 overflow-hidden">
             <div className="bg-[#003D79] text-white px-5 py-3 flex justify-between items-center">
               <h3 className="font-bold">🛒 Order Part</h3>
@@ -1081,7 +1081,7 @@ export default function PartsCatalogPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Machine Unit * <span className="text-slate-400 font-normal">(unit yang rusak)</span></label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Machine Unit * <span className="text-[#5a6a7e] font-normal">(unit yang rusak)</span></label>
                 <input type="text" value={orderMachine} onChange={e => setOrderMachine(e.target.value)} disabled={orderSubmitting} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79]" placeholder="Contoh: PC200-7 Unit 03" />
               </div>
 
@@ -1127,7 +1127,7 @@ export default function PartsCatalogPage() {
       {showBulkOrder && (
         <>
           <div
-            className="fixed inset-0 bg-slate-900/60 z-50"
+            className="fixed inset-0 bg-[#f4f7fa]/60 z-50"
             onClick={() => !bulkSubmitting && setShowBulkOrder(false)}
           />
           <div className="fixed inset-x-2 top-4 bottom-4 md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[92%] md:max-w-lg md:max-h-[90vh] md:inset-auto bg-white rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col">
@@ -1144,7 +1144,7 @@ export default function PartsCatalogPage() {
             {/* Cart Items */}
             <div className="flex-1 overflow-y-auto">
               {cart.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-sm">
+                <div className="p-8 text-center text-[#5a6a7e] text-sm">
                   Cart kosong. Pilih part terlebih dahulu.
                 </div>
               ) : (
@@ -1200,7 +1200,7 @@ export default function PartsCatalogPage() {
               <div className="border-t p-3 space-y-2 bg-slate-50 flex-shrink-0">
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Machine Unit * <span className="text-slate-400 font-normal">(unit yang rusak)</span>
+                    Machine Unit * <span className="text-[#5a6a7e] font-normal">(unit yang rusak)</span>
                   </label>
                   <input
                     type="text"
@@ -1269,6 +1269,12 @@ export default function PartsCatalogPage() {
         </>
       )}
 
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

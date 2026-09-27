@@ -192,7 +192,7 @@ export default function ImportMcuPage() {
             disabled={uploading}
             className="hidden"
           />
-          <Upload size={32} className="mx-auto text-slate-400 mb-2" />
+          <Upload size={32} className="mx-auto text-[#5a6a7e] mb-2" />
           <div className="text-sm font-black text-slate-700">
             {uploading ? '⏳ Memproses...' : 'Klik untuk pilih file Excel'}
           </div>
@@ -317,6 +317,12 @@ export default function ImportMcuPage() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

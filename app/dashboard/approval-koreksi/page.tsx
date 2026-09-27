@@ -323,7 +323,7 @@ export default function ApprovalKoreksiPage() {
                 </div>
               )}
 
-              <div className="text-[10px] text-slate-400 mb-3">
+              <div className="text-[10px] text-[#5a6a7e] mb-3">
                 Diajukan: {formatDateTime(item.created_at)}
               </div>
 
@@ -388,6 +388,12 @@ export default function ApprovalKoreksiPage() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

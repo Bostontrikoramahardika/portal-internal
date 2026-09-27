@@ -414,7 +414,7 @@ export default function KoreksiAbsensiPage() {
                 👤 Ditujukan Kepada <span className="text-rose-600">*</span>
               </label>
               {loadingApprovers ? (
-                <div className="px-4 py-3 rounded-[1.2rem] border-2 border-slate-200 text-sm text-slate-400">
+                <div className="px-4 py-3 rounded-[1.2rem] border-2 border-slate-200 text-sm text-[#5a6a7e]">
                   Memuat daftar atasan...
                 </div>
               ) : approvers.length === 0 ? (
@@ -448,7 +448,7 @@ export default function KoreksiAbsensiPage() {
                           {a.nama}
                         </div>
                         <div className={`text-[10px] ${
-                          selectedApprover === a.nrp ? 'text-blue-200' : 'text-slate-400'
+                          selectedApprover === a.nrp ? 'text-blue-200' : 'text-[#5a6a7e]'
                         }`}>
                           {a.role_label} · {a.nrp}
                         </div>
@@ -585,7 +585,7 @@ function CorrectionCard({ item }: { item: CorrectionItem }) {
             <span className="font-bold text-[#003D79]">
               {item.approver_target_nama}
               {item.approver_target_role && (
-                <span className="text-slate-400 font-normal"> ({item.approver_target_role})</span>
+                <span className="text-[#5a6a7e] font-normal"> ({item.approver_target_role})</span>
               )}
             </span>
           </div>
@@ -615,9 +615,15 @@ function CorrectionCard({ item }: { item: CorrectionItem }) {
         </div>
       )}
 
-      <div className="mt-3 text-[10px] text-slate-400 text-right">
+      <div className="mt-3 text-[10px] text-[#5a6a7e] text-right">
         Diajukan: {formatDateTime(item.created_at)}
       </div>
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }

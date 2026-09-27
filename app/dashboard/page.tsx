@@ -22,7 +22,7 @@ const getGreeting = () => {
 };
 
 /**
- * 🏠 DASHBOARD VIEW v1.6.0 (Luxury Mobile Edition)
+ * 🏠 DASHBOARD VIEW V1.7.0 (Luxury Mobile Edition)
  */
 function DashboardView({ title, data }: any) {
   const stats = data?.stats || { 
@@ -50,23 +50,23 @@ function DashboardView({ title, data }: any) {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-xl">⏰</div>
               <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status Hari Ini</p>
+                <p className="text-[9px] font-black text-[#5a6a7e] uppercase tracking-widest">Status Hari Ini</p>
                 <h4 className="text-xs font-black text-[#003D79] uppercase">Shift Normal</h4>
               </div>
             </div>
-            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${stats.clock_in_time !== '--:--' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${stats.clock_in_time !== '--:--' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-[#5a6a7e]'}`}>
               {stats.clock_in_time !== '--:--' ? 'Hadir' : 'Belum Absen'}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-6">
             <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
-              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock In</p>
+              <p className="text-[9px] font-black text-[#5a6a7e] uppercase mb-1">Clock In</p>
               <p className="text-xl font-black text-slate-900">{stats.clock_in_time || '--:--'}</p>
             </div>
             <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
-              <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock Out</p>
-              <p className="text-xl font-black text-slate-300">{stats.clock_out_time || '--:--'}</p>
+              <p className="text-[9px] font-black text-[#5a6a7e] uppercase mb-1">Clock Out</p>
+              <p className="text-xl font-black text-[#5a6a7e]">{stats.clock_out_time || '--:--'}</p>
             </div>
           </div>
         </div>
@@ -74,7 +74,7 @@ function DashboardView({ title, data }: any) {
 
       <div className="grid grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-8">
         <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Anggota</p>
+            <p className="text-[9px] font-black text-[#5a6a7e] uppercase tracking-widest mb-1">Total Anggota</p>
             <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-slate-900">{stats.total}</p>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
@@ -311,7 +311,7 @@ function formatExpiredDate(dateStr: any): string {
 }
 
 function getExpiredColor(dateStr: any, defaultColor: string = 'text-slate-800'): string {
-  if (!dateStr) return 'text-slate-400'
+  if (!dateStr) return 'text-[#5a6a7e]'
   try {
     const d = new Date(dateStr)
     if (isNaN(d.getTime())) return defaultColor
@@ -329,13 +329,13 @@ function getExpiredColor(dateStr: any, defaultColor: string = 'text-slate-800'):
   }
 }
 
-// ============ 👤 MY IDENTITY VIEW v1.6.1 (Luxury Final) ============
+// ============ 👤 MY IDENTITY VIEW V1.7.0 (Luxury Final) ============
 function IdentityView({ data }: { data: any }) {
   const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
     <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 group">
       <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100">{icon}</div>
       <div className="flex-1 border-b border-slate-50 pb-2">
-        <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{label}</div>
+        <div className="text-[9px] font-black text-[#5a6a7e] uppercase tracking-tighter">{label}</div>
         <div className={`text-sm font-black tracking-tight ${color}`}>{value || '-'}</div>
       </div>
     </div>
@@ -347,14 +347,14 @@ function IdentityView({ data }: { data: any }) {
       <div className="flex-1 border-b border-slate-50 pb-3">
         <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">{label}</div>
         <div className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1">{no || '-'}</div>
-        <div className="text-[11px] font-bold text-slate-400 uppercase">{nama || '-'}</div>
+        <div className="text-[11px] font-bold text-[#5a6a7e] uppercase">{nama || '-'}</div>
       </div>
     </div>
   )
 
   const SectionTitle = ({ children }: { children: string }) => (
     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 flex items-center gap-2">
-      <span className="w-4 h-[2px] bg-blue-600/20"></span> {children}
+      <span className="w-4 h-[2px] bg-[#003d79]/20"></span> {children}
     </h3>
   )
 
@@ -443,7 +443,7 @@ function IdentityView({ data }: { data: any }) {
                 <div>
                   <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">{sp.jenis_sp}</div>
                   <div className="text-sm font-black text-slate-900 tracking-tight">{sp.alasan || 'Pelanggaran Kedisiplinan'}</div>
-                  <div className="text-[9px] font-bold text-slate-400 uppercase mt-1 italic">Berlaku Sampai: {new Date(sp.berlaku_sampai).toLocaleDateString('id-ID')}</div>
+                  <div className="text-[9px] font-bold text-[#5a6a7e] uppercase mt-1 italic">Berlaku Sampai: {new Date(sp.berlaku_sampai).toLocaleDateString('id-ID')}</div>
                 </div>
               </div>
             ))}
@@ -465,8 +465,8 @@ function IdentityView({ data }: { data: any }) {
   <PushNotificationButton />
 </section>
 
-      <p className="text-[8px] text-center text-slate-300 mt-10 font-bold uppercase tracking-widest px-8 italic">
-        BTM Portal v1.6.1 • Data disinkronkan otomatis.
+      <p className="text-[8px] text-center text-[#5a6a7e] mt-10 font-bold uppercase tracking-widest px-8 italic">
+        BTM Portal V1.7.0 • Data disinkronkan otomatis.
       </p>
     </div>
   )
@@ -811,7 +811,7 @@ setForm({
         📅 Pilih Tanggal CR yang Diklaim
       </p>
       {loadingCR ? (
-        <p className="text-[10px] text-slate-400 font-bold animate-pulse">Memuat daftar CR...</p>
+        <p className="text-[10px] text-[#5a6a7e] font-bold animate-pulse">Memuat daftar CR...</p>
       ) : crList.length === 0 ? (
         <p className="text-[10px] text-rose-500 font-bold">
           ⚠️ Tidak ada roster CR ditemukan untuk akun Anda
@@ -995,7 +995,7 @@ setForm({
             </div>
           )}
 
-          <button disabled={loading} className="w-full bg-blue-600 text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all">
+          <button disabled={loading} className="w-full bg-[#003d79] text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-[#003d79] shadow-lg shadow-blue-200 active:scale-95 transition-all">
             {loading ? 'MENGIRIM...' : '🚀 KIRIM PENGAJUAN'}
           </button>
         </form>
@@ -1008,7 +1008,7 @@ setForm({
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-black tracking-widest">
+            <thead className="bg-slate-50 text-[#5a6a7e] uppercase text-[10px] font-black tracking-widest">
               <tr>
                 <th className="px-3 py-2.5 lg:px-5 lg:py-3">Tanggal</th>
                 <th className="px-3 py-2.5 lg:px-5 lg:py-3">Jenis</th>
@@ -1021,7 +1021,7 @@ setForm({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {riwayat.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-10 lg:py-16 text-center text-slate-300 font-bold italic">Belum ada pengajuan bulan ini.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 lg:py-16 text-center text-[#5a6a7e] font-bold italic">Belum ada pengajuan bulan ini.</td></tr>
               ) : riwayat.map((r: any, i: number) => (
                 <tr key={i}>
                   <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-xs font-bold">{new Date(r.tanggal_mulai).toLocaleDateString('id-ID')} - {new Date(r.tanggal_selesai).toLocaleDateString('id-ID')}</td>
@@ -1030,7 +1030,7 @@ setForm({
                   <td className="px-3 py-2.5 lg:px-5 lg:py-3">
                     {r.butuh_tiket
                       ? <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-[9px] font-black">✈️ YA</span>
-                      : <span className="text-slate-300 text-[9px] font-bold italic">tidak</span>}
+                      : <span className="text-[#5a6a7e] text-[9px] font-bold italic">tidak</span>}
                   </td>
                   <td className="px-3 py-2.5 lg:px-5 lg:py-3 italic text-slate-500 text-xs truncate max-w-[200px]">"{r.alasan}"</td>
                   <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-center"><StatusBadge value={r.status_atasan} /></td>
@@ -1188,7 +1188,7 @@ function FormLemburView({ title, onSuccess, data }: any) {
           </div>
 
           <Textarea label="Pekerjaan / Alasan Lembur" required value={form.alasan} onChange={(v:any) => setForm({...form, alasan: v})} />
-          <button disabled={loading} className="w-full bg-amber-500 text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-amber-600 shadow-lg shadow-amber-200 active:scale-95 transition-all">
+          <button disabled={loading} className="w-full bg-[#003d79] text-white text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-[#002a57] text-white shadow-lg shadow-amber-200 active:scale-95 transition-all">
             {loading ? 'MENGIRIM...' : '🚀 KIRIM LEMBUR'}
           </button>
         </form>
@@ -1201,7 +1201,7 @@ function FormLemburView({ title, onSuccess, data }: any) {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-black tracking-widest">
+            <thead className="bg-slate-50 text-[#5a6a7e] uppercase text-[10px] font-black tracking-widest">
               <tr>
                 <th className="px-3 py-2.5 lg:px-5 lg:py-3">Tanggal</th>
                 <th className="px-3 py-2.5 lg:px-5 lg:py-3">Jam</th>
@@ -1212,7 +1212,7 @@ function FormLemburView({ title, onSuccess, data }: any) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {riwayat.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-10 lg:py-16 text-center text-slate-300 font-bold italic">Belum ada lembur bulan ini.</td></tr>
+                <tr><td colSpan={5} className="px-4 py-10 lg:py-16 text-center text-[#5a6a7e] font-bold italic">Belum ada lembur bulan ini.</td></tr>
               ) : riwayat.map((r: any, i: number) => (
                 <tr key={i}>
                   <td className="px-3 py-2.5 lg:px-5 lg:py-3 text-xs font-bold">{new Date(r.tanggal).toLocaleDateString('id-ID')}</td>
@@ -1271,8 +1271,8 @@ function FormSakitView({ title, onSuccess, data }: any) {
       label: 'Izin Potongan',
       icon: '⚠️',
       color: 'amber',
-      bgClass: 'bg-amber-500',
-      hoverClass: 'hover:bg-amber-600',
+      bgClass: 'bg-[#003d79] text-white',
+      hoverClass: 'hover:bg-[#002a57] text-white',
       shadowClass: 'shadow-amber-200',
       borderActive: 'border-amber-500 bg-amber-50',
       desc: 'Izin dengan potongan gaji'
@@ -1352,7 +1352,7 @@ function FormSakitView({ title, onSuccess, data }: any) {
     <div className="max-w-4xl mx-auto space-y-4 lg:space-y-6 animate-in fade-in duration-500">
       <div className="bg-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border shadow-xl">
         <h2 className="text-sm lg:text-2xl font-black mb-2">{currentConfig.icon} {title}</h2>
-        <p className="text-xs text-slate-400 mb-4 lg:mb-6 font-medium">Laporkan ketidakhadiran dengan bukti dokumen lengkap.</p>
+        <p className="text-xs text-[#5a6a7e] mb-4 lg:mb-6 font-medium">Laporkan ketidakhadiran dengan bukti dokumen lengkap.</p>
 
         <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-5">
 
@@ -1380,7 +1380,7 @@ function FormSakitView({ title, onSuccess, data }: any) {
                     <div className={`text-[9px] lg:text-[10px] font-black uppercase tracking-tight ${isActive ? `text-${conf.color}-700` : 'text-slate-500'}`}>
                       {conf.label}
                     </div>
-                    <div className="text-[8px] lg:text-[9px] font-bold text-slate-400 mt-1 leading-tight">
+                    <div className="text-[8px] lg:text-[9px] font-bold text-[#5a6a7e] mt-1 leading-tight">
                       {conf.desc}
                     </div>
                   </button>
@@ -1451,7 +1451,7 @@ function FormSakitView({ title, onSuccess, data }: any) {
             <label className="block text-[11px] lg:text-sm font-bold text-slate-700 mb-2">
               Upload Bukti Dokumen <span className="text-rose-500">*</span>
             </label>
-            <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 mb-2 italic">
+            <p className="text-[9px] lg:text-[10px] font-bold text-[#5a6a7e] mb-2 italic">
               {form.kategori === 'SAKIT' && '📄 Upload: SKS / Surat Dokter'}
               {form.kategori === 'IZIN_POTONGAN' && '📄 Upload: Surat Izin / Bukti Keperluan'}
               {form.kategori === 'IZIN_BERBAYAR' && '📄 Upload: Undangan / Surat Kematian / Bukti Musibah'}
@@ -1466,7 +1466,7 @@ function FormSakitView({ title, onSuccess, data }: any) {
                   <img src={form.foto_url} className="h-9 w-9 lg:h-10 lg:w-10 object-cover rounded-lg lg:rounded-xl" />
                 </div>
               ) : (
-                <p className="text-slate-400 font-bold text-[11px] lg:text-xs uppercase tracking-[0.15em]">Klik untuk pilih foto dokumen</p>
+                <p className="text-[#5a6a7e] font-bold text-[11px] lg:text-xs uppercase tracking-[0.15em]">Klik untuk pilih foto dokumen</p>
               )}
             </div>
           </div>
@@ -1503,7 +1503,7 @@ function FormSakitView({ title, onSuccess, data }: any) {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[11px] lg:text-sm text-left">
-            <thead className="bg-slate-50 text-slate-400 uppercase text-[9px] lg:text-[10px] font-black">
+            <thead className="bg-slate-50 text-[#5a6a7e] uppercase text-[9px] lg:text-[10px] font-black">
               <tr>
                 <th className="px-3 py-2.5 lg:px-5 lg:py-3">Tanggal</th>
                 <th className="px-3 py-2.5 lg:px-5 lg:py-3">Kategori</th>
@@ -1539,7 +1539,7 @@ function FormSakitView({ title, onSuccess, data }: any) {
               })}
               {riwayat.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-6 lg:px-5 lg:py-8 text-center text-slate-300 text-[11px] lg:text-sm font-bold italic">Belum ada riwayat bulan ini</td>
+                  <td colSpan={5} className="px-3 py-6 lg:px-5 lg:py-8 text-center text-[#5a6a7e] text-[11px] lg:text-sm font-bold italic">Belum ada riwayat bulan ini</td>
                 </tr>
               )}
             </tbody>
@@ -1568,7 +1568,7 @@ function APDHistoryView({ data, onReload }: any) {
           <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 tracking-tight">{data.title}</h2>
           <p className="text-sm text-slate-500 font-medium">Monitoring & pengajuan mandiri perlengkapan APD</p>
         </div>
-        <button onClick={() => setShowAdd(true)} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-xl hover:bg-slate-800 active:scale-95 transition-all">+ AJUKAN APD BARU</button>
+        <button onClick={() => setShowAdd(true)} className="bg-[#f4f7fa] text-white px-6 py-3 rounded-2xl font-black text-sm shadow-xl hover:bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm active:scale-95 transition-all">+ AJUKAN APD BARU</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Object.entries(grouped).map(([jenis, items]: any) => (
@@ -1581,7 +1581,7 @@ function APDHistoryView({ data, onReload }: any) {
               {items.slice(0, 5).map((it: any) => (
                 <div key={it.id} className="flex justify-between items-center text-xs border-b border-slate-50 pb-3 last:border-0 last:pb-0">
                   <div className="flex flex-col">
-                    <span className="text-slate-400 font-bold text-[9px] uppercase tracking-tighter">{new Date(it.tanggal_terima).toLocaleDateString('id-ID')}</span>
+                    <span className="text-[#5a6a7e] font-bold text-[9px] uppercase tracking-tighter">{new Date(it.tanggal_terima).toLocaleDateString('id-ID')}</span>
                     <span className="font-black text-slate-700">Qty: {it.jumlah} Unit</span>
                   </div>
                   <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-black text-[10px]">{it.ukuran}</span>
@@ -1633,12 +1633,12 @@ function PKWTSayaView({ title, data, onSuccess }: any) {
             <label className="block text-sm font-black text-slate-700 mb-3 uppercase tracking-tighter">Opsi Durasi Perpanjangan</label>
             <div className="grid grid-cols-3 gap-3">
               {[30, 90, 180].map(d => (
-                <button key={d} type="button" onClick={() => handleDuration(d)} className="bg-slate-50 hover:bg-blue-600 hover:text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-slate-700 transition-all border-2 border-transparent hover:border-blue-200 text-sm shadow-sm">+{d} Hari</button>
+                <button key={d} type="button" onClick={() => handleDuration(d)} className="bg-slate-50 hover:bg-[#003d79] hover:text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-slate-700 transition-all border-2 border-transparent hover:border-blue-200 text-sm shadow-sm">+{d} Hari</button>
               ))}
             </div>
           </div>
           <Input label="Estimasi Tanggal Berakhir" type="date" required value={form.akhir_kontrak} onChange={(v:any) => setForm({...form, akhir_kontrak: v})} readOnly />
-          <button disabled={loading} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-black shadow-2xl active:scale-95 transition-all text-lg tracking-tight">
+          <button disabled={loading} className="w-full bg-[#f4f7fa] text-white py-5 rounded-3xl font-black shadow-2xl active:scale-95 transition-all text-lg tracking-tight">
             {loading ? 'MENYIMPAN...' : '💾 UPDATE KONTRAK'}
           </button>
         </form>
@@ -1647,7 +1647,7 @@ function PKWTSayaView({ title, data, onSuccess }: any) {
         <h2 className="text-xl font-black mb-6 tracking-tight">📜 Histori Kontrak Kerja</h2>
         <div className="space-y-4">
           {data.rows?.length === 0 ? (
-            <div className="p-10 text-center text-slate-300 italic">Data PKWT tidak ditemukan.</div>
+            <div className="p-10 text-center text-[#5a6a7e] italic">Data PKWT tidak ditemukan.</div>
           ) : (
             data.rows?.map((r: any, i: number) => (
                 <div key={i} className="p-6 border-2 border-slate-50 rounded-3xl bg-slate-50/50 hover:bg-white hover:border-blue-100 transition-all group">
@@ -1656,7 +1656,7 @@ function PKWTSayaView({ title, data, onSuccess }: any) {
                         {new Date(r.mulai_kontrak).toLocaleDateString('id-ID')} — {new Date(r.akhir_kontrak).toLocaleDateString('id-ID')}
                     </div>
                   </div>
-                  <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{r.keterangan || 'Log Sistem'}</div>
+                  <div className="text-[10px] text-[#5a6a7e] font-black uppercase tracking-widest">{r.keterangan || 'Log Sistem'}</div>
                 </div>
               ))
           )}
@@ -2094,7 +2094,7 @@ function AbsensiClockView({ title }: any) {
     }
   }
 
-  if (loading) return <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-[0.3em]">Memvalidasi Sesi Absensi...</div>
+  if (loading) return <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-[0.3em]">Memvalidasi Sesi Absensi...</div>
   
   const hasIn = status?.today?.clock_in
   const hasOut = status?.today?.clock_out
@@ -2152,7 +2152,7 @@ function AbsensiClockView({ title }: any) {
                 Dokumen Akan Expired
               </span>
             </div>
-            <span className="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+            <span className="bg-[#003d79] text-white text-white text-[9px] font-black px-2 py-0.5 rounded-full">
               {dokumenExpired.length}
             </span>
           </div>
@@ -2164,7 +2164,7 @@ function AbsensiClockView({ title }: any) {
               const isCritical = diffDays <= 7
               return (
                 <div key={i} className="px-4 py-2.5 flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${isCritical ? 'bg-rose-500 animate-pulse' : 'bg-amber-500'}`}></div>
+                  <div className={`w-2 h-2 rounded-full ${isCritical ? 'bg-rose-500 animate-pulse' : 'bg-[#003d79] text-white'}`}></div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-black text-slate-800 truncate">{item.jenis_dokumen || 'Dokumen'}</p>
                     <p className="text-[9px] font-bold text-slate-500">
@@ -2186,7 +2186,7 @@ function AbsensiClockView({ title }: any) {
       
       {announcement && <AnnouncementCard announcement={announcement} />}
 
-      <div className="bg-slate-800/40 backdrop-blur-2xl text-white rounded-[1.5rem] md:rounded-[3rem] p-3 md:p-10 text-center shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] mb-4 md:mb-6 border border-slate-700/30 relative overflow-hidden">
+      <div className="bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm/40 backdrop-blur-2xl text-white rounded-[1.5rem] md:rounded-[3rem] p-3 md:p-10 text-center shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] mb-4 md:mb-6 border border-[#e2e8f0]/30 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-700/20 via-transparent to-slate-900/30 pointer-events-none"></div>
         <div className="text-2xl md:text-6xl font-black mb-1 tracking-tighter text-white font-mono relative z-10">
           {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -2219,7 +2219,7 @@ function AbsensiClockView({ title }: any) {
               🔴 CLOCK OUT
             </button>
           ) : (
-            <div className="bg-white/10 backdrop-blur px-4 md:px-10 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] border border-white/10 font-black text-[10px] md:text-xl tracking-tight text-slate-200">✅ SHIFT SELESAI</div>
+            <div className="bg-white/10 backdrop-blur px-4 md:px-10 py-2.5 md:py-6 rounded-[1rem] md:rounded-[2rem] border border-white/10 font-black text-[10px] md:text-xl tracking-tight text-[#1a2332]">✅ SHIFT SELESAI</div>
           )}
         </div>
         <div className="mt-3 md:mt-10 text-[7px] md:text-[9px] text-white/40 flex items-center justify-center gap-2 md:gap-3 font-black tracking-widest relative z-10">
@@ -2230,11 +2230,11 @@ function AbsensiClockView({ title }: any) {
       
       <div className="grid grid-cols-2 gap-3 md:gap-6">
         <div className="bg-white p-3 md:p-8 rounded-[1.2rem] md:rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-emerald-100 transition-all">
-          <div className="text-[8px] md:text-[10px] text-slate-400 font-black mb-1 md:mb-2 uppercase tracking-widest">Record Masuk</div>
+          <div className="text-[8px] md:text-[10px] text-[#5a6a7e] font-black mb-1 md:mb-2 uppercase tracking-widest">Record Masuk</div>
           <div className="text-lg md:text-3xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{hasIn ? new Date(hasIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
         </div>
         <div className="bg-white p-3 md:p-8 rounded-[1.2rem] md:rounded-[2rem] border-2 border-slate-50 shadow-sm group hover:border-rose-100 transition-all">
-          <div className="text-[8px] md:text-[10px] text-slate-400 font-black mb-1 md:mb-2 uppercase tracking-widest">Record Pulang</div>
+          <div className="text-[8px] md:text-[10px] text-[#5a6a7e] font-black mb-1 md:mb-2 uppercase tracking-widest">Record Pulang</div>
           <div className="text-lg md:text-3xl font-black text-slate-900 group-hover:text-rose-600 transition-colors">{hasOut ? new Date(hasOut).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'}) : '--:--'}</div>
         </div>
       </div>
@@ -2242,16 +2242,16 @@ function AbsensiClockView({ title }: any) {
       <div className="mt-6 bg-white rounded-[2rem] border-2 border-slate-50 shadow-sm overflow-hidden">
         <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100">
           <div>
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">History</p>
+            <p className="text-[9px] font-black text-[#5a6a7e] uppercase tracking-[0.25em]">History</p>
             <h4 className="text-sm font-black text-[#003D79] tracking-tight">Riwayat 7 Hari Terakhir</h4>
           </div>
-          <a href="/dashboard?menu=riwayat_absensi" className="text-[9px] font-black text-slate-400 hover:text-[#003D79] uppercase tracking-widest transition-colors">Lihat Semua →</a>
+          <a href="/dashboard?menu=riwayat_absensi" className="text-[9px] font-black text-[#5a6a7e] hover:text-[#003D79] uppercase tracking-widest transition-colors">Lihat Semua →</a>
         </div>
 
         <div className="divide-y divide-slate-50">
           {riwayat7Hari.length === 0 ? (
             <div className="px-6 py-10 text-center">
-              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Belum ada riwayat absensi</p>
+              <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest italic">Belum ada riwayat absensi</p>
             </div>
           ) : (
             riwayat7Hari.map((item, i) => {
@@ -2259,10 +2259,10 @@ function AbsensiClockView({ title }: any) {
               const ket = String(item.keterangan || '').toUpperCase();
               let statusLabel = 'HADIR';
               let statusColor = { dot: 'bg-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50' };
-              if (ket.includes('TERLAMBAT')) { statusLabel = 'TERLAMBAT'; statusColor = { dot: 'bg-amber-500', text: 'text-amber-600', bg: 'bg-amber-50' }; }
+              if (ket.includes('TERLAMBAT')) { statusLabel = 'TERLAMBAT'; statusColor = { dot: 'bg-[#003d79] text-white', text: 'text-amber-600', bg: 'bg-amber-50' }; }
                             else if (ket.includes('BELUM ABSEN')) { statusLabel = 'BELUM'; statusColor = { dot: 'bg-slate-300', text: 'text-slate-500', bg: 'bg-slate-50' }; }
               else if (ket.includes('MANGKIR') || ket.includes('TIDAK ADA')) { statusLabel = 'MANGKIR'; statusColor = { dot: 'bg-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' }; }
-              else if (item.actual === 'OFF' || item.actual === 'MASUK OFF') { statusLabel = 'OFF'; statusColor = { dot: 'bg-slate-300', text: 'text-slate-400', bg: 'bg-slate-50' }; }
+              else if (item.actual === 'OFF' || item.actual === 'MASUK OFF') { statusLabel = 'OFF'; statusColor = { dot: 'bg-slate-300', text: 'text-[#5a6a7e]', bg: 'bg-slate-50' }; }
               else if (item.actual === 'SAKIT') { statusLabel = 'SAKIT'; statusColor = { dot: 'bg-blue-500', text: 'text-blue-600', bg: 'bg-blue-50' }; }
               else if (ket.includes('IZIN') || ket.includes('CUTI')) { statusLabel = 'IZIN'; statusColor = { dot: 'bg-purple-500', text: 'text-purple-600', bg: 'bg-purple-50' }; }
               const tglObj = new Date(item.tanggal);
@@ -2272,8 +2272,8 @@ function AbsensiClockView({ title }: any) {
                   <div className={`w-2.5 h-2.5 rounded-full ${statusColor.dot} shadow-sm flex-shrink-0`}></div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-black text-slate-900 tracking-tight mb-0.5 capitalize">{tglFormatted}</p>
-                    <p className="text-[10px] font-bold text-slate-400 font-mono tracking-widest">
-                      {jamMasuk?.trim() || '--:--'} <span className="text-slate-300 mx-1">→</span> {jamPulang?.trim() || '--:--'}
+                    <p className="text-[10px] font-bold text-[#5a6a7e] font-mono tracking-widest">
+                      {jamMasuk?.trim() || '--:--'} <span className="text-[#5a6a7e] mx-1">→</span> {jamPulang?.trim() || '--:--'}
                     </p>
                   </div>
                   <div className={`${statusColor.bg} ${statusColor.text} px-3 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase`}>{statusLabel}</div>
@@ -2292,7 +2292,7 @@ function AbsensiClockView({ title }: any) {
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[998] animate-in fade-in duration-200"
+            className="fixed inset-0 bg-[#f4f7fa]/70 backdrop-blur-md z-[998] animate-in fade-in duration-200"
             onClick={() => {
               // Skip = tutup popup (Clock In BATAL)
               if (!closingRecord) {
@@ -2429,7 +2429,7 @@ function AbsensiClockView({ title }: any) {
                     setManualTime('')
                   }}
                   disabled={closingRecord}
-                  className="w-full py-3 text-slate-400 text-xs font-black uppercase tracking-widest hover:text-slate-600 transition-colors disabled:opacity-50"
+                  className="w-full py-3 text-[#5a6a7e] text-xs font-black uppercase tracking-widest hover:text-slate-600 transition-colors disabled:opacity-50"
                 >
                   Nanti Saja
                 </button>
@@ -2782,7 +2782,7 @@ function TableView({ data, onReload }: any) {
 
           {/* Search */}
           <div className="relative flex-1">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6a7e] text-xs">🔍</span>
             <input
               type="text"
               placeholder="Cari data..."
@@ -2831,7 +2831,7 @@ function TableView({ data, onReload }: any) {
         </div>
 
         <div className="flex items-center justify-between mt-1.5">
-          <p className="text-[9px] lg:text-[10px] font-bold text-slate-400">
+          <p className="text-[9px] lg:text-[10px] font-bold text-[#5a6a7e]">
             Menampilkan <span className="text-[#003D79] font-black">{displayRows.length}</span> dari {rows.length} data
           </p>
           {sortConfig && (
@@ -2902,7 +2902,7 @@ function TableView({ data, onReload }: any) {
                     value={columnFilters[c] || ''}
                     onChange={e => handleColumnFilter(c, e.target.value)}
                     onClick={e => e.stopPropagation()}
-                    className="w-full px-1.5 py-0.5 rounded text-[10px] font-medium bg-white border border-blue-200 focus:outline-none focus:ring-1 focus:ring-[#003D79] focus:border-[#003D79] text-slate-700 placeholder:text-slate-300"
+                    className="w-full px-1.5 py-0.5 rounded text-[10px] font-medium bg-white border border-blue-200 focus:outline-none focus:ring-1 focus:ring-[#003D79] focus:border-[#003D79] text-slate-700 placeholder:text-[#5a6a7e]"
                   />
                 </th>
               ))}
@@ -2912,7 +2912,7 @@ function TableView({ data, onReload }: any) {
           <tbody>
             {dataRows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="px-4 py-6 lg:py-8 text-center text-slate-300 font-black uppercase tracking-widest text-[11px] italic">
+                <td colSpan={columns.length + 1} className="px-4 py-6 lg:py-8 text-center text-[#5a6a7e] font-black uppercase tracking-widest text-[11px] italic">
                   Tidak ada data
                 </td>
               </tr>
@@ -2945,7 +2945,7 @@ function TableView({ data, onReload }: any) {
                       <>
                         <button
                           onClick={() => setFormModal({ mode: 'update_expired', row: r })}
-                          className="bg-blue-600 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-blue-700 shadow-sm"
+                          className="bg-[#003d79] text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-[#003d79] shadow-sm"
                         >
                           🔄
                         </button>
@@ -3006,7 +3006,7 @@ function TableView({ data, onReload }: any) {
 
                         <button
                           onClick={() => setFormModal({ mode: 'edit', row: r })}
-                          className="bg-amber-500 text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-amber-600 shadow-sm"
+                          className="bg-[#003d79] text-white text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-[#002a57] text-white shadow-sm"
                           title="Edit"
                         >
                           ✏️
@@ -3049,7 +3049,7 @@ function TableView({ data, onReload }: any) {
       </div>
       {dataRows.length > 0 && (
         <div className="px-3 py-1.5 lg:px-4 lg:py-2 border-t border-slate-100 bg-slate-50">
-          <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
+          <p className="text-[9px] lg:text-[10px] font-bold text-[#5a6a7e] text-center uppercase tracking-wider">
             {dataRows.length} Data
           </p>
         </div>
@@ -3170,19 +3170,19 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
   if (loading) return <div className="fixed inset-0 bg-black/50 z-[99] flex items-center justify-center font-black text-white tracking-widest uppercase animate-pulse">Memuat Form Digital...</div>
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[99] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-[#f4f7fa]/60 backdrop-blur-md z-[99] flex items-center justify-center p-4">
       <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] border-4 border-white">
         <div className="p-8 border-b bg-slate-50 flex justify-between items-center">
           <div>
             <h3 className="font-black text-2xl text-slate-900 tracking-tight">{mode === 'create' ? 'Input Data Baru' : 'Perbarui Data'}</h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Tabel: {table}</p>
+            <p className="text-[10px] text-[#5a6a7e] font-bold uppercase tracking-widest mt-1">Tabel: {table}</p>
           </div>
-          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white border-2 border-slate-100 text-2xl text-slate-400 hover:text-rose-500 hover:border-rose-100 transition-all">&times;</button>
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white border-2 border-slate-100 text-2xl text-[#5a6a7e] hover:text-rose-500 hover:border-rose-100 transition-all">&times;</button>
         </div>
         <form onSubmit={handleSubmit} className="p-8 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
           {fields.map(f => (
             <div key={f.key}>
-              <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">{f.label}{f.required && <span className="text-rose-500 ml-1">*</span>}</label>
+              <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">{f.label}{f.required && <span className="text-rose-500 ml-1">*</span>}</label>
               
               {f.type === 'employee_select' ? (
                 row?.nrp && mode === 'create' ? (
@@ -3211,7 +3211,7 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
                           .map(emp => (
                             <div
                               key={emp.nrp}
-                              className="p-4 hover:bg-blue-600 hover:text-white cursor-pointer border-b border-slate-50 last:border-0 transition-all flex flex-col"
+                              className="p-4 hover:bg-[#003d79] hover:text-white cursor-pointer border-b border-slate-50 last:border-0 transition-all flex flex-col"
                               onClick={() => {
                                 setValues({ ...values, [f.key]: emp.nrp })
                                 setSearchEmp(`${emp.nrp} - ${emp.nama}`)
@@ -3239,7 +3239,7 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
           ))}
           <div className="flex gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 pt-8 sticky bottom-0 bg-white">
             <button type="button" onClick={onClose} className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">BATAL</button>
-            <button type="submit" disabled={saving} className="flex-1 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all">
+            <button type="submit" disabled={saving} className="flex-1 py-5 bg-[#003d79] text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-[#003d79] active:scale-95 transition-all">
               {saving ? 'PROSES SIMPAN...' : '💾 SIMPAN DATA'}
             </button>
           </div>
@@ -3313,7 +3313,7 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
   }
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[99] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-[#f4f7fa]/60 backdrop-blur-md z-[99] flex items-center justify-center p-4">
       <div className={`bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] border-4 border-white`}>
         <div className={`p-6 ${isResign ? 'bg-orange-500' : 'bg-emerald-500'} text-white`}>
           <div className="flex items-center gap-3">
@@ -3333,19 +3333,19 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
           <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100">
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase">Jabatan</p>
+                <p className="text-[9px] font-black text-[#5a6a7e] uppercase">Jabatan</p>
                 <p className="font-bold text-slate-800">{row.jabatan || '-'}</p>
               </div>
               <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase">Site</p>
+                <p className="text-[9px] font-black text-[#5a6a7e] uppercase">Site</p>
                 <p className="font-bold text-slate-800">{row.site || '-'}</p>
               </div>
               <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase">Tgl Masuk</p>
+                <p className="text-[9px] font-black text-[#5a6a7e] uppercase">Tgl Masuk</p>
                 <p className="font-bold text-slate-800">{row.tanggal_masuk || '-'}</p>
               </div>
               <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase">Masa Kerja</p>
+                <p className="text-[9px] font-black text-[#5a6a7e] uppercase">Masa Kerja</p>
                 <p className="font-bold text-blue-600">{row._masa_kerja || '-'}</p>
               </div>
             </div>
@@ -3354,7 +3354,7 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
           {isResign ? (
             <>
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+                <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
                   Tanggal Resign <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -3374,7 +3374,7 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
 )}
 
 <div>
-  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+  <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
     Alasan Resign <span className="text-rose-500">*</span>
   </label>
 
@@ -3571,12 +3571,12 @@ function RoleManagerView({ title }: any) {
   }
 
   if (loading) return (
-    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+    <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-widest text-xs">
       Memuat data karyawan & role...
     </div>
   )
 
-  if (!data) return <div className="p-10 text-center text-slate-400">Gagal memuat data</div>
+  if (!data) return <div className="p-10 text-center text-[#5a6a7e]">Gagal memuat data</div>
 
   const employees = data.employees || []
   const templates = data.templates || []
@@ -3611,7 +3611,7 @@ function RoleManagerView({ title }: any) {
       {/* STATS BAR */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         <div className="bg-white p-4 rounded-2xl border-2 border-slate-50 shadow-sm">
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
+          <p className="text-[8px] font-black text-[#5a6a7e] uppercase tracking-widest mb-1">Total</p>
           <p className="text-xl font-black text-slate-900">{data.stats.total_karyawan}</p>
         </div>
         <div className="bg-white p-4 rounded-2xl border-2 border-emerald-50 shadow-sm">
@@ -3619,7 +3619,7 @@ function RoleManagerView({ title }: any) {
           <p className="text-xl font-black text-emerald-600">{data.stats.punya_role}</p>
         </div>
         <div className="bg-white p-4 rounded-2xl border-2 border-amber-50 shadow-sm">
-          <p className="text-[8px] font-black text-amber-400 uppercase tracking-widest mb-1">Tanpa Role</p>
+          <p className="text-[8px] font-black text-[#003d79] uppercase tracking-widest mb-1">Tanpa Role</p>
           <p className="text-xl font-black text-amber-600">{data.stats.tanpa_role}</p>
         </div>
         <div className="bg-white p-4 rounded-2xl border-2 border-blue-50 shadow-sm">
@@ -3754,7 +3754,7 @@ function RoleManagerView({ title }: any) {
             className={`w-full py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
               batchRole && !saving
                 ? 'bg-emerald-500 text-white shadow-xl hover:bg-emerald-600'
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : 'bg-slate-200 text-[#5a6a7e] cursor-not-allowed'
             }`}
           >
             {saving ? '⏳ MEMPROSES...' : `⚡ APPLY ROLE KE ${selectedNrps.size} KARYAWAN`}
@@ -3772,7 +3772,7 @@ function RoleManagerView({ title }: any) {
       {/* LIST KARYAWAN */}
       <div className="space-y-3">
         {employees.length === 0 ? (
-          <div className="p-20 text-center bg-white rounded-[2rem] border-2 border-dashed text-slate-300 font-bold uppercase italic">
+          <div className="p-20 text-center bg-white rounded-[2rem] border-2 border-dashed text-[#5a6a7e] font-bold uppercase italic">
             Tidak ada karyawan sesuai filter
           </div>
         ) : (
@@ -3798,21 +3798,21 @@ function RoleManagerView({ title }: any) {
                   )}
                   
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-lg flex-shrink-0 ${
-                    e.has_role ? 'bg-[#003D79]' : 'bg-amber-500'
+                    e.has_role ? 'bg-[#003D79]' : 'bg-[#003d79] text-white'
                   }`}>
                     {e.nama[0]}
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="font-black text-slate-900 text-sm truncate">{e.nama}</div>
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                    <div className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest mt-0.5">
                       {e.nrp} • {e.jabatan || '-'} • {e.site || '-'}
                     </div>
                     
                     {/* Role badges */}
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {e.roles.length === 0 ? (
-                        <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest italic">
+                        <span className="text-[9px] font-black text-[#003d79] uppercase tracking-widest italic">
                           ⚠️ Belum ada role
                         </span>
                       ) : (
@@ -3876,7 +3876,7 @@ function ImportExcel({ title, table }: any) {
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
       <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📥 {title}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-slate-900 text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+        <div className="bg-[#f4f7fa] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
           <div className="relative z-10">
             <h3 className="text-xl font-black mb-6 flex items-center gap-2">📄 Download Template</h3>
             <div className="space-y-3">
@@ -3891,9 +3891,9 @@ function ImportExcel({ title, table }: any) {
           <form onSubmit={handleImport} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
             <div className="p-6 border-4 border-dashed border-slate-100 rounded-[2rem] text-center hover:border-blue-200 transition-all bg-slate-50/30">
                 <input type="file" accept=".xlsx,.xls" onChange={e => setFile(e.target.files?.[0] || null)} className="w-full text-xs cursor-pointer font-bold" />
-                <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-4">Pastikan file sesuai format template BTM.</p>
+                <p className="text-[9px] text-[#5a6a7e] font-black uppercase tracking-widest mt-4">Pastikan file sesuai format template BTM.</p>
             </div>
-            <button type="submit" disabled={loading || !file} className="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-blue-200 active:scale-95 transition-all">
+            <button type="submit" disabled={loading || !file} className="w-full bg-[#003d79] text-white py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-blue-200 active:scale-95 transition-all">
               {loading ? '⏳ MENGIMPORT...' : 'IMPORT DATA SEKARANG'}
             </button>
           </form>
@@ -3930,7 +3930,7 @@ function ChangeLoginView({ title }: any) {
         <div className="bg-amber-50 p-5 rounded-2xl mb-6 text-[10px] text-amber-800 font-bold uppercase tracking-widest leading-relaxed">⚠️ PERINGATAN: Gunakan NRP yang terdaftar. Anda akan otomatis logout setelah proses berhasil.</div>
         <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
           <Input label="Masukkan NRP Login Baru" required value={newNrp} onChange={setNewNrp} placeholder="Contoh: 123456" />
-          <button disabled={loading} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-black text-lg tracking-tight active:scale-95 transition-all shadow-xl">
+          <button disabled={loading} className="w-full bg-[#f4f7fa] text-white py-5 rounded-3xl font-black text-lg tracking-tight active:scale-95 transition-all shadow-xl">
             {loading ? 'MEMPROSES...' : 'GANTI NRP LOGIN'}
           </button>
         </form>
@@ -3961,7 +3961,7 @@ function ExportAbsensiView({ title }: any) {
       <div className="bg-white p-10 rounded-[3rem] border shadow-2xl space-y-8">
         <div className="flex justify-between items-center border-b pb-6 border-slate-50">
             <span className="text-sm font-black text-slate-800 uppercase tracking-widest">Filter Laporan</span>
-            <button onClick={setBulanIni} className="bg-amber-100 text-amber-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 hover:text-white transition-all">📆 Bulan Ini</button>
+            <button onClick={setBulanIni} className="bg-amber-100 text-amber-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#002a57] text-white hover:text-white transition-all">📆 Bulan Ini</button>
         </div>
         <div className="grid grid-cols-2 gap-6">
           <Input label="Dari Tanggal" type="date" value={filters.tanggal_mulai} onChange={(v:any) => setFilters({...filters, tanggal_mulai: v})} />
@@ -3983,17 +3983,17 @@ function RosterView({ title }: any) {
     fetch('/api/roster/list').then(r => r.json()).then(d => { setFiles(d.files || []); setLoading(false) })
   }, [])
 
-  if (loading) return <div className="text-center py-20 font-black text-slate-300 animate-pulse tracking-widest">MEMUAT DOKUMEN ROSTER...</div>
+  if (loading) return <div className="text-center py-20 font-black text-[#5a6a7e] animate-pulse tracking-widest">MEMUAT DOKUMEN ROSTER...</div>
   return (
     <div className="animate-in fade-in duration-500">
       <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📅 {title}</h2>
-      {files.length === 0 ? <div className="bg-white p-24 rounded-[3rem] border-2 border-dashed border-slate-100 text-center text-slate-300 font-bold italic">Belum Ada Berkas Roster Terlampir.</div> : (
+      {files.length === 0 ? <div className="bg-white p-24 rounded-[3rem] border-2 border-dashed border-slate-100 text-center text-[#5a6a7e] font-bold italic">Belum Ada Berkas Roster Terlampir.</div> : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {files.map(f => (
             <div key={f.id} className="bg-white p-6 rounded-3xl border shadow-lg hover:border-blue-200 transition-all group">
               <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">{f.site || 'General Site'}</div>
               <div className="font-black text-xl text-slate-900 mb-6 tracking-tight">📅 {f.periode}</div>
-              <a href={f.file_url} target="_blank" className="w-full inline-block text-center bg-slate-900 text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] group-hover:bg-blue-600 transition-all">👁️ Lihat Dokumen</a>
+              <a href={f.file_url} target="_blank" className="w-full inline-block text-center bg-[#f4f7fa] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] group-hover:bg-[#003d79] transition-all">👁️ Lihat Dokumen</a>
             </div>
           ))}
         </div>
@@ -4034,10 +4034,10 @@ function RosterUpload({ title }: any) {
           <Input label="Nama Site" value={form.site} onChange={(v:any) => setForm({...form, site: v})} placeholder="Lokasi Site Kerja" />
           <Input label="Catatan Tambahan" value={form.keterangan} onChange={(v:any) => setForm({...form, keterangan: v})} />
           <div className="p-8 border-4 border-dashed border-slate-50 rounded-[2rem] bg-slate-50/50 text-center">
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">Pilih Berkas PDF / Gambar</label>
+            <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-4 tracking-widest">Pilih Berkas PDF / Gambar</label>
             <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={e => setFile(e.target.files?.[0] || null)} className="w-full text-xs font-bold cursor-pointer" required />
           </div>
-          <button disabled={loading} className="w-full bg-blue-600 text-white py-6 rounded-[2rem] font-black text-xl shadow-xl shadow-blue-200 active:scale-95 transition-all">
+          <button disabled={loading} className="w-full bg-[#003d79] text-white py-6 rounded-[2rem] font-black text-xl shadow-xl shadow-blue-200 active:scale-95 transition-all">
             {loading ? 'SEDANG MENGUNGGAH...' : 'UPLOAD ROSTER'}
           </button>
         </form>
@@ -4122,10 +4122,10 @@ function RiwayatAbsensiCustom({ data }: any) {
         <div className="grid grid-cols-5 gap-1.5 lg:gap-2 mt-2.5 lg:mt-4">
           {[
             { label: 'Hadir', val: stats.hadir, color: 'bg-emerald-500/20 text-emerald-200' },
-            { label: 'Telat', val: stats.terlambat, color: 'bg-amber-500/20 text-amber-200' },
+            { label: 'Telat', val: stats.terlambat, color: 'bg-[#003d79] text-white/20 text-amber-200' },
             { label: 'Mangkir', val: stats.mangkir, color: 'bg-rose-500/20 text-rose-200' },
-            { label: 'Belum', val: stats.belum, color: 'bg-slate-500/20 text-slate-300' },
-            { label: 'OFF', val: stats.off, color: 'bg-slate-500/20 text-slate-200' },
+            { label: 'Belum', val: stats.belum, color: 'bg-slate-500/20 text-[#5a6a7e]' },
+            { label: 'OFF', val: stats.off, color: 'bg-slate-500/20 text-[#1a2332]' },
           ].map((s) => (
             <div key={s.label} className={`${s.color} rounded-lg lg:rounded-xl p-1.5 lg:p-3 text-center`}>
               <p className="text-lg lg:text-3xl font-black leading-none">{s.val}</p>
@@ -4141,7 +4141,7 @@ function RiwayatAbsensiCustom({ data }: any) {
       <div className="bg-white rounded-xl lg:rounded-2xl p-2.5 lg:p-5 border border-slate-100 shadow-sm">
         <div className="flex flex-col lg:flex-row gap-1.5 lg:gap-2">
           <div className="relative flex-1">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6a7e] text-xs">🔍</span>
             <input
               type="text"
               placeholder="Cari tanggal, status..."
@@ -4167,7 +4167,7 @@ function RiwayatAbsensiCustom({ data }: any) {
           </select>
         </div>
 
-        <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 mt-1.5 lg:mt-2">
+        <p className="text-[9px] lg:text-[10px] font-bold text-[#5a6a7e] mt-1.5 lg:mt-2">
           Menampilkan <span className="text-[#003D79] font-black">{rows.length}</span> dari {allRows.length} record
         </p>
       </div>
@@ -4188,7 +4188,7 @@ function RiwayatAbsensiCustom({ data }: any) {
             <tbody className="divide-y divide-slate-100">
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 lg:py-16 text-center text-slate-300 font-black uppercase tracking-widest text-xs italic">
+                  <td colSpan={5} className="px-4 py-10 lg:py-16 text-center text-[#5a6a7e] font-black uppercase tracking-widest text-xs italic">
                     Tidak ada data ditemukan
                   </td>
                 </tr>
@@ -4264,7 +4264,7 @@ function RiwayatAbsensiCustom({ data }: any) {
 
         {rows.length > 0 && (
           <div className="px-3 py-2 lg:px-4 lg:py-3 border-t border-slate-100 bg-slate-50">
-            <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
+            <p className="text-[9px] lg:text-[10px] font-bold text-[#5a6a7e] text-center uppercase tracking-wider">
               Total {rows.length} Record • BTM Mobile App v2.6
             </p>
           </div>
@@ -4362,7 +4362,7 @@ function RiwayatApprovalView({ data, onReload }: any) {
       <div className="bg-white rounded-xl lg:rounded-2xl p-2.5 lg:p-4 border border-slate-100 shadow-sm space-y-2">
         {/* Search */}
         <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6a7e] text-xs">🔍</span>
           <input
             type="text"
             placeholder="Cari nama, jenis, catatan..."
@@ -4374,13 +4374,13 @@ function RiwayatApprovalView({ data, onReload }: any) {
 
         {/* Filter jenis */}
         <div className="grid grid-cols-4 gap-1.5">
-          <button onClick={() => setFilterJenis('ALL')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'ALL' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>Semua</button>
+          <button onClick={() => setFilterJenis('ALL')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'ALL' ? 'bg-[#f4f7fa] text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>Semua</button>
           <button onClick={() => setFilterJenis('CUTI')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'CUTI' ? 'bg-blue-500 text-white' : 'bg-slate-50 text-slate-500 hover:bg-blue-50'}`}>🌴 Cuti</button>
-          <button onClick={() => setFilterJenis('LEMBUR')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'LEMBUR' ? 'bg-amber-500 text-white' : 'bg-slate-50 text-slate-500 hover:bg-amber-50'}`}>⏰ Lembur</button>
+          <button onClick={() => setFilterJenis('LEMBUR')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'LEMBUR' ? 'bg-[#003d79] text-white text-white' : 'bg-slate-50 text-slate-500 hover:bg-amber-50'}`}>⏰ Lembur</button>
           <button onClick={() => setFilterJenis('SAKIT')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'SAKIT' ? 'bg-rose-500 text-white' : 'bg-slate-50 text-slate-500 hover:bg-rose-50'}`}>🤒 Sakit</button>
         </div>
 
-        <p className="text-[9px] lg:text-[10px] font-bold text-slate-400">
+        <p className="text-[9px] lg:text-[10px] font-bold text-[#5a6a7e]">
           Menampilkan <span className="text-[#003D79] font-black">{filteredRows.length}</span> dari {rows.length} record
         </p>
       </div>
@@ -4389,7 +4389,7 @@ function RiwayatApprovalView({ data, onReload }: any) {
       <div className="lg:hidden space-y-1.5">
         {filteredRows.length === 0 ? (
           <div className="bg-white p-8 rounded-xl border border-dashed border-slate-200 text-center">
-            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">
+            <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest italic">
               Belum ada riwayat approval di periode {data.periode || `${bulan}/${tahun}`}
             </p>
           </div>
@@ -4417,7 +4417,7 @@ function RiwayatApprovalView({ data, onReload }: any) {
                   {r.catatan && (
                     <p className="text-[10px] text-slate-500 italic truncate mt-0.5">"{r.catatan}"</p>
                   )}
-                  <p className="text-[9px] font-bold text-slate-400 mt-0.5">
+                  <p className="text-[9px] font-bold text-[#5a6a7e] mt-0.5">
                     {r.tanggal_aksi ? new Date(r.tanggal_aksi).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}
                   </p>
                 </div>
@@ -4450,7 +4450,7 @@ function RiwayatApprovalView({ data, onReload }: any) {
             <tbody className="divide-y divide-slate-100">
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center text-slate-300 font-black uppercase text-xs italic">
+                  <td colSpan={7} className="px-4 py-16 text-center text-[#5a6a7e] font-black uppercase text-xs italic">
                     Belum ada riwayat approval di periode {data.periode || `${bulan}/${tahun}`}
                   </td>
                 </tr>
@@ -4488,7 +4488,7 @@ function RiwayatApprovalView({ data, onReload }: any) {
         </div>
         {filteredRows.length > 0 && (
           <div className="px-4 py-2 border-t border-slate-100 bg-slate-50">
-            <p className="text-[10px] font-bold text-slate-400 text-center">
+            <p className="text-[10px] font-bold text-[#5a6a7e] text-center">
               {filteredRows.length} Record • BTM Portal v2.6
             </p>
           </div>
@@ -4504,10 +4504,10 @@ function KPISayaRaportView({ data }: any) {
 
   if (!raport) return (
     <div className="bg-white p-12 md:p-20 rounded-3xl border-2 border-dashed border-slate-200 text-center max-w-4xl mx-auto my-6">
-      <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-slate-300">
+      <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-[#5a6a7e]">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
       </div>
-      <h3 className="font-bold text-slate-400 uppercase tracking-widest text-[10px] md:text-xs">Penilaian belum dirilis untuk periode berjalan.</h3>
+      <h3 className="font-bold text-[#5a6a7e] uppercase tracking-widest text-[10px] md:text-xs">Penilaian belum dirilis untuk periode berjalan.</h3>
     </div>
   )
 
@@ -4556,7 +4556,7 @@ function KPISayaRaportView({ data }: any) {
             <div className="w-10 h-10 md:w-12 md:h-12 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-xl md:rounded-2xl flex items-center justify-center tracking-tighter shadow-inner shrink-0 relative overflow-hidden p-1.5 md:p-2">
               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain relative z-10 drop-shadow-md" onError={(e: any) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex' }} />
               <div className="hidden absolute inset-0 items-center justify-center z-0">
-                <svg className="w-6 h-6 md:w-8 h-8 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                <svg className="w-6 h-6 md:w-8 h-8 text-[#003d79]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
               </div>
             </div>
 
@@ -4566,16 +4566,16 @@ function KPISayaRaportView({ data }: any) {
                 <span className="text-[8px] md:text-[10px] text-blue-300 font-medium italic">Together for a Better Tomorrow</span>
               </div>
               <h1 className="text-lg md:text-2xl font-black tracking-tight text-white mt-0.5 leading-tight">Raport Kinerja Karyawan</h1>
-              <p className="text-[9px] md:text-[11px] text-slate-300 font-semibold tracking-wide">Key Performance Indicator (KPI)</p>
+              <p className="text-[9px] md:text-[11px] text-[#5a6a7e] font-semibold tracking-wide">Key Performance Indicator (KPI)</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 md:gap-3 bg-white/10 backdrop-blur-md px-3 md:px-4 py-2 md:py-2.5 rounded-xl md:rounded-2xl border border-white/15 text-xs w-full md:w-auto justify-between md:justify-start">
             <div className="flex items-center gap-2">
-              <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#003d79]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               <div>
                 <span className="text-[8px] md:text-[9px] uppercase font-bold text-blue-200 block">Periode</span>
-                <span className="font-extrabold text-amber-400 text-xs md:text-sm">{periodePenilaian}</span>
+                <span className="font-extrabold text-[#003d79] text-xs md:text-sm">{periodePenilaian}</span>
               </div>
             </div>
             <div className="w-px h-6 bg-white/20"></div>
@@ -4609,9 +4609,9 @@ function KPISayaRaportView({ data }: any) {
           </div>
 
           <div className="border-t border-slate-100 pt-2.5 md:pt-3.5 mt-3 md:mt-4 space-y-1 md:space-y-1.5 text-[11px] md:text-xs font-medium">
-            <div className="flex justify-between"><span className="text-slate-400">Departemen</span><span className="font-bold text-slate-700">{raport.departemen || "Operasional"}</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">Jabatan</span><span className="font-bold text-slate-700 truncate max-w-[140px] md:max-w-[160px]">{raport._jabatan || "Staff"}</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">Site</span><span className="font-bold text-slate-700">{raport._site || "PPA-MLP"}</span></div>
+            <div className="flex justify-between"><span className="text-[#5a6a7e]">Departemen</span><span className="font-bold text-slate-700">{raport.departemen || "Operasional"}</span></div>
+            <div className="flex justify-between"><span className="text-[#5a6a7e]">Jabatan</span><span className="font-bold text-slate-700 truncate max-w-[140px] md:max-w-[160px]">{raport._jabatan || "Staff"}</span></div>
+            <div className="flex justify-between"><span className="text-[#5a6a7e]">Site</span><span className="font-bold text-slate-700">{raport._site || "PPA-MLP"}</span></div>
           </div>
         </div>
 
@@ -4624,18 +4624,18 @@ function KPISayaRaportView({ data }: any) {
           
           <div className="relative w-28 h-28 md:w-36 md:h-36 flex items-center justify-center my-1">
             <svg viewBox="0 0 144 144" className="w-full h-full transform -rotate-90">
-              <circle cx="72" cy="72" r={radius} stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-100" />
+              <circle cx="72" cy="72" r={radius} stroke="currentColor" strokeWidth="12" fill="transparent" className="text-[#1a2332]" />
               <circle cx="72" cy="72" r={radius} stroke="currentColor" strokeWidth="12" fill="transparent" className="text-blue-600 transition-all duration-1000 ease-out" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter leading-none">{nilaiAkhir}</span>
-              <span className="text-[9px] md:text-[10px] font-bold text-slate-400 mt-1">/ 100 POIN</span>
+              <span className="text-[9px] md:text-[10px] font-bold text-[#5a6a7e] mt-1">/ 100 POIN</span>
             </div>
           </div>
 
           <div className="inline-flex items-center gap-1 text-[9px] md:text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 md:px-3 py-1 rounded-full border border-emerald-200 mt-1">
             <span>? Evaluasi Realtime</span>
-            <span className="text-slate-400 font-normal">Berjalan</span>
+            <span className="text-[#5a6a7e] font-normal">Berjalan</span>
           </div>
         </div>
 
@@ -4647,7 +4647,7 @@ function KPISayaRaportView({ data }: any) {
                 <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
               </div>
               <div>
-                <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Catatan Evaluasi Atasan</p>
+                <p className="text-[9px] md:text-[10px] font-bold text-[#5a6a7e] uppercase tracking-wider">Catatan Evaluasi Atasan</p>
                 <h3 className="text-xs md:text-sm font-bold text-slate-800">Feedback HRGA / SPV</h3>
               </div>
             </div>
@@ -4659,7 +4659,7 @@ function KPISayaRaportView({ data }: any) {
                 "{ketPenilaianAtasan}"
               </p>
             ) : (
-              <p className="text-[11px] md:text-xs text-slate-400 italic font-medium leading-relaxed">
+              <p className="text-[11px] md:text-xs text-[#5a6a7e] italic font-medium leading-relaxed">
                 - Belum ada catatan evaluasi dari Atasan / HRGA Site.
               </p>
             )}
@@ -4682,7 +4682,7 @@ function KPISayaRaportView({ data }: any) {
             <span className="text-[11px] md:text-xs font-bold text-slate-700">Kehadiran</span>
           </div>
           <p className="text-base md:text-lg font-black text-slate-800">{pctKehadiran}%</p>
-          <p className="text-[9px] md:text-[10px] text-slate-400 font-medium">( {hadirHari} / {totalHariBulan} Hari )</p>
+          <p className="text-[9px] md:text-[10px] text-[#5a6a7e] font-medium">( {hadirHari} / {totalHariBulan} Hari )</p>
         </div>
 
         <div className="bg-white p-3 md:p-3.5 rounded-xl md:rounded-2xl border border-slate-200/80 shadow-sm">
@@ -4693,7 +4693,7 @@ function KPISayaRaportView({ data }: any) {
             <span className="text-[11px] md:text-xs font-bold text-slate-700">Sakit</span>
           </div>
           <p className="text-base md:text-lg font-black text-slate-800">{sakitHari} Hari</p>
-          <p className="text-[9px] md:text-[10px] text-slate-400 font-medium">Bulan Berjalan</p>
+          <p className="text-[9px] md:text-[10px] text-[#5a6a7e] font-medium">Bulan Berjalan</p>
         </div>
 
         <div className="bg-white p-3 md:p-3.5 rounded-xl md:rounded-2xl border border-slate-200/80 shadow-sm">
@@ -4704,7 +4704,7 @@ function KPISayaRaportView({ data }: any) {
             <span className="text-[11px] md:text-xs font-bold text-slate-700">Ijin</span>
           </div>
           <p className="text-base md:text-lg font-black text-slate-800">{ijinHari} Hari</p>
-          <p className="text-[9px] md:text-[10px] text-slate-400 font-medium">Bulan Berjalan</p>
+          <p className="text-[9px] md:text-[10px] text-[#5a6a7e] font-medium">Bulan Berjalan</p>
         </div>
 
         <div className="bg-white p-3 md:p-3.5 rounded-xl md:rounded-2xl border border-slate-200/80 shadow-sm">
@@ -4715,16 +4715,16 @@ function KPISayaRaportView({ data }: any) {
             <span className="text-[11px] md:text-xs font-bold text-slate-700">Alpa</span>
           </div>
           <p className="text-base md:text-lg font-black text-slate-800">{alpaHari} Hari</p>
-          <p className="text-[9px] md:text-[10px] text-slate-400 font-medium">Bulan Berjalan</p>
+          <p className="text-[9px] md:text-[10px] text-[#5a6a7e] font-medium">Bulan Berjalan</p>
         </div>
 
         <div className="col-span-2 sm:col-span-1 bg-white p-3 md:p-3.5 rounded-xl md:rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
           <div>
             <span className="text-[11px] md:text-xs font-bold text-slate-700 block mb-1">Total Hari Kerja</span>
-            <p className="text-base md:text-lg font-black text-slate-800">{hadirHari} <span className="text-[10px] md:text-xs font-semibold text-slate-400">/ {totalHariBulan}</span></p>
+            <p className="text-base md:text-lg font-black text-slate-800">{hadirHari} <span className="text-[10px] md:text-xs font-semibold text-[#5a6a7e]">/ {totalHariBulan}</span></p>
           </div>
           <div className="w-full h-1.5 md:h-2 bg-slate-100 rounded-full overflow-hidden mt-1.5 md:mt-2">
-            <div className="h-full bg-blue-600 rounded-full" style={{ width: Math.min(100, pctKehadiran) + "%" }}></div>
+            <div className="h-full bg-[#003d79] rounded-full" style={{ width: Math.min(100, pctKehadiran) + "%" }}></div>
           </div>
         </div>
 
@@ -4739,8 +4739,8 @@ function KPISayaRaportView({ data }: any) {
             </div>
             <h3 className="font-extrabold text-[13px] md:text-sm text-slate-800 tracking-wide">Rincian KPI</h3>
           </div>
-          <div className="flex items-center gap-2 md:gap-4 text-[10px] md:text-xs font-semibold text-slate-400">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-blue-600"></span> Nilai</span>
+          <div className="flex items-center gap-2 md:gap-4 text-[10px] md:text-xs font-semibold text-[#5a6a7e]">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-[#003d79]"></span> Nilai</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-slate-200"></span> Target</span>
           </div>
         </div>
@@ -4757,10 +4757,10 @@ function KPISayaRaportView({ data }: any) {
                 <p className="text-[11px] md:text-xs font-bold text-slate-800">Kehadiran</p>
                 <div className="flex items-baseline gap-1.5 md:gap-2">
                   <span className="text-base md:text-lg font-black text-slate-900">{pctKehadiran}%</span>
-                  <span className="text-[9px] md:text-[10px] text-slate-400 font-medium">( {hadirHari}/{totalHariBulan} Hari )</span>
+                  <span className="text-[9px] md:text-[10px] text-[#5a6a7e] font-medium">( {hadirHari}/{totalHariBulan} Hari )</span>
                 </div>
                 <div className="w-full h-1.5 md:h-2 bg-slate-200 rounded-full overflow-hidden mt-1">
-                  <div className="h-full bg-blue-600 rounded-full" style={{ width: Math.min(100, pctKehadiran) + "%" }}></div>
+                  <div className="h-full bg-[#003d79] rounded-full" style={{ width: Math.min(100, pctKehadiran) + "%" }}></div>
                 </div>
               </div>
             </div>
@@ -4768,12 +4768,12 @@ function KPISayaRaportView({ data }: any) {
             <div className="md:col-span-4 border-t md:border-t-0 md:border-l border-slate-200/80 pt-2 md:pt-0 md:pl-4 text-[11px] md:text-xs space-y-1 font-medium text-slate-600">
               <div className="flex justify-between"><span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Hadir</span><span className="font-bold text-slate-800">{hadirHari} hari</span></div>
               <div className="flex justify-between"><span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Sakit</span><span className="font-bold text-slate-800">{sakitHari} hari</span></div>
-              <div className="flex justify-between"><span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Ijin</span><span className="font-bold text-slate-800">{ijinHari} hari</span></div>
+              <div className="flex justify-between"><span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#003d79] text-white"></span> Ijin</span><span className="font-bold text-slate-800">{ijinHari} hari</span></div>
             </div>
 
             <div className="md:col-span-4 bg-white p-2.5 md:p-3 rounded-lg md:rounded-xl border border-slate-200 text-[10px] md:text-xs">
-              <span className="text-[9px] md:text-[10px] font-bold text-slate-400 block uppercase mb-0.5">Catatan</span>
-              {ketKehadiran !== "-" ? <p className="text-slate-700 font-medium">{ketKehadiran}</p> : <p className="text-slate-400 italic">- Belum ada catatan</p>}
+              <span className="text-[9px] md:text-[10px] font-bold text-[#5a6a7e] block uppercase mb-0.5">Catatan</span>
+              {ketKehadiran !== "-" ? <p className="text-slate-700 font-medium">{ketKehadiran}</p> : <p className="text-[#5a6a7e] italic">- Belum ada catatan</p>}
             </div>
           </div>
 
@@ -4787,7 +4787,7 @@ function KPISayaRaportView({ data }: any) {
                 <p className="text-[11px] md:text-xs font-bold text-slate-800">Disiplin Sistem</p>
                 <div className="flex items-baseline gap-1.5 md:gap-2">
                   <span className="text-base md:text-lg font-black text-slate-900">{nilaiSistem} Poin</span>
-                  <span className="text-[9px] md:text-[10px] text-slate-400 font-medium">( Max 70 )</span>
+                  <span className="text-[9px] md:text-[10px] text-[#5a6a7e] font-medium">( Max 70 )</span>
                 </div>
                 <div className="w-full h-1.5 md:h-2 bg-slate-200 rounded-full overflow-hidden mt-1">
                   <div className="h-full bg-emerald-500 rounded-full" style={{ width: Math.min(100, (nilaiSistem / 70 * 100)) + "%" }}></div>
@@ -4801,8 +4801,8 @@ function KPISayaRaportView({ data }: any) {
             </div>
 
             <div className="md:col-span-4 bg-white p-2.5 md:p-3 rounded-lg md:rounded-xl border border-slate-200 text-[10px] md:text-xs">
-              <span className="text-[9px] md:text-[10px] font-bold text-slate-400 block uppercase mb-0.5">Catatan</span>
-              {ketDisiplin !== "-" ? <p className="text-slate-700 font-medium">{ketDisiplin}</p> : <p className="text-slate-400 italic">- Belum ada catatan</p>}
+              <span className="text-[9px] md:text-[10px] font-bold text-[#5a6a7e] block uppercase mb-0.5">Catatan</span>
+              {ketDisiplin !== "-" ? <p className="text-slate-700 font-medium">{ketDisiplin}</p> : <p className="text-[#5a6a7e] italic">- Belum ada catatan</p>}
             </div>
           </div>
 
@@ -4816,7 +4816,7 @@ function KPISayaRaportView({ data }: any) {
                 <p className="text-[11px] md:text-xs font-bold text-slate-800">Penilaian Atasan</p>
                 <div className="flex items-baseline gap-1.5 md:gap-2">
                   <span className="text-base md:text-lg font-black text-slate-900">{nilaiPerforma} Poin</span>
-                  <span className="text-[9px] md:text-[10px] text-slate-400 font-medium">( Max 30 )</span>
+                  <span className="text-[9px] md:text-[10px] text-[#5a6a7e] font-medium">( Max 30 )</span>
                 </div>
                 <div className="w-full h-1.5 md:h-2 bg-slate-200 rounded-full overflow-hidden mt-1">
                   <div className="h-full bg-purple-600 rounded-full" style={{ width: Math.min(100, (nilaiPerforma / 30 * 100)) + "%" }}></div>
@@ -4831,8 +4831,8 @@ function KPISayaRaportView({ data }: any) {
             </div>
 
             <div className="md:col-span-4 bg-white p-2.5 md:p-3 rounded-lg md:rounded-xl border border-slate-200 text-[10px] md:text-xs">
-              <span className="text-[9px] md:text-[10px] font-bold text-slate-400 block uppercase mb-0.5">Catatan</span>
-              {ketKualitas !== "-" ? <p className="text-slate-700 font-medium">{ketKualitas}</p> : <p className="text-slate-400 italic">- Belum ada catatan</p>}
+              <span className="text-[9px] md:text-[10px] font-bold text-[#5a6a7e] block uppercase mb-0.5">Catatan</span>
+              {ketKualitas !== "-" ? <p className="text-slate-700 font-medium">{ketKualitas}</p> : <p className="text-[#5a6a7e] italic">- Belum ada catatan</p>}
             </div>
           </div>
 
@@ -4840,12 +4840,12 @@ function KPISayaRaportView({ data }: any) {
       </div>
 
       {/* ================= 5. FOOTER ================= */}
-      <div className="bg-slate-900 text-white px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-2 shadow-lg">
+      <div className="bg-[#f4f7fa] text-white px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-2 shadow-lg">
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 md:w-6 md:h-6 rounded-md md:rounded-lg bg-amber-400 text-slate-900 flex items-center justify-center font-black text-[10px] md:text-xs">??</div>
           <span className="font-extrabold text-[10px] md:text-xs tracking-wide">Terus Berkembang, Raih Hasil Terbaik!</span>
         </div>
-        <span className="text-[8px] md:text-[10px] text-slate-400 font-medium tracking-widest uppercase">Kinerja Hari Ini, Masa Depan Nanti</span>
+        <span className="text-[8px] md:text-[10px] text-[#5a6a7e] font-medium tracking-widest uppercase">Kinerja Hari Ini, Masa Depan Nanti</span>
       </div>
 
     </div>
@@ -4921,7 +4921,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
     if (nilai >= 70) return { label: 'Baik', color: 'text-blue-600' }
     if (nilai >= 60) return { label: 'Cukup', color: 'text-amber-600' }
     if (nilai > 0) return { label: 'Kurang', color: 'text-rose-600' }
-    return { label: '-', color: 'text-slate-400' }
+    return { label: '-', color: 'text-[#5a6a7e]' }
   }
 
   return (
@@ -4976,7 +4976,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
         {/* SUMMARY */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
           <div className="bg-slate-50 rounded-2xl p-4 text-center">
-            <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total</div>
+            <div className="text-xs font-black text-[#5a6a7e] uppercase tracking-widest mb-1">Total</div>
             <div className="text-2xl font-black text-slate-900">{summary.total}</div>
           </div>
           <div className="bg-emerald-50 rounded-2xl p-4 text-center">
@@ -4984,7 +4984,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
             <div className="text-2xl font-black text-emerald-600">{summary.sudah_dinilai}</div>
           </div>
           <div className="bg-amber-50 rounded-2xl p-4 text-center">
-            <div className="text-xs font-black text-amber-500 uppercase tracking-widest mb-1">⏳ Pending</div>
+            <div className="text-xs font-black text-[#003d79] uppercase tracking-widest mb-1">⏳ Pending</div>
             <div className="text-2xl font-black text-amber-600">{summary.belum_dinilai}</div>
           </div>
           <div className="bg-blue-50 rounded-2xl p-4 text-center">
@@ -4999,14 +4999,14 @@ function PenilaianBawahanView({ data, onReload }: any) {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setActiveFilter('ALL')}
-            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase border-2 transition-all ${activeFilter === 'ALL' ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-400 border-slate-100'}`}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase border-2 transition-all ${activeFilter === 'ALL' ? 'bg-[#f4f7fa] text-white border-slate-900 shadow-lg' : 'bg-white text-[#5a6a7e] border-slate-100'}`}
           >
             📋 Semua ({filteredBySearch.length})
           </button>
           {operators.length > 0 && (
             <button
               onClick={() => setActiveFilter('OPERATOR')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase border-2 transition-all ${activeFilter === 'OPERATOR' ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-400 border-slate-100'}`}
+              className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase border-2 transition-all ${activeFilter === 'OPERATOR' ? 'bg-[#f4f7fa] text-white border-slate-900 shadow-lg' : 'bg-white text-[#5a6a7e] border-slate-100'}`}
             >
               🚜 Operator ({operators.length})
             </button>
@@ -5014,7 +5014,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
           {mechanics.length > 0 && (
             <button
               onClick={() => setActiveFilter('PLANT')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase border-2 transition-all ${activeFilter === 'PLANT' ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-400 border-slate-100'}`}
+              className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase border-2 transition-all ${activeFilter === 'PLANT' ? 'bg-[#f4f7fa] text-white border-slate-900 shadow-lg' : 'bg-white text-[#5a6a7e] border-slate-100'}`}
             >
               🛠️ Plant ({mechanics.length})
             </button>
@@ -5022,7 +5022,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
           {support.length > 0 && (
             <button
               onClick={() => setActiveFilter('SUPPORT')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase border-2 transition-all ${activeFilter === 'SUPPORT' ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-white text-slate-400 border-slate-100'}`}
+              className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase border-2 transition-all ${activeFilter === 'SUPPORT' ? 'bg-[#f4f7fa] text-white border-slate-900 shadow-lg' : 'bg-white text-[#5a6a7e] border-slate-100'}`}
             >
               💼 Support ({support.length})
             </button>
@@ -5043,7 +5043,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
       {/* CARDS */}
       {currentList.length === 0 ? (
         <div className="p-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
-          <p className="text-slate-300 font-black uppercase tracking-widest italic text-lg">
+          <p className="text-[#5a6a7e] font-black uppercase tracking-widest italic text-lg">
             Tidak ada karyawan di kategori ini
           </p>
         </div>
@@ -5071,21 +5071,21 @@ function PenilaianBawahanView({ data, onReload }: any) {
                   {/* Header karyawan */}
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl text-white shadow-md ${
-                      sudahDinilaiOrang ? 'bg-emerald-600' : 'bg-slate-800'
+                      sudahDinilaiOrang ? 'bg-emerald-600' : 'bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm'
                     }`}>
                       {emp.nama[0]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-black text-slate-900 leading-tight truncate">{emp.nama}</h3>
                       <p className="text-[11px] font-bold text-slate-600 truncate">{emp.jabatan}</p>
-                      <p className="text-[10px] font-medium text-slate-400 italic">📍 {emp.site} • {emp.nrp}</p>
+                      <p className="text-[10px] font-medium text-[#5a6a7e] italic">📍 {emp.site} • {emp.nrp}</p>
                     </div>
                   </div>
 
                   {/* Nilai display */}
                   {sudahDinilaiOrang ? (
                     <div className="bg-gradient-to-br from-slate-50 to-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nilai Rata-Rata</p>
+                      <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest mb-1">Nilai Rata-Rata</p>
                       <p className={`text-4xl font-black ${label.color}`}>{nilaiRataRata}</p>
                       <p className={`text-xs font-black mt-1 ${label.color}`}>{label.label}</p>
                       <div className="mt-3 pt-3 border-t border-emerald-100">
@@ -5104,7 +5104,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
                     </div>
                   ) : (
                     <div className="bg-slate-50 rounded-2xl p-4 text-center">
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Belum ada penilaian</p>
+                      <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest">Belum ada penilaian</p>
                     </div>
                   )}
                 </div>
@@ -5135,14 +5135,14 @@ function PenilaianBawahanView({ data, onReload }: any) {
                 {/* Header karyawan */}
                 <div className="flex items-center gap-3 mb-4 mt-2">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg text-white shadow-md ${
-                    dinilaiSaya ? 'bg-emerald-600' : 'bg-slate-800'
+                    dinilaiSaya ? 'bg-emerald-600' : 'bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm'
                   }`}>
                     {emp.nama[0]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-black text-slate-900 leading-tight truncate text-sm">{emp.nama}</h3>
                     <p className="text-[10px] font-bold text-slate-500 truncate">{emp.jabatan}</p>
-                    <p className="text-[9px] font-medium text-slate-400 italic">{emp.nrp} • {emp.site}</p>
+                    <p className="text-[9px] font-medium text-[#5a6a7e] italic">{emp.nrp} • {emp.site}</p>
                   </div>
                 </div>
 
@@ -5151,12 +5151,12 @@ function PenilaianBawahanView({ data, onReload }: any) {
                   <div className="bg-white border border-slate-100 rounded-2xl p-3 mb-3">
                     <div className="grid grid-cols-2 gap-2 text-center">
                       <div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Rata-rata</p>
+                        <p className="text-[9px] font-black text-[#5a6a7e] uppercase tracking-widest">Rata-rata</p>
                         <p className={`text-xl font-black ${label.color}`}>{nilaiRataRata}</p>
                         <p className={`text-[9px] font-bold ${label.color}`}>{label.label}</p>
                       </div>
                       <div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nilai Anda</p>
+                        <p className="text-[9px] font-black text-[#5a6a7e] uppercase tracking-widest">Nilai Anda</p>
                         <p className="text-xl font-black text-slate-900">{nilaiSaya ?? '-'}</p>
                         <p className="text-[9px] font-bold text-slate-500">
                           {totalPenilai} penilai
@@ -5185,7 +5185,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
                     className={`w-full py-3 rounded-xl font-black text-[10px] tracking-[0.2em] uppercase transition-all shadow-md active:scale-95 ${
                       dinilaiSaya
                         ? 'bg-white text-emerald-600 border-2 border-emerald-500 hover:bg-emerald-500 hover:text-white'
-                        : 'bg-slate-950 text-white hover:bg-blue-600'
+                        : 'bg-[#f4f7fa] text-white hover:bg-[#003d79]'
                     }`}
                   >
                     {dinilaiSaya ? '🔄 Edit Nilai Anda' : '⭐ Beri Penilaian'}
@@ -5203,7 +5203,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
              onClick={() => setShowPenilaiDetail(null)}>
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-lg">
+              <div className="w-12 h-12 rounded-2xl bg-[#f4f7fa] text-white flex items-center justify-center font-black text-lg">
                 {showPenilaiDetail.nama[0]}
               </div>
               <div>
@@ -5212,7 +5212,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
               </div>
             </div>
 
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+            <h4 className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest mb-3">
               Riwayat Penilaian {periode}
             </h4>
 
@@ -5228,7 +5228,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-black text-slate-900">{p.nilai_total}</p>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
+                      <p className="text-[9px] font-bold text-[#5a6a7e] uppercase tracking-widest">Total</p>
                     </div>
                   </div>
                   {p.catatan && (
@@ -5242,7 +5242,7 @@ function PenilaianBawahanView({ data, onReload }: any) {
 
             <button
               onClick={() => setShowPenilaiDetail(null)}
-              className="w-full mt-5 py-3 rounded-xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest"
+              className="w-full mt-5 py-3 rounded-xl bg-[#f4f7fa] text-white font-black text-xs uppercase tracking-widest"
             >
               Tutup
             </button>
@@ -5331,9 +5331,9 @@ function ChangePasswordView({ title }: any) {
           
           {/* Password Lama */}
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Password Lama</label>
+            <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">Password Lama</label>
             <div className="flex items-center bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 focus-within:border-[#003D79] focus-within:bg-white transition-all">
-              <span className="text-slate-400 mr-3 text-lg">🔒</span>
+              <span className="text-[#5a6a7e] mr-3 text-lg">🔒</span>
               <input
                 type={show.lama ? 'text' : 'password'}
                 value={form.password_lama}
@@ -5345,7 +5345,7 @@ function ChangePasswordView({ title }: any) {
               <button
                 type="button"
                 onClick={() => setShow({ ...show, lama: !show.lama })}
-                className="text-slate-400 hover:text-[#003D79] transition-colors ml-2 text-lg active:scale-90"
+                className="text-[#5a6a7e] hover:text-[#003D79] transition-colors ml-2 text-lg active:scale-90"
               >
                 {show.lama ? '🙈' : '👁️'}
               </button>
@@ -5354,9 +5354,9 @@ function ChangePasswordView({ title }: any) {
 
           {/* Password Baru */}
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Password Baru</label>
+            <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">Password Baru</label>
             <div className="flex items-center bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 focus-within:border-[#003D79] focus-within:bg-white transition-all">
-              <span className="text-slate-400 mr-3 text-lg">🔒</span>
+              <span className="text-[#5a6a7e] mr-3 text-lg">🔒</span>
               <input
                 type={show.baru ? 'text' : 'password'}
                 value={form.password_baru}
@@ -5368,7 +5368,7 @@ function ChangePasswordView({ title }: any) {
               <button
                 type="button"
                 onClick={() => setShow({ ...show, baru: !show.baru })}
-                className="text-slate-400 hover:text-[#003D79] transition-colors ml-2 text-lg active:scale-90"
+                className="text-[#5a6a7e] hover:text-[#003D79] transition-colors ml-2 text-lg active:scale-90"
               >
                 {show.baru ? '🙈' : '👁️'}
               </button>
@@ -5377,9 +5377,9 @@ function ChangePasswordView({ title }: any) {
 
           {/* Konfirmasi Password */}
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Konfirmasi Password Baru</label>
+            <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">Konfirmasi Password Baru</label>
             <div className="flex items-center bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 focus-within:border-[#003D79] focus-within:bg-white transition-all">
-              <span className="text-slate-400 mr-3 text-lg">🔒</span>
+              <span className="text-[#5a6a7e] mr-3 text-lg">🔒</span>
               <input
                 type={show.konfirmasi ? 'text' : 'password'}
                 value={form.password_konfirmasi}
@@ -5391,7 +5391,7 @@ function ChangePasswordView({ title }: any) {
               <button
                 type="button"
                 onClick={() => setShow({ ...show, konfirmasi: !show.konfirmasi })}
-                className="text-slate-400 hover:text-[#003D79] transition-colors ml-2 text-lg active:scale-90"
+                className="text-[#5a6a7e] hover:text-[#003D79] transition-colors ml-2 text-lg active:scale-90"
               >
                 {show.konfirmasi ? '🙈' : '👁️'}
               </button>
@@ -5565,7 +5565,7 @@ function SitesManagerView() {
   }
 
   if (loading) return (
-    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+    <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-widest text-xs">
       Memuat data site...
     </div>
   )
@@ -5579,7 +5579,7 @@ function SitesManagerView() {
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🏢</div>
             <div>
-              <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Master Data</p>
+              <p className="text-[#003d79] font-black text-[10px] uppercase tracking-[0.3em] mb-1">Master Data</p>
               <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Kelola Site</h1>
             </div>
           </div>
@@ -5601,7 +5601,7 @@ function SitesManagerView() {
             }`}>
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${
-                  site.is_pusat ? 'bg-amber-500 text-white' : 'bg-[#003D79] text-white'
+                  site.is_pusat ? 'bg-[#003d79] text-white text-white' : 'bg-[#003D79] text-white'
                 }`}>
                   {site.is_pusat ? '⭐' : '🏢'}
                 </div>
@@ -5609,12 +5609,12 @@ function SitesManagerView() {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-black text-slate-900 text-base">{site.nama_site}</h3>
                     {site.is_pusat && (
-                      <span className="bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+                      <span className="bg-[#003d79] text-white text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
                         Pusat
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest">
                     Kode: {site.kode_site || '-'}
                   </p>
                 </div>
@@ -5636,7 +5636,7 @@ function SitesManagerView() {
               </div>
               {site.deputy_info && (
                 <div className="flex items-center gap-2">
-                  <span className="font-black text-slate-400 uppercase tracking-widest text-[9px]">🎖️ Deputy:</span>
+                  <span className="font-black text-[#5a6a7e] uppercase tracking-widest text-[9px]">🎖️ Deputy:</span>
                   <span className="font-bold text-slate-700">{site.deputy_info.nama}</span>
                 </div>
               )}
@@ -5652,7 +5652,7 @@ function SitesManagerView() {
     <p className="text-[9px] font-bold text-blue-400 uppercase mt-0.5">orang aktif</p>
   </div>
   <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
-    <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">🎖️ PJO Site</p>
+    <p className="text-[9px] font-black text-[#003d79] uppercase tracking-widest mb-1">🎖️ PJO Site</p>
     {site.pjo_info?.nama ? (
       <>
         <p className="text-xs font-black text-amber-700 leading-tight truncate">
@@ -5665,7 +5665,7 @@ function SitesManagerView() {
         )}
       </>
     ) : (
-      <p className="text-xs font-black text-slate-400 italic">Belum ada PJO</p>
+      <p className="text-xs font-black text-[#5a6a7e] italic">Belum ada PJO</p>
     )}
   </div>
 </div>
@@ -5699,7 +5699,7 @@ function SitesManagerView() {
                   <span className="font-black text-emerald-700 text-lg">{site.radius_meter}m</span>
                 </div>
                 <div className="flex justify-between items-center text-[10px]">
-                  <span className="font-black text-slate-400 uppercase tracking-widest">🗺️ Koordinat</span>
+                  <span className="font-black text-[#5a6a7e] uppercase tracking-widest">🗺️ Koordinat</span>
                   <span className="font-black text-slate-600 font-mono truncate">
                     {site.latitude ? `${Number(site.latitude).toFixed(4)}, ${Number(site.longitude).toFixed(4)}` : 'Belum diset'}
                   </span>
@@ -5710,13 +5710,13 @@ function SitesManagerView() {
               <div className="grid grid-cols-2 gap-2">
                 <button 
                   onClick={() => openEditModal(site)}
-                  className="py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-[#003D79] active:scale-95 transition-all"
+                  className="py-4 bg-[#f4f7fa] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-[#003D79] active:scale-95 transition-all"
                 >
                   ✏️ EDIT SITE
                 </button>
                 <button 
                   onClick={() => window.location.href = `/dashboard/kelola-unit?site=${encodeURIComponent(site.nama_site)}`}
-                  className="py-4 bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-amber-700 active:scale-95 transition-all"
+                  className="py-4 bg-[#002a57] text-white text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-amber-700 active:scale-95 transition-all"
                 >
                   🚜 KELOLA UNIT
                 </button>
@@ -5726,7 +5726,7 @@ function SitesManagerView() {
         ))}
 
         {sites.length === 0 && (
-          <div className="p-20 text-center text-slate-300 font-bold italic bg-white rounded-[2rem] border-2 border-dashed">
+          <div className="p-20 text-center text-[#5a6a7e] font-bold italic bg-white rounded-[2rem] border-2 border-dashed">
             Belum ada site terdaftar
           </div>
         )}
@@ -5735,13 +5735,13 @@ function SitesManagerView() {
       {/* MODAL EDIT SITE */}
       {editingSite && (
         <>
-          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => !saving && setEditingSite(null)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/70 backdrop-blur-md z-[100]" onClick={() => !saving && setEditingSite(null)} />
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-2xl lg:h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
             {/* Modal Header */}
             <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${
-                editingSite.is_pusat ? 'bg-amber-500' : 'bg-white/10'
+                editingSite.is_pusat ? 'bg-[#003d79] text-white' : 'bg-white/10'
               }`}>
                 {editingSite.is_pusat ? '⭐' : '🏢'}
               </div>
@@ -5856,7 +5856,7 @@ function SitesManagerView() {
                       return emp ? (
                         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-2 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-sm">
+                            <div className="w-9 h-9 rounded-full bg-[#003d79] text-white flex items-center justify-center font-black text-sm">
                               {(emp.nama || '?')[0]}
                             </div>
                             <div>
@@ -5909,7 +5909,7 @@ function SitesManagerView() {
                                   className="w-full p-2.5 rounded-xl text-left bg-white hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-all"
                                 >
                                   <div className="font-bold text-sm text-[#003D79]">{e.nama}</div>
-                                  <div className="text-[10px] text-slate-400">
+                                  <div className="text-[10px] text-[#5a6a7e]">
                                     {e.nrp} · {e.site || '—'} · {e.jabatan || '—'}
                                   </div>
                                 </button>
@@ -5918,7 +5918,7 @@ function SitesManagerView() {
                               e.nama?.toLowerCase().includes(pjoSearch.toLowerCase()) ||
                               e.nrp?.toLowerCase().includes(pjoSearch.toLowerCase())
                             ).length === 0 && (
-                              <div className="text-center py-4 text-xs text-slate-400">
+                              <div className="text-center py-4 text-xs text-[#5a6a7e]">
                                 Tidak ditemukan karyawan &quot;{pjoSearch}&quot;
                               </div>
                             )}
@@ -5993,7 +5993,7 @@ function SitesManagerView() {
                                   className="w-full p-2.5 rounded-xl text-left bg-white hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all"
                                 >
                                   <div className="font-bold text-sm text-slate-800">{e.nama}</div>
-                                  <div className="text-[10px] text-slate-400">
+                                  <div className="text-[10px] text-[#5a6a7e]">
                                     {e.nrp} · {e.site || '—'} · {e.jabatan || '—'}
                                   </div>
                                 </button>
@@ -6002,7 +6002,7 @@ function SitesManagerView() {
                               e.nama?.toLowerCase().includes(deputySearch.toLowerCase()) ||
                               e.nrp?.toLowerCase().includes(deputySearch.toLowerCase())
                             ).length === 0 && (
-                              <div className="text-center py-4 text-xs text-slate-400">
+                              <div className="text-center py-4 text-xs text-[#5a6a7e]">
                                 Tidak ditemukan karyawan &quot;{deputySearch}&quot;
                               </div>
                             )}
@@ -6062,7 +6062,7 @@ function SitesManagerView() {
                 <button 
                   onClick={handleSave}
                   disabled={saving || deleting}
-                  className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
+                  className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-[#003d79] disabled:opacity-50 active:scale-95 transition-all"
                 >
                   {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN PERUBAHAN'}
                 </button>
@@ -6246,7 +6246,7 @@ function GlobalConfigView() {
   }
 
   if (loading) return (
-    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+    <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-widest text-xs">
       Memuat Konfigurasi Global...
     </div>
   )
@@ -6294,7 +6294,7 @@ function GlobalConfigView() {
           <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-emerald-600">
             {stats?.online_now ?? 0}
           </p>
-          <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
+          <p className="text-[8px] font-bold text-[#5a6a7e] mt-1 uppercase">
             15 menit terakhir
           </p>
         </div>
@@ -6306,19 +6306,19 @@ function GlobalConfigView() {
           <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-blue-600">
             {stats?.total_karyawan ?? 0}
           </p>
-          <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
+          <p className="text-[8px] font-bold text-[#5a6a7e] mt-1 uppercase">
             karyawan
           </p>
         </div>
 
         <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-amber-100 shadow-sm">
-          <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest mb-2">
+          <p className="text-[8px] font-black text-[#003d79] uppercase tracking-widest mb-2">
             📊 Sesi Hari Ini
           </p>
           <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-amber-600">
             {stats?.session_hari_ini ?? 0}
           </p>
-          <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
+          <p className="text-[8px] font-bold text-[#5a6a7e] mt-1 uppercase">
             login
           </p>
         </div>
@@ -6327,14 +6327,14 @@ function GlobalConfigView() {
       {/* PANEL 1: BROADCAST NOTIFIKASI */}
       <div className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-lg overflow-hidden">
         <div className="p-6 bg-blue-50/50 border-b-2 border-blue-100 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-xl">
+          <div className="w-10 h-10 bg-[#003d79] rounded-2xl flex items-center justify-center text-xl">
             📢
           </div>
           <div>
             <h2 className="font-black text-slate-900 text-base tracking-tight">
               Broadcast Notifikasi
             </h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest">
               Kirim pesan ke semua user sekaligus
             </p>
           </div>
@@ -6375,7 +6375,7 @@ function GlobalConfigView() {
                     ? 'Mode Urgent / Darurat'
                     : 'Mode Normal'}
                 </p>
-                <p className="text-[9px] text-slate-400 font-bold">
+                <p className="text-[9px] text-[#5a6a7e] font-bold">
                   {broadcastForm.is_urgent
                     ? 'Banner merah mencolok di semua HP'
                     : 'Klik untuk aktifkan mode darurat'}
@@ -6391,8 +6391,8 @@ function GlobalConfigView() {
 
           {/* Input Judul (Opsional) */}
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
-              Judul Notifikasi <span className="text-slate-300">(opsional)</span>
+            <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
+              Judul Notifikasi <span className="text-[#5a6a7e]">(opsional)</span>
             </label>
             <input
               type="text"
@@ -6407,8 +6407,8 @@ function GlobalConfigView() {
 
           {/* Input Pesan (Opsional) */}
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
-              Isi Pesan <span className="text-slate-300">(opsional)</span>
+            <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
+              Isi Pesan <span className="text-[#5a6a7e]">(opsional)</span>
             </label>
             <textarea
               value={broadcastForm.pesan}
@@ -6423,7 +6423,7 @@ function GlobalConfigView() {
 
           {/* Upload Multi Gambar (Max 10) */}
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+            <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
               📷 Lampiran Gambar (Opsional, Max 10)
               <span className="ml-2 text-blue-500">
                 {broadcastForm.images.length}/10
@@ -6475,7 +6475,7 @@ function GlobalConfigView() {
                   ⏳ MENGUNGGAH GAMBAR...
                 </p>
               ) : broadcastForm.images.length === 0 ? (
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest py-4">
+                <p className="text-[#5a6a7e] font-bold text-xs uppercase tracking-widest py-4">
                   Klik untuk pilih gambar (bisa multi-select)
                 </p>
               ) : (
@@ -6521,10 +6521,10 @@ function GlobalConfigView() {
             disabled={broadcastLoading}
             className={`w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 shadow-lg ${
               broadcastLoading
-                ? 'bg-slate-200 text-slate-400'
+                ? 'bg-slate-200 text-[#5a6a7e]'
                 : broadcastForm.is_urgent
                   ? 'bg-rose-600 text-white shadow-rose-200 hover:bg-rose-700'
-                  : 'bg-[#003D79] text-white shadow-blue-200 hover:bg-blue-700'
+                  : 'bg-[#003D79] text-white shadow-blue-200 hover:bg-[#003d79]'
             }`}
           >
             {broadcastLoading
@@ -6538,14 +6538,14 @@ function GlobalConfigView() {
       <div className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-lg overflow-hidden">
         <div className="p-6 bg-amber-50/50 border-b-2 border-amber-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-500 rounded-2xl flex items-center justify-center text-xl">
+            <div className="w-10 h-10 bg-[#003d79] text-white rounded-2xl flex items-center justify-center text-xl">
               📋
             </div>
             <div>
               <h2 className="font-black text-slate-900 text-base tracking-tight">
                 Pengumuman Aktif
               </h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest">
                 {announcements.length} pengumuman tampil di HP karyawan
               </p>
             </div>
@@ -6559,7 +6559,7 @@ function GlobalConfigView() {
           {announcements.length === 0 ? (
             <div className="p-12 text-center">
               <div className="text-4xl mb-3 opacity-20">📭</div>
-              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest">
                 Belum ada pengumuman aktif
               </p>
             </div>
@@ -6588,7 +6588,7 @@ function GlobalConfigView() {
                   <p className="text-[10px] text-slate-500 font-medium truncate italic mb-1">
                     {ann.content || '(Tanpa Pesan)'}
                   </p>
-                  <div className="flex items-center gap-3 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                  <div className="flex items-center gap-3 text-[9px] font-bold text-[#5a6a7e] uppercase tracking-widest">
                     <span>📅 {new Date(ann.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                     {ann.images?.length > 0 && (
                       <span>🖼️ {ann.images.length} Foto</span>
@@ -6601,7 +6601,7 @@ function GlobalConfigView() {
                   disabled={deletingId === ann.id}
                   className={`flex-shrink-0 px-4 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
                     deletingId === ann.id
-                      ? 'bg-slate-100 text-slate-300'
+                      ? 'bg-slate-100 text-[#5a6a7e]'
                       : 'bg-rose-50 text-rose-600 border-2 border-rose-100 hover:bg-rose-600 hover:text-white hover:border-rose-600'
                   }`}
                 >
@@ -6626,7 +6626,7 @@ function GlobalConfigView() {
               <h2 className="font-black text-slate-900 text-base tracking-tight">
                 User Online Sekarang
               </h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest">
                 Refresh otomatis setiap 30 detik
               </p>
             </div>
@@ -6643,7 +6643,7 @@ function GlobalConfigView() {
           {onlineUsers.length === 0 ? (
             <div className="p-16 text-center">
               <div className="text-4xl mb-3 opacity-20">🏝️</div>
-              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest">
                 Tidak ada user online saat ini
               </p>
             </div>
@@ -6670,7 +6670,7 @@ function GlobalConfigView() {
                     <p className="font-black text-sm text-slate-900 truncate">
                       {u.nama}
                     </p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
+                    <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest truncate">
                       {u.nrp} • {u.jabatan} • {u.site}
                     </p>
                   </div>
@@ -6678,7 +6678,7 @@ function GlobalConfigView() {
                     <p className="text-[10px] font-black text-emerald-600">
                       🟢 Aktif
                     </p>
-                    <p className="text-[9px] font-bold text-slate-400">
+                    <p className="text-[9px] font-bold text-[#5a6a7e]">
                       {minsAgo !== null ? `${minsAgo} mnt lalu` : '-'}
                     </p>
                   </div>
@@ -6743,7 +6743,7 @@ function GlobalConfigView() {
             disabled={forceLoading}
             className={`w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 border-2 ${
               forceLoading
-                ? 'bg-slate-100 text-slate-400 border-slate-200'
+                ? 'bg-slate-100 text-[#5a6a7e] border-slate-200'
                 : 'bg-rose-600 text-white border-rose-600 shadow-lg shadow-rose-200 hover:bg-rose-700'
             }`}
           >
@@ -6848,7 +6848,7 @@ function ResetPasswordAdminView() {
   )
 
   if (loading) return (
-    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+    <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-widest text-xs">
       Memuat data karyawan...
     </div>
   )
@@ -6863,7 +6863,7 @@ function ResetPasswordAdminView() {
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🔧</div>
             <div>
-             <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Manajemen Akses</p>
+             <p className="text-[#003d79] font-black text-[10px] uppercase tracking-[0.3em] mb-1">Manajemen Akses</p>
               <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Reset Password Karyawan</h1>
             </div>
           </div>
@@ -6876,11 +6876,11 @@ function ResetPasswordAdminView() {
       {/* STATS */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm">
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">👥 Total Karyawan</p>
+          <p className="text-[8px] font-black text-[#5a6a7e] uppercase tracking-widest mb-1">👥 Total Karyawan</p>
           <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-slate-900">{employees.length}</p>
         </div>
         <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-amber-50 shadow-sm">
-          <p className="text-[8px] font-black text-amber-400 uppercase tracking-widest mb-1">🔧 Direset Hari Ini</p>
+          <p className="text-[8px] font-black text-[#003d79] uppercase tracking-widest mb-1">🔧 Direset Hari Ini</p>
           <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-amber-600">{recentResets.length}</p>
         </div>
       </div>
@@ -6903,7 +6903,7 @@ function ResetPasswordAdminView() {
             <span className="text-xl">📜</span>
             <div>
               <h3 className="font-black text-slate-900 text-sm">Riwayat Reset Sesi Ini</h3>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Log otomatis hapus saat halaman ditutup</p>
+              <p className="text-[9px] font-bold text-[#5a6a7e] uppercase tracking-widest">Log otomatis hapus saat halaman ditutup</p>
             </div>
           </div>
           <div className="divide-y divide-amber-50">
@@ -6914,9 +6914,9 @@ function ResetPasswordAdminView() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-black text-slate-900 truncate">{r.nama}</p>
-                  <p className="text-[9px] font-bold text-slate-400">{r.nrp} • Reset ke {r.reset_to}</p>
+                  <p className="text-[9px] font-bold text-[#5a6a7e]">{r.nrp} • Reset ke {r.reset_to}</p>
                 </div>
-                <span className="text-[9px] font-black text-slate-400">{r.waktu}</span>
+                <span className="text-[9px] font-black text-[#5a6a7e]">{r.waktu}</span>
               </div>
             ))}
           </div>
@@ -6926,7 +6926,7 @@ function ResetPasswordAdminView() {
       {/* LIST KARYAWAN */}
       <div className="space-y-2">
         {filtered.length === 0 ? (
-          <div className="p-20 text-center text-slate-300 font-bold italic bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
+          <div className="p-20 text-center text-[#5a6a7e] font-bold italic bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
             Karyawan tidak ditemukan
           </div>
         ) : (
@@ -6935,18 +6935,18 @@ function ResetPasswordAdminView() {
               key={emp.nrp}
               className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 hover:border-amber-200 transition-all group"
             >
-              <div className="w-11 h-11 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-slate-400 group-hover:bg-[#003D79] group-hover:text-white transition-all text-sm">
+              <div className="w-11 h-11 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-[#5a6a7e] group-hover:bg-[#003D79] group-hover:text-white transition-all text-sm">
                 {(emp.nama || '?')[0]}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-black text-sm text-slate-900 truncate">{emp.nama}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
+                <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest truncate">
                   {emp.nrp} • {emp.jabatan || '-'} • {emp.site || '-'}
                 </p>
               </div>
               <button
                 onClick={() => openResetModal(emp)}
-                className="bg-amber-500 text-white px-4 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-amber-600 active:scale-95 transition-all whitespace-nowrap"
+                className="bg-[#003d79] text-white text-white px-4 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-[#002a57] text-white active:scale-95 transition-all whitespace-nowrap"
               >
                 🔧 RESET
               </button>
@@ -6954,7 +6954,7 @@ function ResetPasswordAdminView() {
           ))
         )}
         {filtered.length > 50 && (
-          <p className="text-center text-[10px] font-black text-slate-300 uppercase tracking-widest py-4">
+          <p className="text-center text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest py-4">
             Menampilkan 50 dari {filtered.length} hasil. Persempit pencarian untuk akurasi.
           </p>
         )}
@@ -6963,7 +6963,7 @@ function ResetPasswordAdminView() {
       {/* MODAL RESET PASSWORD */}
       {selectedEmp && (
         <>
-          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => !processing && setSelectedEmp(null)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/70 backdrop-blur-md z-[100]" onClick={() => !processing && setSelectedEmp(null)} />
           <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 lg:inset-x-auto lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-md bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden">
 
             {/* Modal Header */}
@@ -6996,7 +6996,7 @@ function ResetPasswordAdminView() {
             {/* Modal Body */}
             <div className="p-6 space-y-5">
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest mb-3">
                   Pilih Mode Reset
                 </p>
 
@@ -7017,7 +7017,7 @@ function ResetPasswordAdminView() {
                     </div>
                     <div>
                       <p className="font-black text-sm text-slate-900">Reset ke NRP</p>
-                      <p className="text-[10px] text-slate-400 font-bold">
+                      <p className="text-[10px] text-[#5a6a7e] font-bold">
                         Password akan menjadi: <span className="font-black text-blue-600 font-mono">{selectedEmp.nrp}</span>
                       </p>
                     </div>
@@ -7035,13 +7035,13 @@ function ResetPasswordAdminView() {
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      mode === 'custom' ? 'border-amber-500 bg-amber-500' : 'border-slate-300'
+                      mode === 'custom' ? 'border-amber-500 bg-[#003d79] text-white' : 'border-slate-300'
                     }`}>
                       {mode === 'custom' && <span className="text-white text-xs">✓</span>}
                     </div>
                     <div>
                       <p className="font-black text-sm text-slate-900">Password Custom</p>
-                      <p className="text-[10px] text-slate-400 font-bold">Tentukan password sendiri (min 4 karakter)</p>
+                      <p className="text-[10px] text-[#5a6a7e] font-bold">Tentukan password sendiri (min 4 karakter)</p>
                     </div>
                   </div>
                 </button>
@@ -7086,8 +7086,8 @@ function ResetPasswordAdminView() {
                 disabled={processing || (mode === 'custom' && customPassword.length < 4)}
                 className={`flex-[2] py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
                   processing || (mode === 'custom' && customPassword.length < 4)
-                    ? 'bg-slate-200 text-slate-400'
-                    : 'bg-amber-500 text-white shadow-xl shadow-amber-200 hover:bg-amber-600'
+                    ? 'bg-slate-200 text-[#5a6a7e]'
+                    : 'bg-[#003d79] text-white text-white shadow-xl shadow-amber-200 hover:bg-[#002a57] text-white'
                 }`}
               >
                 {processing ? '⏳ MEMPROSES...' : '🔧 RESET PASSWORD SEKARANG'}
@@ -7200,7 +7200,7 @@ function SystemAuditView() {
   }
 
   if (loading) return (
-    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+    <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-widest text-xs">
       Memuat riwayat audit log...
     </div>
   )
@@ -7239,7 +7239,7 @@ function SystemAuditView() {
       {/* STATS CARDS */}
       <div className="grid grid-cols-3 gap-2 lg:gap-3">
   <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm">
-    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 lg:mb-2 truncate">📊 Total Log</p>
+    <p className="text-[8px] font-black text-[#5a6a7e] uppercase tracking-widest mb-1 lg:mb-2 truncate">📊 Total Log</p>
     <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900">{stats.total || 0}</p>
   </div>
   <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-emerald-50 shadow-sm">
@@ -7335,7 +7335,7 @@ function SystemAuditView() {
 
         <button
           onClick={() => loadLogs()}
-          className="w-full py-2.5 lg:py-3 bg-[#003D79] text-white rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all shadow-lg"
+          className="w-full py-2.5 lg:py-3 bg-[#003D79] text-white rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#003d79] active:scale-95 transition-all shadow-lg"
         >
           🔍 Terapkan Filter
         </button>
@@ -7345,12 +7345,12 @@ function SystemAuditView() {
       <div className="bg-white rounded-2xl lg:rounded-[2.5rem] border-2 border-slate-50 shadow-lg overflow-hidden">
   <div className="p-3 lg:p-5 bg-slate-50/50 border-b-2 border-slate-100 flex items-center justify-between">
     <div className="flex items-center gap-2 lg:gap-3">
-      <div className="w-8 h-8 lg:w-10 lg:h-10 bg-slate-900 rounded-xl lg:rounded-2xl flex items-center justify-center text-base lg:text-xl">
+      <div className="w-8 h-8 lg:w-10 lg:h-10 bg-[#f4f7fa] rounded-xl lg:rounded-2xl flex items-center justify-center text-base lg:text-xl">
         📜
       </div>
       <div>
         <h2 className="font-black text-slate-900 text-sm lg:text-base tracking-tight">Riwayat Aktivitas</h2>
-        <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        <p className="text-[9px] lg:text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest">
           {logs.length} log terbaru
         </p>
       </div>
@@ -7361,7 +7361,7 @@ function SystemAuditView() {
           {logs.length === 0 ? (
             <div className="p-16 text-center">
               <div className="text-4xl mb-3 opacity-20">📭</div>
-              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest">
                 Belum ada log yang cocok dengan filter
               </p>
             </div>
@@ -7397,18 +7397,18 @@ function SystemAuditView() {
                       👤 <span className="text-slate-700">{log.actor_nama || log.actor_nrp}</span>
                       {log.target_label && (
                         <>
-                          <span className="text-slate-300 mx-1">→</span>
+                          <span className="text-[#5a6a7e] mx-1">→</span>
                           <span className="text-slate-700 italic">"{log.target_label}"</span>
                         </>
                       )}
                     </p>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                    <p className="text-[9px] font-bold text-[#5a6a7e] uppercase tracking-widest">
                       🕐 {timeAgo(log.created_at)} • {log.ip_address || '-'}
                     </p>
                   </div>
 
                   {/* Arrow */}
-                  <div className="text-slate-300 group-hover:text-[#003D79] transition-colors flex-shrink-0 mt-2">
+                  <div className="text-[#5a6a7e] group-hover:text-[#003D79] transition-colors flex-shrink-0 mt-2">
                     →
                   </div>
                 </button>
@@ -7421,7 +7421,7 @@ function SystemAuditView() {
       {/* MODAL DETAIL LOG */}
       {selectedLog && (
         <>
-          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setSelectedLog(null)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/70 backdrop-blur-md z-[100]" onClick={() => setSelectedLog(null)} />
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-lg lg:h-[85vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
             {/* Modal Header */}
@@ -7493,8 +7493,8 @@ function SystemAuditView() {
               {/* Detail JSON */}
               {selectedLog.detail && Object.keys(selectedLog.detail).length > 0 && (
                 <div className="bg-white p-5 rounded-2xl border-2 border-slate-100">
-                  <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3">📦 Detail Lengkap</p>
-                  <pre className="text-[10px] font-mono bg-slate-900 text-emerald-400 p-4 rounded-xl overflow-x-auto whitespace-pre-wrap break-words">
+                  <p className="text-[10px] font-black text-[#003d79] uppercase tracking-widest mb-3">📦 Detail Lengkap</p>
+                  <pre className="text-[10px] font-mono bg-[#f4f7fa] text-emerald-400 p-4 rounded-xl overflow-x-auto whitespace-pre-wrap break-words">
                     {JSON.stringify(selectedLog.detail, null, 2)}
                   </pre>
                 </div>
@@ -7507,7 +7507,7 @@ function SystemAuditView() {
                   <DetailRow label="Waktu" value={formatDateTime(selectedLog.created_at)} />
                   <DetailRow label="IP Address" value={selectedLog.ip_address} mono />
                   <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">User Agent</p>
+                    <p className="text-[9px] font-black text-[#5a6a7e] uppercase tracking-widest mb-1">User Agent</p>
                     <p className="text-[10px] font-mono text-slate-600 bg-slate-50 p-2 rounded-lg break-all">
                       {selectedLog.user_agent || '-'}
                     </p>
@@ -7517,8 +7517,8 @@ function SystemAuditView() {
 
               {/* Log ID */}
               <div className="text-center pt-2">
-                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Log ID</p>
-                <p className="text-[10px] font-mono text-slate-400">{selectedLog.id}</p>
+                <p className="text-[9px] font-black text-[#5a6a7e] uppercase tracking-widest">Log ID</p>
+                <p className="text-[10px] font-mono text-[#5a6a7e]">{selectedLog.id}</p>
               </div>
             </div>
 
@@ -7526,7 +7526,7 @@ function SystemAuditView() {
             <div className="p-4 bg-white border-t-2 border-slate-100">
               <button
                 onClick={() => setSelectedLog(null)}
-                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#003D79] active:scale-95 transition-all"
+                className="w-full py-4 bg-[#f4f7fa] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#003D79] active:scale-95 transition-all"
               >
                 Tutup Detail
               </button>
@@ -7723,7 +7723,7 @@ function ApprovalCenterView() {
   ]
 
   if (loading) return (
-    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+    <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-widest text-xs">
       Memuat pengajuan...
     </div>
   )
@@ -7738,7 +7738,7 @@ function ApprovalCenterView() {
           className={`flex-1 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
             mainTab === 'pengajuan'
               ? 'bg-[#003D79] text-white shadow-lg'
-              : 'text-slate-400 hover:bg-slate-50'
+              : 'text-[#5a6a7e] hover:bg-slate-50'
           }`}
         >
           📋 Pengajuan
@@ -7754,8 +7754,8 @@ function ApprovalCenterView() {
           onClick={() => setMainTab('revisi')}
           className={`flex-1 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
             mainTab === 'revisi'
-              ? 'bg-amber-500 text-white shadow-lg'
-              : 'text-slate-400 hover:bg-slate-50'
+              ? 'bg-[#003d79] text-white text-white shadow-lg'
+              : 'text-[#5a6a7e] hover:bg-slate-50'
           }`}
         >
           ✏️ Revisi Absensi
@@ -7808,7 +7808,7 @@ function ApprovalCenterView() {
             className={`flex-1 py-2 lg:py-2.5 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-wider transition-all ${
               tahap === 'ATASAN'
                 ? 'bg-[#003D79] text-white shadow-lg'
-                : 'text-slate-400 hover:bg-slate-50'
+                : 'text-[#5a6a7e] hover:bg-slate-50'
             }`}
           >
             👔 Sebagai Atasan
@@ -7818,7 +7818,7 @@ function ApprovalCenterView() {
             className={`flex-1 py-2 lg:py-2.5 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-wider transition-all ${
               tahap === 'PJO'
                 ? 'bg-[#003D79] text-white shadow-lg'
-                : 'text-slate-400 hover:bg-slate-50'
+                : 'text-[#5a6a7e] hover:bg-slate-50'
             }`}
           >
             🎖️ Sebagai PJO
@@ -7827,7 +7827,7 @@ function ApprovalCenterView() {
       ) : (
         // Single role: tampilkan label saja (bukan tombol)
         <div className="bg-white p-2.5 lg:p-4 rounded-xl lg:rounded-2xl border border-slate-100 shadow-sm text-center">
-          <p className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-wider">Approval sebagai</p>
+          <p className="text-[9px] lg:text-[10px] font-black text-[#5a6a7e] uppercase tracking-wider">Approval sebagai</p>
           <p className="text-sm lg:text-lg font-black text-[#003D79] mt-0.5">
             {showPjoTab ? '🎖️ PJO' : '👔 ATASAN'}
           </p>
@@ -7836,7 +7836,7 @@ function ApprovalCenterView() {
 
       {/* FILTER JENIS - PILL BUTTONS */}
       <div className="bg-white p-2.5 lg:p-4 rounded-xl lg:rounded-2xl border border-slate-100 shadow-sm">
-        <p className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">
+        <p className="text-[9px] lg:text-[10px] font-black text-[#5a6a7e] uppercase tracking-wider mb-2">
           Filter Jenis Pengajuan
         </p>
         <div className="grid grid-cols-3 gap-1.5 lg:gap-2">
@@ -7867,10 +7867,10 @@ function ApprovalCenterView() {
             <div className="text-5xl mb-4 opacity-20">
               {stats.total === 0 ? '🎉' : '📭'}
             </div>
-            <h3 className="font-black text-slate-400 uppercase tracking-[0.2em] text-sm mb-2">
+            <h3 className="font-black text-[#5a6a7e] uppercase tracking-[0.2em] text-sm mb-2">
               {stats.total === 0 ? 'Semua Beres!' : 'Filter Tidak Ada Hasil'}
             </h3>
-            <p className="text-[10px] text-slate-300 font-bold italic">
+            <p className="text-[10px] text-[#5a6a7e] font-bold italic">
               {stats.total === 0 
                 ? 'Tidak ada pengajuan yang perlu diproses saat ini' 
                 : 'Coba pilih filter lain di atas'}
@@ -7900,7 +7900,7 @@ function ApprovalCenterView() {
                       <h3 className="font-black text-sm text-slate-900 truncate">{item.judul}</h3>
                     </div>
                     <p className="text-xs font-bold text-slate-700 truncate">👤 {item.karyawan_nama}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest">
                       {item.karyawan_jabatan} • {item.karyawan_site}
                     </p>
                   </div>
@@ -7909,7 +7909,7 @@ function ApprovalCenterView() {
                 {/* Detail Row */}
                 <div className="bg-slate-50/70 p-2 lg:p-3 rounded-lg lg:rounded-xl space-y-1 lg:space-y-1.5 mb-2 lg:mb-3">
                   <div className="flex justify-between text-[11px]">
-                    <span className="font-black text-slate-400 uppercase tracking-widest">📅 Tanggal</span>
+                    <span className="font-black text-[#5a6a7e] uppercase tracking-widest">📅 Tanggal</span>
                     <span className="font-black text-slate-900">
                       {new Date(item.tanggal_mulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                       {item.tanggal_selesai && item.tanggal_selesai !== item.tanggal_mulai && (
@@ -7918,17 +7918,17 @@ function ApprovalCenterView() {
                     </span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="font-black text-slate-400 uppercase tracking-widest">⏰ Durasi</span>
+                    <span className="font-black text-[#5a6a7e] uppercase tracking-widest">⏰ Durasi</span>
                     <span className="font-black text-slate-900">{item.durasi}</span>
                   </div>
                   {item.alasan_izin && (
                     <div className="flex justify-between text-[11px]">
-                      <span className="font-black text-slate-400 uppercase tracking-widest">📝 Alasan Izin</span>
+                      <span className="font-black text-[#5a6a7e] uppercase tracking-widest">📝 Alasan Izin</span>
                       <span className="font-black text-emerald-600 text-right max-w-[60%] truncate">{item.alasan_izin}</span>
                     </div>
                   )}
                   <div className="border-t border-slate-100 pt-2">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">💬 Alasan</p>
+                    <p className="text-[9px] font-black text-[#5a6a7e] uppercase tracking-widest mb-1">💬 Alasan</p>
                     <p className="text-[11px] font-medium text-slate-700 italic line-clamp-2">"{item.alasan}"</p>
                   </div>
                 </div>
@@ -7976,7 +7976,7 @@ function ApprovalCenterView() {
       {/* MODAL DETAIL */}
       {detailItem && (
         <>
-          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setDetailItem(null)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/70 backdrop-blur-md z-[100]" onClick={() => setDetailItem(null)} />
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-md lg:h-[85vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
             <div className={`p-6 ${COLOR_MAP[detailItem.color]?.bg || 'bg-blue-50'} border-b-2 ${COLOR_MAP[detailItem.color]?.border || 'border-blue-100'} flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4`}>
@@ -8029,7 +8029,7 @@ function ApprovalCenterView() {
                     <DetailRowSimple label="Alasan Izin" value={detailItem.alasan_izin} />
                   )}
                   <div className="border-t border-slate-100 pt-2 mt-2">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Alasan</p>
+                    <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest mb-2">Alasan</p>
                     <p className="text-xs font-medium text-slate-700 italic bg-slate-50 p-3 rounded-xl">
                       "{detailItem.alasan || '-'}"
                     </p>
@@ -8113,13 +8113,13 @@ function ApprovalCenterView() {
           </div>
 
           {revisiLoading ? (
-            <div className="bg-white p-12 rounded-2xl text-center text-slate-400 text-sm font-bold animate-pulse">
+            <div className="bg-white p-12 rounded-2xl text-center text-[#5a6a7e] text-sm font-bold animate-pulse">
               Memuat pengajuan revisi...
             </div>
           ) : revisiItems.length === 0 ? (
             <div className="bg-white p-12 rounded-2xl text-center border border-dashed border-slate-200">
               <div className="text-4xl mb-3 opacity-30">🎉</div>
-              <p className="font-black text-slate-400 uppercase tracking-widest text-xs">
+              <p className="font-black text-[#5a6a7e] uppercase tracking-widest text-xs">
                 Tidak ada pengajuan revisi
               </p>
             </div>
@@ -8150,7 +8150,7 @@ function ApprovalCenterView() {
                           {item.employee_nama || item.employee_nrp}
                         </span>
                       </div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest">
                         {item.employee_nrp} · {item.employee_site_resolved || '—'}
                       </p>
                     </div>
@@ -8159,31 +8159,31 @@ function ApprovalCenterView() {
                   {/* Detail */}
                   <div className="bg-slate-50 rounded-xl p-3 space-y-1.5 mb-3 text-[11px]">
                     <div className="flex justify-between">
-                      <span className="font-black text-slate-400 uppercase tracking-widest">📅 Tanggal</span>
+                      <span className="font-black text-[#5a6a7e] uppercase tracking-widest">📅 Tanggal</span>
                       <span className="font-bold text-slate-800">
                         {new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </span>
                     </div>
                     {item.requested_clock_in && (
                       <div className="flex justify-between">
-                        <span className="font-black text-slate-400 uppercase tracking-widest">🕐 Clock In</span>
+                        <span className="font-black text-[#5a6a7e] uppercase tracking-widest">🕐 Clock In</span>
                         <span className="font-bold text-emerald-700">{item.requested_clock_in.slice(0, 5)}</span>
                       </div>
                     )}
                     {item.requested_clock_out && (
                       <div className="flex justify-between">
-                        <span className="font-black text-slate-400 uppercase tracking-widest">🕐 Clock Out</span>
+                        <span className="font-black text-[#5a6a7e] uppercase tracking-widest">🕐 Clock Out</span>
                         <span className="font-bold text-emerald-700">{item.requested_clock_out.slice(0, 5)}</span>
                       </div>
                     )}
                     {item.approver_target_nama && (
                       <div className="flex justify-between">
-                        <span className="font-black text-slate-400 uppercase tracking-widest">👤 Ditujukan</span>
+                        <span className="font-black text-[#5a6a7e] uppercase tracking-widest">👤 Ditujukan</span>
                         <span className="font-bold text-[#003D79]">{item.approver_target_nama}</span>
                       </div>
                     )}
                     <div className="border-t border-slate-100 pt-2">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">💬 Alasan</p>
+                      <p className="text-[9px] font-black text-[#5a6a7e] uppercase tracking-widest mb-1">💬 Alasan</p>
                       <p className="text-[11px] text-slate-700 italic">"{item.alasan}"</p>
                     </div>
                   </div>
@@ -8220,7 +8220,7 @@ function ApprovalCenterView() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
           <div className="bg-white rounded-[2rem] w-full max-w-sm p-6 shadow-2xl">
             <h3 className="font-black text-[#003D79] text-lg mb-1">❌ Tolak Revisi?</h3>
-            <p className="text-xs text-slate-400 mb-4">Isi alasan penolakan (wajib)</p>
+            <p className="text-xs text-[#5a6a7e] mb-4">Isi alasan penolakan (wajib)</p>
             <textarea
               value={revisiRejectNote}
               onChange={e => setRevisiRejectNote(e.target.value)}
@@ -8255,7 +8255,7 @@ function ApprovalCenterView() {
 function DetailRowSimple({ label, value, mono = false }: any) {
   return (
     <div className="flex items-start justify-between gap-3 border-b border-slate-50 pb-2 last:border-0">
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex-shrink-0">{label}</p>
+      <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest flex-shrink-0">{label}</p>
       <div className={`text-xs font-bold text-slate-800 text-right max-w-[65%] ${mono ? 'font-mono' : ''}`}>
         {value || '-'}
       </div>
@@ -8267,7 +8267,7 @@ function DetailRowSimple({ label, value, mono = false }: any) {
 function DetailRow({ label, value, mono = false }: any) {
   return (
     <div className="flex items-start justify-between gap-3 border-b border-slate-50 pb-2 last:border-0">
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex-shrink-0">{label}</p>
+      <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest flex-shrink-0">{label}</p>
       <div className={`text-xs font-bold text-slate-800 text-right ${mono ? 'font-mono' : ''}`}>
         {value || '-'}
       </div>
@@ -8279,7 +8279,7 @@ function DetailRow({ label, value, mono = false }: any) {
 function FieldInput({ label, value, onChange, type = 'text', placeholder = '' }: any) {
   return (
     <div>
-      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 tracking-widest">{label}</label>
+      <label className="block text-[9px] font-black uppercase text-[#5a6a7e] mb-1 tracking-widest">{label}</label>
       <input 
         type={type}
         value={value}
@@ -8470,12 +8470,12 @@ function PermissionManagerView() {
   }
 
   if (loading) return (
-    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+    <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-widest text-xs">
       Memuat data karyawan & permissions...
     </div>
   )
 
-  if (!data) return <div className="p-10 text-center text-slate-400">Gagal memuat data</div>
+  if (!data) return <div className="p-10 text-center text-[#5a6a7e]">Gagal memuat data</div>
 
   const filteredEmps = (data.employees || []).filter((e: any) =>
     e.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -8504,7 +8504,7 @@ function PermissionManagerView() {
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🔐</div>
             <div>
-              <p className="text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">Manajemen Akses</p>
+              <p className="text-[#003d79] font-black text-[10px] uppercase tracking-[0.3em] mb-1">Manajemen Akses</p>
               <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Kelola Permission</h1>
             </div>
           </div>
@@ -8517,7 +8517,7 @@ function PermissionManagerView() {
       {/* STATS BAR */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-white p-4 rounded-2xl border-2 border-slate-50 shadow-sm">
-          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Karyawan</p>
+          <p className="text-[8px] font-black text-[#5a6a7e] uppercase tracking-widest mb-1">Total Karyawan</p>
           <p className="text-xl font-black text-slate-900">{stats.total}</p>
         </div>
         <div className="bg-white p-4 rounded-2xl border-2 border-blue-50 shadow-sm">
@@ -8549,14 +8549,14 @@ function PermissionManagerView() {
             onClick={() => openEmployeeModal(emp)}
             className="w-full text-left bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 shadow-sm hover:shadow-lg transition-all active:scale-98 flex items-center gap-2 lg:gap-4 border-slate-50 hover:border-blue-200"
           >
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-lg bg-slate-900">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-lg bg-[#f4f7fa]">
               {emp.nama[0]}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-black text-slate-900 text-sm truncate">{emp.nama}</h3>
               </div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
+              <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest truncate">
                 {emp.nrp} • {emp.jabatan || '-'} • {emp.site || '-'}
               </p>
               {emp.roles && emp.roles.length > 0 && (
@@ -8576,19 +8576,19 @@ function PermissionManagerView() {
             </div>
             <div className="text-right">
               <p className={`text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black ${
-                emp.permission_count === 0 ? 'text-slate-300' :
+                emp.permission_count === 0 ? 'text-[#5a6a7e]' :
                 emp.permission_count < 15 ? 'text-blue-600' :
                 emp.permission_count < 40 ? 'text-amber-600' : 'text-emerald-600'
               }`}>
                 {emp.permission_count}
               </p>
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">/ {stats.total_perms}</p>
+              <p className="text-[8px] font-black text-[#5a6a7e] uppercase tracking-widest">/ {stats.total_perms}</p>
             </div>
           </button>
         ))}
 
         {filteredEmps.length === 0 && (
-          <div className="p-20 text-center text-slate-300 font-bold italic bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
+          <div className="p-20 text-center text-[#5a6a7e] font-bold italic bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
             Karyawan tidak ditemukan
           </div>
         )}
@@ -8597,7 +8597,7 @@ function PermissionManagerView() {
       {/* MODAL DETAIL PERMISSION */}
       {selectedEmp && (
         <>
-          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={handleCloseModal} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/70 backdrop-blur-md z-[100]" onClick={handleCloseModal} />
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-3xl lg:max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
             {/* Modal Header */}
@@ -8610,7 +8610,7 @@ function PermissionManagerView() {
                 <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest truncate">
                   {selectedEmp.nrp} • {selectedEmp.jabatan}
                 </p>
-                <p className="text-amber-400 text-[10px] font-black uppercase tracking-widest mt-1">
+                <p className="text-[#003d79] text-[10px] font-black uppercase tracking-widest mt-1">
                   {draftPerms.length} / {data.total_permissions} Permission Aktif
                 </p>
               </div>
@@ -8647,8 +8647,8 @@ function PermissionManagerView() {
                   disabled={!selectedTemplate || applyingTemplate}
                   className={`px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
                     selectedTemplate && !applyingTemplate
-                      ? 'bg-[#003D79] text-white shadow-lg shadow-blue-200 hover:bg-blue-700'
-                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      ? 'bg-[#003D79] text-white shadow-lg shadow-blue-200 hover:bg-[#003d79]'
+                      : 'bg-slate-200 text-[#5a6a7e] cursor-not-allowed'
                   }`}
                 >
                   {applyingTemplate ? '⏳' : '⚡ Apply'}
@@ -8685,7 +8685,7 @@ function PermissionManagerView() {
             {/* Modal Body - Permissions List */}
             <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
               {loadingModal ? (
-                <div className="p-20 text-center font-black text-slate-400 animate-pulse uppercase tracking-widest text-xs">
+                <div className="p-20 text-center font-black text-[#5a6a7e] animate-pulse uppercase tracking-widest text-xs">
                   Memuat permissions...
                 </div>
               ) : (
@@ -8695,7 +8695,7 @@ function PermissionManagerView() {
                       <h3 className="text-[10px] font-black text-[#003D79] uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
                         <span className="w-4 h-[2px] bg-[#003D79]"></span>
                         {category}
-                        <span className="text-slate-400">
+                        <span className="text-[#5a6a7e]">
                           ({perms.filter(p => draftPerms.includes(p.perm_key)).length}/{perms.length})
                         </span>
                       </h3>
@@ -8715,13 +8715,13 @@ function PermissionManagerView() {
                               } ${isChanged ? 'ring-2 ring-amber-400 ring-offset-2' : ''}`}
                             >
                               {isChanged && (
-                                <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">
+                                <span className="absolute -top-1 -right-1 bg-[#003d79] text-white text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">
                                   Draft
                                 </span>
                               )}
                               <div className="flex items-center gap-3">
                                 <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                                  isActive ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-300'
+                                  isActive ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-[#5a6a7e]'
                                 }`}>
                                   {isActive ? '✓' : ''}
                                 </div>
@@ -8729,7 +8729,7 @@ function PermissionManagerView() {
                                   <div className="flex items-center gap-2 mb-0.5">
                                     <p className="font-black text-xs text-slate-900 truncate">{perm.perm_label}</p>
                                     {perm.is_super_only && (
-                                      <span className="bg-amber-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">
+                                      <span className="bg-[#003d79] text-white text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">
                                         Super
                                       </span>
                                     )}
@@ -8761,8 +8761,8 @@ function PermissionManagerView() {
                 disabled={!hasChanges || saving}
                 className={`flex-[2] py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
                   hasChanges && !saving
-                    ? 'bg-[#003D79] text-white shadow-xl shadow-blue-200 hover:bg-blue-700' 
-                    : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                    ? 'bg-[#003D79] text-white shadow-xl shadow-blue-200 hover:bg-[#003d79]' 
+                    : 'bg-slate-100 text-[#5a6a7e] cursor-not-allowed'
                 }`}
               >
                 {saving ? '⏳ MENYIMPAN...' : hasChanges ? `💾 SIMPAN ${toAdd.length + toRemove.length} PERUBAHAN` : '💾 TIDAK ADA PERUBAHAN'}
@@ -8895,7 +8895,7 @@ function KelolaHakCutiView() {
   })
 
   if (loading) return (
-    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+    <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-widest text-xs">
       Memuat data...
     </div>
   )
@@ -8956,7 +8956,7 @@ function KelolaHakCutiView() {
         <div className="p-5 bg-slate-50/50 border-b-2 border-slate-100 flex items-center justify-between">
           <div>
             <h2 className="font-black text-slate-900 text-base tracking-tight">Daftar Karyawan</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest">
               {filteredRows.length} karyawan • Tahun {tahun}
             </p>
           </div>
@@ -8964,7 +8964,7 @@ function KelolaHakCutiView() {
 
         <div className="divide-y divide-slate-50 max-h-[600px] overflow-y-auto">
           {filteredRows.length === 0 ? (
-            <div className="p-16 text-center text-slate-300 font-bold italic">Karyawan tidak ditemukan</div>
+            <div className="p-16 text-center text-[#5a6a7e] font-bold italic">Karyawan tidak ditemukan</div>
           ) : (
             filteredRows.map((row: any) => (
               <div key={row.nrp} className="p-4 hover:bg-slate-50/50 transition-colors">
@@ -8974,7 +8974,7 @@ function KelolaHakCutiView() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-black text-sm text-slate-900 truncate">{row.nama}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
+                    <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest truncate">
                       {row.nrp} • {row.jabatan} • {row.site}
                     </p>
 
@@ -8986,7 +8986,7 @@ function KelolaHakCutiView() {
                         className={`p-3 rounded-2xl border-2 text-left transition-all active:scale-95 ${
                           row.eligible_tiket_pesawat
                             ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                            : 'bg-slate-50 border-slate-100 text-slate-400'
+                            : 'bg-slate-50 border-slate-100 text-[#5a6a7e]'
                         } ${!data?.can_edit ? 'cursor-not-allowed opacity-70' : ''}`}
                       >
                         <p className="text-[9px] font-black uppercase tracking-widest">✈️ Hak Tiket</p>
@@ -9023,8 +9023,8 @@ function KelolaHakCutiView() {
                         disabled={!data?.can_edit}
                         className={`p-3 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
                           data?.can_edit
-                            ? 'bg-[#003D79] text-white border-[#003D79] hover:bg-blue-700'
-                            : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                            ? 'bg-[#003D79] text-white border-[#003D79] hover:bg-[#003d79]'
+                            : 'bg-slate-100 text-[#5a6a7e] cursor-not-allowed'
                         }`}
                       >
                         ✏️ EDIT<br />SALDO
@@ -9041,7 +9041,7 @@ function KelolaHakCutiView() {
       {/* MODAL EDIT SALDO */}
       {editingBalance && (
         <>
-          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setEditingBalance(null)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/70 backdrop-blur-md z-[100]" onClick={() => setEditingBalance(null)} />
           <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 lg:inset-x-auto lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-md bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden">
             <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
               <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
@@ -9064,7 +9064,7 @@ function KelolaHakCutiView() {
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+                <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
                   Hak Awal (default 12)
                 </label>
                 <input
@@ -9076,7 +9076,7 @@ function KelolaHakCutiView() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+                <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
                   Terpakai (otomatis dari cuti disetujui)
                 </label>
                 <input
@@ -9088,7 +9088,7 @@ function KelolaHakCutiView() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+                <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
                   Penyesuaian (bisa negatif atau positif)
                 </label>
                 <input
@@ -9097,7 +9097,7 @@ function KelolaHakCutiView() {
                   onChange={e => setBalanceForm({ ...balanceForm, penyesuaian: Number(e.target.value) })}
                   className="w-full p-4 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-[#003D79] focus:bg-white outline-none"
                 />
-                <p className="text-[10px] font-bold text-slate-400 mt-2">
+                <p className="text-[10px] font-bold text-[#5a6a7e] mt-2">
                   💡 Contoh: bonus cuti +2, atau potong cuti -1
                 </p>
               </div>
@@ -9123,7 +9123,7 @@ function KelolaHakCutiView() {
               <button
                 onClick={saveBalance}
                 disabled={saving === editingBalance.nrp}
-                className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
+                className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-[#003d79] disabled:opacity-50 active:scale-95 transition-all"
               >
                 {saving === editingBalance.nrp ? '⏳ MENYIMPAN...' : '💾 SIMPAN'}
               </button>
@@ -9294,13 +9294,13 @@ function MonitoringRosterCRView() {
         </div>
 
         {loading ? (
-          <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+          <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-widest text-xs">
             Memuat data...
           </div>
         ) : rows.length === 0 ? (
           <div className="p-20 text-center">
             <div className="text-5xl mb-4 opacity-20">📭</div>
-            <p className="text-slate-400 text-xs font-black uppercase tracking-widest">
+            <p className="text-[#5a6a7e] text-xs font-black uppercase tracking-widest">
               Tidak ada karyawan dengan roster CR pada periode ini
             </p>
           </div>
@@ -9314,7 +9314,7 @@ function MonitoringRosterCRView() {
                   <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                     <div className="min-w-0 flex-1">
                       <div className="font-black text-slate-800 text-sm">{r.nama}</div>
-                      <div className="text-[10px] text-slate-400 font-bold">
+                      <div className="text-[10px] text-[#5a6a7e] font-bold">
                         {r.nrp} • {r.jabatan}
                       </div>
                       <div className="text-[10px] text-blue-600 font-black mt-0.5">
@@ -9329,7 +9329,7 @@ function MonitoringRosterCRView() {
                   {/* Info CR */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 text-[10px]">
                     <div className="bg-slate-50 rounded-xl p-3">
-                      <div className="text-slate-400 font-black uppercase tracking-widest mb-1">
+                      <div className="text-[#5a6a7e] font-black uppercase tracking-widest mb-1">
                         📅 Jadwal CR
                       </div>
                       <div className="font-black text-slate-700">
@@ -9341,7 +9341,7 @@ function MonitoringRosterCRView() {
                     </div>
 
                     <div className="bg-slate-50 rounded-xl p-3">
-                      <div className="text-slate-400 font-black uppercase tracking-widest mb-1">
+                      <div className="text-[#5a6a7e] font-black uppercase tracking-widest mb-1">
                         📝 Tanggal Ajukan
                       </div>
                       <div className="font-black text-slate-700">
@@ -9350,19 +9350,19 @@ function MonitoringRosterCRView() {
                               day: 'numeric', month: 'short', year: 'numeric',
                               hour: '2-digit', minute: '2-digit'
                             })
-                          : <span className="text-slate-300 italic">Belum ada pengajuan</span>
+                          : <span className="text-[#5a6a7e] italic">Belum ada pengajuan</span>
                         }
                       </div>
                     </div>
 
                     <div className="bg-slate-50 rounded-xl p-3">
-                      <div className="text-slate-400 font-black uppercase tracking-widest mb-1">
+                      <div className="text-[#5a6a7e] font-black uppercase tracking-widest mb-1">
                         🏖️ Periode Cuti Diajukan
                       </div>
                       <div className="font-black text-slate-700">
                         {r.tanggal_cuti_mulai && r.tanggal_cuti_selesai
                           ? `${formatDate(r.tanggal_cuti_mulai)} — ${formatDate(r.tanggal_cuti_selesai)}`
-                          : <span className="text-slate-300 italic">—</span>
+                          : <span className="text-[#5a6a7e] italic">—</span>
                         }
                       </div>
                     </div>
@@ -9529,7 +9529,7 @@ useEffect(() => {
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="w-full bg-blue-600 text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50"
+            className="w-full bg-[#003d79] text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-[#003d79] shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50"
           >
             {downloading ? '⏳ MENYIAPKAN FILE...' : '📥 DOWNLOAD EXCEL'}
           </button>
@@ -9639,7 +9639,7 @@ function MonitoringCutiTiketView() {
   }
 
   if (loading) return (
-    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
+    <div className="p-20 text-center font-black animate-pulse text-[#5a6a7e] uppercase tracking-widest text-xs">
       Memuat monitoring...
     </div>
   )
@@ -9668,21 +9668,21 @@ function MonitoringCutiTiketView() {
         <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-blue-100 shadow-sm">
           <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1">🌴 Total Cuti</p>
           <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-blue-700">{stats.total_cuti || 0}</p>
-          <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">bulan ini</p>
+          <p className="text-[8px] font-bold text-[#5a6a7e] mt-1 uppercase">bulan ini</p>
         </div>
         <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-amber-100 shadow-sm">
-          <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest mb-1">🏖️ Cuti Tahunan</p>
+          <p className="text-[8px] font-black text-[#003d79] uppercase tracking-widest mb-1">🏖️ Cuti Tahunan</p>
           <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-amber-700">{stats.cuti_tahunan || 0}</p>
         </div>
         <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-indigo-100 shadow-sm">
           <p className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mb-1">✈️ Butuh Tiket</p>
           <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-indigo-700">{stats.butuh_tiket || 0}</p>
-          <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">{stats.total_tiket || 0} trip</p>
+          <p className="text-[8px] font-bold text-[#5a6a7e] mt-1 uppercase">{stats.total_tiket || 0} trip</p>
         </div>
         <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-rose-100 shadow-sm">
           <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1">⏳ Menunggu</p>
           <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-rose-700">{stats.tiket_menunggu || 0}</p>
-          <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">tiket belum dipesan</p>
+          <p className="text-[8px] font-bold text-[#5a6a7e] mt-1 uppercase">tiket belum dipesan</p>
         </div>
       </div>
 
@@ -9691,7 +9691,7 @@ function MonitoringCutiTiketView() {
         <button
           onClick={() => setSubTab('CUTI')}
           className={`flex-1 py-2 lg:py-2.5 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-wider transition-all ${
-            subTab === 'CUTI' ? 'bg-[#003D79] text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'
+            subTab === 'CUTI' ? 'bg-[#003D79] text-white shadow-lg' : 'text-[#5a6a7e] hover:bg-slate-50'
           }`}
         >
           🌴 Cuti ({stats.total_cuti || 0})
@@ -9699,7 +9699,7 @@ function MonitoringCutiTiketView() {
         <button
           onClick={() => setSubTab('TIKET')}
           className={`flex-1 py-2 lg:py-2.5 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-xs uppercase tracking-wider transition-all ${
-            subTab === 'TIKET' ? 'bg-[#003D79] text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'
+            subTab === 'TIKET' ? 'bg-[#003D79] text-white shadow-lg' : 'text-[#5a6a7e] hover:bg-slate-50'
           }`}
         >
           ✈️ Tiket ({stats.total_tiket || 0})
@@ -9751,7 +9751,7 @@ function MonitoringCutiTiketView() {
         <div className="space-y-3">
           {(data?.cuti || []).length === 0 ? (
             <div className="p-16 text-center bg-white rounded-[2rem] border-2 border-dashed border-slate-200">
-              <p className="text-slate-300 font-bold italic">Belum ada cuti bulan ini</p>
+              <p className="text-[#5a6a7e] font-bold italic">Belum ada cuti bulan ini</p>
             </div>
           ) : (data?.cuti || []).map((c: any) => (
             <div key={c.id} className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm">
@@ -9773,23 +9773,23 @@ function MonitoringCutiTiketView() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                  <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest mb-2">
                     {c.nrp} • {c.jabatan} • {c.site}
                   </p>
 
                   <div className="bg-slate-50/50 p-3 rounded-xl space-y-1">
                     <div className="flex justify-between text-[11px]">
-                      <span className="font-black text-slate-400 uppercase tracking-widest">📅 Tanggal</span>
+                      <span className="font-black text-[#5a6a7e] uppercase tracking-widest">📅 Tanggal</span>
                       <span className="font-black text-slate-900">
                         {new Date(c.tanggal_mulai).toLocaleDateString('id-ID')} — {new Date(c.tanggal_selesai).toLocaleDateString('id-ID')}
                       </span>
                     </div>
                     <div className="flex justify-between text-[11px]">
-                      <span className="font-black text-slate-400 uppercase tracking-widest">⏱️ Durasi</span>
+                      <span className="font-black text-[#5a6a7e] uppercase tracking-widest">⏱️ Durasi</span>
                       <span className="font-black text-slate-900">{c.jumlah_hari} hari</span>
                     </div>
                     <div className="flex justify-between text-[11px] items-center">
-                      <span className="font-black text-slate-400 uppercase tracking-widest">Status</span>
+                      <span className="font-black text-[#5a6a7e] uppercase tracking-widest">Status</span>
                       <div className="flex gap-1">
                         <StatusBadge value={c.status_atasan} />
                         <StatusBadge value={c.status_pjo || '-'} />
@@ -9807,7 +9807,7 @@ function MonitoringCutiTiketView() {
         <div className="space-y-3">
           {(data?.tiket || []).length === 0 ? (
             <div className="p-16 text-center bg-white rounded-[2rem] border-2 border-dashed border-slate-200">
-              <p className="text-slate-300 font-bold italic">Belum ada tiket bulan ini</p>
+              <p className="text-[#5a6a7e] font-bold italic">Belum ada tiket bulan ini</p>
             </div>
           ) : (data?.tiket || []).map((t: any) => {
             const conf = STATUS_TIKET_CONFIG[t.status] || STATUS_TIKET_CONFIG.MENUNGGU_PEMESANAN
@@ -9830,24 +9830,24 @@ function MonitoringCutiTiketView() {
                         {conf.icon} {conf.label}
                       </span>
                     </div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                    <p className="text-[10px] font-bold text-[#5a6a7e] uppercase tracking-widest mb-2">
                       {t.nrp} • {t.jabatan} • {t.site}
                     </p>
 
                     <div className="bg-slate-50/50 p-3 rounded-xl space-y-1">
                       <div className="flex justify-between text-[11px]">
-                        <span className="font-black text-slate-400 uppercase tracking-widest">📅 Tanggal</span>
+                        <span className="font-black text-[#5a6a7e] uppercase tracking-widest">📅 Tanggal</span>
                         <span className="font-black text-slate-900">
                           {new Date(t.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                         </span>
                       </div>
                       <div className="flex justify-between text-[11px]">
-                        <span className="font-black text-slate-400 uppercase tracking-widest">📍 Tujuan</span>
+                        <span className="font-black text-[#5a6a7e] uppercase tracking-widest">📍 Tujuan</span>
                         <span className="font-black text-slate-900">{t.tujuan}</span>
                       </div>
                       {t.dipesan_oleh && (
                         <div className="flex justify-between text-[11px]">
-                          <span className="font-black text-slate-400 uppercase tracking-widest">Dipesan Oleh</span>
+                          <span className="font-black text-[#5a6a7e] uppercase tracking-widest">Dipesan Oleh</span>
                           <span className="font-black text-slate-900">{t.dipesan_oleh}</span>
                         </div>
                       )}
@@ -9858,7 +9858,7 @@ function MonitoringCutiTiketView() {
 
                     <button
                       onClick={() => openEditTiket(t)}
-                      className="mt-3 w-full py-3 bg-[#003D79] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-blue-700 active:scale-95 transition-all"
+                      className="mt-3 w-full py-3 bg-[#003D79] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#003d79] active:scale-95 transition-all"
                     >
                       ✏️ UPDATE STATUS TIKET
                     </button>
@@ -9873,7 +9873,7 @@ function MonitoringCutiTiketView() {
       {/* MODAL EDIT TIKET */}
       {editingTiket && (
         <>
-          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setEditingTiket(null)} />
+          <div className="fixed inset-0 bg-[#f4f7fa]/70 backdrop-blur-md z-[100]" onClick={() => setEditingTiket(null)} />
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-full lg:max-w-md lg:max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
               <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
@@ -9893,7 +9893,7 @@ function MonitoringCutiTiketView() {
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Status Baru</label>
+                <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">Status Baru</label>
                 <div className="space-y-2">
                   {Object.entries(STATUS_TIKET_CONFIG).map(([key, conf]: any) => (
                     <button
@@ -9906,14 +9906,14 @@ function MonitoringCutiTiketView() {
                       }`}
                     >
                       <p className="text-sm font-black">{conf.icon} {conf.label}</p>
-                      <p className="text-[9px] font-bold text-slate-400 mt-0.5">{key}</p>
+                      <p className="text-[9px] font-bold text-[#5a6a7e] mt-0.5">{key}</p>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Catatan (Opsional)</label>
+                <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">Catatan (Opsional)</label>
                 <textarea
                   value={tiketForm.catatan}
                   onChange={e => setTiketForm({ ...tiketForm, catatan: e.target.value })}
@@ -9934,7 +9934,7 @@ function MonitoringCutiTiketView() {
               <button
                 onClick={saveTiketStatus}
                 disabled={saving || !tiketForm.status}
-                className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
+                className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-[#003d79] disabled:opacity-50 active:scale-95 transition-all"
               >
                 {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN'}
               </button>
@@ -9983,7 +9983,7 @@ function StatusBadge({ value }: any) {
     DISETUJUI: 'bg-emerald-50 text-emerald-700 border-emerald-200', HADIR: 'bg-emerald-50 text-emerald-700 border-emerald-200', TERLAMBAT: 'bg-amber-50 text-amber-700 border-amber-200',
     Aktif: 'bg-emerald-50 text-emerald-700 border-emerald-200', Nonaktif: 'bg-slate-100 text-slate-500 border-slate-200'
   }
-  return <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${m[value] || 'bg-slate-50 text-slate-400 border-slate-100'}`}>{value}</span>
+  return <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${m[value] || 'bg-slate-50 text-[#5a6a7e] border-slate-100'}`}>{value}</span>
 }
 
 function formatColumnName(col: string) {
@@ -10036,7 +10036,7 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => !saving && onClose()} />
+      <div className="fixed inset-0 bg-[#f4f7fa]/70 backdrop-blur-md z-[100]" onClick={() => !saving && onClose()} />
       <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 lg:inset-x-auto lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-md bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden">
         
         {/* Header */}
@@ -10060,7 +10060,7 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
 
         {/* Info Karyawan */}
         <div className="p-6 bg-slate-50/50 border-b-2 border-slate-100">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Karyawan</p>
+          <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest mb-2">Karyawan</p>
           <p className="font-black text-slate-900 text-sm">{row._nama_karyawan || '-'}</p>
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
             NRP: {row.nrp} • Site: {row._site}
@@ -10077,7 +10077,7 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
         {/* Body */}
         <div className="p-6 space-y-4">
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+            <p className="text-[10px] font-black text-[#5a6a7e] uppercase tracking-widest mb-2">
               Tanggal Expired Saat Ini
             </p>
             <div className="bg-rose-50 border-2 border-rose-100 p-3 rounded-2xl">
@@ -10088,7 +10088,7 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
           </div>
 
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+            <label className="block text-[10px] font-black uppercase text-[#5a6a7e] mb-2 tracking-widest">
               🗓️ Tanggal Expired Baru
             </label>
             <input
@@ -10097,7 +10097,7 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
               onChange={e => setTanggalBaru(e.target.value)}
               className="w-full p-4 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-[#003D79] focus:bg-white outline-none transition-all"
             />
-            <p className="text-[10px] text-slate-400 font-bold mt-2">
+            <p className="text-[10px] text-[#5a6a7e] font-bold mt-2">
               💡 Pilih tanggal baru untuk memperpanjang masa berlaku dokumen ini
             </p>
           </div>
@@ -10117,8 +10117,8 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
             disabled={saving || !tanggalBaru}
             className={`flex-[2] py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
               saving || !tanggalBaru
-                ? 'bg-slate-200 text-slate-400'
-                : 'bg-[#003D79] text-white shadow-xl shadow-blue-200 hover:bg-blue-700'
+                ? 'bg-slate-200 text-[#5a6a7e]'
+                : 'bg-[#003D79] text-white shadow-xl shadow-blue-200 hover:bg-[#003d79]'
             }`}
           >
             {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN'}
@@ -10130,8 +10130,8 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
 }
 
 function renderCell(col: string, val: any) {
-  if (val === null || val === undefined) return <span className="text-slate-200 italic font-bold text-[10px]">EMPTY</span>
-  if (typeof val === 'boolean') return val ? <span className="text-emerald-500 font-black">YES</span> : <span className="text-slate-300 font-black">NO</span>
+  if (val === null || val === undefined) return <span className="text-[#1a2332] italic font-bold text-[10px]">EMPTY</span>
+  if (typeof val === 'boolean') return val ? <span className="text-emerald-500 font-black">YES</span> : <span className="text-[#5a6a7e] font-black">NO</span>
   if (col.includes('status')) return <StatusBadge value={String(val)} />
   if (col === 'persen') return <span className="font-black text-slate-900">{val}%</span>
   if (col.includes('tanggal') && !col.includes('jam')) { try { return new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) } catch { return String(val) } }

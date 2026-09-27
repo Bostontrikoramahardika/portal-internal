@@ -166,7 +166,7 @@ export default function PushNotificationButton() {
           <button
             onClick={handleSubscribe}
             disabled={loading}
-            className="w-full px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-black hover:bg-[#002a57] disabled:opacity-50 transition-all shadow-sm">
+            className="w-full px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-black hover:bg-[#003d79] disabled:opacity-50 transition-all shadow-sm">
             {loading ? '⏳ Mengaktifkan...' : '🔔 Aktifkan Notifikasi'}
           </button>
 

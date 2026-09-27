@@ -371,14 +371,14 @@ export default function LogistikDashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-6 pb-28">
+    <div className="min-h-screen bg-[#f4f7fa] text-[#1a2332] p-4 md:p-6 pb-28">
       <PageHeader title="Logistik Central Portal" backUrl="/dashboard" badge="LOGISTIK" />
 
       {/* Header */}
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5 mb-6">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-5 mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <Link href="/dashboard" className="text-xs text-amber-500 hover:underline flex items-center gap-1 font-semibold">
+            <Link href="/dashboard" className="text-xs text-[#003d79] hover:underline flex items-center gap-1 font-semibold">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
               Kembali ke Menu Utama
             </Link>
@@ -388,14 +388,14 @@ export default function LogistikDashboardPage() {
               Buka Parts Catalog
             </Link>
           </div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2 mt-1">
-            <svg className="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+          <h1 className="text-2xl font-bold text-[#1a2332] flex items-center gap-2 mt-1">
+            <svg className="w-7 h-7 text-[#003d79]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
             Sistem Logistik & Pergudangan Site
           </h1>
-          <p className="text-xs text-slate-400">PT. Boston PPA - MLP | Modul Terintegrasi PR, PO, LPB, Stok Opname, & Min-Stock Alert</p>
+          <p className="text-xs text-[#5a6a7e]">PT. Boston PPA - MLP | Modul Terintegrasi PR, PO, LPB, Stok Opname, & Min-Stock Alert</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={fetchData} disabled={loading} className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700">
+          <button onClick={fetchData} disabled={loading} className="px-3.5 py-2 bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm hover:bg-slate-700 text-[#1a2332] rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-[#e2e8f0]">
             <svg className={"w-3.5 h-3.5 " + (loading ? "animate-spin" : "")} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             Refresh
           </button>
@@ -410,7 +410,7 @@ export default function LogistikDashboardPage() {
       {message && (
         <div className={"max-w-7xl mx-auto mb-4 p-3 rounded-lg text-xs font-semibold flex items-center justify-between border " + (message.type === "success" ? "bg-emerald-950/60 border-emerald-800 text-emerald-300" : message.type === "info" ? "bg-cyan-950/60 border-cyan-800 text-cyan-300" : "bg-rose-950/60 border-rose-800 text-rose-300")}>
           <span>{message.text}</span>
-          <button onClick={function() { setMessage(null); }} className="text-slate-400 hover:text-slate-200">?</button>
+          <button onClick={function() { setMessage(null); }} className="text-[#5a6a7e] hover:text-[#1a2332]">?</button>
         </div>
       )}
 
@@ -448,35 +448,35 @@ export default function LogistikDashboardPage() {
       )}
 
       {/* Tab Navigation */}
-      <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pb-3 mb-4 border-b border-slate-800 text-xs font-semibold">
+      <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pb-3 mb-4 border-b border-[#e2e8f0] text-xs font-semibold">
         <button
           onClick={function() { setActiveTab("pr"); }}
-          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "pr" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800")}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "pr" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           1. Purchase Request ({prList.length})
         </button>
         <button
           onClick={function() { setActiveTab("po"); }}
-          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "po" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800")}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "po" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           2. Purchase Order ({poList.length})
         </button>
         <button
           onClick={function() { setActiveTab("lpb"); }}
-          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "lpb" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800")}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "lpb" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           3. Penerimaan / LPB ({lpbList.length})
         </button>
         <button
           onClick={function() { setActiveTab("stok"); }}
-          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "stok" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800")}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "stok" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           4. Stok Real-Time ({stokList.length})
           {lowStockList.length > 0 && <span className="w-2 h-2 rounded-full bg-red-500 inline-block"></span>}
         </button>
         <button
           onClick={function() { setActiveTab("opname"); }}
-          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "opname" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800")}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "opname" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           5. Stock Opname ({opnameList.length})
         </button>
@@ -486,14 +486,14 @@ export default function LogistikDashboardPage() {
       {activeTab === "pr" && (
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-200">Daftar Purchase Request (Permintaan Barang)</h2>
-            <button onClick={function() { setIsPrModalOpen(true); }} className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
+            <h2 className="text-base font-bold text-[#1a2332]">Daftar Purchase Request (Permintaan Barang)</h2>
+            <button onClick={function() { setIsPrModalOpen(true); }} className="px-3 py-1.5 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
               + Buat PR Manual
             </button>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
-            <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
-              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-xl overflow-x-auto shadow">
+            <table className="w-full text-left text-xs text-[#5a6a7e] min-w-[700px]">
+              <thead className="bg-[#f4f7fa]/80 text-[#5a6a7e] border-b border-[#e2e8f0] font-semibold">
                 <tr>
                   <th className="p-3">Nomor PR</th>
                   <th className="p-3">Unit / Pemohon</th>
@@ -510,24 +510,24 @@ export default function LogistikDashboardPage() {
                 ) : (
                   prList.map(function(pr, idx) {
                     return (
-                      <tr key={idx} className="hover:bg-slate-800/40 transition">
-                        <td className="p-3 font-mono font-bold text-amber-400">{pr.nomor_pr || "PR-" + pr.id}</td>
+                      <tr key={idx} className="hover:bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm/40 transition">
+                        <td className="p-3 font-mono font-bold text-[#003d79]">{pr.nomor_pr || "PR-" + pr.id}</td>
                         <td className="p-3">
-                          <div className="font-semibold text-slate-200">{pr.unit_code || "-"}</div>
-                          <div className="text-[10px] text-slate-400">{pr.pemohon || pr.requester || "Staff"}</div>
+                          <div className="font-semibold text-[#1a2332]">{pr.unit_code || "-"}</div>
+                          <div className="text-[10px] text-[#5a6a7e]">{pr.pemohon || pr.requester || "Staff"}</div>
                         </td>
                         <td className="p-3">
-                          <div className="font-semibold text-slate-200">{pr.nama_barang || pr.item_name}</div>
+                          <div className="font-semibold text-[#1a2332]">{pr.nama_barang || pr.item_name}</div>
                           <div className="text-[10px] text-slate-500 font-mono">{pr.part_number || "-"}</div>
                         </td>
                         <td className="p-3 font-bold">{pr.jumlah || pr.qty || 1} {pr.satuan || "PCS"}</td>
                         <td className="p-3">
-                          <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (pr.prioritas === "EMERGENCY" || pr.prioritas === "URGENT" ? "bg-rose-900/60 text-rose-300 border border-rose-800" : "bg-slate-800 text-slate-300")}>
+                          <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (pr.prioritas === "EMERGENCY" || pr.prioritas === "URGENT" ? "bg-rose-900/60 text-rose-300 border border-rose-800" : "bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e]")}>
                             {pr.prioritas || "NORMAL"}
                           </span>
                         </td>
                         <td className="p-3">
-                          <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (pr.status === "APPROVED" ? "bg-emerald-900/60 text-emerald-300 border border-emerald-800" : pr.status === "PENDING" ? "bg-amber-900/60 text-amber-300 border border-amber-800" : "bg-slate-800 text-slate-400")}>
+                          <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (pr.status === "APPROVED" ? "bg-emerald-900/60 text-emerald-300 border border-emerald-800" : pr.status === "PENDING" ? "bg-amber-900/60 text-amber-300 border border-amber-800" : "bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e]")}>
                             {pr.status || "PENDING"}
                           </span>
                         </td>
@@ -554,14 +554,14 @@ export default function LogistikDashboardPage() {
       {activeTab === "po" && (
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-200">Daftar Purchase Order (PO Pengadaan)</h2>
-            <button onClick={function() { setIsPoModalOpen(true); }} className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
+            <h2 className="text-base font-bold text-[#1a2332]">Daftar Purchase Order (PO Pengadaan)</h2>
+            <button onClick={function() { setIsPoModalOpen(true); }} className="px-3 py-1.5 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
               + Terbitkan PO
             </button>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
-            <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
-              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-xl overflow-x-auto shadow">
+            <table className="w-full text-left text-xs text-[#5a6a7e] min-w-[700px]">
+              <thead className="bg-[#f4f7fa]/80 text-[#5a6a7e] border-b border-[#e2e8f0] font-semibold">
                 <tr>
                   <th className="p-3">Nomor PO</th>
                   <th className="p-3">Ref PR</th>
@@ -578,11 +578,11 @@ export default function LogistikDashboardPage() {
                 ) : (
                   poList.map(function(po, idx) {
                     return (
-                      <tr key={idx} className="hover:bg-slate-800/40 transition">
-                        <td className="p-3 font-mono font-bold text-amber-400">{po.nomor_po || "PO-" + po.id}</td>
-                        <td className="p-3 font-mono text-slate-400">{po.nomor_pr || "-"}</td>
-                        <td className="p-3 font-semibold text-slate-200">{po.vendor || "Vendor Utama"}</td>
-                        <td className="p-3 text-slate-200">{po.nama_barang || po.item_name}</td>
+                      <tr key={idx} className="hover:bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm/40 transition">
+                        <td className="p-3 font-mono font-bold text-[#003d79]">{po.nomor_po || "PO-" + po.id}</td>
+                        <td className="p-3 font-mono text-[#5a6a7e]">{po.nomor_pr || "-"}</td>
+                        <td className="p-3 font-semibold text-[#1a2332]">{po.vendor || "Vendor Utama"}</td>
+                        <td className="p-3 text-[#1a2332]">{po.nama_barang || po.item_name}</td>
                         <td className="p-3 font-bold">{po.jumlah || po.qty || 1} {po.satuan || "PCS"}</td>
                         <td className="p-3 font-semibold text-emerald-400">Rp {Number(po.estimasi_harga || 0).toLocaleString("id-ID")}</td>
                         <td className="p-3 text-right">
@@ -608,14 +608,14 @@ export default function LogistikDashboardPage() {
       {activeTab === "lpb" && (
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-200">Daftar Penerimaan Barang (LPB / GRN)</h2>
-            <button onClick={function() { setIsLpbModalOpen(true); }} className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
+            <h2 className="text-base font-bold text-[#1a2332]">Daftar Penerimaan Barang (LPB / GRN)</h2>
+            <button onClick={function() { setIsLpbModalOpen(true); }} className="px-3 py-1.5 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
               + Catat Penerimaan LPB
             </button>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
-            <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
-              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-xl overflow-x-auto shadow">
+            <table className="w-full text-left text-xs text-[#5a6a7e] min-w-[700px]">
+              <thead className="bg-[#f4f7fa]/80 text-[#5a6a7e] border-b border-[#e2e8f0] font-semibold">
                 <tr>
                   <th className="p-3">Nomor LPB</th>
                   <th className="p-3">Ref PO</th>
@@ -632,10 +632,10 @@ export default function LogistikDashboardPage() {
                 ) : (
                   lpbList.map(function(lpb, idx) {
                     return (
-                      <tr key={idx} className="hover:bg-slate-800/40 transition">
+                      <tr key={idx} className="hover:bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm/40 transition">
                         <td className="p-3 font-mono font-bold text-emerald-400">{lpb.nomor_lpb || "LPB-" + lpb.id}</td>
-                        <td className="p-3 font-mono text-slate-400">{lpb.nomor_po || "-"}</td>
-                        <td className="p-3 font-semibold text-slate-200">{lpb.nama_barang || lpb.item_name}</td>
+                        <td className="p-3 font-mono text-[#5a6a7e]">{lpb.nomor_po || "-"}</td>
+                        <td className="p-3 font-semibold text-[#1a2332]">{lpb.nama_barang || lpb.item_name}</td>
                         <td className="p-3 font-bold text-emerald-300">{lpb.jumlah_diterima || lpb.jumlah || 1} {lpb.satuan || "PCS"}</td>
                         <td className="p-3">
                           <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (lpb.kondisi === "BAIK" ? "bg-emerald-900/60 text-emerald-300 border border-emerald-800" : "bg-rose-900/60 text-rose-300 border border-rose-800")}>
@@ -643,7 +643,7 @@ export default function LogistikDashboardPage() {
                           </span>
                         </td>
                         <td className="p-3">
-                          <div className="font-semibold text-slate-200">{lpb.penerima || "Staff Gudang"}</div>
+                          <div className="font-semibold text-[#1a2332]">{lpb.penerima || "Staff Gudang"}</div>
                           <div className="text-[10px] text-slate-500">{lpb.lokasi_simpan || "Gudang Utama"}</div>
                         </td>
                         <td className="p-3 text-right">
@@ -670,20 +670,20 @@ export default function LogistikDashboardPage() {
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-bold text-slate-200">Inventaris & Stok Fisik Gudang</h2>
-              <p className="text-xs text-slate-400">Total {stokList.length} master part terdaftar di database logistik site.</p>
+              <h2 className="text-base font-bold text-[#1a2332]">Inventaris & Stok Fisik Gudang</h2>
+              <p className="text-xs text-[#5a6a7e]">Total {stokList.length} master part terdaftar di database logistik site.</p>
             </div>
             {/* Filter Chips */}
-            <div className="flex items-center gap-2 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+            <div className="flex items-center gap-2 bg-[#f4f7fa] p-1 rounded-lg border border-[#e2e8f0] text-xs">
               <button
                 onClick={function() { setStockFilter("ALL"); }}
-                className={"px-3 py-1 rounded transition " + (stockFilter === "ALL" ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-400 hover:text-slate-200")}
+                className={"px-3 py-1 rounded transition " + (stockFilter === "ALL" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "text-[#5a6a7e] hover:text-[#1a2332]")}
               >
                 Semua ({stokList.length})
               </button>
               <button
                 onClick={function() { setStockFilter("LOW"); }}
-                className={"px-3 py-1 rounded transition flex items-center gap-1 " + (stockFilter === "LOW" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-400 hover:text-amber-300")}
+                className={"px-3 py-1 rounded transition flex items-center gap-1 " + (stockFilter === "LOW" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "text-[#003d79] hover:text-amber-300")}
               >
                 Menipis ({lowStockList.length})
               </button>
@@ -696,9 +696,9 @@ export default function LogistikDashboardPage() {
             </div>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
-            <table className="w-full text-left text-xs text-slate-300 min-w-[750px]">
-              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-xl overflow-x-auto shadow">
+            <table className="w-full text-left text-xs text-[#5a6a7e] min-w-[750px]">
+              <thead className="bg-[#f4f7fa]/80 text-[#5a6a7e] border-b border-[#e2e8f0] font-semibold">
                 <tr>
                   <th className="p-3">Kode / Part No</th>
                   <th className="p-3">Nama Part & Kategori</th>
@@ -719,21 +719,21 @@ export default function LogistikDashboardPage() {
                     var isOut = curStok <= 0;
                     var isLow = curStok <= minStok;
                     return (
-                      <tr key={idx} className={"transition " + (isOut ? "bg-rose-950/20 hover:bg-rose-950/40" : isLow ? "bg-amber-950/20 hover:bg-amber-950/40" : "hover:bg-slate-800/40")}>
-                        <td className="p-3 font-mono font-bold text-amber-400">
+                      <tr key={idx} className={"transition " + (isOut ? "bg-rose-950/20 hover:bg-rose-950/40" : isLow ? "bg-amber-950/20 hover:bg-amber-950/40" : "hover:bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm/40")}>
+                        <td className="p-3 font-mono font-bold text-[#003d79]">
                           {item.part_number || item.kode_barang || "ITEM-" + item.id}
                         </td>
                         <td className="p-3">
-                          <div className="font-semibold text-slate-200">{item.nama_barang}</div>
-                          <div className="text-[10px] text-slate-400">{item.kategori || "Spareparts"}</div>
+                          <div className="font-semibold text-[#1a2332]">{item.nama_barang}</div>
+                          <div className="text-[10px] text-[#5a6a7e]">{item.kategori || "Spareparts"}</div>
                         </td>
-                        <td className="p-3 font-mono text-slate-400">{item.lokasi_rak || item.lokasi || "RAK-01"}</td>
+                        <td className="p-3 font-mono text-[#5a6a7e]">{item.lokasi_rak || item.lokasi || "RAK-01"}</td>
                         <td className="p-3 text-center">
-                          <span className={"font-bold text-sm " + (isOut ? "text-rose-400 font-mono" : isLow ? "text-amber-400 font-mono" : "text-emerald-400 font-mono")}>
+                          <span className={"font-bold text-sm " + (isOut ? "text-rose-400 font-mono" : isLow ? "text-[#003d79] font-mono" : "text-emerald-400 font-mono")}>
                             {curStok} {item.satuan || "PCS"}
                           </span>
                         </td>
-                        <td className="p-3 text-center font-mono text-slate-400">{minStok} {item.satuan || "PCS"}</td>
+                        <td className="p-3 text-center font-mono text-[#5a6a7e]">{minStok} {item.satuan || "PCS"}</td>
                         <td className="p-3">
                           {isOut ? (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-900/60 text-rose-300 border border-rose-800">
@@ -753,7 +753,7 @@ export default function LogistikDashboardPage() {
                           {isLow ? (
                             <button
                               onClick={function() { handleQuickRestockPr(item); }}
-                              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded text-[11px] font-bold transition inline-flex items-center gap-1 shadow"
+                              className="px-2.5 py-1 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 rounded text-[11px] font-bold transition inline-flex items-center gap-1 shadow"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                               Restock PR
@@ -764,7 +764,7 @@ export default function LogistikDashboardPage() {
                                 handleSelectBarangOpname(String(item.id));
                                 setIsOpnameModalOpen(true);
                               }}
-                              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded text-[11px] font-semibold transition"
+                              className="px-2.5 py-1 bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm hover:bg-slate-700 text-[#5a6a7e] border border-[#e2e8f0] rounded text-[11px] font-semibold transition"
                             >
                               Opname
                             </button>
@@ -785,16 +785,16 @@ export default function LogistikDashboardPage() {
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-slate-200">Riwayat Stock Opname & Penyesuaian Stok</h2>
-              <p className="text-xs text-slate-400">Pencatatan audit fisik, rekonsiliasi selisih, dan log movement ADJUST.</p>
+              <h2 className="text-base font-bold text-[#1a2332]">Riwayat Stock Opname & Penyesuaian Stok</h2>
+              <p className="text-xs text-[#5a6a7e]">Pencatatan audit fisik, rekonsiliasi selisih, dan log movement ADJUST.</p>
             </div>
             <button onClick={function() { setIsOpnameModalOpen(true); }} className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold transition shadow">
               + Mulai Stock Opname Baru
             </button>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto shadow">
-            <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
-              <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-xl overflow-x-auto shadow">
+            <table className="w-full text-left text-xs text-[#5a6a7e] min-w-[700px]">
+              <thead className="bg-[#f4f7fa]/80 text-[#5a6a7e] border-b border-[#e2e8f0] font-semibold">
                 <tr>
                   <th className="p-3">Tanggal / Waktu</th>
                   <th className="p-3">Nama Part</th>
@@ -811,20 +811,20 @@ export default function LogistikDashboardPage() {
                   opnameList.map(function(op, idx) {
                     var delta = Number(op.selisih || (Number(op.stok_fisik || 0) - Number(op.stok_sistem || 0)));
                     return (
-                      <tr key={idx} className="hover:bg-slate-800/40 transition">
-                        <td className="p-3 font-mono text-slate-400">
+                      <tr key={idx} className="hover:bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm/40 transition">
+                        <td className="p-3 font-mono text-[#5a6a7e]">
                           {op.created_at ? new Date(op.created_at).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}
                         </td>
-                        <td className="p-3 font-semibold text-slate-200">{op.nama_barang || "Sparepart"}</td>
+                        <td className="p-3 font-semibold text-[#1a2332]">{op.nama_barang || "Sparepart"}</td>
                         <td className="p-3 text-center font-mono">{op.stok_sistem || 0}</td>
-                        <td className="p-3 text-center font-mono font-bold text-amber-400">{op.stok_fisik || 0}</td>
+                        <td className="p-3 text-center font-mono font-bold text-[#003d79]">{op.stok_fisik || 0}</td>
                         <td className="p-3 text-center font-mono">
-                          <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (delta > 0 ? "bg-emerald-900/60 text-emerald-300 border border-emerald-800" : delta < 0 ? "bg-rose-900/60 text-rose-300 border border-rose-800" : "bg-slate-800 text-slate-400")}>
+                          <span className={"px-2 py-0.5 rounded text-[10px] font-bold " + (delta > 0 ? "bg-emerald-900/60 text-emerald-300 border border-emerald-800" : delta < 0 ? "bg-rose-900/60 text-rose-300 border border-rose-800" : "bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e]")}>
                             {delta > 0 ? "+" + delta : delta}
                           </span>
                         </td>
                         <td className="p-3">
-                          <div className="font-semibold text-slate-300">{op.auditor || "Auditor Gudang"}</div>
+                          <div className="font-semibold text-[#5a6a7e]">{op.auditor || "Auditor Gudang"}</div>
                           <div className="text-[10px] text-slate-500">{op.alasan || op.catatan || "Penyesuaian Fisik Bulanan"}</div>
                         </td>
                       </tr>
@@ -839,42 +839,42 @@ export default function LogistikDashboardPage() {
 
       {/* MODAL: PR */}
       {isPrModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+        <div className="fixed inset-0 z-50 bg-[#f4f7fa]/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
+              <h3 className="text-base font-bold text-[#1a2332] flex items-center gap-2">
+                <svg className="w-5 h-5 text-[#003d79]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                 Buat Purchase Request (PR)
               </h3>
-              <button onClick={function() { setIsPrModalOpen(false); }} className="text-slate-400 hover:text-slate-200">?</button>
+              <button onClick={function() { setIsPrModalOpen(false); }} className="text-[#5a6a7e] hover:text-[#1a2332]">?</button>
             </div>
             <form onSubmit={handleSubmitPr} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Nomor PR</label>
-                  <input type="text" value={prForm.nomor_pr} onChange={function(e) { setPrForm({ ...prForm, nomor_pr: e.target.value }); }} placeholder="Auto / PR-2026-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Nomor PR</label>
+                  <input type="text" value={prForm.nomor_pr} onChange={function(e) { setPrForm({ ...prForm, nomor_pr: e.target.value }); }} placeholder="Auto / PR-2026-..." className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Unit Code</label>
-                  <input type="text" value={prForm.unit_code} onChange={function(e) { setPrForm({ ...prForm, unit_code: e.target.value }); }} placeholder="DT-01, EX-200, dsb" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Unit Code</label>
+                  <input type="text" value={prForm.unit_code} onChange={function(e) { setPrForm({ ...prForm, unit_code: e.target.value }); }} placeholder="DT-01, EX-200, dsb" className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
               </div>
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Nama Barang / Sparepart</label>
-                <input type="text" value={prForm.nama_barang} onChange={function(e) { setPrForm({ ...prForm, nama_barang: e.target.value }); }} placeholder="Filter Oli, Tyre 24R, dsb" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                <label className="block text-[#5a6a7e] font-semibold mb-1">Nama Barang / Sparepart</label>
+                <input type="text" value={prForm.nama_barang} onChange={function(e) { setPrForm({ ...prForm, nama_barang: e.target.value }); }} placeholder="Filter Oli, Tyre 24R, dsb" className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Part Number</label>
-                  <input type="text" value={prForm.part_number} onChange={function(e) { setPrForm({ ...prForm, part_number: e.target.value }); }} placeholder="PN-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Part Number</label>
+                  <input type="text" value={prForm.part_number} onChange={function(e) { setPrForm({ ...prForm, part_number: e.target.value }); }} placeholder="PN-..." className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Jumlah (Qty)</label>
-                  <input type="number" min="1" value={prForm.jumlah} onChange={function(e) { setPrForm({ ...prForm, jumlah: Number(e.target.value) }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Jumlah (Qty)</label>
+                  <input type="number" min="1" value={prForm.jumlah} onChange={function(e) { setPrForm({ ...prForm, jumlah: Number(e.target.value) }); }} className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Satuan</label>
-                  <select value={prForm.satuan} onChange={function(e) { setPrForm({ ...prForm, satuan: e.target.value }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200">
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Satuan</label>
+                  <select value={prForm.satuan} onChange={function(e) { setPrForm({ ...prForm, satuan: e.target.value }); }} className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]">
                     <option value="PCS">PCS</option>
                     <option value="SET">SET</option>
                     <option value="LITER">LITER</option>
@@ -884,20 +884,20 @@ export default function LogistikDashboardPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Prioritas</label>
-                <select value={prForm.prioritas} onChange={function(e) { setPrForm({ ...prForm, prioritas: e.target.value }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200">
+                <label className="block text-[#5a6a7e] font-semibold mb-1">Prioritas</label>
+                <select value={prForm.prioritas} onChange={function(e) { setPrForm({ ...prForm, prioritas: e.target.value }); }} className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]">
                   <option value="NORMAL">NORMAL - Kebutuhan Terjadwal</option>
                   <option value="HIGH">HIGH - Stok Kritis</option>
                   <option value="URGENT">URGENT - Breakdown Unit (BD)</option>
                 </select>
               </div>
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Keterangan Tambahan</label>
-                <textarea value={prForm.keterangan} onChange={function(e) { setPrForm({ ...prForm, keterangan: e.target.value }); }} rows={2} placeholder="Justifikasi kebutuhan..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200"></textarea>
+                <label className="block text-[#5a6a7e] font-semibold mb-1">Keterangan Tambahan</label>
+                <textarea value={prForm.keterangan} onChange={function(e) { setPrForm({ ...prForm, keterangan: e.target.value }); }} rows={2} placeholder="Justifikasi kebutuhan..." className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]"></textarea>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-                <button type="button" onClick={function() { setIsPrModalOpen(false); }} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition">Batal</button>
-                <button type="submit" className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition">Simpan & Kirim PR</button>
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#e2e8f0]">
+                <button type="button" onClick={function() { setIsPrModalOpen(false); }} className="px-4 py-2 bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e] rounded-lg hover:bg-slate-700 transition">Batal</button>
+                <button type="submit" className="px-4 py-2 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition">Simpan & Kirim PR</button>
               </div>
             </form>
           </div>
@@ -906,51 +906,51 @@ export default function LogistikDashboardPage() {
 
       {/* MODAL: PO */}
       {isPoModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+        <div className="fixed inset-0 z-50 bg-[#f4f7fa]/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
+              <h3 className="text-base font-bold text-[#1a2332] flex items-center gap-2">
+                <svg className="w-5 h-5 text-[#003d79]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 Terbitkan Purchase Order (PO)
               </h3>
-              <button onClick={function() { setIsPoModalOpen(false); }} className="text-slate-400 hover:text-slate-200">?</button>
+              <button onClick={function() { setIsPoModalOpen(false); }} className="text-[#5a6a7e] hover:text-[#1a2332]">?</button>
             </div>
             <form onSubmit={handleSubmitPo} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Nomor PO</label>
-                  <input type="text" value={poForm.nomor_po} onChange={function(e) { setPoForm({ ...poForm, nomor_po: e.target.value }); }} placeholder="PO-2026-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Nomor PO</label>
+                  <input type="text" value={poForm.nomor_po} onChange={function(e) { setPoForm({ ...poForm, nomor_po: e.target.value }); }} placeholder="PO-2026-..." className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Ref Nomor PR</label>
-                  <input type="text" value={poForm.nomor_pr} onChange={function(e) { setPoForm({ ...poForm, nomor_pr: e.target.value }); }} placeholder="PR-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Ref Nomor PR</label>
+                  <input type="text" value={poForm.nomor_pr} onChange={function(e) { setPoForm({ ...poForm, nomor_pr: e.target.value }); }} placeholder="PR-..." className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
               </div>
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Vendor / Supplier</label>
-                <input type="text" value={poForm.vendor} onChange={function(e) { setPoForm({ ...poForm, vendor: e.target.value }); }} placeholder="PT. United Tractors, dsb" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                <label className="block text-[#5a6a7e] font-semibold mb-1">Vendor / Supplier</label>
+                <input type="text" value={poForm.vendor} onChange={function(e) { setPoForm({ ...poForm, vendor: e.target.value }); }} placeholder="PT. United Tractors, dsb" className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
               </div>
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Nama Barang</label>
-                <input type="text" value={poForm.nama_barang} onChange={function(e) { setPoForm({ ...poForm, nama_barang: e.target.value }); }} placeholder="Item yang dipesan" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                <label className="block text-[#5a6a7e] font-semibold mb-1">Nama Barang</label>
+                <input type="text" value={poForm.nama_barang} onChange={function(e) { setPoForm({ ...poForm, nama_barang: e.target.value }); }} placeholder="Item yang dipesan" className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Jumlah</label>
-                  <input type="number" min="1" value={poForm.jumlah} onChange={function(e) { setPoForm({ ...poForm, jumlah: Number(e.target.value) }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Jumlah</label>
+                  <input type="number" min="1" value={poForm.jumlah} onChange={function(e) { setPoForm({ ...poForm, jumlah: Number(e.target.value) }); }} className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Satuan</label>
-                  <input type="text" value={poForm.satuan} onChange={function(e) { setPoForm({ ...poForm, satuan: e.target.value }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Satuan</label>
+                  <input type="text" value={poForm.satuan} onChange={function(e) { setPoForm({ ...poForm, satuan: e.target.value }); }} className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Estimasi Total (Rp)</label>
-                  <input type="number" min="0" value={poForm.estimasi_harga} onChange={function(e) { setPoForm({ ...poForm, estimasi_harga: Number(e.target.value) }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Estimasi Total (Rp)</label>
+                  <input type="number" min="0" value={poForm.estimasi_harga} onChange={function(e) { setPoForm({ ...poForm, estimasi_harga: Number(e.target.value) }); }} className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-                <button type="button" onClick={function() { setIsPoModalOpen(false); }} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition">Batal</button>
-                <button type="submit" className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition">Terbitkan PO</button>
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#e2e8f0]">
+                <button type="button" onClick={function() { setIsPoModalOpen(false); }} className="px-4 py-2 bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e] rounded-lg hover:bg-slate-700 transition">Batal</button>
+                <button type="submit" className="px-4 py-2 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition">Terbitkan PO</button>
               </div>
             </form>
           </div>
@@ -959,42 +959,42 @@ export default function LogistikDashboardPage() {
 
       {/* MODAL: LPB */} 
       {isLpbModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-[#f4f7fa]/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
+              <h3 className="text-base font-bold text-[#1a2332] flex items-center gap-2">
                 <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                 Pencatatan Penerimaan Barang (LPB / GRN)
               </h3>
-              <button onClick={function() { setIsLpbModalOpen(false); }} className="text-slate-400 hover:text-slate-200">?</button>
+              <button onClick={function() { setIsLpbModalOpen(false); }} className="text-[#5a6a7e] hover:text-[#1a2332]">?</button>
             </div>
             <form onSubmit={handleSubmitLpb} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Nomor LPB</label>
-                  <input type="text" value={lpbForm.nomor_lpb} onChange={function(e) { setLpbForm({ ...lpbForm, nomor_lpb: e.target.value }); }} placeholder="LPB-2026-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Nomor LPB</label>
+                  <input type="text" value={lpbForm.nomor_lpb} onChange={function(e) { setLpbForm({ ...lpbForm, nomor_lpb: e.target.value }); }} placeholder="LPB-2026-..." className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Ref Nomor PO</label>
-                  <input type="text" value={lpbForm.nomor_po} onChange={function(e) { setLpbForm({ ...lpbForm, nomor_po: e.target.value }); }} placeholder="PO-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Ref Nomor PO</label>
+                  <input type="text" value={lpbForm.nomor_po} onChange={function(e) { setLpbForm({ ...lpbForm, nomor_po: e.target.value }); }} placeholder="PO-..." className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
               </div>
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Nama Barang Diterima</label>
-                <input type="text" value={lpbForm.nama_barang} onChange={function(e) { setLpbForm({ ...lpbForm, nama_barang: e.target.value }); }} placeholder="Nama sparepart / material" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                <label className="block text-[#5a6a7e] font-semibold mb-1">Nama Barang Diterima</label>
+                <input type="text" value={lpbForm.nama_barang} onChange={function(e) { setLpbForm({ ...lpbForm, nama_barang: e.target.value }); }} placeholder="Nama sparepart / material" className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Qty Diterima</label>
-                  <input type="number" min="1" value={lpbForm.jumlah_diterima} onChange={function(e) { setLpbForm({ ...lpbForm, jumlah_diterima: Number(e.target.value) }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Qty Diterima</label>
+                  <input type="number" min="1" value={lpbForm.jumlah_diterima} onChange={function(e) { setLpbForm({ ...lpbForm, jumlah_diterima: Number(e.target.value) }); }} className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Satuan</label>
-                  <input type="text" value={lpbForm.satuan} onChange={function(e) { setLpbForm({ ...lpbForm, satuan: e.target.value }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Satuan</label>
+                  <input type="text" value={lpbForm.satuan} onChange={function(e) { setLpbForm({ ...lpbForm, satuan: e.target.value }); }} className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Kondisi Fisik</label>
-                  <select value={lpbForm.kondisi} onChange={function(e) { setLpbForm({ ...lpbForm, kondisi: e.target.value }); }} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200">
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Kondisi Fisik</label>
+                  <select value={lpbForm.kondisi} onChange={function(e) { setLpbForm({ ...lpbForm, kondisi: e.target.value }); }} className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]">
                     <option value="BAIK">BAIK & LENGKAP</option>
                     <option value="RUSAK">RUSAK / CACAT</option>
                     <option value="KURANG">KURANG / PARTIAL</option>
@@ -1003,16 +1003,16 @@ export default function LogistikDashboardPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Lokasi Penyimpanan</label>
-                  <input type="text" value={lpbForm.lokasi_simpan} onChange={function(e) { setLpbForm({ ...lpbForm, lokasi_simpan: e.target.value }); }} placeholder="RAK-A1, RAK-B2, dsb" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Lokasi Penyimpanan</label>
+                  <input type="text" value={lpbForm.lokasi_simpan} onChange={function(e) { setLpbForm({ ...lpbForm, lokasi_simpan: e.target.value }); }} placeholder="RAK-A1, RAK-B2, dsb" className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Petugas Penerima</label>
-                  <input type="text" value={lpbForm.penerima} onChange={function(e) { setLpbForm({ ...lpbForm, penerima: e.target.value }); }} placeholder="Nama Checker Gudang" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Petugas Penerima</label>
+                  <input type="text" value={lpbForm.penerima} onChange={function(e) { setLpbForm({ ...lpbForm, penerima: e.target.value }); }} placeholder="Nama Checker Gudang" className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-                <button type="button" onClick={function() { setIsLpbModalOpen(false); }} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition">Batal</button>
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#e2e8f0]">
+                <button type="button" onClick={function() { setIsLpbModalOpen(false); }} className="px-4 py-2 bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e] rounded-lg hover:bg-slate-700 transition">Batal</button>
                 <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition">Simpan & Update Stok</button>
               </div>
             </form>
@@ -1022,22 +1022,22 @@ export default function LogistikDashboardPage() {
 
       {/* MODAL: OPNAME */} 
       {isOpnameModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-[#f4f7fa]/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
+              <h3 className="text-base font-bold text-[#1a2332] flex items-center gap-2">
                 <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
                 Penyesuaian Fisik (Stock Opname)
               </h3>
-              <button onClick={function() { setIsOpnameModalOpen(false); }} className="text-slate-400 hover:text-slate-200">?</button>
+              <button onClick={function() { setIsOpnameModalOpen(false); }} className="text-[#5a6a7e] hover:text-[#1a2332]">?</button>
             </div>
             <form onSubmit={handleSubmitOpname} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Pilih Part dari Master Stok</label>
+                <label className="block text-[#5a6a7e] font-semibold mb-1">Pilih Part dari Master Stok</label>
                 <select
                   value={opnameForm.barang_id}
                   onChange={function(e) { handleSelectBarangOpname(e.target.value); }}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 font-semibold"
+                  className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332] font-semibold"
                   required
                 >
                   <option value="">-- Pilih Barang yang Diaudit --</option>
@@ -1052,23 +1052,23 @@ export default function LogistikDashboardPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Stok Tercatat Sistem</label>
-                  <input type="number" value={opnameForm.stok_sistem} readOnly className="w-full bg-slate-950/60 border border-slate-800 rounded-lg p-2.5 text-slate-400 font-mono font-bold" />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Stok Tercatat Sistem</label>
+                  <input type="number" value={opnameForm.stok_sistem} readOnly className="w-full bg-[#f4f7fa]/60 border border-[#e2e8f0] rounded-lg p-2.5 text-[#5a6a7e] font-mono font-bold" />
                 </div>
                 <div>
-                  <label className="block text-amber-400 font-semibold mb-1">Hasil Hitung Fisik Nyata</label>
+                  <label className="block text-[#003d79] font-semibold mb-1">Hasil Hitung Fisik Nyata</label>
                   <input
                     type="number"
                     min="0"
                     value={opnameForm.stok_fisik}
                     onChange={function(e) { setOpnameForm({ ...opnameForm, stok_fisik: Number(e.target.value) }); }}
-                    className="w-full bg-slate-950 border border-amber-500/60 rounded-lg p-2.5 text-amber-300 font-mono font-bold text-sm"
+                    className="w-full bg-[#f4f7fa] border border-amber-500/60 rounded-lg p-2.5 text-amber-300 font-mono font-bold text-sm"
                     required
                   />
                 </div>
               </div>
-              <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-between">
-                <span className="text-slate-400 font-semibold">Deviasi / Selisih Penyesuaian:</span>
+              <div className="p-3 bg-[#f4f7fa] rounded-lg border border-[#e2e8f0] flex items-center justify-between">
+                <span className="text-[#5a6a7e] font-semibold">Deviasi / Selisih Penyesuaian:</span>
                 <span className={"font-mono font-bold text-sm " + (Number(opnameForm.stok_fisik) - Number(opnameForm.stok_sistem) >= 0 ? "text-emerald-400" : "text-rose-400")}>
                   {Number(opnameForm.stok_fisik) - Number(opnameForm.stok_sistem) > 0 ? "+" : ""}
                   {Number(opnameForm.stok_fisik) - Number(opnameForm.stok_sistem)}
@@ -1076,20 +1076,20 @@ export default function LogistikDashboardPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Lokasi Rak Aktual</label>
-                  <input type="text" value={opnameForm.lokasi_rak} onChange={function(e) { setOpnameForm({ ...opnameForm, lokasi_rak: e.target.value }); }} placeholder="RAK-01..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Lokasi Rak Aktual</label>
+                  <input type="text" value={opnameForm.lokasi_rak} onChange={function(e) { setOpnameForm({ ...opnameForm, lokasi_rak: e.target.value }); }} placeholder="RAK-01..." className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Nama Auditor</label>
-                  <input type="text" value={opnameForm.auditor} onChange={function(e) { setOpnameForm({ ...opnameForm, auditor: e.target.value }); }} placeholder="Auditor / GL Logistik" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
+                  <label className="block text-[#5a6a7e] font-semibold mb-1">Nama Auditor</label>
+                  <input type="text" value={opnameForm.auditor} onChange={function(e) { setOpnameForm({ ...opnameForm, auditor: e.target.value }); }} placeholder="Auditor / GL Logistik" className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required />
                 </div>
               </div>
               <div>
-                <label className="block text-slate-400 font-semibold mb-1">Alasan Penyesuaian / Catatan</label>
-                <textarea value={opnameForm.alasan} onChange={function(e) { setOpnameForm({ ...opnameForm, alasan: e.target.value }); }} rows={2} placeholder="Misal: Selisih fisik audit akhir bulan / salah catat LPB sebelumnya" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200" required></textarea>
+                <label className="block text-[#5a6a7e] font-semibold mb-1">Alasan Penyesuaian / Catatan</label>
+                <textarea value={opnameForm.alasan} onChange={function(e) { setOpnameForm({ ...opnameForm, alasan: e.target.value }); }} rows={2} placeholder="Misal: Selisih fisik audit akhir bulan / salah catat LPB sebelumnya" className="w-full bg-[#f4f7fa] border border-[#e2e8f0] rounded-lg p-2.5 text-[#1a2332]" required></textarea>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-                <button type="button" onClick={function() { setIsOpnameModalOpen(false); }} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition">Batal</button>
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#e2e8f0]">
+                <button type="button" onClick={function() { setIsOpnameModalOpen(false); }} className="px-4 py-2 bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e] rounded-lg hover:bg-slate-700 transition">Batal</button>
                 <button type="submit" className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition">Rekonsiliasi & Update Stok</button>
               </div>
             </form>
@@ -1099,7 +1099,7 @@ export default function LogistikDashboardPage() {
 
       {/* OFFICIAL DOCUMENT PRINT PREVIEW MODAL (Task #5 & #6) */}
       {printDoc.isOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-[#f4f7fa]/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white text-slate-900 border border-slate-300 rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 print:m-0 print:p-0 print:border-none print:shadow-none">
             
             {/* Header Document */}
@@ -1110,7 +1110,7 @@ export default function LogistikDashboardPage() {
                 <p className="text-[10px] text-slate-500">Site Project: Muara Lawa Project (MLP) � Kalimantan Timur</p>
               </div>
               <div className="text-right">
-                <span className="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-black tracking-wider uppercase rounded">
+                <span className="inline-block px-3 py-1 bg-[#f4f7fa] text-white text-xs font-black tracking-wider uppercase rounded">
                   {printDoc.docType === "DO" ? "SURAT JALAN / DO" : printDoc.docType === "PO" ? "PURCHASE ORDER (PO)" : "BAST / LPB"}
                 </span>
                 <div className="font-mono text-xs font-bold text-slate-800 mt-1">{printDoc.docNumber}</div>
@@ -1199,7 +1199,7 @@ export default function LogistikDashboardPage() {
               <button
                 type="button"
                 onClick={function() { window.print(); }}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow"
+                className="px-4 py-2 bg-[#f4f7fa] hover:bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                 Cetak / Simpan PDF
@@ -1210,6 +1210,12 @@ export default function LogistikDashboardPage() {
         </div>
       )}
 
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   );
 }

@@ -143,7 +143,7 @@ export default function NotificationBell() {
               <div className="p-8 text-center">
                 <div className="text-4xl mb-2">🔔</div>
                 <p className="text-sm font-bold text-slate-500">Tidak ada notifikasi</p>
-                <p className="text-[11px] text-slate-400 mt-1">Notif akan muncul di sini</p>
+                <p className="text-[11px] text-[#5a6a7e] mt-1">Notif akan muncul di sini</p>
               </div>
             ) : (
               notifs.map((n) => (
@@ -164,7 +164,7 @@ export default function NotificationBell() {
                       <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
                         {n.body}
                       </p>
-                      <p className="text-[10px] text-slate-400 mt-1">
+                      <p className="text-[10px] text-[#5a6a7e] mt-1">
                         {fmtTime(n.created_at)}
                       </p>
                     </div>

@@ -79,7 +79,7 @@ function RujukanCard({ finding }: { finding: Finding }) {
           href={finding.rujukan_file_url!}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 shadow-md"
+          className="flex items-center justify-center gap-2 py-2.5 bg-[#003d79] text-white rounded-xl font-bold text-sm hover:bg-[#003d79] shadow-md"
         >
           <Download className="w-4 h-4" />
           Download Surat Rujukan
@@ -193,7 +193,7 @@ export default function McuSayaPage() {
   const hasOpenFu = latestMcu?.status_mcu === 'OPEN'
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa]" style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+    <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa]" style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
         {/* Header */}
@@ -240,8 +240,8 @@ export default function McuSayaPage() {
           </div>
         ) : mcuList.length === 0 ? (
           <div className="bg-white rounded-[2rem] shadow-xl p-12 text-center">
-            <HeartPulse className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-            <p className="font-semibold text-slate-400">Belum ada data MCU</p>
+            <HeartPulse className="w-12 h-12 mx-auto mb-3 text-[#5a6a7e]" />
+            <p className="font-semibold text-[#5a6a7e]">Belum ada data MCU</p>
           </div>
         ) : (
           mcuList.map((mcu, idx) => (
@@ -249,7 +249,7 @@ export default function McuSayaPage() {
               <div className="p-5 cursor-pointer" onClick={() => setExpanded(expanded === mcu.id ? null : mcu.id)}>
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] mb-1">
                       {idx === 0 ? 'MCU TERAKHIR' : `MCU ${idx + 1}`}
                     </div>
                     <div className="font-black text-slate-800">{mcu.jenis_mcu}</div>
@@ -259,7 +259,7 @@ export default function McuSayaPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusChip status={mcu.status_mcu} />
-                    {expanded === mcu.id ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                    {expanded === mcu.id ? <ChevronUp className="w-4 h-4 text-[#5a6a7e]" /> : <ChevronDown className="w-4 h-4 text-[#5a6a7e]" />}
                   </div>
                 </div>
 
@@ -269,15 +269,15 @@ export default function McuSayaPage() {
 
                 <div className="mt-3 grid grid-cols-3 gap-3">
                   <div className="bg-slate-50 rounded-xl p-2 text-center">
-                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Hasil</div>
+                    <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Hasil</div>
                     <div className="text-sm font-black text-slate-700 mt-0.5">{mcu.hasil || '-'}</div>
                   </div>
                   <div className="bg-slate-50 rounded-xl p-2 text-center">
-                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Temuan</div>
+                    <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Temuan</div>
                     <div className="text-sm font-black text-slate-700 mt-0.5">{mcu.mcu_findings?.length || 0}</div>
                   </div>
                   <div className={`rounded-xl p-2 text-center ${isExpired(mcu.tanggal_expired) ? 'bg-rose-50' : 'bg-slate-50'}`}>
-                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Berlaku s/d</div>
+                    <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">Berlaku s/d</div>
                     <div className={`text-xs font-black mt-0.5 ${isExpired(mcu.tanggal_expired) ? 'text-rose-600' : 'text-slate-700'}`}>
                       {mcu.tanggal_expired ? new Date(mcu.tanggal_expired).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: '2-digit' }) : '-'}
                     </div>
@@ -301,7 +301,7 @@ export default function McuSayaPage() {
 
                   {mcu.mcu_findings?.length > 0 && (
                     <div>
-                      <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Temuan & Tindak Lanjut</div>
+                      <div className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] mb-3">Temuan & Tindak Lanjut</div>
                       <div className="space-y-4">
                         {mcu.mcu_findings.map(f => (
                           <div key={f.id} className="border-2 border-slate-200 rounded-[1.5rem] p-4">
@@ -427,6 +427,12 @@ export default function McuSayaPage() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Standard App Footer */}
+      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
+        <p>BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px]">Powered By rck_Production</p>
+      </footer>
+</div>
   )
 }
