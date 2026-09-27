@@ -1,4 +1,11 @@
-"use client";
+﻿const fs = require('fs');
+const path = require('path');
+
+console.log('=======================================================');
+console.log('🛠️ FIX JSX TAG AT MOBILE BOTTOM NAV');
+console.log('=======================================================\n');
+
+const navCode = `"use client";
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
@@ -131,3 +138,9 @@ export default function MobileBottomNav() {
     </Suspense>
   );
 }
+`;
+
+const navPath = path.join(process.cwd(), 'app', 'components', 'MobileBottomNav.tsx');
+fs.writeFileSync(navPath, navCode, 'utf8');
+console.log('✅ FIXED: app/components/MobileBottomNav.tsx');
+console.log('=======================================================');

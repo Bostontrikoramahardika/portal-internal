@@ -1074,9 +1074,10 @@ if (menuKey === 'import_roster_bulk') {
                 <div className="p-4 lg:p-6 pt-16 lg:pt-6">
   <AuthProvider user={{ ...user, is_super_admin: isSuperAdmin }} permissions={userPermissions}>
     {children}
-  </AuthProvider>
+    <MobileBottomNav />
+        </AuthProvider>
 </div>
-            <MobileBottomNav />
+            
     </main>
 
       {/* BOTTOM NAVIGATION MOBILE */}
