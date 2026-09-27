@@ -9,6 +9,7 @@ import { initAutoSync } from '@/app/lib/sync-manager'
 import SyncIndicator from '@/app/dashboard/components/SyncIndicator'
 import ClockOutReminder from '@/app/dashboard/components/ClockOutReminder'
 import VerificationModal from '@/app/dashboard/components/VerificationModal'
+import AppFooter from '@/app/components/AppFooter'
 
 interface User {
   nrp: string

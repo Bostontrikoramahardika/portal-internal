@@ -1,16 +1,10 @@
-'use client'
-
-import React from 'react'
-
+'use client';
+import React from 'react';
 export default function AppFooter() {
   return (
-    <footer className="mt-8 mb-4 text-center select-none">
-      <p className="text-[11px] text-slate-400 font-medium italic tracking-tight">
-        BTM Mobile APP V1.7.0
-      </p>
-      <p className="text-[10px] text-slate-400/80 font-normal italic tracking-tight">
-        Powered By rck_Production
-      </p>
+    <footer className="w-full bg-[#f4f7fa] py-4.5 flex flex-col items-center justify-center">
+      <p className="text-[10px] font-bold text-slate-400 tracking-wider">BTM MOBILE APP V1.7.0</p>
+      <p className="text-[9px] text-slate-400 mt-0.5">Powered By rck_Production</p>
     </footer>
-  )
+  );
 }
