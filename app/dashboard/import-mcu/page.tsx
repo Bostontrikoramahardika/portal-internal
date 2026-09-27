@@ -111,12 +111,7 @@ export default function ImportMcuPage() {
 
       {/* Header */}
       <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] p-6 md:p-8 rounded-[2rem] shadow-2xl text-white">
-        <button
-          onClick={() => history.back()}
-          className="mb-4 flex items-center gap-2 text-white/70 hover:text-white text-xs font-black uppercase tracking-widest transition"
-        >
-          <ArrowLeft size={14} /> Kembali
-        </button>
+        
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center">
             <FileSpreadsheet size={28} />

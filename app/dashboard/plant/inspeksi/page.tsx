@@ -576,7 +576,7 @@ export default function FormInspeksiPage() {
             <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200 space-y-3">
               <div className="flex items-center justify-between border-b pb-2">
                 <h2 className="font-bold text-slate-800 text-sm sm:text-base uppercase flex items-center gap-2">
-                  <span className="bg-[#003d79] text-white text-white rounded px-2 py-0.5 text-xs">III</span>
+                  <span className="bg-[#003d79] text-white rounded px-2 py-0.5 text-xs">III</span>
                   Catatan Temuan & Tindakan Perbaikan
                 </h2>
                 <button

@@ -442,7 +442,7 @@ export default function PlantLogistikDashboardPage() {
       <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-[#e2e8f0] text-xs font-bold scrollbar-none">
         <button
           onClick={() => setActiveTab("permintaan")}
-          className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "permintaan" ? "bg-[#003d79] text-white text-slate-950 shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
+          className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "permintaan" ? "bg-[#003d79] text-white shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           1. Permintaan Barang ({myPrList.length})
@@ -450,7 +450,7 @@ export default function PlantLogistikDashboardPage() {
 
         <button
           onClick={() => setActiveTab("stok")}
-          className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "stok" ? "bg-[#003d79] text-white text-slate-950 shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
+          className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "stok" ? "bg-[#003d79] text-white shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
           2. Stock Gudang ({masterItems.length})
@@ -459,7 +459,7 @@ export default function PlantLogistikDashboardPage() {
         {isManagementOrLogistic && (
           <button
             onClick={() => setActiveTab("monitoring_all")}
-            className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "monitoring_all" ? "bg-[#003d79] text-white text-slate-950 shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
+            className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "monitoring_all" ? "bg-[#003d79] text-white shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
           >
             <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             3. Monitoring Semua Permintaan ??
@@ -468,7 +468,7 @@ export default function PlantLogistikDashboardPage() {
 
         <button
           onClick={() => setActiveTab("pengeluaran")}
-          className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "pengeluaran" ? "bg-[#003d79] text-white text-slate-950 shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
+          className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "pengeluaran" ? "bg-[#003d79] text-white shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           <svg className="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
           4. Pengeluaran Barang
@@ -477,7 +477,7 @@ export default function PlantLogistikDashboardPage() {
         {isManagementOrLogistic && (
           <button
             onClick={() => setActiveTab("barang_masuk")}
-            className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "barang_masuk" ? "bg-[#003d79] text-white text-slate-950 shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
+            className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "barang_masuk" ? "bg-[#003d79] text-white shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
           >
             <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
             5. Barang Masuk (LPB) ??
@@ -595,7 +595,7 @@ export default function PlantLogistikDashboardPage() {
                       type="button"
                       key={crit}
                       onClick={() => setPrForm({ ...prForm, kriteria: crit })}
-                      className={"py-2 px-2.5 rounded-xl border text-[11px] font-bold transition flex items-center justify-center gap-1 " + (prForm.kriteria === crit ? (crit === "EMERGENCY" ? "bg-red-600 text-white border-red-500" : crit === "URGENT" ? "bg-[#003d79] text-white text-slate-950 border-amber-400" : "bg-cyan-600 text-white border-cyan-500") : "bg-[#f4f7fa] text-[#5a6a7e] border-[#e2e8f0] hover:border-[#e2e8f0]")}
+                      className={"py-2 px-2.5 rounded-xl border text-[11px] font-bold transition flex items-center justify-center gap-1 " + (prForm.kriteria === crit ? (crit === "EMERGENCY" ? "bg-red-600 text-white border-red-500" : crit === "URGENT" ? "bg-[#003d79] text-white border-amber-400" : "bg-cyan-600 text-white border-cyan-500") : "bg-[#f4f7fa] text-[#5a6a7e] border-[#e2e8f0] hover:border-[#e2e8f0]")}
                     >
                       {crit}
                     </button>
@@ -618,7 +618,7 @@ export default function PlantLogistikDashboardPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 font-black rounded-xl transition shadow-lg flex items-center justify-center gap-2 mt-2"
+                className="w-full py-3 bg-[#003d79] text-white hover:bg-[#002a57] font-black rounded-xl transition shadow-lg flex items-center justify-center gap-2 mt-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                 Kirim Pengajuan PR
@@ -705,8 +705,8 @@ export default function PlantLogistikDashboardPage() {
                 className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-xl px-3 py-1.5 text-xs text-[#1a2332] focus:border-amber-500 focus:outline-none w-56"
               />
               <div className="flex bg-[#f4f7fa] p-1 rounded-xl border border-[#e2e8f0] text-xs font-semibold">
-                <button onClick={() => setStockFilter("ALL")} className={"px-3 py-1 rounded-lg transition " + (stockFilter === "ALL" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "text-[#5a6a7e]")}>Semua</button>
-                <button onClick={() => setStockFilter("LOW")} className={"px-3 py-1 rounded-lg transition " + (stockFilter === "LOW" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "text-[#003d79]")}>Menipis</button>
+                <button onClick={() => setStockFilter("ALL")} className={"px-3 py-1 rounded-lg transition " + (stockFilter === "ALL" ? "bg-[#003d79] text-white font-bold" : "text-[#5a6a7e]")}>Semua</button>
+                <button onClick={() => setStockFilter("LOW")} className={"px-3 py-1 rounded-lg transition " + (stockFilter === "LOW" ? "bg-[#003d79] text-white font-bold" : "text-[#003d79]")}>Menipis</button>
                 <button onClick={() => setStockFilter("OUT")} className={"px-3 py-1 rounded-lg transition " + (stockFilter === "OUT" ? "bg-red-500 text-white font-bold" : "text-red-400")}>Habis</button>
               </div>
             </div>
@@ -758,7 +758,7 @@ export default function PlantLogistikDashboardPage() {
                             });
                             setActiveTab("permintaan");
                           }}
-                          className="px-2.5 py-1 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-[11px] transition shadow"
+                          className="px-2.5 py-1 bg-[#003d79] text-white hover:bg-[#002a57] font-bold rounded-lg text-[11px] transition shadow"
                         >
                           Restock PR
                         </button>
@@ -1239,7 +1239,7 @@ export default function PlantLogistikDashboardPage() {
 
               {/* Step 2: GL Plant Approval */}
               <div className="flex items-start gap-3">
-                <div className={"w-6 h-6 rounded-full font-bold flex items-center justify-center shrink-0 mt-0.5 " + (timelineModalPr.approval_gl_status === "APPROVED" ? "bg-emerald-500 text-slate-950" : timelineModalPr.status === "PENDING_GL" ? "bg-[#003d79] text-white text-slate-950 animate-pulse" : timelineModalPr.status === "REJECTED" ? "bg-red-500 text-white" : "bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e]")}>
+                <div className={"w-6 h-6 rounded-full font-bold flex items-center justify-center shrink-0 mt-0.5 " + (timelineModalPr.approval_gl_status === "APPROVED" ? "bg-emerald-500 text-slate-950" : timelineModalPr.status === "PENDING_GL" ? "bg-[#003d79] text-white animate-pulse" : timelineModalPr.status === "REJECTED" ? "bg-red-500 text-white" : "bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e]")}>
                   {timelineModalPr.approval_gl_status === "APPROVED" ? "?" : "2"}
                 </div>
                 <div>
@@ -1250,7 +1250,7 @@ export default function PlantLogistikDashboardPage() {
 
               {/* Step 3: PJO Approval */}
               <div className="flex items-start gap-3">
-                <div className={"w-6 h-6 rounded-full font-bold flex items-center justify-center shrink-0 mt-0.5 " + (timelineModalPr.approval_pjo_status === "APPROVED" ? "bg-emerald-500 text-slate-950" : timelineModalPr.status === "PENDING_PJO" ? "bg-[#003d79] text-white text-slate-950 animate-pulse" : "bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e]")}>
+                <div className={"w-6 h-6 rounded-full font-bold flex items-center justify-center shrink-0 mt-0.5 " + (timelineModalPr.approval_pjo_status === "APPROVED" ? "bg-emerald-500 text-slate-950" : timelineModalPr.status === "PENDING_PJO" ? "bg-[#003d79] text-white animate-pulse" : "bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e]")}>
                   {timelineModalPr.approval_pjo_status === "APPROVED" ? "?" : "3"}
                 </div>
                 <div>
@@ -1261,7 +1261,7 @@ export default function PlantLogistikDashboardPage() {
 
               {/* Step 4: HO Final Approval */}
               <div className="flex items-start gap-3">
-                <div className={"w-6 h-6 rounded-full font-bold flex items-center justify-center shrink-0 mt-0.5 " + (timelineModalPr.approval_ho_status === "APPROVED" || timelineModalPr.status === "APPROVED" || timelineModalPr.status === "BARANG_READY" ? "bg-emerald-500 text-slate-950" : timelineModalPr.status === "PENDING_HO" ? "bg-[#003d79] text-white text-slate-950 animate-pulse" : "bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e]")}>
+                <div className={"w-6 h-6 rounded-full font-bold flex items-center justify-center shrink-0 mt-0.5 " + (timelineModalPr.approval_ho_status === "APPROVED" || timelineModalPr.status === "APPROVED" || timelineModalPr.status === "BARANG_READY" ? "bg-emerald-500 text-slate-950" : timelineModalPr.status === "PENDING_HO" ? "bg-[#003d79] text-white animate-pulse" : "bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e]")}>
                   {timelineModalPr.approval_ho_status === "APPROVED" || timelineModalPr.status === "APPROVED" || timelineModalPr.status === "BARANG_READY" ? "?" : "4"}
                 </div>
                 <div>

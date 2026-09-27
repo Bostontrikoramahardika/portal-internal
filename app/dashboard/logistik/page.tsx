@@ -451,32 +451,32 @@ export default function LogistikDashboardPage() {
       <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pb-3 mb-4 border-b border-[#e2e8f0] text-xs font-semibold">
         <button
           onClick={function() { setActiveTab("pr"); }}
-          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "pr" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "pr" ? "bg-[#003d79] text-white font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           1. Purchase Request ({prList.length})
         </button>
         <button
           onClick={function() { setActiveTab("po"); }}
-          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "po" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "po" ? "bg-[#003d79] text-white font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           2. Purchase Order ({poList.length})
         </button>
         <button
           onClick={function() { setActiveTab("lpb"); }}
-          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "lpb" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "lpb" ? "bg-[#003d79] text-white font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           3. Penerimaan / LPB ({lpbList.length})
         </button>
         <button
           onClick={function() { setActiveTab("stok"); }}
-          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "stok" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "stok" ? "bg-[#003d79] text-white font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           4. Stok Real-Time ({stokList.length})
           {lowStockList.length > 0 && <span className="w-2 h-2 rounded-full bg-red-500 inline-block"></span>}
         </button>
         <button
           onClick={function() { setActiveTab("opname"); }}
-          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "opname" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
+          className={"px-4 py-2.5 rounded-lg transition shrink-0 flex items-center gap-1.5 " + (activeTab === "opname" ? "bg-[#003d79] text-white font-bold" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           5. Stock Opname ({opnameList.length})
         </button>
@@ -487,7 +487,7 @@ export default function LogistikDashboardPage() {
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-[#1a2332]">Daftar Purchase Request (Permintaan Barang)</h2>
-            <button onClick={function() { setIsPrModalOpen(true); }} className="px-3 py-1.5 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
+            <button onClick={function() { setIsPrModalOpen(true); }} className="px-3 py-1.5 bg-[#003d79] text-white hover:bg-[#002a57] rounded-lg text-xs font-bold transition shadow">
               + Buat PR Manual
             </button>
           </div>
@@ -555,7 +555,7 @@ export default function LogistikDashboardPage() {
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-[#1a2332]">Daftar Purchase Order (PO Pengadaan)</h2>
-            <button onClick={function() { setIsPoModalOpen(true); }} className="px-3 py-1.5 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
+            <button onClick={function() { setIsPoModalOpen(true); }} className="px-3 py-1.5 bg-[#003d79] text-white hover:bg-[#002a57] rounded-lg text-xs font-bold transition shadow">
               + Terbitkan PO
             </button>
           </div>
@@ -609,7 +609,7 @@ export default function LogistikDashboardPage() {
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-[#1a2332]">Daftar Penerimaan Barang (LPB / GRN)</h2>
-            <button onClick={function() { setIsLpbModalOpen(true); }} className="px-3 py-1.5 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition shadow">
+            <button onClick={function() { setIsLpbModalOpen(true); }} className="px-3 py-1.5 bg-[#003d79] text-white hover:bg-[#002a57] rounded-lg text-xs font-bold transition shadow">
               + Catat Penerimaan LPB
             </button>
           </div>
@@ -677,13 +677,13 @@ export default function LogistikDashboardPage() {
             <div className="flex items-center gap-2 bg-[#f4f7fa] p-1 rounded-lg border border-[#e2e8f0] text-xs">
               <button
                 onClick={function() { setStockFilter("ALL"); }}
-                className={"px-3 py-1 rounded transition " + (stockFilter === "ALL" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "text-[#5a6a7e] hover:text-[#1a2332]")}
+                className={"px-3 py-1 rounded transition " + (stockFilter === "ALL" ? "bg-[#003d79] text-white font-bold" : "text-[#5a6a7e] hover:text-[#1a2332]")}
               >
                 Semua ({stokList.length})
               </button>
               <button
                 onClick={function() { setStockFilter("LOW"); }}
-                className={"px-3 py-1 rounded transition flex items-center gap-1 " + (stockFilter === "LOW" ? "bg-[#003d79] text-white text-slate-950 font-bold" : "text-[#003d79] hover:text-amber-300")}
+                className={"px-3 py-1 rounded transition flex items-center gap-1 " + (stockFilter === "LOW" ? "bg-[#003d79] text-white font-bold" : "text-[#003d79] hover:text-amber-300")}
               >
                 Menipis ({lowStockList.length})
               </button>
@@ -753,7 +753,7 @@ export default function LogistikDashboardPage() {
                           {isLow ? (
                             <button
                               onClick={function() { handleQuickRestockPr(item); }}
-                              className="px-2.5 py-1 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 rounded text-[11px] font-bold transition inline-flex items-center gap-1 shadow"
+                              className="px-2.5 py-1 bg-[#003d79] text-white hover:bg-[#002a57] rounded text-[11px] font-bold transition inline-flex items-center gap-1 shadow"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                               Restock PR
@@ -897,7 +897,7 @@ export default function LogistikDashboardPage() {
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-[#e2e8f0]">
                 <button type="button" onClick={function() { setIsPrModalOpen(false); }} className="px-4 py-2 bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e] rounded-lg hover:bg-slate-700 transition">Batal</button>
-                <button type="submit" className="px-4 py-2 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition">Simpan & Kirim PR</button>
+                <button type="submit" className="px-4 py-2 bg-[#003d79] text-white hover:bg-[#002a57] font-bold rounded-lg transition">Simpan & Kirim PR</button>
               </div>
             </form>
           </div>
@@ -950,7 +950,7 @@ export default function LogistikDashboardPage() {
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-[#e2e8f0]">
                 <button type="button" onClick={function() { setIsPoModalOpen(false); }} className="px-4 py-2 bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm text-[#5a6a7e] rounded-lg hover:bg-slate-700 transition">Batal</button>
-                <button type="submit" className="px-4 py-2 bg-[#003d79] text-white hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition">Terbitkan PO</button>
+                <button type="submit" className="px-4 py-2 bg-[#003d79] text-white hover:bg-[#002a57] font-bold rounded-lg transition">Terbitkan PO</button>
               </div>
             </form>
           </div>

@@ -127,7 +127,7 @@ export default function HrOverrideAbsensiPage() {
         </div>
       </div>
 
-      <div className="px-5 -mt-8">
+      <div className="px-5">
         {message && (
           <div
             className={`mb-4 rounded-[1.5rem] p-4 text-sm font-bold shadow-lg ${

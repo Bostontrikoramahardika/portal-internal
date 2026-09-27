@@ -179,18 +179,7 @@ export default function ApprovalKoreksiPage() {
       <PageHeader title="Approval Koreksi" backUrl="/dashboard" />
 
       {/* HERO */}
-      <div className="bg-[#003D79] px-5 pt-8 pb-16 rounded-b-[2.5rem] shadow-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <Link
-            href="/dashboard"
-            className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white text-lg"
-          >
-            ←
-          </Link>
-          <div>
-            <div className="text-white/60 text-[9px] font-black uppercase tracking-widest">
-              Approval
-            </div>
+      
             <h1 className="text-white text-2xl font-black tracking-tight">
               Koreksi Absensi
             </h1>
@@ -213,7 +202,7 @@ export default function ApprovalKoreksiPage() {
         </div>
       </div>
 
-      <div className="px-5 -mt-8">
+      <div className="px-5">
         {message && (
           <div
             className={`mb-4 rounded-[1.5rem] p-4 text-sm font-bold shadow-lg ${

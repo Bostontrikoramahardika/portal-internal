@@ -404,12 +404,7 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
                 🔄 Coba Lagi
               </button>
             )}
-            <button
-              onClick={() => router.back()}
-              className="w-full py-2 text-slate-500 text-xs font-semibold hover:text-slate-700"
-            >
-              ← Kembali ke halaman sebelumnya
-            </button>
+            
           </div>
         </div>
       </div>
@@ -429,9 +424,7 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2.5 bg-white rounded-2xl shadow-md hover:bg-slate-50">
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
-          </button>
+          
           <div>
             <h1 className="text-xl font-black text-slate-800">Detail MCU</h1>
             <p className="text-sm text-slate-500">{mcu.nama_karyawan} · {mcu.nrp}</p>

@@ -150,26 +150,7 @@ export default function KelolaApdPage() {
       <PageHeader title="Kelola Apd" backUrl="/dashboard" />
 
       {/* ── Header ── */}
-      <div className="bg-[#003D79] px-4 pt-8 pb-6">
-        <h1 className="text-white text-2xl font-black tracking-tight">🦺 Kelola APD</h1>
-        <p className="text-blue-200 text-sm mt-1">Manajemen Alat Pelindung Diri</p>
-
-        {/* Tab bar */}
-        <div className="flex gap-2 mt-4 overflow-x-auto pb-1 scrollbar-hide">
-          {tabs.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all
-                ${activeTab === t.key
-                  ? 'bg-white text-[#003D79] shadow-lg'
-                  : 'bg-white/20 text-white/80 hover:bg-white/30'
-                }`}
-            >
-              {t.icon}{t.label}
-            </button>
-          ))}
-        </div>
+      
       </div>
 
       {/* ── Tab Content ── */}
@@ -261,7 +242,7 @@ function TabVerifikasi() {
           <button key={s} onClick={() => setFilterStatus(s)}
             className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all
               ${filterStatus === s
-                ? s === 'PENDING' ? 'bg-[#003d79] text-white text-white'
+                ? s === 'PENDING' ? 'bg-[#003d79] text-white'
                   : s === 'VERIFIED' ? 'bg-emerald-600 text-white'
                   : 'bg-rose-600 text-white'
                 : 'bg-white text-slate-600 shadow'}`}>
@@ -1763,7 +1744,7 @@ function TabPlan() {
                         ${overrideAction === a
                           ? a === 'REMOVE' ? 'bg-rose-600 text-white'
                             : a === 'ADD' ? 'bg-emerald-600 text-white'
-                            : 'bg-[#003d79] text-white text-white'
+                            : 'bg-[#003d79] text-white'
                           : 'bg-slate-100 text-slate-600'}`}>
                       {a === 'REMOVE' ? '❌ Hapus' : a === 'ADD' ? '➕ Tambah' : '✏️ Edit Qty'}
                     </button>

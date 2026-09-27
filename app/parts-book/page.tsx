@@ -187,7 +187,7 @@ export default function PartsBookPage() {
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <table border={1} cellPadding={8} style={{ borderCollapse: 'collapse' }}>
+        <table className="block w-full overflow-x-auto whitespace-nowrap md:table md:whitespace-normal" border={1} cellPadding={8} style={{ borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               <th>Unit</th>

@@ -233,7 +233,7 @@ export default function HRRekrutmenPage() {
           onClick={() => setActiveTab("applicants")}
           className={"px-4 py-2 rounded-xl text-xs font-bold transition-all " +
             (activeTab === "applicants"
-              ? "bg-[#003d79] text-white text-slate-950 shadow-md shadow-amber-500/20"
+              ? "bg-[#003d79] text-white shadow-md shadow-amber-500/20"
               : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-white border border-[#e2e8f0]")}
         >
           Daftar Pelamar ({applicants.length})
@@ -242,7 +242,7 @@ export default function HRRekrutmenPage() {
           onClick={() => setActiveTab("positions")}
           className={"px-4 py-2 rounded-xl text-xs font-bold transition-all " +
             (activeTab === "positions"
-              ? "bg-[#003d79] text-white text-slate-950 shadow-md shadow-amber-500/20"
+              ? "bg-[#003d79] text-white shadow-md shadow-amber-500/20"
               : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-white border border-[#e2e8f0]")}
         >
           Kelola Lowongan ({positions.length})
@@ -412,7 +412,7 @@ export default function HRRekrutmenPage() {
               </select>
               <button
                 type="submit"
-                className="px-4 py-2.5 rounded-xl bg-[#003d79] text-white text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 hover:bg-amber-400 transition-all"
+                className="px-4 py-2.5 rounded-xl bg-[#003d79] text-white font-bold text-xs shadow-md shadow-amber-500/20 hover:bg-amber-400 transition-all"
               >
                 + Buka Lowongan
               </button>

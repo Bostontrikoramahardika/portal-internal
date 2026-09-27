@@ -283,7 +283,7 @@ export default function CrewOnDutyPage() {
             
             {/* POSTER HEADER */}
             <div className="bg-gradient-to-br from-[#003D79] via-[#004a8f] to-[#003D79] text-white p-6 lg:p-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 rounded-full -mr-32 blur-3xl"></div>
               
               <div className="relative z-10">
                 <div className="flex items-start justify-between mb-4">

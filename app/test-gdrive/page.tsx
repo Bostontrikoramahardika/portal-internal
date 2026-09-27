@@ -151,7 +151,7 @@ export default function TestGDrivePage() {
             {loading ? '...' : '🔄 Refresh'}
           </button>
         </div>
-        <table className="w-full text-xs">
+        <table className="w-full text-xs block w-full overflow-x-auto whitespace-nowrap md:table md:whitespace-normal">
           <thead className="bg-gray-100">
             <tr>
               <th className="p-2 text-left">Nama File</th>

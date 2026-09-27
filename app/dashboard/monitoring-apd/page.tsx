@@ -133,8 +133,7 @@ export default function MonitoringApdPage() {
       <PageHeader title="Monitoring Apd" backUrl="/dashboard" />
 
       {/* HERO */}
-      <div className="bg-[#003D79] text-white px-5 pt-6 pb-6 rounded-b-[2.5rem] shadow-2xl relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
+      
         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
         
         <div className="relative">
@@ -191,7 +190,7 @@ export default function MonitoringApdPage() {
           )}
 
           {summary && summary.totalPending > 0 && (
-            <div className="mt-3 bg-[#003d79] text-white text-white rounded-2xl px-3 py-2 text-center text-[11px] font-black">
+            <div className="mt-3 bg-[#003d79] text-white rounded-2xl px-3 py-2 text-center text-[11px] font-black">
               ⏳ {summary.totalPending} request menunggu verifikasi di Kelola APD
             </div>
           )}
@@ -308,7 +307,7 @@ export default function MonitoringApdPage() {
                           <div className="font-black text-slate-900 text-[11px]">
                             {r.nama}
                             {r.pendingCount > 0 && (
-                              <span className="ml-2 bg-[#003d79] text-white text-white rounded-full px-1.5 py-0.5 text-[8px]">
+                              <span className="ml-2 bg-[#003d79] text-white rounded-full px-1.5 py-0.5 text-[8px]">
                                 {r.pendingCount}
                               </span>
                             )}
@@ -367,7 +366,7 @@ export default function MonitoringApdPage() {
                             {r.nama}
                           </div>
                           {r.pendingCount > 0 && (
-                            <span className="bg-[#003d79] text-white text-white rounded-full px-1.5 py-0.5 text-[9px] font-black">
+                            <span className="bg-[#003d79] text-white rounded-full px-1.5 py-0.5 text-[9px] font-black">
                               ⏳ {r.pendingCount}
                             </span>
                           )}

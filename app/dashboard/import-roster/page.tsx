@@ -423,21 +423,10 @@ export default function ImportRosterPage() {
 
 
       {/* HERO */}
-      <div className="bg-[#003D79] px-4 pt-12 pb-20 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-        <button onClick={() => router.back()}
-          className="mb-3 flex items-center gap-1.5 text-white/60 hover:text-white text-sm relative z-10">
-          ← Kembali
-        </button>
-        <div className="relative z-10">
-          <p className="text-[9px] font-black uppercase tracking-widest text-blue-300 mb-1">Import Data</p>
-          <h1 className="text-xl font-black text-white">📤 Import Roster Bulanan</h1>
-          <p className="text-blue-200 text-sm mt-1">Multi-sheet Excel · Template · Riwayat</p>
-        </div>
+      
       </div>
 
-      <div className="px-4 -mt-10 space-y-4 relative z-10">
+      <div className="px-4 space-y-4 relative z-10">
 
         {/* ═══ SECTION: DOWNLOAD TEMPLATE ═══ */}
         {step === 'upload' && (

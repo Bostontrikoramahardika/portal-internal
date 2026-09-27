@@ -281,21 +281,10 @@ export default function SettingUnitPage() {
       <PageHeader title="Setting Unit" backUrl="/dashboard" />
 
       {/* HERO */}
-      <div className="bg-[#003D79] px-4 pt-12 pb-20 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-        <button onClick={() => router.back()}
-          className="mb-3 flex items-center gap-1.5 text-white/60 hover:text-white text-sm relative z-10">
-          ← Kembali
-        </button>
-        <div className="relative z-10">
-          <p className="text-[9px] font-black uppercase tracking-widest text-blue-300 mb-1">GL Produksi Tools</p>
-          <h1 className="text-xl font-black text-white">🎯 Setting Unit</h1>
-          <p className="text-blue-200 text-sm mt-1">Assign operator ke unit per shift</p>
-        </div>
+      
       </div>
 
-      <div className="px-4 -mt-10 space-y-4 relative z-10">
+      <div className="px-4 space-y-4 relative z-10">
         {/* FILTER */}
         <div className="bg-white rounded-2xl shadow-xl p-4 space-y-3">
           <div className="grid grid-cols-3 gap-2">
@@ -367,7 +356,7 @@ export default function SettingUnitPage() {
           <div className="bg-white rounded-2xl p-8 text-center">
             <p className="text-[#5a6a7e] text-xs mb-3">📭 Belum ada unit terdaftar di site ini</p>
             <button onClick={() => router.push(`/dashboard/kelola-unit?site=${encodeURIComponent(site)}`)}
-              className="bg-[#002a57] text-white text-white px-4 py-2 rounded-lg font-black text-xs">
+              className="bg-[#002a57] text-white px-4 py-2 rounded-lg font-black text-xs">
               🚜 Kelola Master Unit
             </button>
           </div>

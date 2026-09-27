@@ -1,5 +1,6 @@
 'use client'
 
+import MobileBottomNav from '@/app/components/MobileBottomNav';
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
@@ -1076,7 +1077,14 @@ if (menuKey === 'import_roster_bulk') {
     {children}
   </AuthProvider>
 </div>
-      </main>
+      
+      {/* GLOBAL FOOTER TTD - LOCKED V1.7.0 */}
+      <footer className="mt-8 mb-24 sm:mb-8 text-center text-xs text-[#8896a7] italic opacity-70 border-t border-[#e2e8f0]/60 pt-4">
+        <p className="font-semibold text-[#5a6a7e]">BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px] text-[#8896a7] mt-0.5">Powered By rck_Production</p>
+      </footer>
+
+</main>
 
       {/* BOTTOM NAVIGATION MOBILE */}
            <nav className="lg:hidden fixed bottom-3 left-3 right-3 z-50 bg-white/70 backdrop-blur-2xl border border-white/50 flex overflow-x-auto px-2 py-2 rounded-[1.8rem] shadow-[0_10px_40px_rgba(0,61,121,0.15)] no-scrollbar">

@@ -35,8 +35,7 @@ function DashboardView({ title, data }: any) {
       <PageHeader title="Dashboard Central" backUrl="/dashboard" />
 
       <div className="relative mb-12">
-        <div className="bg-[#003D79] rounded-[2.5rem] p-8 pt-10 pb-24 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+        
           <div className="relative z-10">
             <p className="text-blue-200/70 font-bold text-[10px] uppercase tracking-[0.3em] mb-2">{getGreeting()}</p>
             <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-white tracking-tight">{data.user_name || stats.user_name || 'Rekan BTM'} 👋</h2>
@@ -45,7 +44,7 @@ function DashboardView({ title, data }: any) {
           <KoreksiBadge /> 
         </div>
 
-        <div className="bg-white rounded-[2.2rem] mx-4 -mt-16 p-6 shadow-[0_20px_50px_rgba(0,61,121,0.12)] border border-white relative z-20">
+        <div className="bg-white rounded-[2.2rem] mx-4 p-6 shadow-[0_20px_50px_rgba(0,61,121,0.12)] border border-white relative z-20">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-xl">⏰</div>
@@ -1188,7 +1187,7 @@ function FormLemburView({ title, onSuccess, data }: any) {
           </div>
 
           <Textarea label="Pekerjaan / Alasan Lembur" required value={form.alasan} onChange={(v:any) => setForm({...form, alasan: v})} />
-          <button disabled={loading} className="w-full bg-[#003d79] text-white text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-[#002a57] text-white shadow-lg shadow-amber-200 active:scale-95 transition-all">
+          <button disabled={loading} className="w-full bg-[#003d79] text-white py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black hover:bg-[#002a57] text-white shadow-lg shadow-amber-200 active:scale-95 transition-all">
             {loading ? 'MENGIRIM...' : '🚀 KIRIM LEMBUR'}
           </button>
         </form>
@@ -2152,7 +2151,7 @@ function AbsensiClockView({ title }: any) {
                 Dokumen Akan Expired
               </span>
             </div>
-            <span className="bg-[#003d79] text-white text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+            <span className="bg-[#003d79] text-white text-[9px] font-black px-2 py-0.5 rounded-full">
               {dokumenExpired.length}
             </span>
           </div>
@@ -3006,7 +3005,7 @@ function TableView({ data, onReload }: any) {
 
                         <button
                           onClick={() => setFormModal({ mode: 'edit', row: r })}
-                          className="bg-[#003d79] text-white text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-[#002a57] text-white shadow-sm"
+                          className="bg-[#003d79] text-white px-2 py-1 rounded text-[9px] lg:text-[10px] font-black hover:bg-[#002a57] text-white shadow-sm"
                           title="Edit"
                         >
                           ✏️
@@ -3593,7 +3592,7 @@ function RoleManagerView({ title }: any) {
     <div className="animate-in fade-in duration-500 pb-32">
       {/* HEADER MEWAH */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 blur-3xl"></div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">👥</div>
@@ -4376,7 +4375,7 @@ function RiwayatApprovalView({ data, onReload }: any) {
         <div className="grid grid-cols-4 gap-1.5">
           <button onClick={() => setFilterJenis('ALL')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'ALL' ? 'bg-[#f4f7fa] text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>Semua</button>
           <button onClick={() => setFilterJenis('CUTI')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'CUTI' ? 'bg-blue-500 text-white' : 'bg-slate-50 text-slate-500 hover:bg-blue-50'}`}>🌴 Cuti</button>
-          <button onClick={() => setFilterJenis('LEMBUR')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'LEMBUR' ? 'bg-[#003d79] text-white text-white' : 'bg-slate-50 text-slate-500 hover:bg-amber-50'}`}>⏰ Lembur</button>
+          <button onClick={() => setFilterJenis('LEMBUR')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'LEMBUR' ? 'bg-[#003d79] text-white' : 'bg-slate-50 text-slate-500 hover:bg-amber-50'}`}>⏰ Lembur</button>
           <button onClick={() => setFilterJenis('SAKIT')} className={`py-1.5 lg:py-2 rounded-lg font-black text-[9px] lg:text-[10px] uppercase tracking-wide transition-all ${filterJenis === 'SAKIT' ? 'bg-rose-500 text-white' : 'bg-slate-50 text-slate-500 hover:bg-rose-50'}`}>🤒 Sakit</button>
         </div>
 
@@ -5310,7 +5309,7 @@ function ChangePasswordView({ title }: any) {
       
       {/* Header Card */}
       <div className="bg-gradient-to-br from-[#003D79] to-blue-800 text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 blur-3xl"></div>
         <div className="relative z-10">
           <div className="text-4xl mb-3">🔐</div>
           <h2 className="text-xl font-black tracking-tight mb-1">Ganti Password</h2>
@@ -5574,7 +5573,7 @@ function SitesManagerView() {
     <div className="animate-in fade-in duration-500 pb-32">
       {/* HEADER MEWAH */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 blur-3xl"></div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🏢</div>
@@ -5601,7 +5600,7 @@ function SitesManagerView() {
             }`}>
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${
-                  site.is_pusat ? 'bg-[#003d79] text-white text-white' : 'bg-[#003D79] text-white'
+                  site.is_pusat ? 'bg-[#003d79] text-white' : 'bg-[#003D79] text-white'
                 }`}>
                   {site.is_pusat ? '⭐' : '🏢'}
                 </div>
@@ -5609,7 +5608,7 @@ function SitesManagerView() {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-black text-slate-900 text-base">{site.nama_site}</h3>
                     {site.is_pusat && (
-                      <span className="bg-[#003d79] text-white text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+                      <span className="bg-[#003d79] text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
                         Pusat
                       </span>
                     )}
@@ -5716,7 +5715,7 @@ function SitesManagerView() {
                 </button>
                 <button 
                   onClick={() => window.location.href = `/dashboard/kelola-unit?site=${encodeURIComponent(site.nama_site)}`}
-                  className="py-4 bg-[#002a57] text-white text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-amber-700 active:scale-95 transition-all"
+                  className="py-4 bg-[#002a57] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-amber-700 active:scale-95 transition-all"
                 >
                   🚜 KELOLA UNIT
                 </button>
@@ -6256,7 +6255,7 @@ function GlobalConfigView() {
 
       {/* HEADER */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-rose-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-rose-400/10 rounded-full -mr-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 mb-3">
@@ -6287,7 +6286,7 @@ function GlobalConfigView() {
       {/* STATS CARDS */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-emerald-100 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-full -mr-4 -mt-4" />
+          <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-full -mr-4" />
           <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-2">
             🟢 Online Kini
           </p>
@@ -6858,7 +6857,7 @@ function ResetPasswordAdminView() {
 
       {/* HEADER */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🔧</div>
@@ -6946,7 +6945,7 @@ function ResetPasswordAdminView() {
               </div>
               <button
                 onClick={() => openResetModal(emp)}
-                className="bg-[#003d79] text-white text-white px-4 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-[#002a57] text-white active:scale-95 transition-all whitespace-nowrap"
+                className="bg-[#003d79] text-white px-4 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-[#002a57] text-white active:scale-95 transition-all whitespace-nowrap"
               >
                 🔧 RESET
               </button>
@@ -7087,7 +7086,7 @@ function ResetPasswordAdminView() {
                 className={`flex-[2] py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
                   processing || (mode === 'custom' && customPassword.length < 4)
                     ? 'bg-slate-200 text-[#5a6a7e]'
-                    : 'bg-[#003d79] text-white text-white shadow-xl shadow-amber-200 hover:bg-[#002a57] text-white'
+                    : 'bg-[#003d79] text-white shadow-xl shadow-amber-200 hover:bg-[#002a57] text-white'
                 }`}
               >
                 {processing ? '⏳ MEMPROSES...' : '🔧 RESET PASSWORD SEKARANG'}
@@ -7210,7 +7209,7 @@ function SystemAuditView() {
 
       {/* HEADER */}
 <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-  <div className="absolute top-0 right-0 w-40 h-40 bg-purple-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+  <div className="absolute top-0 right-0 w-40 h-40 bg-purple-400/10 rounded-full -mr-16 blur-3xl" />
   <div className="relative z-10">
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
@@ -7754,7 +7753,7 @@ function ApprovalCenterView() {
           onClick={() => setMainTab('revisi')}
           className={`flex-1 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
             mainTab === 'revisi'
-              ? 'bg-[#003d79] text-white text-white shadow-lg'
+              ? 'bg-[#003d79] text-white shadow-lg'
               : 'text-[#5a6a7e] hover:bg-slate-50'
           }`}
         >
@@ -7771,7 +7770,7 @@ function ApprovalCenterView() {
 
       {/* HEADER */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 lg:gap-3">
@@ -8094,7 +8093,7 @@ function ApprovalCenterView() {
 
           {/* Header revisi */}
           <div className="bg-gradient-to-br from-amber-600 to-amber-500 text-white p-4 rounded-2xl shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 blur-2xl" />
             <div className="relative z-10 flex items-center justify-between">
               <div>
                 <p className="text-amber-100 font-black text-[9px] uppercase tracking-widest mb-1">Revisi Waktu Absensi</p>
@@ -8499,7 +8498,7 @@ function PermissionManagerView() {
     <div className="animate-in fade-in duration-500 pb-32">
       {/* HEADER MEWAH */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -mr-16 blur-3xl"></div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🔐</div>
@@ -8715,7 +8714,7 @@ function PermissionManagerView() {
                               } ${isChanged ? 'ring-2 ring-amber-400 ring-offset-2' : ''}`}
                             >
                               {isChanged && (
-                                <span className="absolute -top-1 -right-1 bg-[#003d79] text-white text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">
+                                <span className="absolute -top-1 -right-1 bg-[#003d79] text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">
                                   Draft
                                 </span>
                               )}
@@ -8729,7 +8728,7 @@ function PermissionManagerView() {
                                   <div className="flex items-center gap-2 mb-0.5">
                                     <p className="font-black text-xs text-slate-900 truncate">{perm.perm_label}</p>
                                     {perm.is_super_only && (
-                                      <span className="bg-[#003d79] text-white text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">
+                                      <span className="bg-[#003d79] text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">
                                         Super
                                       </span>
                                     )}
@@ -8903,7 +8902,7 @@ function KelolaHakCutiView() {
     <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
       {/* HEADER */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">🎫</div>
@@ -9650,7 +9649,7 @@ function MonitoringCutiTiketView() {
     <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
       {/* HEADER */}
       <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="text-3xl">📊</div>
@@ -10124,7 +10123,13 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
             {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN'}
           </button>
         </div>
-      </div>
+      
+      {/* GLOBAL FOOTER TTD - LOCKED V1.7.0 */}
+      <footer className="mt-8 mb-24 sm:mb-8 text-center text-xs text-[#8896a7] italic opacity-70 border-t border-[#e2e8f0]/60 pt-4">
+        <p className="font-semibold text-[#5a6a7e]">BTM Mobile APP V1.7.0</p>
+        <p className="text-[10px] text-[#8896a7] mt-0.5">Powered By rck_Production</p>
+      </footer>
+</div>
     </>
   )
 }

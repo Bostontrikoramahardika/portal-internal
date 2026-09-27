@@ -180,8 +180,7 @@ export default function ApdSayaPage() {
   return (
     <div className="min-h-screen bg-[#f4f7fa] pb-24">
       {/* HERO */}
-      <div className="bg-[#003D79] text-white px-5 pt-6 pb-6 rounded-b-[2.5rem] shadow-2xl relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
+      
         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
         
         <div className="relative">
