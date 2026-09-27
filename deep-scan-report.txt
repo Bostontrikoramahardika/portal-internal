@@ -1,0 +1,911 @@
+=== DEEP SCAN 30 HALAMAN BTM APP ===
+Dibuat: 2026-09-27T10:17:49.664Z
+
+
+======================================================================
+[1/30] app/dashboard/apd-saya/page.tsx
+======================================================================
+📏 Total Line     : 591 | Ukuran: 26.9 KB
+📋 Judul Halaman  : APD Saya
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 15x
+   - useEffect     : 2x
+   - fetch API     : 3x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : ADA
+🔗 API Endpoints Terpakai (3):
+   • /api/apd/saya
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center p-6"> <PageHeader title="Apd Saya" backUrl="/dashboard" /> <div className="text-center"> <div className="text-4xl mb-4 animate-pulse">🦺</div> <div className="text-sm text-slate-500 font-medium">Memuat data APD...</div> </div> </div> ) } if (error) { return ( <div className="min-h-screen bg-[#f4f7fa] flex items-cen...
+
+======================================================================
+[2/30] app/dashboard/approval-koreksi/page.tsx
+======================================================================
+📏 Total Line     : 399 | Ukuran: 13.9 KB
+📋 Judul Halaman  : Koreksi Absensi
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 8x
+   - useEffect     : 3x
+   - fetch API     : 3x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (3):
+   • /api/attendance/corrections
+   • /api/attendance/corrections/
+📌 Preview JSX Awal:
+   return () => clearTimeout(t) }, [message]) const handleApprove = async (id: string) => { if (!confirm('Setujui pengajuan koreksi ini?')) return setProcessing(id) try { const res = await fetch(`/api/attendance/corrections/${id}`, { method: 'PATCH', headers: getAuthHeaders(), body: JSON.stringify({ action: 'APPROVE' }), }) const data = await res.json() if (res.ok) { setMessage({ type: 'success', tex...
+
+======================================================================
+[3/30] app/dashboard/crew-on-duty/page.tsx
+======================================================================
+📏 Total Line     : 419 | Ukuran: 17.0 KB
+📋 Judul Halaman  : CREW ON DUTY
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 10x
+   - useEffect     : 4x
+   - fetch API     : 2x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : NO
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (2):
+   • /api/public/sites
+   • /api/crew-on-duty
+📌 Preview JSX Awal:
+   return () => clearInterval(timer) }, []) useEffect(() => { if (filterSite) loadData() }, [filterSite, filterShift, filterTanggal]) async function loadData() { setLoading(true) setError('') try { const params = new URLSearchParams() if (filterSite) params.set('site', filterSite) if (filterShift !== 'AUTO') params.set('shift', filterShift) if (filterTanggal) params.set('tanggal', filterTanggal) cons...
+
+======================================================================
+[4/30] app/dashboard/dashboard-cuti/page.tsx
+======================================================================
+📏 Total Line     : 851 | Ukuran: 41.1 KB
+📋 Judul Halaman  : Dashboard Cuti
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 17x
+   - useEffect     : 4x
+   - fetch API     : 3x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : NO
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (3):
+   • /api/monitoring-roster-cr
+   • /api/monitoring-cuti
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] pb-24"> <PageHeader title="Dashboard Cuti" backUrl="/dashboard" /> {/* ─── HEADER ────────────────────────────────────────────────────── */} <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-6 rounded-b-3xl shadow-lg"> <div className="flex items-center gap-3"> <span className="text-4xl">🌴</span> <d...
+
+======================================================================
+[5/30] app/dashboard/hr-dashboard/page.tsx
+======================================================================
+📏 Total Line     : 133 | Ukuran: 5.3 KB
+📋 Judul Halaman  : HR Dashboard
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 4x
+   - useEffect     : 2x
+   - fetch API     : 1x
+   - Form Input    : NO
+   - Table/Grid    : NO
+   - Modal/Popup   : NO
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (2):
+   • /api/data/route
+   • /api/menus
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] pb-24"> <PageHeader title="Hr Dashboard" backUrl="/dashboard" /> {/* HEADER */} <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-6 rounded-b-3xl shadow-lg"> <div className="flex items-center gap-3"> <span className="text-4xl">📊</span> <div> <h1 className="text-white text-xl lg:text-3xl font-black ...
+
+======================================================================
+[6/30] app/dashboard/hr-override-absensi/page.tsx
+======================================================================
+📏 Total Line     : 290 | Ukuran: 10.6 KB
+📋 Judul Halaman  : 🛠️ Override Absensi
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 11x
+   - useEffect     : 2x
+   - fetch API     : 1x
+   - Form Input    : YES
+   - Table/Grid    : YES
+   - Modal/Popup   : NO
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (1):
+   • /api/attendance/corrections/override
+📌 Preview JSX Awal:
+   return () => clearTimeout(t) }, [message]) const handleSubmit = async (e: React.FormEvent) => { e.preventDefault() setMessage(null) if (!employeeNrp.trim()) { setMessage({ type: 'error', text: 'NRP karyawan wajib diisi' }) return } if (!alasan.trim()) { setMessage({ type: 'error', text: 'Alasan wajib diisi' }) return } if ( !confirm( `⚠️ OVERRIDE ABSENSI\n\nNRP: ${employeeNrp}\nTanggal: ${tanggal}...
+
+======================================================================
+[7/30] app/dashboard/import-mcu/page.tsx
+======================================================================
+📏 Total Line     : 328 | Ukuran: 13.9 KB
+📋 Judul Halaman  : Import MCU Massal
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 9x
+   - useEffect     : 2x
+   - fetch API     : 4x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : NO
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : YES
+   - File Upload   : YES
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : TIDAK
+   - Back Button   : ADA
+   - Sticky Header : ADA
+🔗 API Endpoints Terpakai (4):
+   • /api/employees/sites
+   • /api/mcu/import/template
+   • /api/mcu/import/preview
+   • /api/mcu/import/commit
+📌 Preview JSX Awal:
+   return ( <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6"> <PageHeader title="Import Mcu" backUrl="/dashboard" /> {/* Header */} <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] p-6 md:p-8 rounded-[2rem] shadow-2xl text-white"> <button onClick={() => history.back()} className="mb-4 flex items-center gap-2 text-white/70 hover:text-white text-xs font-black uppercase tracking-wide...
+
+======================================================================
+[8/30] app/dashboard/import-roster/page.tsx
+======================================================================
+📏 Total Line     : 945 | Ukuran: 44.7 KB
+📋 Judul Halaman  : 📤 Import Roster Bulanan
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 26x
+   - useEffect     : 3x
+   - fetch API     : 11x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : YES
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : YES
+   - File Upload   : YES
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (11):
+   • /api/employees/sites
+   • /api/roster/categories
+   • /api/roster/history
+   • /api/roster/import-preview
+   • /api/roster/import-confirm
+   • /api/roster/download-template
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] pb-24"> <PageHeader title="Import Roster" backUrl="/dashboard" /> {/* HERO */} <div className="hidden"> <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} /> <button onClick={() => router.back()} className="mb-3 flex items-...
+
+======================================================================
+[9/30] app/dashboard/kelola-akses/page.tsx
+======================================================================
+📏 Total Line     : 1391 | Ukuran: 58.4 KB
+📋 Judul Halaman  : 🔑 Kelola Akses
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 33x
+   - useEffect     : 5x
+   - fetch API     : 8x
+   - Form Input    : YES
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : ADA
+🔗 API Endpoints Terpakai (8):
+   • /api/kelola-akses
+   • /api/kelola-akses/google
+   • /api/kelola-akses/sites
+   • /api/kelola-akses/templates
+   • /api/employees
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] pb-24"> <PageHeader title="Kelola Akses" backUrl="/dashboard" /> {/* Header */} <div className="hidden"> <h1 className="text-white text-2xl font-black tracking-tight">🔑 Kelola Akses</h1> <p className="text-blue-200 text-sm mt-1">Role & Permission Terpusat</p> <div className="flex gap-2 mt-4 overflow-x-auto pb-1"> {tabs.map(t => ( <button key={t.k...
+
+======================================================================
+[10/30] app/dashboard/kelola-apd/page.tsx
+======================================================================
+📏 Total Line     : 1812 | Ukuran: 83.4 KB
+📋 Judul Halaman  : 🦺 Kelola APD
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 66x
+   - useEffect     : 8x
+   - fetch API     : 18x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : YES
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : ADA
+🔗 API Endpoints Terpakai (18):
+   • /api/apd/verify
+   • /api/apd/monitoring
+   • /api/apd/master
+   • /api/apd/distribusi
+   • /api/employees
+   • /api/apd/stok
+   • /api/apd/plan
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] pb-24"> <PageHeader title="Kelola Apd" backUrl="/dashboard" /> {/* ── Header ── */} <div className="hidden"> <h1 className="text-white text-2xl font-black tracking-tight">🦺 Kelola APD</h1> <p className="text-blue-200 text-sm mt-1">Manajemen Alat Pelindung Diri</p> {/* Tab bar */} <div className="flex gap-2 mt-4 overflow-x-auto pb-1 scrollbar-hide...
+
+======================================================================
+[11/30] app/dashboard/kelola-event/page.tsx
+======================================================================
+📏 Total Line     : 1489 | Ukuran: 67.7 KB
+📋 Judul Halaman  : Kelola Event
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 42x
+   - useEffect     : 11x
+   - fetch API     : 19x
+   - Form Input    : YES
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : YES
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (23):
+   • /api/auth/me
+   • /api/employees/sites
+   • /api/events
+   • /api/events/
+   • /api/qr-locations
+   • /api/qr-locations/
+   • /api/master-perusahaan
+   • /api/event-templates
+   • /api/event-templates/
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] pb-24"> <PageHeader title="Kelola Event" backUrl="/dashboard/kelola-event" /> {/* HEADER */} <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-6 rounded-b-3xl shadow-lg"> <div className="flex items-center gap-3"> <span className="text-4xl">🎫</span> <div> <h1 className="text-white text-xl lg:text-3x...
+
+======================================================================
+[12/30] app/dashboard/kelola-event/[id]/page.tsx
+======================================================================
+📏 Total Line     : 1246 | Ukuran: 57.0 KB
+📋 Judul Halaman  : {event.nama_event}
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 28x
+   - useEffect     : 6x
+   - fetch API     : 9x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : YES
+   - Image/Photo   : YES
+   - Chart Graph   : NO
+   - Excel Export  : YES
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (11):
+   • /api/events/
+   • /api/kelola-akses
+📌 Preview JSX Awal:
+   return ( a.nama?.toLowerCase().includes(s) || a.nrp?.toLowerCase().includes(s) || a.perusahaan?.toLowerCase().includes(s) ) }) // ─── Loading ──────────────────────────────────────────────────────────────── if (loading) { return ( <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center"> <PageHeader title="[id]" backUrl="/dashboard/kelola-event" /> <div className="text-center"> ...
+
+======================================================================
+[13/30] app/dashboard/kelola-unit/page.tsx
+======================================================================
+📏 Total Line     : 492 | Ukuran: 20.2 KB
+📋 Judul Halaman  : 🚜 Kelola Unit
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 13x
+   - useEffect     : 3x
+   - fetch API     : 5x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : YES
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (5):
+   • /api/employees/sites
+   • /api/units
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] pb-24"> <PageHeader title="Kelola Unit" backUrl="/dashboard" /> {/* HERO */} <div className="hidden"> <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} /> <button onClick={() => router.back()} className="mb-3 flex items-ce...
+
+======================================================================
+[14/30] app/dashboard/koreksi-absensi/page.tsx
+======================================================================
+📏 Total Line     : 629 | Ukuran: 22.2 KB
+📋 Judul Halaman  : 📝 Revisi Waktu Absensi
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 16x
+   - useEffect     : 4x
+   - fetch API     : 3x
+   - Form Input    : YES
+   - Table/Grid    : YES
+   - Modal/Popup   : NO
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (3):
+   • /api/employees/approvers
+   • /api/attendance/corrections
+📌 Preview JSX Awal:
+   return () => clearTimeout(t) }, [message]) const handleSubmit = async (e: React.FormEvent) => { e.preventDefault() setMessage(null) if (!tanggal) { setMessage({ type: 'error', text: 'Tanggal wajib diisi' }) return } if (!alasan.trim()) { setMessage({ type: 'error', text: 'Alasan wajib diisi' }) return } if (!selectedApprover) { setMessage({ type: 'error', text: 'Pilih approver terlebih dahulu' }) ...
+
+======================================================================
+[15/30] app/dashboard/logistik/page.tsx
+======================================================================
+📏 Total Line     : 1222 | Ukuran: 71.2 KB
+📋 Judul Halaman  : Daftar Purchase Request (Permintaan Barang)
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 21x
+   - useEffect     : 2x
+   - fetch API     : 11x
+   - Form Input    : YES
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (11):
+   • /api/logistik/pr
+   • /api/logistik/po
+   • /api/logistik/lpb
+   • /api/logistik/stok
+   • /api/logistik/stock-opname
+   • /api/logistik/min-stock
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] text-[#1a2332] p-4 md:p-6 pb-28"> <PageHeader title="Logistik Central Portal" backUrl="/dashboard" badge="LOGISTIK" /> {/* Header */} <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-5 mb-6"> <div> <div className="flex items-center gap-2"> <Link href="/dashboard" classNa...
+
+======================================================================
+[16/30] app/dashboard/manajemen-absensi/page.tsx
+======================================================================
+📏 Total Line     : 989 | Ukuran: 48.5 KB
+📋 Judul Halaman  : Manajemen Absensi
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 29x
+   - useEffect     : 3x
+   - fetch API     : 6x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : YES
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : YES
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : ADA
+🔗 API Endpoints Terpakai (6):
+   • /api/export-absensi-matrix
+   • /api/attendance/rekap/export
+   • /api/employees/sites
+   • /api/attendance/matrix
+   • /api/attendance/matrix/edit
+   • /api/employees/resign
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] pb-16"> <PageHeader title="Manajemen Absensi" backUrl="/dashboard" /> {/* ── HERO ── */} <div className="hidden"> <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }}/> <button onClick={() => router.back()} className="mb-4 fl...
+
+======================================================================
+[17/30] app/dashboard/mcu-saya/page.tsx
+======================================================================
+📏 Total Line     : 438 | Ukuran: 20.2 KB
+📋 Judul Halaman  : MCU Saya
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 10x
+   - useEffect     : 3x
+   - fetch API     : 2x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : YES
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (2):
+   • /api/mcu/saya
+   • /api/mcu/
+📌 Preview JSX Awal:
+   return ( <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 mb-2"> <PageHeader title="Mcu Saya" backUrl="/dashboard" /> <div className="flex items-center gap-2 mb-2"> <Download className="w-4 h-4 text-blue-600" /> <span className="text-[9px] font-black uppercase tracking-widest text-blue-600"> 📥 Surat Rujukan dari HR </span> </div> <a href={finding.rujukan_file_url!} target="_blank"...
+
+======================================================================
+[18/30] app/dashboard/monitoring-apd/page.tsx
+======================================================================
+📏 Total Line     : 590 | Ukuran: 27.5 KB
+📋 Judul Halaman  : Monitoring APD
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 15x
+   - useEffect     : 3x
+   - fetch API     : 1x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : ADA
+🔗 API Endpoints Terpakai (1):
+   • /api/apd/monitoring
+📌 Preview JSX Awal:
+   return () => clearTimeout(t) // eslint-disable-next-line }, [search]) const loadData = async () => { try { setLoading(true) setError(null) const token = localStorage.getItem('btm_session_token_v1') const headers: Record<string, string> = {} if (token) headers['Authorization'] = `Bearer ${token}` const params = new URLSearchParams({ site: filterSite, departemen: filterDept, status: filterStatus, se...
+
+======================================================================
+[19/30] app/dashboard/monitoring-mcu/karyawan/[nrp]/page.tsx
+======================================================================
+📏 Total Line     : 340 | Ukuran: 16.1 KB
+📋 Judul Halaman  : {employee.nama}
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 4x
+   - useEffect     : 2x
+   - fetch API     : 1x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : NO
+   - Router Nav    : YES
+   - Image/Photo   : YES
+   - Chart Graph   : YES
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (1):
+   • /api/mcu/karyawan/
+📌 Preview JSX Awal:
+   return ( <span className={`inline-flex items-center gap-1 rounded-full font-bold border ${sizeCls} ${s.cls}`}> {Icon && <Icon className="w-3 h-3" />} {s.label} </span> ) } function formatDate(d?: string) { if (!d) return '-' return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) } export default function KaryawanMcuTimelinePage({ params }: { params: Pro...
+
+======================================================================
+[20/30] app/dashboard/monitoring-mcu/page.tsx
+======================================================================
+📏 Total Line     : 631 | Ukuran: 27.4 KB
+📋 Judul Halaman  : Monitoring MCU
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 12x
+   - useEffect     : 2x
+   - fetch API     : 2x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : NO
+   - Router Nav    : YES
+   - Image/Photo   : NO
+   - Chart Graph   : YES
+   - Excel Export  : YES
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (2):
+   • /api/mcu/matrix
+   • /api/mcu/matrix/export
+📌 Preview JSX Awal:
+   return ( <div className="text-center text-[#5a6a7e] text-[10px]"> <PageHeader title="Monitoring Mcu" backUrl="/dashboard/monitoring-mcu" /> —</div> ) } return ( <div className="text-center"> <div className="text-[10px] font-bold text-slate-700"> {formatDateShort(col.tanggal)} </div> {col.hasil && ( <span className={`inline-block mt-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold border ${getHa...
+
+======================================================================
+[21/30] app/dashboard/monitoring-mcu/[id]/page.tsx
+======================================================================
+📏 Total Line     : 699 | Ukuran: 28.5 KB
+📋 Judul Halaman  : Detail MCU
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 12x
+   - useEffect     : 2x
+   - fetch API     : 6x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : YES
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : YES
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (6):
+   • /api/mcu/
+📌 Preview JSX Awal:
+   return ( <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${map[status] || 'bg-slate-100 text-slate-500'}`}> {labels[status] || status} </span> ) } // ═══════════════════════════════════════════════════════════════ // 🆕 COMPONENT: Upload Rujukan Section (HR) // ═══════════════════════════════════════════════════════════════ function RujukanSection({ mcuId, finding, onReload }: { m...
+
+======================================================================
+[22/30] app/dashboard/page.tsx
+======================================================================
+📏 Total Line     : 10140 | Ukuran: 522.1 KB
+📋 Judul Halaman  : Kelola Role Karyawan
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 209x
+   - useEffect     : 23x
+   - fetch API     : 65x
+   - Form Input    : YES
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : YES
+   - Image/Photo   : YES
+   - Chart Graph   : NO
+   - Excel Export  : YES
+   - File Upload   : YES
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : TIDAK
+   - Back Button   : ADA
+   - Sticky Header : ADA
+🔗 API Endpoints Terpakai (71):
+   • /api/data
+   • /api/leave/atasan-list
+   • /api/leave/cr-list
+   • /api/leave/submit
+   • /api/overtime/atasan-list
+   • /api/overtime/submit
+   • /api/attendance/atasan-list
+   • /api/announcements/upload
+   • /api/crud
+   • /api/announcements
+📌 Preview JSX Awal:
+   return ( <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-28"> <PageHeader title="Dashboard Central" backUrl="/dashboard" /> <div className="relative mb-12"> <div className="hidden"> <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 blur-3xl"></div> <div className="relative z-10"> <p className="text-blue-200/70 font-bold text-[10px] uppercase...
+
+======================================================================
+[23/30] app/dashboard/plant/inspeksi/page.tsx
+======================================================================
+📏 Total Line     : 784 | Ukuran: 32.9 KB
+📋 Judul Halaman  : FORM INSPEKSI UNIT
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 18x
+   - useEffect     : 3x
+   - fetch API     : 5x
+   - Form Input    : YES
+   - Table/Grid    : YES
+   - Modal/Popup   : NO
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (5):
+   • /api/auth/me
+   • /api/units
+   • /api/plant/format-inspeksi
+   • /api/plant/inspeksi
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-slate-100 p-2 sm:p-4 text-slate-800 pb-20"> <PageHeader title="Form Inspeksi P2H Lapangan" backUrl="/dashboard/plant" badge="INSPEKSI" /> <div className="max-w-4xl mx-auto space-y-3"> {/* Header Title Section */} <div className="bg-[#003d79] rounded-xl p-3 sm:p-4 text-white shadow-md text-center space-y-1"> <h1 className="text-xl sm:text-2xl font-black trac...
+
+======================================================================
+[24/30] app/dashboard/plant/logistik/page.tsx
+======================================================================
+📏 Total Line     : 1407 | Ukuran: 76.8 KB
+📋 Judul Halaman  : Status Permintaan Saya
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 24x
+   - useEffect     : 3x
+   - fetch API     : 10x
+   - Form Input    : YES
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (10):
+   • /api/plant/logistik/stok
+   • /api/plant/logistik/pr
+   • /api/plant/logistik/barang-masuk
+   • /api/plant/logistik/pengeluaran
+   • /api/plant/logistik/pr/approve
+   • /api/plant/logistik/cross-check
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] text-[#1a2332] p-4 md:p-6 pb-28"> <PageHeader title="Plant Logistik & Permintaan Part" backUrl="/dashboard/plant" badge="LOGISTIK" /> {/* Top Header Breadcrumb */} <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-5 mb-6"> <div> <div className="flex items-center gap-2 tex...
+
+======================================================================
+[25/30] app/dashboard/plant/page.tsx
+======================================================================
+📏 Total Line     : 855 | Ukuran: 38.3 KB
+📋 Judul Halaman  : KRU & WORKSHOP PLANT
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 21x
+   - useEffect     : 4x
+   - fetch API     : 7x
+   - Form Input    : YES
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : YES
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (7):
+   • /api/plant/kru
+   • /api/units
+   • /api/plant/format-inspeksi
+   • /api/partbook/uploads
+   • /api/partbook/upload-file
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-slate-100 p-2 sm:p-4 text-slate-800 pb-20"> <PageHeader title="Plant Dashboard & Operations" backUrl="/dashboard" badge="PLANT" /> <div className="max-w-5xl mx-auto space-y-3"> {/* UNIFORM BLUE HEADER */} <div className="bg-[#003d79] rounded-xl p-3 sm:p-4 text-white shadow-md text-center space-y-1"> <h1 className="text-xl sm:text-2xl font-black tracking-wid...
+
+======================================================================
+[26/30] app/dashboard/rekap-absensi/page.tsx
+======================================================================
+📏 Total Line     : 445 | Ukuran: 22.9 KB
+📋 Judul Halaman  : Rekap Absensi
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 14x
+   - useEffect     : 3x
+   - fetch API     : 3x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : NO
+   - Router Nav    : YES
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : YES
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (3):
+   • /api/employees/sites
+   • /api/attendance/rekap
+   • /api/attendance/rekap/export
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] pb-16"> <PageHeader title="Rekap Absensi" backUrl="/dashboard" /> {/* HERO */} <div className="hidden"> <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} /> <button onClick={() => router.back()} className="mb-5 flex items-...
+
+======================================================================
+[27/30] app/dashboard/rekrutmen/page.tsx
+======================================================================
+📏 Total Line     : 571 | Ukuran: 24.5 KB
+📋 Judul Halaman  : Recruitment Center & 1-Click Hire
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 15x
+   - useEffect     : 2x
+   - fetch API     : 5x
+   - Form Input    : YES
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (5):
+   • /api/rekrutmen
+   • /api/rekrutmen/convert-hire
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] text-[#1a2332] p-4 pb-28"> <PageHeader title="Rekrutmen" backUrl="/dashboard" /> {/* Header */} <div className="max-w-6xl mx-auto mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4"> <div> <div className="flex items-center gap-2 mb-1"> <Link href="/dashboard" className="text-[#5a6a7e] hover:text-white p-1 rounded-lg bg-[#f4f7f...
+
+======================================================================
+[28/30] app/dashboard/scan-qr/page.tsx
+======================================================================
+📏 Total Line     : 339 | Ukuran: 14.5 KB
+📋 Judul Halaman  : Scan QR Event
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 6x
+   - useEffect     : 2x
+   - fetch API     : 0x
+   - Form Input    : NO
+   - Table/Grid    : NO
+   - Modal/Popup   : NO
+   - Router Nav    : YES
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : YES
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (0):
+📌 Preview JSX Awal:
+   return () => { mountedRef.current = false stopScanner() } }, []) // ── Stop scanner ─────────────────────────────────────────────────────── const stopScanner = useCallback(async () => { if (scannerRef.current) { try { const state = scannerRef.current.getState?.() // state 2 = SCANNING, state 1 = PAUSED if (state === 2 || state === 1) { await scannerRef.current.stop() } scannerRef.current.clear?.()...
+
+======================================================================
+[29/30] app/dashboard/setting-unit/page.tsx
+======================================================================
+📏 Total Line     : 551 | Ukuran: 23.6 KB
+📋 Judul Halaman  : 🎯 Setting Unit
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 17x
+   - useEffect     : 3x
+   - fetch API     : 4x
+   - Form Input    : NO
+   - Table/Grid    : YES
+   - Modal/Popup   : YES
+   - Router Nav    : YES
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : ADA
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (4):
+   • /api/employees/sites
+   • /api/unit-assignments
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen bg-[#f4f7fa] pb-24"> <PageHeader title="Setting Unit" backUrl="/dashboard" /> {/* HERO */} <div className="hidden"> <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} /> <button onClick={() => router.back()} className="mb-3 flex items-c...
+
+======================================================================
+[30/30] app/dashboard/test-google/page.tsx
+======================================================================
+📏 Total Line     : 38 | Ukuran: 1.5 KB
+📋 Judul Halaman  : Menu Portal
+🎯 Fitur Utama:
+   - Client Comp   : YES
+   - useState      : 0x
+   - useEffect     : 0x
+   - fetch API     : 0x
+   - Form Input    : NO
+   - Table/Grid    : NO
+   - Modal/Popup   : NO
+   - Router Nav    : NO
+   - Image/Photo   : NO
+   - Chart Graph   : NO
+   - Excel Export  : NO
+   - File Upload   : NO
+   - QR Scanner    : NO
+🎨 Layout Style:
+   - BG Putih Full : YA (perlu diganti)
+   - Back Button   : TIDAK
+   - Sticky Header : TIDAK
+🔗 API Endpoints Terpakai (0):
+📌 Preview JSX Awal:
+   return ( <div className="min-h-screen pb-24 sm:pb-8 bg-[#f4f7fa] p-4"> {/* Auto-injected Uniform Header with Back Button */} <div className="flex items-center gap-3 mb-4 bg-white p-3 rounded-[14px] border border-[#e2e8f0] shadow-sm"> <button onClick={() => window.history.back()} className="p-2 rounded-lg bg-[#003d79]/10 text-[#003d79] hover:bg-[#003d79]/20 transition-colors flex items-center justi...

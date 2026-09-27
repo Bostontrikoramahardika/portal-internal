@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 import React, { useState, useEffect } from 'react';
@@ -274,7 +276,7 @@ export default function FormInspeksiPage() {
   const currentPeriod = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-slate-100 p-2 sm:p-4 text-slate-800 pb-20">
+    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       <PageHeader title="Form Inspeksi P2H Lapangan" backUrl="/dashboard/plant" badge="INSPEKSI" />
 
       <div className="max-w-4xl mx-auto space-y-3">
@@ -778,6 +780,8 @@ export default function FormInspeksiPage() {
         <p>BTM Mobile APP V1.7.0</p>
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
+
+      <AppFooter />
 </div>
   );
 }

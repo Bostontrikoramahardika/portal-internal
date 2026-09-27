@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 import { useEffect, useState } from 'react'
@@ -98,7 +100,7 @@ export default function HrOverrideAbsensiPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] pb-24">
+    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       <PageHeader title="Hr Override Absensi" backUrl="/dashboard" />
 
       <div className="bg-gradient-to-br from-purple-700 to-purple-900 px-5 pt-8 pb-16 rounded-b-[2.5rem] shadow-2xl">
@@ -285,6 +287,8 @@ export default function HrOverrideAbsensiPage() {
         <p>BTM Mobile APP V1.7.0</p>
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
+
+      <AppFooter />
 </div>
   )
 }

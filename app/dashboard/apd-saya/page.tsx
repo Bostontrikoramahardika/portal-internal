@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/apd-saya/page.tsx
@@ -151,7 +153,7 @@ export default function ApdSayaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       <PageHeader title="Apd Saya" backUrl="/dashboard" />
 
         <div className="text-center">
@@ -164,7 +166,7 @@ export default function ApdSayaPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#f4f7fa] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
         <div className="bg-white rounded-[2rem] shadow-xl p-8 max-w-md text-center">
           <div className="text-5xl mb-4">⚠️</div>
           <h2 className="text-xl font-black text-slate-900 mb-2">Terjadi Kesalahan</h2>
@@ -178,7 +180,7 @@ export default function ApdSayaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] pb-24">
+    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       {/* HERO */}
       <div className="hidden">
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
@@ -586,6 +588,8 @@ export default function ApdSayaPage() {
         <p>BTM Mobile APP V1.7.0</p>
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
+
+      <AppFooter />
 </div>
   )
 }

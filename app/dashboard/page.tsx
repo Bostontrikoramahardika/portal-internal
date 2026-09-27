@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 import { useEffect, useState, Suspense } from 'react'
@@ -31,7 +33,7 @@ function DashboardView({ title, data }: any) {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-28">
+    <div className="animate-in fade-in slide-in-from-top-4 duration-700 pb-24 p-2 sm:p-4">
       <PageHeader title="Dashboard Central" backUrl="/dashboard" />
 
       <div className="relative mb-12">
@@ -4543,7 +4545,7 @@ function KPISayaRaportView({ data }: any) {
   const strokeDashoffset = circumference - (Math.min(100, Math.max(0, nilaiAkhir)) / 100) * circumference
 
   return (
-    <div className="max-w-6xl mx-auto pb-28 md:pb-16 font-sans text-slate-800 bg-transparent md:bg-slate-100/60 p-2 md:p-6 rounded-none md:rounded-3xl border-0 md:border border-slate-200/80 shadow-none md:shadow-sm animate-in fade-in duration-500">
+    <div className="max-w-6xl mx-auto pb-24 p-2 sm:p-4 md:pb-16 font-sans text-slate-800 bg-transparent md:bg-slate-100/60 p-2 md:p-6 rounded-none md:rounded-3xl border-0 md:border border-slate-200/80 shadow-none md:shadow-sm animate-in fade-in duration-500">
       
       {/* ================= 1. HEADER EXECUTIVE ================= */}
       <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 text-white p-4 md:p-7 rounded-2xl md:rounded-3xl shadow-lg md:shadow-xl mb-4 md:mb-6 relative overflow-hidden">
@@ -10124,7 +10126,9 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
             {saving ? '⏳ MENYIMPAN...' : '💾 SIMPAN'}
           </button>
         </div>
-      </div>
+      
+      <AppFooter />
+</div>
     </>
   )
 }

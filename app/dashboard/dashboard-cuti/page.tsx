@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 // ═══════════════════════════════════════════════════════════════════════════
@@ -213,7 +215,7 @@ export default function DashboardCutiPage() {
   // RENDER
   // ═══════════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-[#f4f7fa] pb-24">
+    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       <PageHeader title="Dashboard Cuti" backUrl="/dashboard" />
 
       {/* ─── HEADER ────────────────────────────────────────────────────── */}
@@ -838,6 +840,8 @@ function EmptyState({ icon, msg }: { icon: string; msg: string }) {
         <p>BTM Mobile APP V1.7.0</p>
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
+
+      <AppFooter />
 </div>
   )
 }

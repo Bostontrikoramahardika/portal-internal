@@ -1,0 +1,120 @@
+=== LAPORAN AUDIT 41+ HALAMAN BTM ===
+
+📄 File: app\dashboard\apd-saya\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\approval-koreksi\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\crew-on-duty\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\dashboard-cuti\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\hr-dashboard\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\hr-override-absensi\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\import-mcu\page.tsx
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\import-roster\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\kelola-akses\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\kelola-apd\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\kelola-event\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\kelola-event\[id]\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\kelola-unit\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\koreksi-absensi\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\logistik\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\manajemen-absensi\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\mcu-saya\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\monitoring-apd\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\monitoring-mcu\karyawan\[nrp]\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\monitoring-mcu\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\monitoring-mcu\[id]\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\page.tsx
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\plant\inspeksi\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\plant\logistik\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\plant\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\rekap-absensi\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\rekrutmen\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\scan-qr\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\setting-unit\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+
+📄 File: app\dashboard\test-google\page.tsx
+- Masih pakai background putih full (Belum standar #f4f7fa)
+- Belum menggunakan Layout Standar / Card
+

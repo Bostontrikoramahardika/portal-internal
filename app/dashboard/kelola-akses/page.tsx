@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/kelola-akses/page.tsx — v1.1 Batch 1 (fix TypeScript)
@@ -140,7 +142,7 @@ export default function KelolaAksesPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] pb-24">
+    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       <PageHeader title="Kelola Akses" backUrl="/dashboard" />
 
       {/* Header */}
@@ -1386,6 +1388,8 @@ function TabTemplate() {
         <p>BTM Mobile APP V1.7.0</p>
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
+
+      <AppFooter />
 </div>
   )
 }

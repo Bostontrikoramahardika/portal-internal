@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 import { useState, useEffect, useCallback, useMemo } from 'react'
@@ -177,7 +179,7 @@ export default function ManajemenAbsensiPage() {
   const totalKaryawan = groups.reduce((acc, g) => acc + g.rows.length, 0)
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] pb-16">
+    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       <PageHeader title="Manajemen Absensi" backUrl="/dashboard" />
 
 
@@ -984,6 +986,8 @@ function ResignModal({ row, onClose, onSaved }: any) {
         <p>BTM Mobile APP V1.7.0</p>
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
+
+      <AppFooter />
 </div>
   )
 }

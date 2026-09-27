@@ -1,4 +1,6 @@
-'use client';
+'use client'
+
+import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 import React, { useState, useEffect } from "react";
@@ -371,7 +373,7 @@ export default function LogistikDashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] text-[#1a2332] p-4 md:p-6 pb-28">
+    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       <PageHeader title="Logistik Central Portal" backUrl="/dashboard" badge="LOGISTIK" />
 
       {/* Header */}
@@ -1216,6 +1218,8 @@ export default function LogistikDashboardPage() {
         <p>BTM Mobile APP V1.7.0</p>
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
+
+      <AppFooter />
 </div>
   );
 }

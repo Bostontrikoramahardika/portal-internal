@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import PageHeader from './PageHeader';
 import PageWrapper from './PageWrapper';

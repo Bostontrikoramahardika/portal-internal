@@ -1,28 +1,16 @@
-'use client';
+'use client'
+
+import React from 'react'
 
 export default function AppFooter() {
   return (
-    <footer className="text-center py-4 px-3 mt-6 border-t border-[#e2e8f0]">
-      <p
-        className="text-[10px] font-medium tracking-wide"
-        style={{
-          fontStyle: 'italic',
-          color: '#8896a7',
-          opacity: 0.55,
-        }}
-      >
+    <footer className="mt-8 mb-4 text-center select-none">
+      <p className="text-[11px] text-slate-400 font-medium italic tracking-tight">
         BTM Mobile APP V1.7.0
       </p>
-      <p
-        className="text-[9px] font-medium tracking-wide mt-0.5"
-        style={{
-          fontStyle: 'italic',
-          color: '#8896a7',
-          opacity: 0.40,
-        }}
-      >
+      <p className="text-[10px] text-slate-400/80 font-normal italic tracking-tight">
         Powered By rck_Production
       </p>
     </footer>
-  );
+  )
 }
