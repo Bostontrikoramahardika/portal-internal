@@ -11,7 +11,8 @@ import VerificationModal from '@/app/dashboard/components/VerificationModal'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth()
-  const pathname = usePathname()
+  const rawPathname = usePathname()
+  const pathname = rawPathname || ''
   const router = useRouter()
   const [menus, setMenus] = useState<MenuItem[]>([])
   const [loadingMenus, setLoadingMenus] = useState<boolean>(true)
@@ -41,9 +42,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchMenus()
   }, [])
 
+  const userInitial = user?.nama ? user.nama.charAt(0).toUpperCase() : 'U'
+  const firstName = user?.nama ? user.nama.split(' ')[0] : 'User'
+
   return (
     <div className="min-h-screen bg-[#f4f7fa] flex flex-col antialiased text-slate-800">
-      {/* ─── ULTRA-COMPACT MOBILE HEADER (Maksimal 44px / h-11) ─── */}
+      {/* ─── ULTRA-COMPACT MOBILE HEADER (44px) ─── */}
       <header className="sticky top-0 z-30 bg-[#003d79] text-white border-b border-[#002a57] shadow-xs sm:hidden">
         <div className="flex items-center justify-between h-11 px-3">
           <Link href="/dashboard" className="flex items-center gap-2">
@@ -57,23 +61,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <div className="flex items-center gap-2">
             <SyncIndicator />
-            {user && (
-              <div className="flex items-center gap-1.5 pl-2 border-l border-white/20">
-                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold text-white uppercase">
-                  {user.nama ? user.nama.charAt(0) : 'U'}
-                </div>
-                <span className="text-[11px] font-medium text-white/90 max-w-[75px] truncate">
-                  {user.nama ? user.nama.split(' ')[0] : 'User'}
-                </span>
+            <div className="flex items-center gap-1.5 pl-2 border-l border-white/20">
+              <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold text-white uppercase">
+                {userInitial}
               </div>
-            )}
+              <span className="text-[11px] font-medium text-white/90 max-w-[75px] truncate">
+                {firstName}
+              </span>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* ─── DESKTOP HEADER & SIDEBAR CONTAINER (Aman & Tidak Diubah) ─── */}
+      {/* ─── DESKTOP SIDEBAR & MAIN CONTAINER ─── */}
       <div className="flex flex-1">
-        {/* Desktop Sidebar */}
         <aside className="hidden md:flex flex-col w-64 bg-white border-r border-[#e2e8f0] min-h-screen">
           <div className="h-14 flex items-center px-6 border-b border-[#e2e8f0] bg-[#003d79] text-white">
             <Link href="/dashboard" className="flex items-center gap-2">
@@ -106,7 +107,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               return (
                 <Link
                   key={item.id || item.href || idx}
-                  href={item.href}
+                  href={item.href || '#'}
                   className={[
                     'flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors',
                     isActive ? 'bg-[#003d79] text-white' : 'text-slate-600 hover:bg-slate-100'
@@ -129,7 +130,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="p-4 border-t border-[#e2e8f0] bg-slate-50">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-full bg-[#003d79] text-white flex items-center justify-center font-bold text-xs">
-                {user?.nama ? user.nama.charAt(0) : 'U'}
+                {userInitial}
               </div>
               <div className="truncate">
                 <p className="text-xs font-bold text-slate-800 truncate">{user?.nama || 'User'}</p>
@@ -137,6 +138,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </div>
             <button
+              type="button"
               onClick={() => logout && logout()}
               className="w-full py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold transition-colors"
             >
@@ -145,7 +147,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </aside>
 
-        {/* Main Content Area */}
         <main className="flex-1 min-w-0 flex flex-col">
           {children}
         </main>
@@ -154,7 +155,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* ─── DYNAMIC MOBILE BOTTOM NAVIGATION (5 TABS) ─── */}
       <MobileBottomNav menus={menus} userRole={user?.role || 'KARYAWAN'} />
 
-      {/* ─── MODALS & BACKGROUND MONITORS ─── */}
       <ClockOutReminder />
       <VerificationModal />
     </div>

@@ -21,15 +21,19 @@ interface MobileBottomNavProps {
 }
 
 export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: MobileBottomNavProps) {
-  const pathname = usePathname()
+  const rawPathname = usePathname()
+  const pathname = rawPathname || ''
   const [activeSheet, setActiveSheet] = useState<string | null>(null)
 
-  // Filter menu dinamis sesuai tombol tab yang diklik
+  const safeMenus = Array.isArray(menus) 
+    ? menus.filter(m => m && typeof m.href === 'string' && typeof m.title === 'string')
+    : []
+
   const getSubMenus = (tabKey: string): MenuItem[] => {
-    if (!menus || menus.length === 0) return []
+    if (safeMenus.length === 0) return []
 
     if (tabKey === 'absensi') {
-      return menus.filter(m => 
+      return safeMenus.filter(m => 
         m.href.includes('/absensi') || 
         m.href.includes('/koreksi-absensi') || 
         m.href.includes('/approval-koreksi') ||
@@ -37,32 +41,32 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
         m.href.includes('/manajemen-absensi') ||
         m.href.includes('/rekap-absensi') ||
         m.href.includes('/hr-override-absensi') ||
-        m.title.toLowerCase().includes('absen') ||
-        m.title.toLowerCase().includes('duty')
+        (m.title && m.title.toLowerCase().includes('absen')) ||
+        (m.title && m.title.toLowerCase().includes('duty'))
       )
     }
 
     if (tabKey === 'pengajuan') {
-      return menus.filter(m => 
+      return safeMenus.filter(m => 
         m.href.includes('/cuti') || 
         m.href.includes('/dashboard-cuti') || 
         m.href.includes('/koreksi-absensi') || 
         m.href.includes('/lembur') || 
         m.href.includes('/pengajuan') ||
-        m.title.toLowerCase().includes('cuti') ||
-        m.title.toLowerCase().includes('koreksi') ||
-        m.title.toLowerCase().includes('izin')
+        (m.title && m.title.toLowerCase().includes('cuti')) ||
+        (m.title && m.title.toLowerCase().includes('koreksi')) ||
+        (m.title && m.title.toLowerCase().includes('izin'))
       )
     }
 
     if (tabKey === 'saya') {
-      return menus.filter(m => 
+      return safeMenus.filter(m => 
         m.href.includes('/mcu-saya') || 
         m.href.includes('/apd-saya') || 
         m.href.includes('/profil') || 
         m.href.includes('/slip-gaji') ||
-        m.title.toLowerCase().includes('saya') ||
-        m.title.toLowerCase().includes('profil')
+        (m.title && m.title.toLowerCase().includes('saya')) ||
+        (m.title && m.title.toLowerCase().includes('profil'))
       )
     }
 
@@ -70,7 +74,7 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
       const specificHrefs = new Set(
         [...getSubMenus('absensi'), ...getSubMenus('pengajuan'), ...getSubMenus('saya')].map(m => m.href)
       )
-      return menus.filter(m => !specificHrefs.has(m.href) && !m.href.includes('/scan-qr'))
+      return safeMenus.filter(m => !specificHrefs.has(m.href) && !m.href.includes('/scan-qr'))
     }
 
     return []
@@ -94,31 +98,24 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
       {/* ─── BOTTOM SHEET DRAWER OVERLAY ─── */}
       {activeSheet && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end sm:hidden">
-          {/* Backdrop gelap */}
           <div 
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
             onClick={closeSheet}
           />
-
-          {/* Wadah Drawer */}
           <div className="relative bg-white rounded-t-[22px] shadow-2xl border-t border-[#e2e8f0] p-4 max-h-[75vh] flex flex-col z-10 animate-in slide-in-from-bottom duration-200">
-            {/* Bar Tarik */}
             <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3" />
-
-            {/* Header Drawer */}
             <div className="flex items-center justify-between pb-2.5 border-b border-[#e2e8f0] mb-3">
               <h3 className="text-xs font-black text-[#003d79] uppercase tracking-wider">
                 {getSheetTitle(activeSheet)}
               </h3>
               <button 
+                type="button"
                 onClick={closeSheet}
                 className="w-6 h-6 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-xs font-bold transition-colors"
               >
                 ✕
               </button>
             </div>
-
-            {/* List Item Sub-Menu */}
             <div className="overflow-y-auto space-y-1.5 max-h-[50vh] pr-0.5">
               {activeSheetItems.length === 0 ? (
                 <div className="py-8 text-center text-slate-400 text-xs">
@@ -130,7 +127,7 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
                   return (
                     <Link
                       key={item.id || item.href || idx}
-                      href={item.href}
+                      href={item.href || '#'}
                       onClick={closeSheet}
                       className={[
                         'flex items-center justify-between p-2.5 rounded-xl transition-all text-xs',
@@ -166,9 +163,8 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
                 })
               )}
             </div>
-
-            {/* Tombol Tutup */}
             <button
+              type="button"
               onClick={closeSheet}
               className="mt-3 w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors"
             >
@@ -178,16 +174,16 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
         </div>
       )}
 
-      {/* ─── FIXED BOTTOM NAV BAR (5 TABS DENGAN FLOATING SCAN BUTTON) ─── */}
+      {/* ─── FIXED BOTTOM NAV BAR ─── */}
       <nav className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#e2e8f0] sm:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
         <div className="flex items-center justify-around h-[56px] px-1 relative">
-
           {/* TAB 1: ABSENSI */}
           <button
+            type="button"
             onClick={() => setActiveSheet(activeSheet === 'absensi' ? null : 'absensi')}
             className={[
               'flex flex-col items-center justify-center flex-1 py-1 transition-colors',
-              activeSheet === 'absensi' || pathname.includes('/absensi') || pathname.includes('/crew-on-duty')
+              activeSheet === 'absensi' || (pathname && (pathname.includes('/absensi') || pathname.includes('/crew-on-duty')))
                 ? 'text-[#003d79] font-bold'
                 : 'text-slate-400 hover:text-slate-600 font-medium'
             ].join(' ')}
@@ -202,10 +198,11 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
 
           {/* TAB 2: PENGAJUAN */}
           <button
+            type="button"
             onClick={() => setActiveSheet(activeSheet === 'pengajuan' ? null : 'pengajuan')}
             className={[
               'flex flex-col items-center justify-center flex-1 py-1 transition-colors',
-              activeSheet === 'pengajuan' || pathname.includes('/cuti') || pathname.includes('/koreksi')
+              activeSheet === 'pengajuan' || (pathname && (pathname.includes('/cuti') || pathname.includes('/koreksi')))
                 ? 'text-[#003d79] font-bold'
                 : 'text-slate-400 hover:text-slate-600 font-medium'
             ].join(' ')}
@@ -232,10 +229,11 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
 
           {/* TAB 4: SAYA */}
           <button
+            type="button"
             onClick={() => setActiveSheet(activeSheet === 'saya' ? null : 'saya')}
             className={[
               'flex flex-col items-center justify-center flex-1 py-1 transition-colors',
-              activeSheet === 'saya' || pathname.includes('/mcu-saya') || pathname.includes('/apd-saya')
+              activeSheet === 'saya' || (pathname && (pathname.includes('/mcu-saya') || pathname.includes('/apd-saya')))
                 ? 'text-[#003d79] font-bold'
                 : 'text-slate-400 hover:text-slate-600 font-medium'
             ].join(' ')}
@@ -250,10 +248,11 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
 
           {/* TAB 5: MORE */}
           <button
+            type="button"
             onClick={() => setActiveSheet(activeSheet === 'more' ? null : 'more')}
             className={[
               'flex flex-col items-center justify-center flex-1 py-1 transition-colors',
-              activeSheet === 'more' || pathname.includes('/plant') || pathname.includes('/logistik') || pathname.includes('/kelola')
+              activeSheet === 'more' || (pathname && (pathname.includes('/plant') || pathname.includes('/logistik') || pathname.includes('/kelola')))
                 ? 'text-[#003d79] font-bold'
                 : 'text-slate-400 hover:text-slate-600 font-medium'
             ].join(' ')}
@@ -265,7 +264,6 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
             </div>
             <span className="text-[10px] leading-tight">More</span>
           </button>
-
         </div>
       </nav>
     </>
