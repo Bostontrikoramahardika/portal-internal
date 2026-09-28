@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/monitoring-mcu/[id]/page.tsx v2.0
 // Fix: tambah section Upload Surat Rujukan per temuan (HR)
 import { useState, useEffect, use, useRef } from 'react'
@@ -173,7 +172,7 @@ function RujukanSection({
 
   return (
     <div className="mt-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
-      <PageHeader title="[id]" backUrl="/dashboard/monitoring-mcu" />
+      
 
       <div className="flex items-center justify-between mb-2">
         <div className="text-[9px] font-black uppercase tracking-widest text-blue-600">

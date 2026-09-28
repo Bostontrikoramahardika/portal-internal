@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -179,7 +178,7 @@ export default function ManajemenAbsensiPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
-      <PageHeader title="Manajemen Absensi" backUrl="/dashboard" />
+      
 
 
       {/* ── HERO ── */}

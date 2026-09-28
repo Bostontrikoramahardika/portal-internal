@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/monitoring-apd/page.tsx
 // v1.0 — Smart Table Monitoring APD (BTM Luxury style)
 
@@ -131,7 +130,7 @@ export default function MonitoringApdPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
-      <PageHeader title="Monitoring Apd" backUrl="/dashboard" />
+      
 
       {/* HERO */}
       <div className="hidden">

@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/monitoring-mcu/page.tsx
 // Smart Table MCU — Merge List + Matrix (Chat 21)
 // Design: BTM Luxury Mobile v1.0
@@ -132,7 +131,7 @@ function McuCell({ col }: { col: McuColumn }) {
   if (!col.tanggal) {
     return (
       <div className="text-center text-[#5a6a7e] text-[10px]">
-      <PageHeader title="Monitoring Mcu" backUrl="/dashboard/monitoring-mcu" />
+      
 —</div>
     )
   }

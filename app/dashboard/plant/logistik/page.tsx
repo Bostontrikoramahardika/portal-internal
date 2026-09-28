@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 
@@ -397,7 +396,7 @@ export default function PlantLogistikDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
-      <PageHeader title="Plant Logistik & Permintaan Part" backUrl="/dashboard/plant" badge="LOGISTIK" />
+      
 
       {/* Top Header Breadcrumb */}
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-5 mb-6">

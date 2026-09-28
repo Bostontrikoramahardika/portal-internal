@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
@@ -276,7 +275,7 @@ export default function FormInspeksiPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
-      <PageHeader title="Form Inspeksi P2H Lapangan" backUrl="/dashboard/plant" badge="INSPEKSI" />
+      
 
       <div className="max-w-4xl mx-auto space-y-3">
         

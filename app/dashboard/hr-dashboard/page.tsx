@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 // ═══════════════════════════════════════════════════════════════
 // HR DASHBOARD v4.1 - Full Featured (CLEAN)
 // - Tab bar dinamis dari database
@@ -54,7 +53,7 @@ export default function HRDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
-      <PageHeader title="Hr Dashboard" backUrl="/dashboard" />
+      
 
       {/* HEADER */}
       <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-6 rounded-b-3xl shadow-lg">

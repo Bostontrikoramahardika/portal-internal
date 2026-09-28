@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
@@ -373,7 +372,7 @@ export default function LogistikDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
-      <PageHeader title="Logistik Central Portal" backUrl="/dashboard" badge="LOGISTIK" />
+      
 
       {/* Header */}
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-5 mb-6">

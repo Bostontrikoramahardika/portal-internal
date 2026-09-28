@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/apd-saya/page.tsx
 // v1.3 — Halaman APD Saya + Tombol Request + Modal Form + Section Pending/Rejected
 
@@ -153,7 +152,7 @@ export default function ApdSayaPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
-      <PageHeader title="Apd Saya" backUrl="/dashboard" />
+      
 
         <div className="text-center">
           <div className="text-4xl mb-4 animate-pulse">🦺</div>

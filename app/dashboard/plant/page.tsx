@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
@@ -264,7 +263,7 @@ export default function PlantDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
-      <PageHeader title="Plant Dashboard & Operations" backUrl="/dashboard" badge="PLANT" />
+      
 
       <div className="max-w-5xl mx-auto space-y-3">
         

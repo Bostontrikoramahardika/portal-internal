@@ -1,7 +1,5 @@
 'use client'
 
-import PageHeader from '@/app/components/PageHeader'
-
 import GoogleIntegrationCard from '@/app/dashboard/components/GoogleIntegrationCard'
 
 export default function TestGooglePage() {

@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/kelola-akses/page.tsx — v1.1 Batch 1 (fix TypeScript)
 import { useState, useEffect, useCallback } from 'react'
 import {
@@ -142,7 +141,7 @@ export default function KelolaAksesPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
-      <PageHeader title="Kelola Akses" backUrl="/dashboard" />
+      
 
       {/* Header */}
       <div className="hidden">

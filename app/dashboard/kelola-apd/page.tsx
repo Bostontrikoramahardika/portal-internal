@@ -1,7 +1,6 @@
 'use client'
 
 
-import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/kelola-apd/page.tsx — v2.0 (6 tab lengkap)
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
@@ -148,7 +147,7 @@ export default function KelolaApdPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
-      <PageHeader title="Kelola Apd" backUrl="/dashboard" />
+      
 
       {/* ── Header ── */}
       <div className="hidden">
