@@ -1,6 +1,5 @@
 'use client'
 
-import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 import { useState, useEffect, Suspense } from 'react'
@@ -488,8 +487,7 @@ export default function KelolaUnitPage() {
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
 
-      <AppFooter />
-</div>}>
+      </div>}>
       <KelolaUnitContent />
     </Suspense>
   )

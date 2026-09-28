@@ -1,6 +1,5 @@
 'use client'
 
-import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 import { useState, useEffect } from 'react'
@@ -943,7 +942,6 @@ export default function ImportRosterPage() {
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
 
-      <AppFooter />
-</div>
+      </div>
   )
 }

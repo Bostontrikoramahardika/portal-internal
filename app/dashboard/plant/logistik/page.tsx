@@ -1,6 +1,5 @@
 'use client'
 
-import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 import React, { useState, useEffect, useMemo } from "react";
@@ -1404,7 +1403,6 @@ export default function PlantLogistikDashboardPage() {
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
 
-      <AppFooter />
-</div>
+      </div>
   );
 }

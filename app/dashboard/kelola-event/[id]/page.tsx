@@ -1,6 +1,5 @@
 'use client'
 
-import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1227,8 +1226,7 @@ function InviteModal({ eventId, eventSite, existingNrps, onClose, onSuccess }: {
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
 
-      <AppFooter />
-</div>
+      </div>
   )
 }
 

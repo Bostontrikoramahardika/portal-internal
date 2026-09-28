@@ -1,6 +1,5 @@
 'use client'
 
-import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 import { useState, useEffect, useCallback } from 'react'
@@ -443,7 +442,6 @@ export default function RekapAbsensiPage() {
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
 
-      <AppFooter />
-</div>
+      </div>
   )
 }

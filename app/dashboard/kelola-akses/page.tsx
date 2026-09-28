@@ -1,6 +1,5 @@
 'use client'
 
-import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 // app/dashboard/kelola-akses/page.tsx — v1.1 Batch 1 (fix TypeScript)
@@ -1389,7 +1388,6 @@ function TabTemplate() {
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
 
-      <AppFooter />
-</div>
+      </div>
   )
 }

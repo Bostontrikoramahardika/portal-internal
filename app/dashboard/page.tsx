@@ -1,6 +1,5 @@
 'use client'
 
-import AppFooter from '@/app/components/AppFooter'
 
 import PageHeader from "@/app/components/PageHeader";
 import { useEffect, useState, Suspense } from 'react'
@@ -10127,8 +10126,7 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
           </button>
         </div>
       
-      <AppFooter />
-</div>
+      </div>
     </>
   )
 }

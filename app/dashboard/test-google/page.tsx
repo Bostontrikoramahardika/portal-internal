@@ -1,7 +1,6 @@
 'use client'
 
 import PageHeader from '@/app/components/PageHeader'
-import AppFooter from '@/app/components/AppFooter'
 
 import GoogleIntegrationCard from '@/app/dashboard/components/GoogleIntegrationCard'
 
@@ -37,7 +36,6 @@ export default function TestGooglePage() {
         <p className="text-[10px]">Powered By rck_Production</p>
       </footer>
 
-      <AppFooter />
-</div>
+      </div>
   )
 }
