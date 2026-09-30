@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -92,7 +92,38 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
     { id: 'more', label: 'More', icon: 'M4 6h16M4 12h16M4 18h16' },
   ];
 
-  const currentItems = activeTab && activeTab !== 'scan' ? (DEFAULT_GROUPS[activeTab] || []) : [];
+  const rawItems = activeTab && activeTab !== 'scan' ? (DEFAULT_GROUPS[activeTab] || []) : [];
+
+  // Filter menu berdasarkan Hak Akses Database (/api/menus & Struktur Perusahaan)
+  const currentItems = rawItems.filter(item => {
+    // Menu tanpa badge adalah menu publik standar untuk semua karyawan
+    if (!item.badge) return true;
+
+    // Jika data menu dinamis dari database (/api/menus) ada, gunakan hak akses resmi DB:
+    if (Array.isArray(menus) && menus.length > 0) {
+      return menus.some((dbMenu: any) => {
+        if (!dbMenu) return false;
+        const dbHref = String(dbMenu.href || dbMenu.url || '').toLowerCase();
+        const dbKey = String(dbMenu.menu_key || dbMenu.key || '').toLowerCase();
+        const dbTitle = String(dbMenu.title || dbMenu.name || dbMenu.menu_label || '').toLowerCase();
+
+        const itemHref = String(item.href || '').toLowerCase();
+        const itemName = String(item.name || '').toLowerCase();
+
+        // 1. Match berdasarkan URL / Href
+        if (itemHref && dbHref && (itemHref === dbHref || itemHref.includes(dbHref) || dbHref.includes(itemHref))) return true;
+        // 2. Match berdasarkan menu_key
+        if (dbKey && itemHref && itemHref.includes(dbKey)) return true;
+        // 3. Match berdasarkan Title / Nama Menu
+        if (itemName && dbTitle && (itemName === dbTitle || dbTitle.includes(itemName) || itemName.includes(dbTitle))) return true;
+
+        return false;
+      });
+    }
+
+    // Fallback default jika data menus DB sedang dimuat
+    return true;
+  });
 
   
   async function handleLogout() {
@@ -119,7 +150,7 @@ export default function MobileBottomNav({ menus = [], userRole = 'KARYAWAN' }: M
     <>
       {/* ===== BOTTOM SHEET DRAWER DENGAN GRID KARTU KOTAK ===== */}
       {activeTab && activeTab !== 'scan' && (
-        <div className="fixed inset-0 z-[100000] flex flex-col justify-end sm:hidden">
+        <div className="fixed inset-0 z-[100000] flex flex-col justify-end lg:hidden">
           <div className="fixed inset-0 bg-slate-900/60 transition-opacity" onClick={closeDrawer} />
           <div className="relative bg-white rounded-t-[24px] max-h-[80vh] overflow-y-auto p-4 z-10 shadow-2xl animate-in slide-in-from-bottom duration-200">
             <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-4" />

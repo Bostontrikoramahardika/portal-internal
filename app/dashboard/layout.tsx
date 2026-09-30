@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/app/lib/AuthContext'
 import MobileBottomNav from '@/app/components/MobileBottomNav'
 import SyncIndicator from '@/app/dashboard/components/SyncIndicator'
@@ -16,6 +16,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const rawPathname = usePathname()
   const pathname = rawPathname || ''
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [menus, setMenus] = useState<any[]>([])
   const [loadingMenus, setLoadingMenus] = useState<boolean>(true)
 
@@ -208,7 +209,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* DESKTOP SIDEBAR & MAIN AREA */}
       <div className="flex flex-1">
-        <aside className="hidden md:flex flex-col w-64 bg-white border-r border-[#e2e8f0] min-h-screen">
+        <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-[#e2e8f0] min-h-screen shrink-0 sticky top-0 h-screen">
           <div className="h-14 flex items-center px-6 border-b border-[#e2e8f0] bg-[#003d79] text-white">
             <Link href="/dashboard" className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center font-black text-sm text-white">
@@ -236,11 +237,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
 
             {menus.map((item, idx) => {
-              const isActive = pathname === item.href
+              const label = item.title || item.menu_label || item.name || 'Menu'
+              const href = item.href || (item.menu_key ? `/dashboard?menu=${item.menu_key}` : '#')
+              
+              const currentMenuParam = searchParams ? searchParams.get('menu') : null
+              const itemMenuParam = href.includes('menu=') ? href.split('menu=')[1]?.split('&')[0] : null
+              
+              const isActive = itemMenuParam 
+                ? (currentMenuParam === itemMenuParam)
+                : (pathname === href && !currentMenuParam)
+
               return (
                 <Link
-                  key={item.id || item.href || idx}
-                  href={item.href || '#'}
+                  key={item.id || item.menu_key || href || idx}
+                  href={href}
                   className={[
                     'flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors',
                     isActive ? 'bg-[#003d79] text-white' : 'text-slate-600 hover:bg-slate-100'
@@ -248,7 +258,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <div className="flex items-center gap-3 truncate">
                     <span className="text-sm">{item.icon || '📌'}</span>
-                    <span className="truncate">{item.title}</span>
+                    <span className="truncate">{label}</span>
                   </div>
                   {item.badge && (
                     <span className="text-[10px] font-black bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded-full">
@@ -280,8 +290,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0 flex flex-col pb-24 sm:pb-8 pt-[3.75rem] lg:pt-0">
-          <div className="flex-1">
+        <main className="flex-1 min-w-0 flex flex-col min-h-screen pt-[3.75rem] lg:pt-0 pb-24 lg:pb-8">
+          {/* HEADER DESKTOP ONLY */}
+          <header className="hidden lg:flex items-center justify-between h-16 px-8 bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40">
+            <div>
+              <h1 className="text-base font-black text-[#003D79] tracking-tight">Portal Internal BTM</h1>
+              <p className="text-[11px] text-slate-500 font-medium">Selamat datang, <strong className="text-slate-800">{namaKaryawan}</strong> ({nrpKaryawan}) — <span className="text-blue-600 font-bold">{siteKaryawan}</span></p>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setIsNotifOpen(true)}
+                className="relative flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all active:scale-95 border border-slate-200"
+              >
+                <span>🔔 Notifikasi</span>
+                {notifCount > 0 && (
+                  <span className="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                    {notifCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </header>
+
+          <div className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
             {children}
           </div>
           <AppFooter />

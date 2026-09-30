@@ -54,7 +54,7 @@ function DashboardView({ title, data }: any) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-6">
+          <div className="grid grid-cols-2 gap-2 lg:gap-4 mb-6">
             <div className="bg-slate-50/80 p-4 rounded-[1.5rem] border border-slate-100">
               <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Clock In</p>
               <p className="text-xl font-black text-slate-900">{stats.clock_in_time || '--:--'}</p>
@@ -67,7 +67,7 @@ function DashboardView({ title, data }: any) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-2 lg:gap-4 mb-8">
         <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 shadow-xl">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Anggota</p>
             <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-slate-900">{stats.total}</p>
@@ -264,7 +264,7 @@ useEffect(() => {
   if (!data) return null
   if (data.type === 'identity_view') return <IdentityView data={data.data} />
   if (data.type === 'dashboard') return <DashboardView title={data.title} data={data} />
-  if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} data={data} />
+  if (data.type === 'form_cuti') return <FormCutiView title={data.title} onSuccess={loadData} data={data} activeMenu={menuKey} />
   if (data.type === 'form_lembur') return <FormLemburView title={data.title} onSuccess={loadData} data={data} />
   if (data.type === 'form_sakit') return <FormSakitView title={data.title} onSuccess={loadData} data={data} />
   if (data.type === 'pkwt_saya') return <PKWTSayaView title={data.title} data={data} onSuccess={loadData} />
@@ -324,7 +324,7 @@ function getExpiredColor(dateStr: any, defaultColor: string = 'text-slate-800'):
 // ============ 👤 MY IDENTITY VIEW v1.6.1 (Luxury Final) ============
 function IdentityView({ data }: { data: any }) {
   const InfoItem = ({ icon, label, value, color = "text-slate-800" }: any) => (
-    <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 group">
+    <div className="flex items-center gap-2 lg:gap-4 group">
       <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100">{icon}</div>
       <div className="flex-1 border-b border-slate-50 pb-2">
         <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{label}</div>
@@ -334,7 +334,7 @@ function IdentityView({ data }: { data: any }) {
   )
 
   const BpjsItem = ({ icon, label, no, nama }: any) => (
-    <div className="flex items-start gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+    <div className="flex items-start gap-2 lg:gap-4">
       <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-lg border border-slate-100 mt-1">{icon}</div>
       <div className="flex-1 border-b border-slate-50 pb-3">
         <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">{label}</div>
@@ -430,7 +430,7 @@ function IdentityView({ data }: { data: any }) {
           <SectionTitle>Historical Punishment</SectionTitle>
           <div className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
             {data.punishments.map((sp: any, idx: number) => (
-              <div key={idx} className="flex items-start gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 bg-white p-4 rounded-3xl border border-rose-200">
+              <div key={idx} className="flex items-start gap-2 lg:gap-4 bg-white p-4 rounded-3xl border border-rose-200">
                 <div className="text-2xl mt-1">⚠️</div>
                 <div>
                   <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">{sp.jenis_sp}</div>
@@ -452,7 +452,7 @@ function IdentityView({ data }: { data: any }) {
 
 // ============ ✍️ FORM CUTI (v2 - Cuti Tahunan + Tiket Pesawat) ============
 function FormCutiView(props: any) {
-  const { user, data } = props || {}
+  const { user, data, onSuccess } = props || {}
   const mode = props?.mode || (props?.activeMenu === 'cuti_saya' ? 'history' : 'form')
   const title = mode === 'history' ? 'Riwayat Cuti Saya' : 'Form Pengajuan Cuti'
   const eligibleTiket = !!data?.eligible_tiket_pesawat
@@ -684,7 +684,7 @@ setForm({
   reguler_selesai: '',
   roster_cr_tanggal: ''
 })
-        (typeof onSuccess !== 'undefined' && onSuccess) && onSuccess()
+        if (typeof onSuccess === 'function') onSuccess();
       } else {
         setMsg({ type: 'err', text: resData.error || 'Gagal mengirim pengajuan' })
       }
@@ -697,8 +697,21 @@ setForm({
 
   return (
     <div className="max-w-4xl mx-auto space-y-3 lg:space-y-6">
-      <div className="bg-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border border-slate-100 shadow-sm">
-        <h2 className="text-sm lg:text-xl font-black mb-3 lg:mb-5 tracking-tight">✍️ {title}</h2>
+      {mode === 'form' ? (
+        /* MODE FORM PENGAJUAN CUTI */
+        <div className="bg-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-3 lg:mb-5 border-b border-slate-100 pb-3">
+            <div>
+              <h2 className="text-sm font-black tracking-tight text-[#003D79]">✍️ Form Pengajuan Cuti</h2>
+              <p className="text-xs text-slate-500">Sisa Cuti Tahunan: <strong className="text-amber-600">{sisaCutiTahunan} Hari</strong> ({tahunCuti})</p>
+            </div>
+            <a
+              href="/dashboard?menu=cuti_saya"
+              className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#003D79] font-bold text-xs transition-all flex items-center gap-1.5"
+            >
+              <span>📜 Riwayat Cuti</span>
+            </a>
+          </div>
 
         <form onSubmit={handleSubmit} className="space-y-2.5 lg:space-y-4">
           {msg.text && (
@@ -981,8 +994,22 @@ setForm({
           </button>
         </form>
       </div>
-
-      <div className="bg-white rounded-2xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+      ) : (
+        /* MODE HISTORY ONLY */
+        <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <div>
+            <h2 className="text-base lg:text-lg font-black text-[#003D79]">📜 Riwayat Cuti Saya</h2>
+            <p className="text-xs text-slate-500 font-medium">Sisa Cuti Tahunan Anda: <strong className="text-amber-600">{sisaCutiTahunan} Hari</strong> ({tahunCuti})</p>
+          </div>
+          <a
+            href="/dashboard?menu=form_cuti"
+            className="px-3.5 py-2 rounded-xl bg-[#003D79] hover:bg-blue-900 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 active:scale-95"
+          >
+            <span>➕ Ajukan Cuti</span>
+          </a>
+        </div>
+      )}
+        <div className="bg-white rounded-2xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-3 lg:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center gap-2">
           <h3 className="font-black text-slate-800 text-xs lg:text-sm">📜 Riwayat Cuti Periode <span className="text-blue-600">{data?.periode || 'Bulan Ini'}</span></h3>
           <span className="text-[10px] bg-slate-200 text-slate-600 px-3 py-1.5 rounded-full font-black">{riwayat.length} DATA</span>
@@ -1068,8 +1095,8 @@ function FormLemburView({ title, onSuccess, data }: any) {
     const dataRes = await res.json()
     if (res.ok) {
       setMsg({ type: 'ok', text: '✅ Pengajuan lembur berhasil dikirim' })
-      setForm({ tanggal: '', jam_mulai: '', jam_selesai: '', jenis_lembur: 'BIASA', alasan: '', atasan_nrp: '' })
-      (typeof onSuccess !== 'undefined' && onSuccess) && onSuccess()
+      setForm({ tanggal: '', jam_mulai: '', jam_selesai: '', jenis_lembur: 'BIASA', alasan: '', atasan_nrp: '' });
+      if (typeof onSuccess === 'function') onSuccess();
     } else {
       setMsg({ type: 'err', text: dataRes.error })
     }
@@ -1107,7 +1134,7 @@ function FormLemburView({ title, onSuccess, data }: any) {
   return (
     <div className="max-w-4xl mx-auto space-y-3 lg:space-y-6">
       <div className="bg-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border border-slate-100 shadow-sm">
-        <h2 className="text-base lg:text-xl font-black mb-3 lg:mb-5 tracking-tight">⏱️ {title}</h2>
+        <h2 className="text-base font-black mb-3 lg:mb-5 tracking-tight">⏱️ {title}</h2>
         <form onSubmit={handleSubmit} className="space-y-2.5 lg:space-y-4">
           {msg.text && <div className={`p-4 rounded-2xl text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
           <Input label="Tanggal Lembur" type="date" required value={form.tanggal} onChange={(v:any) => setForm({...form, tanggal: v})} />
@@ -1320,8 +1347,8 @@ function FormSakitView({ title, onSuccess, data }: any) {
       })
       if (res.ok) {
         alert("✅ Pengajuan berhasil dikirim ke atasan!")
-        setForm({ kategori: 'SAKIT', alasan_izin: '', tanggal: '', keterangan: '', foto_url: '', atasan_nrp: '' })
-        (typeof onSuccess !== 'undefined' && onSuccess) && onSuccess()
+        setForm({ kategori: 'SAKIT', alasan_izin: '', tanggal: '', keterangan: '', foto_url: '', atasan_nrp: '' });
+        if (typeof onSuccess === 'function') onSuccess();
       } else {
         const err = await res.json()
         alert("❌ Gagal: " + err.error)
@@ -1544,9 +1571,9 @@ function APDHistoryView({ data, onReload }: any) {
 
   return (
     <div className="pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 lg:gap-4 mb-8">
         <div>
-          <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900 tracking-tight">{data.title}</h2>
+          <h2 className="text-xl lg:text-3xl font-black text-slate-900 tracking-tight">{data.title}</h2>
           <p className="text-sm text-slate-500 font-medium">Monitoring & pengajuan mandiri perlengkapan APD</p>
         </div>
         <button onClick={() => setShowAdd(true)} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-xl hover:bg-slate-800 active:scale-95 transition-all">+ AJUKAN APD BARU</button>
@@ -3135,8 +3162,8 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
       const resData = await res.json()
       
       if (res.ok) {
-        alert("✅ Data Berhasil Disimpan!")
-        (typeof onSuccess !== 'undefined' && onSuccess) && onSuccess() 
+        alert("✅ Data Berhasil Disimpan!");
+        if (typeof onSuccess === 'function') onSuccess(); 
       } else {
         alert("❌ Gagal: " + (resData.error || 'Terjadi kesalahan'))
       }
@@ -3217,7 +3244,7 @@ function CrudModal({ table, mode, row, onClose, onSuccess }: any) {
               )}
             </div>
           ))}
-          <div className="flex gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 pt-8 sticky bottom-0 bg-white">
+          <div className="flex gap-2 lg:gap-4 pt-8 sticky bottom-0 bg-white">
             <button type="button" onClick={onClose} className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">BATAL</button>
             <button type="submit" disabled={saving} className="flex-1 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all">
               {saving ? 'PROSES SIMPAN...' : '💾 SIMPAN DATA'}
@@ -3280,8 +3307,8 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
         alert(isResign 
           ? '✅ Karyawan berhasil di-resign'
           : '✅ Karyawan berhasil diaktifkan kembali'
-        )
-        (typeof onSuccess !== 'undefined' && onSuccess) && onSuccess()
+        );
+        if (typeof onSuccess === 'function') onSuccess();
       } else {
         alert('❌ Gagal: ' + (resData.error || 'Terjadi kesalahan'))
       }
@@ -3767,7 +3794,7 @@ function RoleManagerView({ title }: any) {
                     : e.has_role ? 'border-slate-50' : 'border-amber-100 bg-amber-50/20'
                 }`}
               >
-                <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+                <div className="flex items-center gap-2 lg:gap-4">
                   {batchMode && (
                     <input
                       type="checkbox"
@@ -3854,7 +3881,7 @@ function ImportExcel({ title, table }: any) {
 
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
-      <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📥 {title}</h2>
+      <h2 className="text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📥 {title}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-slate-900 text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
           <div className="relative z-10">
@@ -3937,7 +3964,7 @@ function ExportAbsensiView({ title }: any) {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📥 {title}</h2>
+      <h2 className="text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📥 {title}</h2>
       <div className="bg-white p-10 rounded-[3rem] border shadow-2xl space-y-8">
         <div className="flex justify-between items-center border-b pb-6 border-slate-50">
             <span className="text-sm font-black text-slate-800 uppercase tracking-widest">Filter Laporan</span>
@@ -3966,7 +3993,7 @@ function RosterView({ title }: any) {
   if (loading) return <div className="text-center py-20 font-black text-slate-300 animate-pulse tracking-widest">MEMUAT DOKUMEN ROSTER...</div>
   return (
     <div className="animate-in fade-in duration-500">
-      <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📅 {title}</h2>
+      <h2 className="text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📅 {title}</h2>
       {files.length === 0 ? <div className="bg-white p-24 rounded-[3rem] border-2 border-dashed border-slate-100 text-center text-slate-300 font-bold italic">Belum Ada Berkas Roster Terlampir.</div> : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {files.map(f => (
@@ -4006,7 +4033,7 @@ function RosterUpload({ title }: any) {
 
   return (
     <div className="max-w-2xl mx-auto animate-in fade-in duration-500">
-      <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📅 {title}</h2>
+      <h2 className="text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📅 {title}</h2>
       <div className="bg-white p-10 rounded-[3rem] border-4 border-slate-50 shadow-2xl">
         {msg.text && <div className={`p-4 rounded-2xl mb-8 text-sm font-black ${msg.type === 'ok' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>{msg.text}</div>}
         <form onSubmit={handleUpload} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
@@ -4028,7 +4055,7 @@ function RosterUpload({ title }: any) {
 
 // ============ 🗓️ RIWAYAT ABSENSI ============
 function RiwayatAbsensiCustom({ data }: any) {
-  const allRows = [...(data.rows || [])].sort((a: any, b: any) =>
+  const allRows = [...(data?.rows || [])].sort((a: any, b: any) =>
     new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime()
   )
 
@@ -4070,99 +4097,126 @@ function RiwayatAbsensiCustom({ data }: any) {
       return ket.includes('MANGKIR') || ket.includes('TIDAK ADA')
     }).length,
     off: allRows.filter((r: any) =>
-      String(r.actual || '').toUpperCase() === 'OFF'
+      String(r.actual || '').toUpperCase() === 'OFF' || String(r.keterangan || '').toUpperCase().includes('CUTI')
     ).length,
   }
 
   const shiftMap: any = {
-    'S': { label: 'Siang', color: 'bg-amber-100 text-amber-700' },
-    'M': { label: 'Malam', color: 'bg-indigo-100 text-indigo-700' },
-    'OFF': { label: 'OFF', color: 'bg-slate-100 text-slate-500' },
-    'ID': { label: 'Induksi', color: 'bg-emerald-100 text-emerald-700' },
-    'CR': { label: 'Cuti Roster', color: 'bg-purple-100 text-purple-700' },
-    'P': { label: 'Pagi', color: 'bg-sky-100 text-sky-700' },
-    'L': { label: 'Lembur', color: 'bg-orange-100 text-orange-700' },
+    'S': { label: 'Siang', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+    'M': { label: 'Malam', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+    'OFF': { label: 'OFF', color: 'bg-slate-100 text-slate-600 border-slate-200' },
+    'ID': { label: 'Induksi', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+    'CR': { label: 'Cuti Roster', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+    'P': { label: 'Pagi', color: 'bg-sky-100 text-sky-800 border-sky-200' },
+    'L': { label: 'Lembur', color: 'bg-orange-100 text-orange-800 border-orange-200' },
   }
 
   return (
-    <div className="space-y-2 lg:space-y-5 animate-in fade-in duration-500">
+    <div className="space-y-3 lg:space-y-5 animate-in fade-in duration-300">
 
-      {/* HEADER */}
-      <div className="bg-[#003D79] text-white p-3 lg:p-8 rounded-2xl lg:rounded-[2.5rem]">
-        <h2 className="text-sm lg:text-2xl font-black tracking-tight">{data.title}</h2>
-        <p className="text-blue-200 text-[9px] lg:text-xs font-bold mt-0.5">
-          Roster Shift vs Data Absensi • Bulan Berjalan
-        </p>
+      {/* 🚀 SLIMBANNER HEADER V1.7.0 (APPROVAL CENTER STYLE) */}
+      <div className="bg-[#003D79] text-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+              v1.7.0
+            </span>
+            <span className="text-blue-200 text-xs font-bold">• Periode Berjalan</span>
+          </div>
+          <h2 className="text-base lg:text-2xl font-black tracking-tight mt-1">
+            {data?.title || 'Riwayat Absensi Saya'}
+          </h2>
+          <p className="text-blue-100 text-xs mt-0.5 font-medium">
+            Shift Roster vs Rekapitulasi Jam Aktual
+          </p>
+        </div>
 
-        <div className="grid grid-cols-4 gap-1.5 lg:gap-2 mt-2.5 lg:mt-4">
-          {[
-            { label: 'Hadir', val: stats.hadir, color: 'bg-emerald-500/20 text-emerald-200' },
-            { label: 'Telat', val: stats.terlambat, color: 'bg-amber-500/20 text-amber-200' },
-            { label: 'Mangkir', val: stats.mangkir, color: 'bg-rose-500/20 text-rose-200' },
-            { label: 'OFF', val: stats.off, color: 'bg-slate-500/20 text-slate-300' },
-          ].map((s) => (
-            <div key={s.label} className={`${s.color} rounded-lg lg:rounded-xl p-1.5 lg:p-3 text-center`}>
-              <p className="text-lg lg:text-3xl font-black leading-none">{s.val}</p>
-              <p className="text-[7px] lg:text-[10px] font-black uppercase tracking-wide mt-0.5">
-                {s.label}
-              </p>
-            </div>
-          ))}
+        {/* 📊 MINI STATS BADGES */}
+        <div className="grid grid-cols-4 gap-2 shrink-0">
+          <div className="bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 rounded-xl p-2 text-center min-w-[65px] lg:min-w-[85px]">
+            <p className="text-base lg:text-2xl font-black leading-none">{stats.hadir}</p>
+            <p className="text-[8px] lg:text-[10px] font-black uppercase tracking-wider mt-1 text-emerald-300">Hadir</p>
+          </div>
+          <div className="bg-amber-500/20 border border-amber-400/30 text-amber-200 rounded-xl p-2 text-center min-w-[65px] lg:min-w-[85px]">
+            <p className="text-base lg:text-2xl font-black leading-none">{stats.terlambat}</p>
+            <p className="text-[8px] lg:text-[10px] font-black uppercase tracking-wider mt-1 text-amber-300">Telat</p>
+          </div>
+          <div className="bg-rose-500/20 border border-rose-400/30 text-rose-200 rounded-xl p-2 text-center min-w-[65px] lg:min-w-[85px]">
+            <p className="text-base lg:text-2xl font-black leading-none">{stats.mangkir}</p>
+            <p className="text-[8px] lg:text-[10px] font-black uppercase tracking-wider mt-1 text-rose-300">Mangkir</p>
+          </div>
+          <div className="bg-slate-500/20 border border-slate-400/30 text-slate-200 rounded-xl p-2 text-center min-w-[65px] lg:min-w-[85px]">
+            <p className="text-base lg:text-2xl font-black leading-none">{stats.off}</p>
+            <p className="text-[8px] lg:text-[10px] font-black uppercase tracking-wider mt-1 text-slate-300">OFF/Cuti</p>
+          </div>
         </div>
       </div>
 
-      {/* SEARCH & FILTER */}
-      <div className="bg-white rounded-xl lg:rounded-2xl p-2.5 lg:p-5 border border-slate-100 shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-1.5 lg:gap-2">
-          <div className="relative flex-1">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+      {/* 🔍 SEARCH & QUICK FILTER PILLS */}
+      <div className="bg-white rounded-2xl p-3 lg:p-4 border border-slate-100 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <div className="relative flex-1 w-full">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
             <input
               type="text"
-              placeholder="Cari tanggal, status..."
+              placeholder="Cari tanggal, shift, atau status..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-7 lg:pl-8 py-2 lg:py-3 pr-3 rounded-lg lg:rounded-2xl border border-slate-200 text-[11px] lg:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 focus:border-[#003D79]"
+              className="w-full pl-8 py-2 pr-3 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 focus:border-[#003D79]"
             />
           </div>
 
-          <select
-            value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
-            className="py-2 lg:py-3 px-2.5 lg:px-3 rounded-lg lg:rounded-2xl border border-slate-200 text-[11px] lg:text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 bg-white min-w-[115px] lg:min-w-[130px]"
-          >
-            <option value="ALL">🎛️ Semua</option>
-            <option value="HADIR">✅ Hadir</option>
-            <option value="TERLAMBAT">⚠️ Telat</option>
-            <option value="MANGKIR">❌ Mangkir</option>
-            <option value="SAKIT">🤒 Sakit</option>
-            <option value="IZIN">📋 Izin/Cuti</option>
-            <option value="OFF">💤 OFF</option>
-          </select>
+          <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+            {[
+              { id: 'ALL', label: 'Semua' },
+              { id: 'HADIR', label: '✅ Hadir' },
+              { id: 'TERLAMBAT', label: '⚠️ Telat' },
+              { id: 'MANGKIR', label: '❌ Mangkir' },
+              { id: 'IZIN', label: '📋 Izin/Cuti' },
+              { id: 'OFF', label: '💤 OFF' },
+            ].map(f => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFilterStatus(f.id)}
+                className={
+                  'px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ' +
+                  (filterStatus === f.id
+                    ? 'bg-[#003D79] text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200')
+                }
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 mt-1.5 lg:mt-2">
-          Menampilkan <span className="text-[#003D79] font-black">{rows.length}</span> dari {allRows.length} record
-        </p>
+        <div className="flex justify-between items-center text-[11px] font-bold text-slate-400 border-t border-slate-100 pt-2">
+          <span>Menampilkan <strong className="text-[#003D79]">{rows.length}</strong> dari {allRows.length} catatan</span>
+          <span className="hidden sm:inline">Total {allRows.length} Hari Kerja</span>
+        </div>
       </div>
 
-      {/* TABEL */}
-      <div className="bg-white rounded-xl lg:rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+      {/* 📋 TABEL / CARD LIST ABSENSI */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-[11px] lg:text-xs text-left">
-            <thead className="bg-[#003D79] text-white">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-[#003D79] text-white uppercase text-[10px] font-black tracking-wider">
               <tr>
-                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Tanggal</th>
-                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Shift</th>
-                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Actual</th>
-                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Jam C.in/C.out</th>
-                <th className="px-3 py-2.5 lg:px-4 lg:py-3 font-black uppercase tracking-wider whitespace-nowrap">Status</th>
+                <th className="px-4 py-3">Tanggal</th>
+                <th className="px-4 py-3">Roster</th>
+                <th className="px-4 py-3">Actual</th>
+                <th className="px-4 py-3">Jam In/Out</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-center">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 font-medium">
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 lg:py-16 text-center text-slate-300 font-black uppercase tracking-widest text-xs italic">
-                    Tidak ada data ditemukan
+                  <td colSpan={6} className="px-4 py-12 text-center text-slate-400 font-bold italic">
+                    Tidak ada catatan absensi sesuai filter.
                   </td>
                 </tr>
               ) : rows.map((r: any, i: number) => {
@@ -4185,45 +4239,57 @@ function RiwayatAbsensiCustom({ data }: any) {
                   ? { label: '💤 OFF', cls: 'bg-slate-100 text-slate-500 border-slate-200' }
                   : { label: r.keterangan || '-', cls: 'bg-purple-50 text-purple-700 border-purple-200' }
 
-                const shift = shiftMap[r.roster] || { label: r.roster || '-', color: 'bg-slate-100 text-slate-500' }
+                const shift = shiftMap[r.roster] || { label: r.roster || '-', color: 'bg-slate-100 text-slate-600 border-slate-200' }
 
                 return (
-                  <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-3 py-2.5 lg:px-4 lg:py-3 font-black text-slate-800 whitespace-nowrap">
+                  <tr key={i} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-4 py-3 font-bold text-slate-800 whitespace-nowrap">
                       {new Date(r.tanggal).toLocaleDateString('id-ID', {
                         weekday: 'short',
                         day: 'numeric',
                         month: 'short'
                       })}
                     </td>
-                    <td className="px-3 py-2.5 lg:px-4 lg:py-3">
-                      <span className={`px-2 py-1 rounded-lg font-black text-[9px] lg:text-[10px] tracking-wide ${shift.color}`}>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-lg font-black text-[10px] border ${shift.color}`}>
                         {shift.label}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 lg:px-4 lg:py-3 font-bold text-slate-700 whitespace-nowrap">
-                      {r.actual}
+                    <td className="px-4 py-3 font-bold text-slate-700 whitespace-nowrap">
+                      {r.actual || '-'}
                     </td>
-                    <td className="px-3 py-2.5 lg:px-4 lg:py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       {r.is_foto ? (
                         <a
                           href={r.evident}
                           target="_blank"
                           rel="noreferrer"
-                          className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-black text-[9px] lg:text-[10px] border border-blue-100 hover:bg-blue-100 transition-colors whitespace-nowrap"
+                          className="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-black text-[10px] border border-blue-200 hover:bg-blue-100 transition-colors inline-flex items-center gap-1"
                         >
-                          🖼️ Foto Bukti
+                          <span>🖼️ Foto Bukti</span>
                         </a>
                       ) : (
-                        <span className="font-mono text-[10px] lg:text-[11px] text-slate-500 whitespace-nowrap">
+                        <span className="font-mono text-xs text-slate-600 font-bold">
                           {r.evident || '--:-- / --:--'}
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 lg:px-4 lg:py-3">
-                      <span className={`px-2 py-1 rounded-lg font-black text-[9px] lg:text-[10px] border whitespace-nowrap ${statusConfig.cls}`}>
+                    <td className="px-4 py-3">
+                      <span className={`px-2.5 py-1 rounded-xl font-bold text-[10px] border whitespace-nowrap ${statusConfig.cls}`}>
                         {statusConfig.label}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {(isTerlambat || isMangkir) ? (
+                        <a
+                          href="/dashboard/koreksi-absensi"
+                          className="px-2.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-[10px] shadow-sm transition-all inline-block active:scale-95 whitespace-nowrap"
+                        >
+                          ✏️ Koreksi Jam
+                        </a>
+                      ) : (
+                        <span className="text-slate-300 text-[10px] font-bold">—</span>
+                      )}
                     </td>
                   </tr>
                 )
@@ -4232,13 +4298,10 @@ function RiwayatAbsensiCustom({ data }: any) {
           </table>
         </div>
 
-        {rows.length > 0 && (
-          <div className="px-3 py-2 lg:px-4 lg:py-3 border-t border-slate-100 bg-slate-50">
-            <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
-              Total {rows.length} Record • BTM Mobile App v2.6
-            </p>
-          </div>
-        )}
+        <div className="px-4 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-[10px] text-slate-400 font-bold">
+          <span>BTM Mobile App v1.7.0</span>
+          <span>Approval Center Style View</span>
+        </div>
       </div>
     </div>
   )
@@ -4283,7 +4346,7 @@ function RiwayatApprovalView({ data, onReload }: any) {
         </p>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-1.5 lg:gap-2 mt-2.5 lg:mt-4">
+        <div className="grid grid-cols-3 gap-1.5 mt-2.5 lg:mt-4">
           <div className="bg-white/10 rounded-lg lg:rounded-xl p-1.5 lg:p-3 text-center">
             <p className="text-lg lg:text-3xl font-black leading-none">{statCounts.total}</p>
             <p className="text-[7px] lg:text-[10px] font-black uppercase tracking-wide mt-0.5 text-blue-200">Total</p>
@@ -4499,7 +4562,7 @@ function KPISayaRaportView({ data }: any) {
               {raport._nama_karyawan?.[0]}
             </div>
             <div>
-              <h2 className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black tracking-tight">{raport._nama_karyawan}</h2>
+              <h2 className="text-xl lg:text-3xl font-black tracking-tight">{raport._nama_karyawan}</h2>
               <p className="text-xs opacity-50 font-black tracking-[0.2em] uppercase mt-1">NRP: {raport.nrp} • {raport._jabatan || 'Internal Staff'}</p>
             </div>
           </div>
@@ -5418,7 +5481,7 @@ function SitesManagerView() {
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-2xl lg:h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
             {/* Modal Header */}
-            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-4">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${
                 editingSite.is_pusat ? 'bg-amber-500' : 'bg-white/10'
               }`}>
@@ -5970,7 +6033,7 @@ function GlobalConfigView() {
           <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-2">
             🟢 Online Kini
           </p>
-          <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-emerald-600">
+          <p className="text-xl lg:text-3xl font-black text-emerald-600">
             {stats?.online_now ?? 0}
           </p>
           <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
@@ -5982,7 +6045,7 @@ function GlobalConfigView() {
           <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-2">
             👥 Total Aktif
           </p>
-          <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-blue-600">
+          <p className="text-xl lg:text-3xl font-black text-blue-600">
             {stats?.total_karyawan ?? 0}
           </p>
           <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
@@ -5994,7 +6057,7 @@ function GlobalConfigView() {
           <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest mb-2">
             📊 Sesi Hari Ini
           </p>
-          <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-amber-600">
+          <p className="text-xl lg:text-3xl font-black text-amber-600">
             {stats?.session_hari_ini ?? 0}
           </p>
           <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">
@@ -6244,7 +6307,7 @@ function GlobalConfigView() {
             </div>
           ) : (
             announcements.map((ann: any) => (
-              <div key={ann.id} className="flex items-start gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
+              <div key={ann.id} className="flex items-start gap-2 lg:gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors">
                 {/* Thumbnail gambar jika ada */}
                 {(ann.images?.length > 0 || ann.image_url) && (
                   <img
@@ -6340,7 +6403,7 @@ function GlobalConfigView() {
               return (
                 <div
                   key={i}
-                  className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors"
+                  className="flex items-center gap-2 lg:gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors"
                 >
                   <div className="w-10 h-10 bg-emerald-100 rounded-2xl flex items-center justify-center font-black text-emerald-700">
                     {u.nama?.[0] || '?'}
@@ -6612,7 +6675,7 @@ function ResetPasswordAdminView() {
           filtered.slice(0, 50).map((emp: any) => (
             <div
               key={emp.nrp}
-              className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4 hover:border-amber-200 transition-all group"
+              className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm flex items-center gap-2 lg:gap-4 hover:border-amber-200 transition-all group"
             >
               <div className="w-11 h-11 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-slate-400 group-hover:bg-[#003D79] group-hover:text-white transition-all text-sm">
                 {(emp.nama || '?')[0]}
@@ -6647,7 +6710,7 @@ function ResetPasswordAdminView() {
 
             {/* Modal Header */}
             <div className="p-6 bg-gradient-to-br from-amber-500 to-amber-600 text-white">
-              <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+              <div className="flex items-center gap-2 lg:gap-4">
                 <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center font-black text-2xl">
                   {selectedEmp.nama[0]}
                 </div>
@@ -6919,15 +6982,15 @@ function SystemAuditView() {
       <div className="grid grid-cols-3 gap-2 lg:gap-3">
   <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-slate-50 shadow-sm">
     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 lg:mb-2 truncate">📊 Total Log</p>
-    <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-slate-900">{stats.total || 0}</p>
+    <p className="text-xl lg:text-3xl font-black text-slate-900">{stats.total || 0}</p>
   </div>
   <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-emerald-50 shadow-sm">
     <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1 lg:mb-2 truncate">✅ Sukses</p>
-    <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-emerald-600">{stats.success || 0}</p>
+    <p className="text-xl lg:text-3xl font-black text-emerald-600">{stats.success || 0}</p>
   </div>
   <div className="bg-white p-3 lg:p-5 rounded-2xl lg:rounded-[2rem] border-2 border-rose-50 shadow-sm">
     <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1 lg:mb-2 truncate">❌ Gagal</p>
-    <p className="text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-xl lg:text-3xl font-black text-rose-600">{stats.failed || 0}</p>
+    <p className="text-xl lg:text-3xl font-black text-rose-600">{stats.failed || 0}</p>
   </div>
 </div>
 
@@ -7104,7 +7167,7 @@ function SystemAuditView() {
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-lg lg:h-[85vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
             {/* Modal Header */}
-            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-4">
               <div className={`w-14 h-14 ${CATEGORY_CONFIG[selectedLog.category]?.bg || 'bg-white/10'} rounded-2xl flex items-center justify-center text-2xl`}>
                 {CATEGORY_CONFIG[selectedLog.category]?.icon || '📌'}
               </div>
@@ -7459,7 +7522,7 @@ function ApprovalCenterView() {
                 <p className="text-emerald-400 font-black text-[9px] lg:text-[10px] uppercase tracking-[0.25em] mb-0.5">
                   Approval Center
                 </p>
-                <h1 className="text-sm lg:text-xl font-black tracking-tight leading-tight">
+                <h1 className="text-sm font-black tracking-tight leading-tight">
                   {stats.total > 0 ? `${stats.total} Pengajuan Menunggu` : 'Semua Sudah Diproses'}
                 </h1>
               </div>
@@ -7658,7 +7721,7 @@ function ApprovalCenterView() {
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setDetailItem(null)} />
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-md lg:h-[85vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
-            <div className={`p-6 ${COLOR_MAP[detailItem.color]?.bg || 'bg-blue-50'} border-b-2 ${COLOR_MAP[detailItem.color]?.border || 'border-blue-100'} flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4`}>
+            <div className={`p-6 ${COLOR_MAP[detailItem.color]?.bg || 'bg-blue-50'} border-b-2 ${COLOR_MAP[detailItem.color]?.border || 'border-blue-100'} flex items-center gap-2 lg:gap-4`}>
               <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm">
                 {detailItem.icon}
               </div>
@@ -8280,7 +8343,7 @@ function PermissionManagerView() {
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[90%] lg:max-w-3xl lg:max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             
             {/* Modal Header */}
-            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white flex items-center gap-2 lg:gap-4">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl bg-white/10">
                 {selectedEmp.nama[0]}
               </div>
@@ -8723,7 +8786,7 @@ function KelolaHakCutiView() {
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setEditingBalance(null)} />
           <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 lg:inset-x-auto lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-md bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden">
             <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
-              <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+              <div className="flex items-center gap-2 lg:gap-4">
                 <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl">
                   🌴
                 </div>
@@ -8910,7 +8973,7 @@ function MonitoringRosterCRView() {
         </div>
 
         {/* FILTER */}
-        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-2 lg:gap-4">
           <div>
             <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
               Periode
@@ -9172,7 +9235,7 @@ useEffect(() => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
                 Periode
@@ -9555,7 +9618,7 @@ function MonitoringCutiTiketView() {
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setEditingTiket(null)} />
           <div className="fixed inset-x-2 top-4 bottom-4 lg:inset-x-auto lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-full lg:max-w-md lg:max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden flex flex-col">
             <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
-              <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+              <div className="flex items-center gap-2 lg:gap-4">
                 <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center text-2xl">
                   ✈️
                 </div>
@@ -9720,7 +9783,7 @@ function UpdateExpiredModal({ row, onClose, onSuccess }: any) {
         
         {/* Header */}
         <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
-          <div className="flex items-center gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-2 lg:gap-4">
+          <div className="flex items-center gap-2 lg:gap-4">
             <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-2xl">
               📝
             </div>

@@ -42,7 +42,7 @@ export default function AppLayout({
         title={title}
         subtitle={subtitle}
         backUrl={backUrl}
-        showBack={showBack}
+        /* showBack={showBack} */
         badge={badge}
         rightElement={rightElement}
         icon={icon}
