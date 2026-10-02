@@ -269,7 +269,7 @@ export default function DetailEventPage() {
   // ─── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+      <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       
 
         <div className="text-center">
@@ -290,7 +290,7 @@ export default function DetailEventPage() {
   const momDone       = momList.filter(m => m.status === 'DONE').length
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
 
       {/* ── HEADER ── */}
       <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-4 pb-4 lg:px-6 lg:pt-6 lg:pb-6 rounded-b-3xl shadow-lg">
@@ -1219,11 +1219,6 @@ function InviteModal({ eventId, eventSite, existingNrps, onClose, onSuccess }: {
         </div>
       </div>
     
-      {/* Standard App Footer */}
-      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
-        <p>BTM Mobile APP V1.7.0</p>
-        <p className="text-[10px]">Powered By rck_Production</p>
-      </footer>
 
       </div>
   )

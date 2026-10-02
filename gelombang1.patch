@@ -1,0 +1,252 @@
+diff --git a/app/components/std/TopTabs.tsx b/app/components/std/TopTabs.tsx
+index 3f15933..d6ab816 100644
+--- a/app/components/std/TopTabs.tsx
++++ b/app/components/std/TopTabs.tsx
+@@ -21,13 +21,24 @@ type Props = {
+   tabs: TopTabItem[];
+   value: string;
+   onChange: (id: string) => void;
++  /**
++   * Mode untuk tab yang jumlahnya banyak / dinamis dari DB.
++   * Tab tidak dipaksa lebar sama, tapi bisa digeser ke samping.
++   */
++  scroll?: boolean;
+ };
+ 
+-export default function TopTabs({ tabs, value, onChange }: Props) {
++export default function TopTabs({ tabs, value, onChange, scroll = false }: Props) {
+   if (!tabs?.length) return null;
+ 
+   return (
+-    <div className="flex gap-2">
++    <div
++      className={
++        scroll
++          ? 'flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]{display:none}'
++          : 'flex gap-2'
++      }
++    >
+       {tabs.map((t) => {
+         const on = value === t.id;
+         return (
+@@ -35,7 +46,8 @@ export default function TopTabs({ tabs, value, onChange }: Props) {
+             key={t.id}
+             type="button"
+             onClick={() => onChange(t.id)}
+-            className={`flex-1 py-2.5 px-2 rounded-xl text-[11px] font-extrabold tracking-wide uppercase
++            className={`${scroll ? 'shrink-0 px-3' : 'flex-1 px-2'}
++              py-2.5 rounded-xl text-[11px] font-extrabold tracking-wide uppercase
+               transition-all active:scale-[.98] flex items-center justify-center gap-1.5
+               ${on
+                 ? 'bg-[#0b2a5b] text-white shadow-[0_4px_12px_rgba(11,42,91,.25)]'
+diff --git a/app/dashboard/hr-dashboard/page.tsx b/app/dashboard/hr-dashboard/page.tsx
+index 75c2c0e..58abd05 100644
+--- a/app/dashboard/hr-dashboard/page.tsx
++++ b/app/dashboard/hr-dashboard/page.tsx
+@@ -1,17 +1,33 @@
+ 'use client'
+ 
+-
+ // ═══════════════════════════════════════════════════════════════
+-// HR DASHBOARD v4.1 - Full Featured (CLEAN)
+-// - Tab bar dinamis dari database
+-// - Tab Karyawan: pakai komponen EmployeeTable (full featured)
+-// - Tab lain: Coming Soon
+-// - ✅ FIX Chat 32: Root cause fixed di /api/data/route.ts
+-//   (prioritas access_mode ALL/CRUD > TEAM_ATASAN untuk multi-role user)
++// HR DASHBOARD v4.2 — migrasi ke STD UI KIT (v1.8)
++//
++// Perubahan dari v4.1 (TAMPILAN SAJA, logika tidak diubah):
++//  - Pakai <StdPage> + <StatBanner> + <TopTabs> + <EmptyState>
++//  - Header & tab bar manual dihapus → ikut standar Approval Center
++//  - Footer manual dihapus (layout.tsx sudah punya <AppFooter />)
++//  - min-h-screen dihapus (penyebab ruang kosong di HP)
++//
++// TETAP SAMA:
++//  - Tab dinamis dari /api/menus (tidak ada hardcode role)
++//  - Emoji menu_icon dari DB dipertahankan
++//  - EmployeeTable dipakai persis seperti sebelumnya
++//
++// CATATAN PERFORMA (HP):
++//  EmployeeTable di-load dinamis (next/dynamic) supaya kode tabel yang berat
++//  tidak ikut terunduh saat halaman pertama kali dibuka.
+ // ═══════════════════════════════════════════════════════════════
+ 
+ import { useState, useEffect } from 'react'
+-import EmployeeTable from '@/app/components/EmployeeTable'
++import dynamic from 'next/dynamic'
++import { StdPage, StatBanner, TopTabs, EmptyState, type TopTabItem } from '@/app/components/std'
++
++// ⚡ lazy-load: tabel besar baru diunduh saat benar-benar ditampilkan
++const EmployeeTable = dynamic(() => import('@/app/components/EmployeeTable'), {
++  ssr: false,
++  loading: () => <EmptyState variant="loading" text="Menyiapkan tabel karyawan" />,
++})
+ 
+ type MenuTab = {
+   menu_key: string
+@@ -29,101 +45,78 @@ export default function HRDashboardPage() {
+   const [activeTab, setActiveTab] = useState<string>('')
+   const [loadingTabs, setLoadingTabs] = useState(true)
+ 
+-  useEffect(() => {
+-    async function loadTabs() {
+-      try {
+-        const res = await fetch('/api/menus')
+-        const json = await res.json()
+-        const allMenus = json.menus || []
+-        const hrTabs = allMenus
+-          .filter((m: any) => m.parent_menu_key === 'hr_dashboard')
+-          .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+-        setTabs(hrTabs)
+-        if (hrTabs.length > 0) setActiveTab(hrTabs[0].menu_key)
+-      } catch (err) {
+-        console.error('Load HR tabs error:', err)
+-      } finally {
+-        setLoadingTabs(false)
++  async function loadTabs() {
++    setLoadingTabs(true)
++    try {
++      const res = await fetch('/api/menus')
++      const json = await res.json()
++      const allMenus = json.menus || []
++      const hrTabs = allMenus
++        .filter((m: any) => m.parent_menu_key === 'hr_dashboard')
++        .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
++      setTabs(hrTabs)
++      if (hrTabs.length > 0) {
++        setActiveTab((prev) => (prev && hrTabs.some((t: MenuTab) => t.menu_key === prev) ? prev : hrTabs[0].menu_key))
+       }
++    } catch (err) {
++      console.error('Load HR tabs error:', err)
++    } finally {
++      setLoadingTabs(false)
+     }
++  }
++
++  useEffect(() => {
+     loadTabs()
++    // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [])
+ 
+-  const currentTab = tabs.find(t => t.menu_key === activeTab)
++  const currentTab = tabs.find((t) => t.menu_key === activeTab)
++
++  // tab DB → format TopTabs (emoji dari kolom menu_icon tetap dipakai)
++  const tabItems: TopTabItem[] = tabs.map((t) => ({
++    id: t.menu_key,
++    label: t.menu_label,
++    icon: t.menu_icon || undefined,
++  }))
+ 
+   return (
+-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+-      
++    <StdPage width="full">
++      <StatBanner
++        eyebrow="HR Dashboard"
++        title="Manpower Planning & Analytics"
++        subtitle="Data karyawan, dokumen & analitik SDM"
++        onRefresh={loadTabs}
++        refreshing={loadingTabs}
++      />
+ 
+-      {/* HEADER */}
+-      <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-6 rounded-b-3xl shadow-lg">
+-        <div className="flex items-center gap-3">
+-          <span className="text-4xl">📊</span>
+-          <div>
+-            <h1 className="text-white text-xl lg:text-3xl font-black tracking-tight">HR Dashboard</h1>
+-            <p className="text-blue-200 text-xs lg:text-sm font-bold">Manpower Planning & Analytics</p>
+-          </div>
+-        </div>
++      {loadingTabs ? (
++        <EmptyState variant="loading" title="Memuat Menu…" text="Mengambil daftar tab dari server" />
++      ) : tabs.length === 0 ? (
++        <EmptyState
++          variant="empty"
++          title="Tidak Ada Tab Tersedia"
++          text="Hak akses Anda belum mencakup menu HR Dashboard"
++        />
++      ) : (
++        <>
++          <TopTabs scroll tabs={tabItems} value={activeTab} onChange={setActiveTab} />
+ 
+-        {/* TAB BAR - DINAMIS DARI DB */}
+-        <div className="flex gap-2 mt-4 overflow-x-auto pb-1 no-scrollbar">
+-          {loadingTabs ? (
+-            <div className="text-white/60 text-sm py-2">Memuat tab...</div>
+-          ) : tabs.length === 0 ? (
+-            <div className="text-white/60 text-sm py-2">Tidak ada tab tersedia</div>
+-          ) : (
+-            tabs.map(t => (
+-              <button
+-                key={t.menu_key}
+-                onClick={() => setActiveTab(t.menu_key)}
+-                className={`flex items-center gap-1.5 px-3 py-2 lg:px-4 lg:py-2.5 rounded-full text-xs lg:text-sm font-bold whitespace-nowrap transition-all
+-                  ${activeTab === t.menu_key
+-                    ? 'bg-white text-[#003D79] shadow-lg'
+-                    : 'bg-white/20 text-white/80 hover:bg-white/30'
+-                  }`}
+-              >
+-                <span>{t.menu_icon}</span>
+-                <span>{t.menu_label}</span>
+-              </button>
+-            ))
+-          )}
+-        </div>
+-      </div>
++          {currentTab?.tab_action?.startsWith('REDIRECT:') &&
++            (() => {
++              const targetMenuKey = currentTab.tab_action!.split(':')[1] || ''
++              return <EmployeeTable key={targetMenuKey} menuKey={targetMenuKey} />
++            })()}
+ 
+-      {/* CONTENT */}
+-      <div className="px-4 py-4 lg:px-6 lg:py-6">
+-        {currentTab?.tab_action?.startsWith('REDIRECT:') && (() => {
+-          const targetMenuKey = currentTab.tab_action.split(':')[1] || ''
+-          return (
+-            <EmployeeTable 
+-              key={targetMenuKey} 
+-              menuKey={targetMenuKey} 
++          {currentTab?.tab_action === 'COMING_SOON' && (
++            <EmptyState
++              variant="empty"
++              icon="Warn"
++              title={currentTab.menu_label}
++              text="Fitur ini sedang dalam pengembangan — Coming Soon"
+             />
+-          )
+-        })()}
+-
+-        {currentTab?.tab_action === 'COMING_SOON' && (
+-          <ComingSoon label={currentTab.menu_label} />
+-        )}
+-      </div>
+-    </div>
++          )}
++        </>
++      )}
++    </StdPage>
+   )
+ }
+-
+-// ═══════════════════════════════════════════════════════════════
+-// COMPONENT: Placeholder "Coming Soon"
+-// ═══════════════════════════════════════════════════════════════
+-function ComingSoon({ label }: { label: string }) {
+-  return (
+-    <div className="text-center py-16 px-6">
+-      <div className="text-6xl mb-4">🚧</div>
+-      <div className="text-slate-600 text-lg font-black uppercase tracking-wide">{label}</div>
+-      <div className="text-[#5a6a7e] text-sm mt-2">Fitur ini sedang dalam pengembangan</div>
+-      <div className="mt-6 inline-block bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-xs font-black">
+-        Coming Soon
+-      </div>
+-    
+-
+-      </div>
+-  )
+-}
+\ No newline at end of file

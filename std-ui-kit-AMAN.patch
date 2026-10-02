@@ -1,0 +1,947 @@
+diff --git a/app/components/std/DataCard.tsx b/app/components/std/DataCard.tsx
+new file mode 100644
+index 0000000..4a9af76
+--- /dev/null
++++ b/app/components/std/DataCard.tsx
+@@ -0,0 +1,115 @@
++'use client';
++
++import React from 'react';
++import { renderIcon, type IcoName } from './icons';
++
++/**
++ * 🗂️ DataCard — kartu baris data standar (pengganti kartu buatan tangan di tiap halaman).
++ *
++ * Struktur:
++ *   [ikon]  [badge status] [judul]          →  baris meta (label : nilai)
++ *           [subjudul]                          + tombol aksi opsional
++ */
++
++export type BadgeTone = 'pending' | 'done' | 'info' | 'danger' | 'neutral';
++
++const TONE: Record<BadgeTone, string> = {
++  pending: 'bg-amber-100 text-amber-700',
++  done: 'bg-emerald-100 text-emerald-700',
++  info: 'bg-sky-100 text-sky-700',
++  danger: 'bg-red-100 text-red-700',
++  neutral: 'bg-slate-100 text-slate-600',
++};
++
++const ICON_BG: Record<BadgeTone, string> = {
++  pending: 'bg-amber-50',
++  done: 'bg-emerald-50',
++  info: 'bg-sky-50',
++  danger: 'bg-red-50',
++  neutral: 'bg-slate-50',
++};
++
++const ICON_FG: Record<BadgeTone, string> = {
++  pending: '#f59e0b',
++  done: '#10b981',
++  info: '#0369a1',
++  danger: '#ef4444',
++  neutral: '#64748b',
++};
++
++export type MetaRow = { label: string; value: React.ReactNode };
++
++type Props = {
++  title: string;
++  subtitle?: string;
++  badge?: string;
++  tone?: BadgeTone;
++  icon?: React.ReactNode | IcoName;
++  meta?: MetaRow[];
++  actions?: React.ReactNode;
++  onClick?: () => void;
++  dimmed?: boolean;
++};
++
++export default function DataCard({
++  title,
++  subtitle,
++  badge,
++  tone = 'neutral',
++  icon,
++  meta,
++  actions,
++  onClick,
++  dimmed = false,
++}: Props) {
++  return (
++    <div
++      onClick={onClick}
++      className={`rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition-all
++        ${onClick ? 'cursor-pointer hover:shadow-md active:scale-[.995]' : ''}
++        ${dimmed ? 'opacity-50 pointer-events-none' : ''}`}
++    >
++      <div className="flex items-start gap-2.5">
++        {icon && (
++          <div
++            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${ICON_BG[tone]}`}
++          >
++            {renderIcon(icon, ICON_FG[tone], 18)}
++          </div>
++        )}
++
++        <div className="min-w-0 flex-1">
++          <div className="flex flex-wrap items-center gap-1.5">
++            {badge && (
++              <span
++                className={`rounded-full px-2 py-0.5 text-[7.5px] font-black uppercase tracking-[0.1em] ${TONE[tone]}`}
++              >
++                {badge}
++              </span>
++            )}
++            <h3 className="truncate text-[12px] font-extrabold text-slate-900">{title}</h3>
++          </div>
++
++          {subtitle && (
++            <p className="mt-0.5 truncate text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
++              {subtitle}
++            </p>
++          )}
++        </div>
++      </div>
++
++      {meta && meta.length > 0 && (
++        <div className="mt-2.5 rounded-xl bg-slate-50/80 px-2.5 py-2">
++          {meta.map((m, i) => (
++            <div key={i} className="flex items-center justify-between py-0.5 text-[9.5px]">
++              <span className="font-black uppercase tracking-[0.1em] text-slate-400">{m.label}</span>
++              <span className="font-extrabold text-slate-700">{m.value}</span>
++            </div>
++          ))}
++        </div>
++      )}
++
++      {actions && <div className="mt-2.5 flex gap-2">{actions}</div>}
++    </div>
++  );
++}
+diff --git a/app/components/std/EmptyState.tsx b/app/components/std/EmptyState.tsx
+new file mode 100644
+index 0000000..47d396d
+--- /dev/null
++++ b/app/components/std/EmptyState.tsx
+@@ -0,0 +1,55 @@
++'use client';
++
++import React from 'react';
++import { Ico, renderIcon, type IcoName } from './icons';
++
++/**
++ * 🎉 EmptyState — kartu "SEMUA BERES!" / "TIDAK ADA DATA".
++ * Dipakai juga sebagai state loading & error supaya konsisten.
++ */
++
++type Props = {
++  /** 'done' = 🎉 semua beres · 'empty' = 📭 tidak ada hasil · 'loading' · 'error' */
++  variant?: 'done' | 'empty' | 'loading' | 'error';
++  title?: string;
++  text?: string;
++  icon?: React.ReactNode | IcoName;
++};
++
++const PRESET = {
++  done:    { title: 'Semua Beres!',        text: 'Tidak ada data yang perlu diproses saat ini' },
++  empty:   { title: 'Tidak Ada Hasil',     text: 'Coba pilih filter lain di atas' },
++  loading: { title: 'Memuat…',             text: 'Mengambil data dari server' },
++  error:   { title: 'Gagal Memuat Data',   text: 'Periksa koneksi lalu coba lagi' },
++};
++
++export default function EmptyState({ variant = 'done', title, text, icon }: Props) {
++  const p = PRESET[variant];
++  const isErr = variant === 'error';
++
++  const defaultIcon =
++    variant === 'done' ? <Ico.Party size={40} c="#9aa7b8" />
++    : variant === 'empty' ? <Ico.Inbox size={40} c="#9aa7b8" />
++    : variant === 'loading' ? <Ico.Clock size={40} c="#9aa7b8" />
++    : <Ico.Warn size={40} c="#ef4444" />;
++
++  return (
++    <div
++      className={`rounded-2xl border border-dashed bg-white px-4 py-9 text-center
++        ${isErr ? 'border-red-200' : 'border-slate-200'}`}
++    >
++      <div className={`mb-2.5 flex justify-center ${variant === 'loading' ? 'animate-pulse' : 'opacity-30'}`}>
++        {icon ? renderIcon(icon, undefined, 40) : defaultIcon}
++      </div>
++
++      <h3
++        className={`text-[11.5px] font-black uppercase tracking-[0.18em]
++          ${isErr ? 'text-red-500' : 'text-slate-400'}`}
++      >
++        {title ?? p.title}
++      </h3>
++
++      <p className="mt-1 px-4 text-[9.5px] font-semibold text-slate-300">{text ?? p.text}</p>
++    </div>
++  );
++}
+diff --git a/app/components/std/FilterGrid.tsx b/app/components/std/FilterGrid.tsx
+new file mode 100644
+index 0000000..c8499f4
+--- /dev/null
++++ b/app/components/std/FilterGrid.tsx
+@@ -0,0 +1,93 @@
++'use client';
++
++import React from 'react';
++import { renderIcon, type IcoName } from './icons';
++
++/**
++ * 🔢 FilterGrid — grid filter 3 kolom.
++ *
++ * ATURAN MUTLAK dari dokumen handover:
++ *  "Pada grid filter 3 kolom, angka WAJIB DI SAMPING TEKS (flex-row),
++ *   TIDAK BOLEH berada di bawah teks."
++ *
++ * Maka baris label+angka memakai: flex flex-row items-center justify-center gap-1.5
++ * Ikon berada di ATAS baris tersebut (sesuai tampilan produksi v1.7.0).
++ */
++
++export type FilterItem = {
++  id: string;
++  label: string;
++  count: number;
++  /** nama ikon std ('Palm'), emoji ('🌴'), atau JSX */
++  icon?: React.ReactNode | IcoName;
++  /** warna ikon saat TIDAK aktif */
++  color?: string;
++};
++
++type Props = {
++  /** judul kecil di atas grid */
++  label?: string;
++  items: FilterItem[];
++  value: string;
++  onChange: (id: string) => void;
++  /** sembunyikan ikon, hanya label + angka */
++  hideIcons?: boolean;
++};
++
++export default function FilterGrid({
++  label = 'Filter Jenis Pengajuan',
++  items,
++  value,
++  onChange,
++  hideIcons = false,
++}: Props) {
++  if (!items?.length) return null;
++
++  return (
++    <div>
++      {label && (
++        <p className="mb-1.5 ml-1 text-[8.5px] font-black uppercase tracking-[0.18em] text-slate-400">
++          {label}
++        </p>
++      )}
++
++      <div className="grid grid-cols-3 gap-2">
++        {items.map((it) => {
++          const on = value === it.id;
++          return (
++            <button
++              key={it.id}
++              type="button"
++              onClick={() => onChange(it.id)}
++              className={`rounded-xl border px-1 py-2.5 text-center transition-all active:scale-[.98]
++                ${on
++                  ? 'border-[#0b2a5b] bg-[#0b2a5b] shadow-[0_5px_14px_rgba(11,42,91,.22)]'
++                  : 'border-slate-100 bg-white hover:border-slate-200'}`}
++            >
++              {!hideIcons && it.icon && (
++                <div className="mb-1.5 flex h-5 items-center justify-center">
++                  {renderIcon(it.icon, on ? '#ffffff' : it.color || '#64748b', 18)}
++                </div>
++              )}
++
++              {/* ⬇️ ANGKA DI SAMPING TEKS — jangan diubah jadi flex-col */}
++              <div className="flex flex-row items-center justify-center gap-1.5">
++                <span
++                  className={`text-[8px] font-black uppercase tracking-wide whitespace-nowrap
++                    ${on ? 'text-white' : 'text-slate-500'}`}
++                >
++                  {it.label}
++                </span>
++                <span
++                  className={`text-[12px] font-black leading-none ${on ? 'text-white' : 'text-[#0b2a5b]'}`}
++                >
++                  {it.count}
++                </span>
++              </div>
++            </button>
++          );
++        })}
++      </div>
++    </div>
++  );
++}
+diff --git a/app/components/std/SegmentTabs.tsx b/app/components/std/SegmentTabs.tsx
+new file mode 100644
+index 0000000..dd97d6a
+--- /dev/null
++++ b/app/components/std/SegmentTabs.tsx
+@@ -0,0 +1,67 @@
++'use client';
++
++import React from 'react';
++import { renderIcon, type IcoName } from './icons';
++
++/**
++ * 🎚️ SegmentTabs — tab peran / lingkup di bawah banner.
++ * Contoh: 👔 SEBAGAI ATASAN | 🎖️ SEBAGAI PJO
++ *
++ * Kalau hanya ada 1 item, otomatis tampil sebagai LABEL (bukan tombol),
++ * meniru perilaku Approval Center untuk user single-role.
++ */
++
++export type SegItem = {
++  id: string;
++  label: string;
++  icon?: React.ReactNode | IcoName;
++};
++
++type Props = {
++  items: SegItem[];
++  value: string;
++  onChange: (id: string) => void;
++  /** teks kecil di atas label saat mode single */
++  singleCaption?: string;
++};
++
++export default function SegmentTabs({ items, value, onChange, singleCaption = 'Approval sebagai' }: Props) {
++  if (!items?.length) return null;
++
++  // Mode tunggal → tampil sebagai label informasi
++  if (items.length === 1) {
++    const it = items[0];
++    return (
++      <div className="rounded-xl border border-slate-100 bg-white p-2.5 text-center shadow-sm">
++        <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">{singleCaption}</p>
++        <p className="mt-0.5 flex items-center justify-center gap-1.5 text-sm font-black text-[#0b2a5b]">
++          {it.icon ? renderIcon(it.icon, '#0b2a5b', 14) : null}
++          {it.label}
++        </p>
++      </div>
++    );
++  }
++
++  return (
++    <div className="flex gap-2">
++      {items.map((it) => {
++        const on = value === it.id;
++        return (
++          <button
++            key={it.id}
++            type="button"
++            onClick={() => onChange(it.id)}
++            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-2
++              text-[10px] font-extrabold uppercase tracking-wider transition-all active:scale-[.98]
++              ${on
++                ? 'bg-[#0b2a5b] text-white shadow-[0_4px_12px_rgba(11,42,91,.22)]'
++                : 'bg-white text-slate-400 border border-slate-100'}`}
++          >
++            {it.icon ? renderIcon(it.icon, undefined, 12) : null}
++            <span className="whitespace-nowrap">{it.label}</span>
++          </button>
++        );
++      })}
++    </div>
++  );
++}
+diff --git a/app/components/std/StatBanner.tsx b/app/components/std/StatBanner.tsx
+new file mode 100644
+index 0000000..3b16ade
+--- /dev/null
++++ b/app/components/std/StatBanner.tsx
+@@ -0,0 +1,86 @@
++'use client';
++
++import React from 'react';
++import { Ico } from './icons';
++
++/**
++ * 🎯 StatBanner — Banner navy utama dengan titik hijau berkedip + tombol REFRESH.
++ *
++ * Elemen wajib sesuai acuan Approval Center:
++ *  - gradient navy
++ *  - eyebrow kecil huruf kapital + status dot #00c37a animate-ping
++ *  - judul tebal
++ *  - subjudul tipis
++ *  - tombol refresh di kanan atas
++ */
++
++type Props = {
++  /** teks kecil di atas judul, cth: "APPROVAL CENTER" */
++  eyebrow: string;
++  /** judul besar, cth: "Semua Sudah Diproses" */
++  title: string;
++  /** keterangan di bawah judul */
++  subtitle?: string;
++  /** tampilkan titik hijau berkedip */
++  live?: boolean;
++  /** handler tombol refresh; kalau tidak diisi, tombol disembunyikan */
++  onRefresh?: () => void;
++  refreshing?: boolean;
++  /** elemen tambahan di kanan (menggantikan tombol refresh) */
++  right?: React.ReactNode;
++};
++
++export default function StatBanner({
++  eyebrow,
++  title,
++  subtitle,
++  live = true,
++  onRefresh,
++  refreshing = false,
++  right,
++}: Props) {
++  return (
++    <div className="relative overflow-hidden rounded-2xl p-3.5 text-white shadow-[0_6px_20px_rgba(11,42,91,.22)]
++                    bg-gradient-to-br from-[#0b2a5b] to-[#123a73]">
++      {/* ornamen lingkaran hijau samar */}
++      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-[#00c37a]/15 blur-xl" />
++
++      <div className="relative z-10 flex items-start justify-between gap-3">
++        <div className="min-w-0">
++          <div className="flex items-center gap-1.5 mb-0.5">
++            {live && (
++              <span className="relative flex h-2 w-2 shrink-0">
++                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00c37a] opacity-75" />
++                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#00c37a]" />
++              </span>
++            )}
++            <span className="text-[8.5px] font-extrabold uppercase tracking-[0.2em] text-blue-200/90 truncate">
++              {eyebrow}
++            </span>
++          </div>
++
++          <h2 className="text-[15px] font-extrabold leading-tight tracking-tight">{title}</h2>
++
++          {subtitle && (
++            <p className="mt-0.5 text-[9.5px] font-medium text-blue-100/70">{subtitle}</p>
++          )}
++        </div>
++
++        {right ??
++          (onRefresh && (
++            <button
++              type="button"
++              onClick={onRefresh}
++              disabled={refreshing}
++              className="shrink-0 flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/10
++                         px-2.5 py-2 text-[8.5px] font-extrabold uppercase tracking-[0.1em]
++                         transition-all hover:bg-white/20 active:scale-95 disabled:opacity-50"
++            >
++              <Ico.Refresh size={11} c="#bfdbfe" className={refreshing ? 'animate-spin' : ''} />
++              Refresh
++            </button>
++          ))}
++      </div>
++    </div>
++  );
++}
+diff --git a/app/components/std/StdPage.tsx b/app/components/std/StdPage.tsx
+new file mode 100644
+index 0000000..3df320f
+--- /dev/null
++++ b/app/components/std/StdPage.tsx
+@@ -0,0 +1,52 @@
++'use client';
++
++import React from 'react';
++import AppFooter from '../AppFooter';
++
++/**
++ * 📐 StdPage — Pembungkus baku SEMUA halaman dashboard.
++ *
++ * Mengunci aturan tata letak dari dokumen handover:
++ *  - Side margin normal  : px-3 max-w-lg mx-auto
++ *  - Top margin rapat    : pt-2
++ *  - Footer TUNGGAL      : menempel mt-6 tepat di bawah konten terakhir,
++ *                          BUKAN melayang di dasar viewport.
++ *  - Ruang aman bawah    : pb-24 supaya tidak tertutup MobileBottomNav.
++ *
++ * Pemakaian:
++ *   <StdPage>
++ *     ...konten...
++ *   </StdPage>
++ */
++
++type Props = {
++  children: React.ReactNode;
++  /**
++   * Tampilkan footer BTM di dalam halaman.
++   *
++   * ⚠️ DEFAULT false — karena app/dashboard/layout.tsx SUDAH merender <AppFooter />
++   * untuk semua halaman dashboard. Menyalakan ini di halaman dashboard akan
++   * membuat FOOTER DOBEL (masalah yang tercatat di dokumen handover).
++   *
++   * Nyalakan hanya untuk halaman DI LUAR /dashboard yang tidak punya layout footer.
++   */
++  footer?: boolean;
++  /** Lebar maksimum. 'lg' = mobile-first (default), 'full' = halaman tabel lebar. */
++  width?: 'lg' | 'xl' | 'full';
++  className?: string;
++};
++
++const W = {
++  lg: 'max-w-lg',
++  xl: 'max-w-3xl',
++  full: 'max-w-none',
++};
++
++export default function StdPage({ children, footer = false, width = 'lg', className = '' }: Props) {
++  return (
++    <div className={`w-full ${W[width]} mx-auto px-3 pt-2 pb-24 ${className}`}>
++      <div className="flex flex-col gap-2.5">{children}</div>
++      {footer && <AppFooter />}
++    </div>
++  );
++}
+diff --git a/app/components/std/TopTabs.tsx b/app/components/std/TopTabs.tsx
+new file mode 100644
+index 0000000..3f15933
+--- /dev/null
++++ b/app/components/std/TopTabs.tsx
+@@ -0,0 +1,59 @@
++'use client';
++
++import React from 'react';
++import { renderIcon, type IcoName } from './icons';
++
++/**
++ * 🔝 TopTabs — 2 tab besar di paling atas halaman.
++ * Contoh: 📋 PENGAJUAN | 📝 REVISI ABSENSI
++ */
++
++export type TopTabItem = {
++  id: string;
++  label: string;
++  /** nama ikon std ('Clipboard'), emoji ('📋'), atau JSX */
++  icon?: React.ReactNode | IcoName;
++  /** angka badge opsional di kanan label */
++  count?: number;
++};
++
++type Props = {
++  tabs: TopTabItem[];
++  value: string;
++  onChange: (id: string) => void;
++};
++
++export default function TopTabs({ tabs, value, onChange }: Props) {
++  if (!tabs?.length) return null;
++
++  return (
++    <div className="flex gap-2">
++      {tabs.map((t) => {
++        const on = value === t.id;
++        return (
++          <button
++            key={t.id}
++            type="button"
++            onClick={() => onChange(t.id)}
++            className={`flex-1 py-2.5 px-2 rounded-xl text-[11px] font-extrabold tracking-wide uppercase
++              transition-all active:scale-[.98] flex items-center justify-center gap-1.5
++              ${on
++                ? 'bg-[#0b2a5b] text-white shadow-[0_4px_12px_rgba(11,42,91,.25)]'
++                : 'bg-white text-slate-400 border border-slate-100'}`}
++          >
++            {t.icon ? renderIcon(t.icon, undefined, 13) : null}
++            <span className="whitespace-nowrap">{t.label}</span>
++            {typeof t.count === 'number' && t.count > 0 && (
++              <span
++                className={`text-[9px] font-black px-1.5 py-0.5 rounded-full
++                  ${on ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#0b2a5b]'}`}
++              >
++                {t.count}
++              </span>
++            )}
++          </button>
++        );
++      })}
++    </div>
++  );
++}
+diff --git a/app/components/std/icons.tsx b/app/components/std/icons.tsx
+new file mode 100644
+index 0000000..e2b67e0
+--- /dev/null
++++ b/app/components/std/icons.tsx
+@@ -0,0 +1,96 @@
++'use client';
++
++import React from 'react';
++
++/**
++ * 🎨 STD ICONS — SVG line icon standar BTM
++ *
++ * Sesuai DESIGN-SYSTEM.md: "✅ DO: Pakai SVG line icon".
++ * Emoji TETAP didukung di seluruh komponen std (prop icon menerima ReactNode
++ * maupun string emoji), jadi halaman lama yang masih pakai 📊 tidak rusak.
++ *
++ * Pemakaian:
++ *   <Ico.Chart />            → warna ikut teks induk
++ *   <Ico.Palm c="#f59e0b" /> → warna khusus
++ */
++
++type P = { size?: number; c?: string; sw?: number; className?: string };
++
++function S({ size = 18, c = 'currentColor', sw = 2.2, className = '', children }: P & { children: React.ReactNode }) {
++  return (
++    <svg
++      width={size}
++      height={size}
++      viewBox="0 0 24 24"
++      fill="none"
++      stroke={c}
++      strokeWidth={sw}
++      strokeLinecap="round"
++      strokeLinejoin="round"
++      className={className}
++      aria-hidden="true"
++    >
++      {children}
++    </svg>
++  );
++}
++
++export const Ico = {
++  /** 📊 statistik / semua */
++  Chart: (p: P) => <S {...p}><path d="M18 20V10M12 20V4M6 20v-6" /></S>,
++  /** 🌴 cuti */
++  Palm: (p: P) => <S {...p}><path d="M12 22V12" /><path d="M12 12c0-4 3-7 7-7-1 4-3 7-7 7Z" /><path d="M12 12C12 8 9 5 5 5c1 4 3 7 7 7Z" /></S>,
++  /** ⏱️ lembur / jam */
++  Clock: (p: P) => <S {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></S>,
++  /** 🙁 sakit */
++  Sick: (p: P) => <S {...p}><circle cx="12" cy="12" r="9" /><path d="M8 15.5c1-1 2.3-1.5 4-1.5s3 .5 4 1.5" /><path d="M9 9h.01M15 9h.01" /></S>,
++  /** ⚠️ peringatan / izin potongan */
++  Warn: (p: P) => <S {...p}><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4M12 17h.01" /></S>,
++  /** ✅ izin berbayar / setuju (kotak) */
++  CheckBox: (p: P) => <S {...p}><rect x="3" y="3" width="18" height="18" rx="4" /><path d="M8 12.5l2.5 2.5L16 9.5" /></S>,
++  /** ✔ centang polos */
++  Check: (p: P) => <S {...p}><path d="M20 6 9 17l-5-5" /></S>,
++  /** ✕ tolak */
++  Close: (p: P) => <S {...p}><path d="M18 6 6 18M6 6l12 12" /></S>,
++  /** 📋 pengajuan / clipboard */
++  Clipboard: (p: P) => <S {...p}><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></S>,
++  /** 📝 revisi / edit-check */
++  EditCheck: (p: P) => <S {...p}><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></S>,
++  /** 👔 atasan / user */
++  User: (p: P) => <S {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></S>,
++  /** 👥 tim */
++  Users: (p: P) => <S {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.9" /></S>,
++  /** 🎖️ PJO / medali */
++  Medal: (p: P) => <S {...p}><circle cx="12" cy="8" r="6" /><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1" /></S>,
++  /** 🔄 refresh */
++  Refresh: (p: P) => <S {...p}><path d="M21 12a9 9 0 1 1-3-6.7L21 8" /><path d="M21 3v5h-5" /></S>,
++  /** 📅 kalender / absensi */
++  Calendar: (p: P) => <S {...p}><rect x="3" y="4" width="18" height="18" rx="3" /><path d="M8 2v4M16 2v4M3 10h18" /></S>,
++  /** 📄 dokumen */
++  Doc: (p: P) => <S {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6" /></S>,
++  /** ⬇ import / unduh */
++  Import: (p: P) => <S {...p}><path d="M12 3v12M8 11l4 4 4-4" /><path d="M4 21h16" /></S>,
++  /** 🏠 site */
++  Home: (p: P) => <S {...p}><path d="M3 21V8l9-5 9 5v13" /><path d="M9 21v-6h6v6" /></S>,
++  /** 🌐 semua site */
++  Globe: (p: P) => <S {...p}><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18" /></S>,
++  /** ➕ tambah */
++  Plus: (p: P) => <S {...p}><path d="M12 5v14M5 12h14" /></S>,
++  /** 🩺 medis / MCU */
++  Pulse: (p: P) => <S {...p}><path d="M3 12h4l2 5 4-12 2 7h6" /></S>,
++  /** 🎉 selesai / party */
++  Party: (p: P) => <S {...p} sw={1.6}><path d="M4 20 9 9l6 6-11 5Z" /><path d="M14 4.5 15 7M19.5 9 17 10M17.8 3.2 16 5" /></S>,
++  /** 📭 kosong */
++  Inbox: (p: P) => <S {...p} sw={1.6}><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.4 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.4-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.8 1.1Z" /></S>,
++};
++
++export type IcoName = keyof typeof Ico;
++
++/** Render ikon dari nama string, emoji, atau elemen React. */
++export function renderIcon(icon: React.ReactNode | IcoName, color?: string, size = 18): React.ReactNode {
++  if (typeof icon === 'string' && icon in Ico) {
++    const C = Ico[icon as IcoName];
++    return <C c={color} size={size} />;
++  }
++  return icon; // emoji atau JSX apa adanya
++}
+diff --git a/app/components/std/index.ts b/app/components/std/index.ts
+new file mode 100644
+index 0000000..234512c
+--- /dev/null
++++ b/app/components/std/index.ts
+@@ -0,0 +1,23 @@
++/**
++ * 📦 BTM STD UI KIT — titik impor tunggal.
++ *
++ * Pakai begini di halaman mana pun:
++ *   import { StdPage, StatBanner, FilterGrid, DataCard, EmptyState, Ico } from '@/app/components/std';
++ *
++ * Ubah tampilan di sini = SEMUA halaman ikut berubah.
++ */
++
++export { default as StdPage } from './StdPage';
++export { default as TopTabs } from './TopTabs';
++export { default as StatBanner } from './StatBanner';
++export { default as SegmentTabs } from './SegmentTabs';
++export { default as FilterGrid } from './FilterGrid';
++export { default as EmptyState } from './EmptyState';
++export { default as DataCard } from './DataCard';
++export { Ico, renderIcon } from './icons';
++
++export type { TopTabItem } from './TopTabs';
++export type { SegItem } from './SegmentTabs';
++export type { FilterItem } from './FilterGrid';
++export type { MetaRow, BadgeTone } from './DataCard';
++export type { IcoName } from './icons';
+diff --git a/app/dashboard/std-demo/page.tsx b/app/dashboard/std-demo/page.tsx
+new file mode 100644
+index 0000000..20f88a2
+--- /dev/null
++++ b/app/dashboard/std-demo/page.tsx
+@@ -0,0 +1,241 @@
++'use client';
++
++/**
++ * 🧪 HALAMAN DEMO STD UI KIT — aman, tidak mengubah halaman mana pun.
++ * Buka: /dashboard/std-demo
++ *
++ * Tujuan: membuktikan 3 halaman berbeda bisa tampil seragam
++ * hanya dengan memanggil komponen yang sama.
++ * Hapus folder ini kapan saja tanpa efek ke aplikasi.
++ */
++
++import React, { useState } from 'react';
++import {
++  StdPage,
++  TopTabs,
++  StatBanner,
++  SegmentTabs,
++  FilterGrid,
++  EmptyState,
++  DataCard,
++  type FilterItem,
++} from '@/app/components/std';
++
++export default function StdDemoPage() {
++  const [demo, setDemo] = useState<'approval' | 'cuti' | 'mcu'>('approval');
++
++  return (
++    <div className="min-h-screen bg-[#eef2f7]">
++      {/* pemilih contoh — hanya alat bantu demo */}
++      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 px-3 py-2 backdrop-blur">
++        <p className="mb-1.5 text-[8.5px] font-black uppercase tracking-[0.18em] text-slate-400">
++          Demo STD UI Kit — pilih halaman
++        </p>
++        <div className="mx-auto flex max-w-lg gap-1.5">
++          {[
++            { id: 'approval', label: 'Approval Center' },
++            { id: 'cuti', label: 'Pengajuan Cuti' },
++            { id: 'mcu', label: 'Monitoring MCU' },
++          ].map((d) => (
++            <button
++              key={d.id}
++              onClick={() => setDemo(d.id as any)}
++              className={`flex-1 rounded-lg py-1.5 text-[9px] font-black uppercase tracking-wider transition-all ${
++                demo === d.id ? 'bg-[#0b2a5b] text-white' : 'bg-slate-100 text-slate-400'
++              }`}
++            >
++              {d.label}
++            </button>
++          ))}
++        </div>
++      </div>
++
++      {demo === 'approval' && <DemoApproval />}
++      {demo === 'cuti' && <DemoCuti />}
++      {demo === 'mcu' && <DemoMcu />}
++    </div>
++  );
++}
++
++/* ══════════════ 1. APPROVAL CENTER ══════════════ */
++function DemoApproval() {
++  const [tab, setTab] = useState('pengajuan');
++  const [peran, setPeran] = useState('atasan');
++  const [f, setF] = useState('ALL');
++
++  const filters: FilterItem[] = [
++    { id: 'ALL', label: 'Semua', count: 0, icon: 'Chart' },
++    { id: 'CUTI', label: 'Cuti', count: 0, icon: 'Palm', color: '#f59e0b' },
++    { id: 'LEMBUR', label: 'Lembur', count: 0, icon: 'Clock', color: '#64748b' },
++    { id: 'SAKIT', label: 'Sakit', count: 0, icon: 'Sick', color: '#f59e0b' },
++    { id: 'IZIN_POT', label: 'Izin Pot.', count: 0, icon: 'Warn', color: '#ef4444' },
++    { id: 'IZIN_BAYAR', label: 'Izin Bayar', count: 0, icon: 'CheckBox', color: '#10b981' },
++  ];
++
++  return (
++    <StdPage>
++      <TopTabs
++        value={tab}
++        onChange={setTab}
++        tabs={[
++          { id: 'pengajuan', label: 'Pengajuan', icon: 'Clipboard' },
++          { id: 'revisi', label: 'Revisi Absensi', icon: 'EditCheck' },
++        ]}
++      />
++      <StatBanner
++        eyebrow="Approval Center"
++        title="Semua Sudah Diproses"
++        subtitle="Cuti, lembur & sakit yang perlu Anda proses"
++        onRefresh={() => {}}
++      />
++      <SegmentTabs
++        value={peran}
++        onChange={setPeran}
++        items={[
++          { id: 'atasan', label: 'Sebagai Atasan', icon: 'User' },
++          { id: 'pjo', label: 'Sebagai PJO', icon: 'Medal' },
++        ]}
++      />
++      <FilterGrid label="Filter Jenis Pengajuan" items={filters} value={f} onChange={setF} />
++      <EmptyState variant="done" text="Tidak ada pengajuan yang perlu diproses saat ini" />
++    </StdPage>
++  );
++}
++
++/* ══════════════ 2. PENGAJUAN CUTI ══════════════ */
++function DemoCuti() {
++  const [tab, setTab] = useState('riwayat');
++  const [lingkup, setLingkup] = useState('saya');
++  const [f, setF] = useState('ALL');
++
++  const filters: FilterItem[] = [
++    { id: 'ALL', label: 'Semua', count: 4, icon: 'Chart' },
++    { id: 'PENDING', label: 'Pending', count: 2, icon: 'Clock', color: '#f59e0b' },
++    { id: 'OK', label: 'Setuju', count: 1, icon: 'Check', color: '#10b981' },
++    { id: 'NO', label: 'Tolak', count: 1, icon: 'Close', color: '#ef4444' },
++    { id: 'REV', label: 'Revisi', count: 0, icon: 'Warn', color: '#f59e0b' },
++    { id: 'DONE', label: 'Selesai', count: 0, icon: 'CheckBox', color: '#0369a1' },
++  ];
++
++  return (
++    <StdPage>
++      <TopTabs
++        value={tab}
++        onChange={setTab}
++        tabs={[
++          { id: 'riwayat', label: 'Riwayat', icon: 'Calendar' },
++          { id: 'baru', label: 'Ajukan Baru', icon: 'Plus' },
++        ]}
++      />
++      <StatBanner
++        eyebrow="Pengajuan Cuti"
++        title="Sisa Cuti Anda 7 Hari"
++        subtitle="Hak cuti tahunan periode 2026"
++        onRefresh={() => {}}
++      />
++      <SegmentTabs
++        value={lingkup}
++        onChange={setLingkup}
++        items={[
++          { id: 'saya', label: 'Cuti Saya', icon: 'User' },
++          { id: 'tim', label: 'Tim Saya', icon: 'Users' },
++        ]}
++      />
++      <FilterGrid label="Filter Status Pengajuan" items={filters} value={f} onChange={setF} />
++
++      <DataCard
++        icon="Palm"
++        tone="pending"
++        badge="Pending"
++        title="Cuti Tahunan"
++        subtitle="Budi Santoso • Operator"
++        meta={[
++          { label: 'Tanggal', value: '12 Okt — 16 Okt 2026' },
++          { label: 'Durasi', value: '5 Hari' },
++          { label: 'Menunggu', value: 'Atasan Langsung' },
++        ]}
++      />
++      <DataCard
++        icon="Check"
++        tone="done"
++        badge="Disetujui"
++        title="Cuti Khusus"
++        subtitle="Budi Santoso • Operator"
++        meta={[
++          { label: 'Tanggal', value: '02 Sep — 03 Sep 2026' },
++          { label: 'Durasi', value: '2 Hari' },
++          { label: 'Disetujui', value: 'PJO Site' },
++        ]}
++      />
++    </StdPage>
++  );
++}
++
++/* ══════════════ 3. MONITORING MCU ══════════════ */
++function DemoMcu() {
++  const [tab, setTab] = useState('monitoring');
++  const [site, setSite] = useState('saya');
++  const [f, setF] = useState('ALL');
++
++  const filters: FilterItem[] = [
++    { id: 'ALL', label: 'Semua', count: 87, icon: 'Chart' },
++    { id: 'FIT', label: 'Fit', count: 61, icon: 'Check', color: '#10b981' },
++    { id: 'NOTE', label: 'Catatan', count: 14, icon: 'Warn', color: '#f59e0b' },
++    { id: 'UNFIT', label: 'Unfit', count: 2, icon: 'Close', color: '#ef4444' },
++    { id: 'EXP', label: 'Expired', count: 6, icon: 'Clock', color: '#ef4444' },
++    { id: 'NONE', label: 'Belum', count: 4, icon: 'Import', color: '#64748b' },
++  ];
++
++  return (
++    <StdPage>
++      <TopTabs
++        value={tab}
++        onChange={setTab}
++        tabs={[
++          { id: 'monitoring', label: 'Monitoring', icon: 'Pulse' },
++          { id: 'import', label: 'Import Bulk', icon: 'Import' },
++        ]}
++      />
++      <StatBanner
++        eyebrow="Monitoring MCU"
++        title="12 Karyawan Perlu MCU"
++        subtitle="Medical Check-Up jatuh tempo < 30 hari"
++        onRefresh={() => {}}
++      />
++      <SegmentTabs
++        value={site}
++        onChange={setSite}
++        items={[
++          { id: 'saya', label: 'Site Saya', icon: 'Home' },
++          { id: 'all', label: 'Semua Site', icon: 'Globe' },
++        ]}
++      />
++      <FilterGrid label="Filter Status MCU" items={filters} value={f} onChange={setF} />
++
++      <DataCard
++        icon="Clock"
++        tone="danger"
++        badge="Expired"
++        title="Agus Prasetyo"
++        subtitle="NRP 10234 • Mekanik • Site Adaro"
++        meta={[
++          { label: 'MCU Terakhir', value: '14 Mar 2025' },
++          { label: 'Berlaku s/d', value: '14 Mar 2026' },
++          { label: 'Status', value: 'Lewat 201 hari' },
++        ]}
++      />
++      <DataCard
++        icon="Warn"
++        tone="pending"
++        badge="Catatan"
++        title="Siti Rahayu"
++        subtitle="NRP 10877 • Admin • Site Adaro"
++        meta={[
++          { label: 'MCU Terakhir', value: '08 Agu 2026' },
++          { label: 'Berlaku s/d', value: '08 Agu 2027' },
++          { label: 'Temuan', value: 'Tensi Tinggi' },
++        ]}
++      />
++    </StdPage>
++  );
++}

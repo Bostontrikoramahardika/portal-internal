@@ -17,17 +17,26 @@ export async function GET(request: NextRequest) {
     .eq('active', true)
     .order('sort_order')
 
-  if (!isSuperAdmin) {
-    // Tambah role '*' supaya menu global juga kebawa
-    const rolesToQuery = Array.from(new Set([...(session.roles || []), '*']))
-    query = query.in('role', rolesToQuery)
-  }
-
-  const { data: menus, error } = await query
+  // Saring setelah diambil supaya bisa memakai required_permission
+  // (boleh berisi beberapa permission dipisah koma = OR).
+  const { data: semuaMenus, error } = await query
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  const userRolesSet = new Set([...(session.roles || []), '*'])
+  const userPerms = new Set(session.permissions || [])
+
+  const menus = isSuperAdmin
+    ? semuaMenus
+    : (semuaMenus || []).filter((m: any) => {
+        const butuh = String(m.required_permission || '').trim()
+        if (!butuh) return userRolesSet.has(m.role)
+        if (butuh === 'super_admin_only') return false
+        return butuh.split(',').map((x: string) => x.trim()).filter(Boolean)
+          .some((perm: string) => userPerms.has(perm))
+      })
 
  // Deduplikasi menu berdasarkan menu_key
 // Prioritas: role spesifik user > role '*' > role lain

@@ -98,7 +98,7 @@ export default function HrOverrideAbsensiPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       
 
       <div className="bg-gradient-to-br from-purple-700 to-purple-900 px-5 pt-8 pb-16 rounded-b-[2.5rem] shadow-2xl">
@@ -280,11 +280,6 @@ export default function HrOverrideAbsensiPage() {
         </form>
       </div>
     
-      {/* Standard App Footer */}
-      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
-        <p>BTM Mobile APP V1.7.0</p>
-        <p className="text-[10px]">Powered By rck_Production</p>
-      </footer>
 
       </div>
   )

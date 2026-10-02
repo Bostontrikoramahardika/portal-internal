@@ -1,10 +1,15 @@
-'use client';
 import React from 'react';
+import { APP_CONFIG } from '../config/version';
+
 export default function AppFooter() {
   return (
-    <footer className="w-full py-4 flex flex-col items-center justify-center border-t border-[#e2e8f0] mt-6 mb-2">
-      <p className="text-[10px] font-bold text-slate-400 tracking-wider">BTM MOBILE APP V1.7.0</p>
-      <p className="text-[9px] text-slate-400 mt-0.5">Powered By rck_Production</p>
-    </footer>
+    <div className="flex flex-col items-center justify-center mt-4 mb-3 text-center w-full shrink-0">
+      <span className="text-[10px] font-extrabold text-slate-400 tracking-wider">
+        {APP_CONFIG.name} {APP_CONFIG.version}
+      </span>
+      <span className="text-[9px] text-slate-300 font-medium">
+        {APP_CONFIG.author}
+      </span>
+    </div>
   );
 }

@@ -689,11 +689,6 @@ export default function DetailMcuPage({ params }: { params: Promise<{ id: string
         </div>
       )}
     
-      {/* Standard App Footer */}
-      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
-        <p>BTM Mobile APP V1.7.0</p>
-        <p className="text-[10px]">Powered By rck_Production</p>
-      </footer>
 
       </div>
   )

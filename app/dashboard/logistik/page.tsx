@@ -371,7 +371,7 @@ export default function LogistikDashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       
 
       {/* Header */}
@@ -1211,11 +1211,6 @@ export default function LogistikDashboardPage() {
       )}
 
     
-      {/* Standard App Footer */}
-      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
-        <p>BTM Mobile APP V1.7.0</p>
-        <p className="text-[10px]">Powered By rck_Production</p>
-      </footer>
 
       </div>
   );

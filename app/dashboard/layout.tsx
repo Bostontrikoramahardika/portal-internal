@@ -165,11 +165,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const userInitial = namaKaryawan.charAt(0).toUpperCase()
 
   return (
-    <div className="min-h-screen bg-[#f4f7fa] flex flex-col antialiased text-slate-800">
+    <div className="h-auto bg-[#f4f7fa] flex flex-col antialiased text-slate-800">
       
       {/* HEADER MOBILE — COMPACT + ROUNDED */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-[60] px-2.5 pt-1.5">
-        <div className="bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-[0_4px_20px_rgba(0,61,121,0.08)] rounded-2xl px-3 py-1.5 flex items-center justify-between">
+        <div className="bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-[0_4px_20px_rgba(0,61,121,0.08)] rounded-2xl px-3 py-1.5 flex items-center justify-start">
           {/* Kiri: Logo + App Name */}
           <div className="flex items-center gap-2 shrink-0">
             <div className="w-7 h-7 rounded-xl bg-[#003D79] flex items-center justify-center shadow-sm overflow-hidden">
@@ -209,7 +209,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* DESKTOP SIDEBAR & MAIN AREA */}
       <div className="flex flex-1">
-        <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-[#e2e8f0] min-h-screen shrink-0 sticky top-0 h-screen">
+        <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-[#e2e8f0] h-auto shrink-0 sticky top-0 h-screen">
           <div className="h-14 flex items-center px-6 border-b border-[#e2e8f0] bg-[#003d79] text-white">
             <Link href="/dashboard" className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center font-black text-sm text-white">
@@ -252,7 +252,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   key={item.id || item.menu_key || href || idx}
                   href={href}
                   className={[
-                    'flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-colors',
+                    'flex items-center justify-start px-3 py-2 rounded-xl text-xs font-semibold transition-colors',
                     isActive ? 'bg-[#003d79] text-white' : 'text-slate-600 hover:bg-slate-100'
                   ].join(' ')}
                 >
@@ -290,9 +290,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0 flex flex-col min-h-screen pt-[3.75rem] lg:pt-0 pb-24 lg:pb-8">
+        <main className="flex-1 min-w-0 flex flex-col h-auto pt-[3.75rem] lg:pt-0 pb-24 lg:pb-8">
           {/* HEADER DESKTOP ONLY */}
-          <header className="hidden lg:flex items-center justify-between h-16 px-8 bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40">
+          <header className="hidden lg:flex items-center justify-start h-16 px-8 bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40">
             <div>
               <h1 className="text-base font-black text-[#003D79] tracking-tight">Portal Internal BTM</h1>
               <p className="text-[11px] text-slate-500 font-medium">Selamat datang, <strong className="text-slate-800">{namaKaryawan}</strong> ({nrpKaryawan}) — <span className="text-blue-600 font-bold">{siteKaryawan}</span></p>
@@ -314,7 +314,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </header>
 
-          <div className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          <div className="p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
             {children}
           </div>
           <AppFooter />
@@ -332,7 +332,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <>
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[999]" onClick={() => setIsNotifOpen(false)} />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[1000] overflow-hidden">
-            <div className="p-8 bg-[#003D79] text-white flex justify-between items-center">
+            <div className="p-8 bg-[#003D79] text-white flex justify-start items-center">
               <div>
                 <h3 className="font-black text-xl tracking-tight uppercase">Pusat Notifikasi</h3>
                 <p className="text-blue-200 text-[10px] font-bold uppercase tracking-[0.2em]">Update Real-time</p>
@@ -351,7 +351,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   {/* KATEGORI 1: APPROVAL */}
                   {notifData.approval.total > 0 && (
                     <div className="bg-white border-2 border-blue-100 rounded-[2rem] overflow-hidden shadow-sm">
-                      <div className="bg-blue-50 px-5 py-3 flex items-center justify-between border-b border-blue-100">
+                      <div className="bg-blue-50 px-5 py-3 flex items-center justify-start border-b border-blue-100">
                         <div className="flex items-center gap-2">
                           <span className="text-lg">📝</span>
                           <span className="font-black text-[#003D79] text-xs uppercase tracking-widest">Persetujuan</span>
@@ -391,7 +391,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <div className={`bg-white border-2 rounded-[2rem] overflow-hidden shadow-sm ${
                       notifData.expired.critical > 0 ? 'border-rose-200' : 'border-amber-100'
                     }`}>
-                      <div className={`px-5 py-3 flex items-center justify-between border-b ${
+                      <div className={`px-5 py-3 flex items-center justify-start border-b ${
                         notifData.expired.critical > 0 ? 'bg-rose-50 border-rose-100' : 'bg-amber-50 border-amber-100'
                       }`}>
                         <div className="flex items-center gap-2">
@@ -449,7 +449,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   {/* KATEGORI 3: MEETING & UMUM */}
                   {notifData.notifications.items.length > 0 && (
                     <div className="bg-white border-2 border-purple-100 rounded-[2rem] overflow-hidden shadow-sm">
-                      <div className="bg-purple-50 px-5 py-3 flex items-center justify-between border-b border-purple-100">
+                      <div className="bg-purple-50 px-5 py-3 flex items-center justify-start border-b border-purple-100">
                         <div className="flex items-center gap-2">
                           <span className="text-lg">📨</span>
                           <span className="font-black text-purple-700 text-xs uppercase tracking-widest">Meeting & Umum</span>

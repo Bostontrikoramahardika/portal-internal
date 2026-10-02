@@ -213,7 +213,7 @@ export default function DashboardCutiPage() {
   // RENDER
   // ═══════════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
       
 
       {/* ─── HEADER ────────────────────────────────────────────────────── */}
@@ -833,11 +833,6 @@ function EmptyState({ icon, msg }: { icon: string; msg: string }) {
       <div className="text-3xl mb-2">{icon}</div>
       <p className="text-sm">{msg}</p>
     
-      {/* Standard App Footer */}
-      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
-        <p>BTM Mobile APP V1.7.0</p>
-        <p className="text-[10px]">Powered By rck_Production</p>
-      </footer>
 
       </div>
   )
