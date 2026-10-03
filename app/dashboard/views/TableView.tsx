@@ -12,6 +12,7 @@ import { getTablePermissions } from '@/app/lib/tablePermissions'
 import { saveOfflineAttendance } from '@/app/lib/offlineDB'
 import KoreksiBadge from '../components/KoreksiBadge'
 import { CrudModal, ResignModal, UpdateExpiredModal, formatColumnName, renderCell } from './_fields2'
+import StatBanner from '@/app/components/std/StatBanner'
 
 export default function TableView({ data, onReload }: any) {
   const { title, rows = [], columns = [], table, access_mode } = data
@@ -23,6 +24,56 @@ export default function TableView({ data, onReload }: any) {
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({})
   const [refreshing, setRefreshing] = useState(false)
   const isApproval = access_mode?.includes('APPROVAL')
+
+  // ---- RESPONSIF: kolom menyesuaikan lebar layar ----
+  const KOLOM_RAHASIA = [
+    'google_refresh_token', 'google_access_token', 'last_signature',
+    'google_connected_at', 'google_access_enabled', 'password', 'password_hash',
+  ]
+  const KOLOM_RINGKAS = 4
+  const [layarSempit, setLayarSempit] = useState(false)
+  const [semuaKolom, setSemuaKolom] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1023px)')
+    const ubah = () => setLayarSempit(mq.matches)
+    ubah()
+    mq.addEventListener('change', ubah)
+    return () => mq.removeEventListener('change', ubah)
+  }, [])
+
+  const KOLOM_PRIORITAS = [
+    'nama', 'nrp', 'jabatan', 'status', 'jenis',
+    'site', 'departemen', 'unit', 'tanggal', 'keterangan',
+  ]
+
+  const kolomBersih = (columns || []).filter((c: string) => !KOLOM_RAHASIA.includes(c))
+
+  const pilih = (() => {
+    const hasil: string[] = []
+    const cocok = (c: string, k: string) => {
+      const n = String(c).toLowerCase()
+      return n === k || n.includes(k)
+    }
+    for (const kunci of KOLOM_PRIORITAS) {
+      if (hasil.length >= KOLOM_RINGKAS) break
+      const tepat = kolomBersih.find((c: string) => String(c).toLowerCase() === kunci && !hasil.includes(c))
+      const mirip = kolomBersih.find((c: string) => cocok(c, kunci) && !hasil.includes(c))
+      const pick = tepat || mirip
+      if (pick) hasil.push(pick)
+    }
+    for (const c of kolomBersih) {
+      if (hasil.length >= KOLOM_RINGKAS) break
+      if (!hasil.includes(c)) hasil.push(c)
+    }
+    return hasil
+  })()
+
+  const kolomRingkasUrut = kolomBersih.filter((c: string) => pilih.includes(c))
+
+  const kolomTampil =
+    layarSempit && !semuaKolom ? kolomRingkasUrut : kolomBersih
+  const kolomTersembunyi = kolomBersih.length - kolomTampil.length
 
   // 🔐 Hook Auth
   const { can, isSuperAdmin } = useAuth()
@@ -195,38 +246,37 @@ export default function TableView({ data, onReload }: any) {
   return (
     <div className="space-y-2 lg:space-y-4 animate-in fade-in duration-500">
 
-      {/* HEADER */}
-      <div className="bg-[#003D79] text-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem]">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h2 className="text-sm lg:text-2xl font-black tracking-tight">{title}</h2>
-            <p className="text-blue-200 text-[9px] lg:text-xs font-bold mt-0.5">
-              Monitoring & Pengelolaan Data
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {/* 🆕 REFRESH BUTTON */}
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="bg-white/20 text-white p-2 lg:px-3 lg:py-2.5 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-xs hover:bg-white/30 active:scale-95 transition-all disabled:opacity-50"
-              title="Refresh Data"
-            >
-              <span className={refreshing ? 'inline-block animate-spin' : ''}>🔄</span>
-              <span className="hidden lg:inline ml-1">Refresh</span>
-            </button>
-
-            {canCreate && (
+      {/* HEADER - STD UI Kit (acuan Approval Center) */}
+      <StatBanner
+        eyebrow={String(table || 'DATA').replace(/_/g, ' ').toUpperCase()}
+        title={title}
+        subtitle={displayRows.length + ' dari ' + rows.length + ' data'}
+        onRefresh={canCreate ? undefined : handleRefresh}
+        refreshing={refreshing}
+        right={
+          canCreate ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                aria-label="Muat ulang"
+                className="h-9 w-9 shrink-0 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? 'animate-spin' : ''}>
+                  <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+              </button>
               <button
                 onClick={() => setFormModal({ mode: 'create' })}
-                className="bg-white text-[#003D79] px-3 py-2 lg:px-5 lg:py-2.5 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-xs shadow-lg hover:bg-blue-50 active:scale-95 transition-all whitespace-nowrap"
+                className="h-9 px-3 shrink-0 rounded-xl bg-white text-[#0b2a5b] font-black text-[11px] uppercase tracking-wide shadow hover:bg-blue-50 active:scale-95 transition-all whitespace-nowrap"
               >
-                ➕ Tambah
+                + Tambah
               </button>
-            )}
-          </div>
-        </div>
-      </div>
+            </div>
+          ) : undefined
+        }
+      />
 
       {/* SEARCH & FILTER */}
       <div className="bg-white rounded-xl lg:rounded-2xl p-2.5 lg:p-4 border border-slate-100 shadow-sm">
@@ -275,7 +325,7 @@ export default function TableView({ data, onReload }: any) {
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="py-2 lg:py-2.5 px-3 rounded-lg lg:rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-[10px] lg:text-xs font-black hover:bg-rose-100 transition-all whitespace-nowrap"
+              className="self-end lg:self-auto py-2 lg:py-2.5 px-3 rounded-lg lg:rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-[10px] lg:text-xs font-black hover:bg-rose-100 transition-all whitespace-nowrap"
             >
               ✕ Reset
             </button>
@@ -284,7 +334,7 @@ export default function TableView({ data, onReload }: any) {
 
         <div className="flex items-center justify-between mt-1.5">
           <p className="text-[9px] lg:text-[10px] font-bold text-slate-400">
-            Menampilkan <span className="text-[#003D79] font-black">{displayRows.length}</span> dari {rows.length} data
+            {hasActiveFilters ? 'Hasil tersaring' : 'Semua data'}
           </p>
           {sortConfig && (
             <p className="text-[9px] lg:text-[10px] font-bold text-blue-600">
@@ -320,14 +370,34 @@ export default function TableView({ data, onReload }: any) {
           </div>
         </div>
       )}
-      <div className="overflow-x-auto overflow-y-auto max-h-[60vh]">
+      {/* STDTABLE: geser horizontal + kolom pertama dipaku */}
+      <div className="relative">
+        <div className="pointer-events-none absolute top-0 right-0 h-full w-6 z-20 bg-gradient-to-l from-slate-900/10 to-transparent lg:hidden" />
+        <div className="lg:hidden flex items-center justify-between gap-2 px-3 pt-2 pb-1">
+          <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="13 17 18 12 13 7" /><polyline points="6 17 11 12 6 7" />
+            </svg>
+            Geser untuk kolom lain
+          </span>
+          {(kolomTersembunyi > 0 || semuaKolom) && (
+            <button
+              type="button"
+              onClick={() => setSemuaKolom(v => !v)}
+              className="shrink-0 px-2 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[9px] font-black uppercase tracking-wider text-[#0b2a5b] active:scale-95"
+            >
+              {semuaKolom ? 'Ringkas' : '+' + kolomTersembunyi + ' kolom'}
+            </button>
+          )}
+        </div>
+      <div className="std-scroll-x overflow-x-auto overflow-y-auto max-h-[60vh] pb-1">
         <table className="w-full text-left text-[11px] lg:text-xs">
-          <thead className="bg-[#003D79] text-white sticky top-0 z-10 shadow-md">
+          <thead className="bg-[#003D79] text-white sticky top-0 z-40 shadow-md">
             <tr>
-              {columns.map((c: string) => (
+              {kolomTampil.map((c: string, ci: number) => (
                 <th 
                   key={c} 
-                  className="px-2.5 py-1.5 lg:px-4 lg:py-2 font-black uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#002D5F] transition-colors select-none text-[10px] lg:text-[11px]"
+                  className={'px-2.5 py-1.5 lg:px-4 lg:py-2 font-black uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-[#002D5F] transition-colors select-none text-[10px] lg:text-[11px] ' + (ci === 0 ? 'sticky left-0 z-30 bg-[#003D79] shadow-[2px_0_4px_rgba(0,0,0,0.18)]' : '')}
                   onClick={() => handleSort(c)}
                 >
                   <div className="flex items-center gap-1">
@@ -340,14 +410,17 @@ export default function TableView({ data, onReload }: any) {
                   </div>
                 </th>
               ))}
-              <th className="px-2.5 py-1.5 lg:px-4 lg:py-2 font-black uppercase tracking-wider text-center whitespace-nowrap text-[10px] lg:text-[11px]">
+              <th className="px-2.5 py-1.5 lg:px-4 lg:py-2 font-black uppercase tracking-wider text-center whitespace-nowrap text-[10px] lg:text-[11px] sticky right-0 z-40 bg-[#003D79] shadow-[-2px_0_4px_rgba(0,0,0,0.18)]">
                 Aksi
               </th>
             </tr>
             {/* FILTER ROW per column */}
             <tr className="bg-blue-50">
-              {columns.map((c: string) => (
-                <th key={`filter-${c}`} className="px-1.5 py-1 lg:px-2 lg:py-1.5">
+              {kolomTampil.map((c: string, ci: number) => (
+                <th
+                  key={`filter-${c}`}
+                  className={'px-1.5 py-1 lg:px-2 lg:py-1.5 ' + (ci === 0 ? 'sticky left-0 z-30 bg-blue-50 shadow-[2px_0_4px_rgba(0,0,0,0.12)]' : '')}
+                >
                   <input
                     type="text"
                     placeholder={`Filter...`}
@@ -358,13 +431,13 @@ export default function TableView({ data, onReload }: any) {
                   />
                 </th>
               ))}
-              <th className="px-1.5 py-1"></th>
+              <th className="px-1.5 py-1 sticky right-0 z-40 bg-blue-50 shadow-[-2px_0_4px_rgba(0,0,0,0.12)]"></th>
             </tr>
           </thead>
           <tbody>
             {dataRows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="px-4 py-6 lg:py-8 text-center text-slate-300 font-black uppercase tracking-widest text-[11px] italic">
+                <td colSpan={kolomTampil.length + 1} className="px-4 py-6 lg:py-8 text-center text-slate-300 font-black uppercase tracking-widest text-[11px] italic">
                   Tidak ada data
                 </td>
               </tr>
@@ -375,12 +448,21 @@ export default function TableView({ data, onReload }: any) {
                   i % 2 === 0 ? 'bg-white' : 'bg-slate-50'
                 }`}
               >
-                {columns.map((c: string) => (
-                  <td key={c} className="px-2.5 py-1.5 lg:px-4 lg:py-2 whitespace-nowrap font-medium text-slate-700 text-[11px] lg:text-xs">
+                {kolomTampil.map((c: string, ci: number) => (
+                  <td
+                    key={c}
+                    className={
+                      'px-2.5 py-1.5 lg:px-4 lg:py-2 whitespace-nowrap font-medium text-slate-700 text-[11px] lg:text-xs ' +
+                      (ci === 0
+                        ? 'sticky left-0 z-10 font-bold shadow-[2px_0_4px_rgba(0,0,0,0.06)] ' +
+                          (i % 2 === 0 ? 'bg-white' : 'bg-slate-50')
+                        : '')
+                    }
+                  >
                     {renderCell(c, r[c])}
                   </td>
                 ))}
-                <td className="px-2.5 py-1.5 lg:px-4 lg:py-2 whitespace-nowrap">
+                <td className={'px-2.5 py-1.5 lg:px-4 lg:py-2 whitespace-nowrap sticky right-0 z-10 shadow-[-2px_0_4px_rgba(0,0,0,0.06)] ' + (i % 2 === 0 ? 'bg-white' : 'bg-slate-50')}>
                   <div className="flex justify-center gap-1 lg:gap-1.5">
 
                     {r.foto_url && (
@@ -499,6 +581,7 @@ export default function TableView({ data, onReload }: any) {
           </tbody>
         </table>
       </div>
+      </div>
       {dataRows.length > 0 && (
         <div className="px-3 py-1.5 lg:px-4 lg:py-2 border-t border-slate-100 bg-slate-50">
           <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 text-center uppercase tracking-wider">
@@ -514,10 +597,10 @@ export default function TableView({ data, onReload }: any) {
     return (
       <div className="space-y-3 lg:space-y-4">
         {/* SECTION AKTIF */}
-        {renderTable(activeRows, ' Karyawan Aktif', 'bg-emerald-600')}
+        {renderTable(activeRows, 'Karyawan Aktif', 'bg-[#0b2a5b]')}
         
         {/* SECTION RESIGN */}
-        {resignRows.length > 0 && renderTable(resignRows, '🚪 Karyawan Resign', 'bg-rose-500')}
+        {resignRows.length > 0 && renderTable(resignRows, 'Karyawan Resign', 'bg-slate-500')}
       </div>
     )
   }

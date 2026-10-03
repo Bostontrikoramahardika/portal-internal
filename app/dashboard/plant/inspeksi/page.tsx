@@ -19,6 +19,7 @@ import {
   FileText
 } from 'lucide-react';
 
+import StatBanner from '@/app/components/std/StatBanner'
 interface UnitData {
   id: string;
   kode_unit: string;
@@ -274,7 +275,8 @@ export default function FormInspeksiPage() {
   const currentPeriod = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
+      <StatBanner eyebrow="Plant" title="Inspeksi P2H" subtitle="Pemeriksaan harian unit" />
       
 
       <div className="max-w-4xl mx-auto space-y-3">

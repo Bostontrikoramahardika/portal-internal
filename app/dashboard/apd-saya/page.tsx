@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from 'react'
 
+import StatBanner from '@/app/components/std/StatBanner'
 interface ApdItem {
   master: { jenis_apd: string; icon: string; life_time_bulan: number; urutan: number }
   latest: any
@@ -151,7 +152,8 @@ export default function ApdSayaPage() {
 
   if (loading) {
     return (
-      <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+      <div className="space-y-3 text-slate-800">
+      <StatBanner eyebrow="Profil Saya" title="APD Saya" subtitle="Riwayat alat pelindung diri" />
       
 
         <div className="text-center">

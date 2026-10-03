@@ -886,6 +886,25 @@ const menuInfo = isSuperAdmin
       })
     }
     
+    // RIWAYAT SAKIT / IZIN - milik sendiri, seluruh periode
+    if (menuKey === 'riwayat_sakit') {
+      const { data: rows } = await supabase
+        .from('attendance_evidences')
+        .select('*')
+        .or(`nrp.eq.${session.nrp},nama_karyawan.ilike.%${session.nama}%`)
+        .order('tanggal', { ascending: false })
+        .limit(200)
+
+      return NextResponse.json({
+        type: 'table',
+        title: menu_label || 'Riwayat Sakit / Izin',
+        rows: rows || [],
+        columns: ['tanggal', 'jenis', 'keterangan', 'status'],
+        table: 'attendance_evidences',
+        access_mode: 'VIEW_ONLY'
+      })
+    }
+
     if (menuKey === 'evident_sakit' || access_mode === 'FORM_SAKIT') {
       const currentMonth = getSiteMonth(null, userSiteTz)
       const currentYear = getSiteYear(null, userSiteTz)
@@ -1187,9 +1206,23 @@ const menuInfo = isSuperAdmin
     if (qErr) return NextResponse.json({ error: qErr.message }, { status: 500 })
     
     const enriched = await enrichWithNames(rows || [], target_table)
-    const columns = getColumns(enriched, target_table)
+    const KOLOM_SENSITIF = [
+      'google_refresh_token', 'google_access_token',
+      'password', 'password_hash', 'session_token',
+    ]
+    const aman = (enriched || []).map((row) => {
+      const o = {}
+      for (const key of Object.keys(row || {})) {
+        if (!KOLOM_SENSITIF.includes(key)) o[key] = row[key]
+      }
+      return o
+    })
 
-    return NextResponse.json({ type: 'table', title: menu_label, table: target_table, access_mode, columns, rows: enriched, total: enriched.length })
+    const columns = getColumns(aman, target_table).filter(
+      (c) => !KOLOM_SENSITIF.includes(c)
+    )
+
+    return NextResponse.json({ type: 'table', title: menu_label, table: target_table, access_mode, columns, rows: aman, total: aman.length })
 
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

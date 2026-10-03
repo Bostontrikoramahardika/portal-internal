@@ -10,6 +10,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useAuth } from '@/app/lib/AuthContext'
 
+import StatBanner from '@/app/components/std/StatBanner'
 type TabKey = 'roster' | 'pengajuan' | 'tiket'
 
 type RosterItem = {
@@ -213,21 +214,14 @@ export default function DashboardCutiPage() {
   // RENDER
   // ═══════════════════════════════════════════════════════════════════════
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
       
 
       {/* ─── HEADER ────────────────────────────────────────────────────── */}
       <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center gap-3">
           <span className="text-4xl">🌴</span>
-          <div>
-            <h1 className="text-white text-xl lg:text-3xl font-black tracking-tight">
-              Dashboard Cuti
-            </h1>
-            <p className="text-blue-200 text-xs lg:text-sm font-bold">
-              Roster • Pengajuan • Tiket Pesawat
-            </p>
-          </div>
+          <StatBanner eyebrow="HR" title="Dashboard Cuti" subtitle="Roster • Pengajuan • Tiket Pesawat" />
         </div>
 
         {/* TAB PILL */}

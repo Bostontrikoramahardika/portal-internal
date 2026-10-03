@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
+import StatBanner from '@/app/components/std/StatBanner'
 type CorrectionType = 'LUPA_CLOCK_IN' | 'LUPA_CLOCK_OUT' | 'KOREKSI_JAM'
 type Status = 'PENDING' | 'APPROVED' | 'REJECTED'
 
@@ -248,7 +249,7 @@ export default function KoreksiAbsensiPage() {
   }
 
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
       
 
       {/* HERO */}
@@ -260,14 +261,7 @@ export default function KoreksiAbsensiPage() {
           >
             ←
           </Link>
-          <div>
-            <div className="text-white/60 text-[9px] font-black uppercase tracking-widest">
-              Pengajuan
-            </div>
-            <h1 className="text-white text-xl font-black tracking-tight">
-              📝 Revisi Waktu Absensi
-            </h1>
-          </div>
+          <StatBanner eyebrow="Pengajuan" title="Revisi Waktu Absensi" />
         </div>
 
         {/* TAB */}

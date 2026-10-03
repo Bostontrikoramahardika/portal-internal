@@ -4,7 +4,7 @@ import GoogleIntegrationCard from '@/app/dashboard/components/GoogleIntegrationC
 
 export default function TestGooglePage() {
   return (
-<div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa] p-4">
+<div className="pb-24 sm:pb-8 bg-[#f4f7fa]">
 
       {/* Auto-injected Uniform Header with Back Button */}
       <div className="flex items-center gap-3 mb-4 bg-white p-3 rounded-[14px] border border-[#e2e8f0] shadow-sm">

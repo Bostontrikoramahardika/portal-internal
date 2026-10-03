@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
+import StatBanner from '@/app/components/std/StatBanner'
 type CorrectionType = 'LUPA_CLOCK_IN' | 'LUPA_CLOCK_OUT' | 'KOREKSI_JAM'
 
 function getAuthHeaders(): Record<string, string> {
@@ -98,7 +99,7 @@ export default function HrOverrideAbsensiPage() {
   }
 
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
       
 
       <div className="bg-gradient-to-br from-purple-700 to-purple-900 px-5 pt-8 pb-16 rounded-b-[2.5rem] shadow-2xl">
@@ -109,14 +110,7 @@ export default function HrOverrideAbsensiPage() {
           >
             ←
           </Link>
-          <div>
-            <div className="text-white/60 text-[9px] font-black uppercase tracking-widest">
-              HR Only
-            </div>
-            <h1 className="text-white text-2xl font-black tracking-tight">
-              🛠️ Override Absensi
-            </h1>
-          </div>
+          <StatBanner eyebrow="HR" title="Override Absensi" />
         </div>
 
         <div className="bg-white/10 backdrop-blur rounded-2xl p-4">

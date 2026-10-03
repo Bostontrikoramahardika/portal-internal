@@ -395,7 +395,7 @@ export default function PlantLogistikDashboardPage() {
   }, [allPrList, selectedSiteFilter, selectedStatusFilter]);
 
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
       
 
       {/* Top Header Breadcrumb */}

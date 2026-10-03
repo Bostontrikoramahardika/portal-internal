@@ -9,7 +9,7 @@ import {
 
 export default function PreviewUIPage() {
   return (
-    <div className="bg-[#F4F7F9] text-slate-800 pt-2 px-3 pb-4 flex flex-col gap-1.5 font-sans w-full max-w-lg mx-auto">
+    <div className="bg-[#F4F7F9] text-slate-800 pt-2 pb-4 flex flex-col gap-1.5 font-sans w-full">
       
       {/* 1. TOP TABS */}
       <div className="flex bg-white rounded-xl p-1 shadow-xs border border-slate-200/80 w-full">

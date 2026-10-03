@@ -27,6 +27,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 
+import StatBanner from '@/app/components/std/StatBanner'
 export default function PlantDashboardPage() {
   const [activeTab, setActiveTab] = useState<'KRU_WORKSHOP' | 'KELOLA_UNIT' | 'FORMAT_INSPEKSI' | 'ADMIN_PARTBOOK'>('KRU_WORKSHOP');
   const [siteFilter, setSiteFilter] = useState<string>('PPA-MLP');
@@ -262,7 +263,8 @@ export default function PlantDashboardPage() {
   );
 
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
+      <StatBanner eyebrow="Plant" title="Kru & Workshop Plant" subtitle="Monitoring kru dan workshop" />
       
 
       <div className="max-w-5xl mx-auto space-y-3">

@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from 'react'
 
+import StatBanner from '@/app/components/std/StatBanner'
 interface MatrixCell {
   status: 'AMAN' | 'SEGERA_GANTI' | 'EXPIRED' | 'BELUM_TERIMA'
   tanggal: string | null
@@ -129,7 +130,7 @@ export default function MonitoringApdPage() {
     (search ? 1 : 0)
 
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
       
 
       {/* HERO */}
@@ -142,10 +143,7 @@ export default function MonitoringApdPage() {
             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-2xl backdrop-blur-sm">
               📊
             </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-black tracking-tight">Monitoring APD</h1>
-              <p className="text-sm text-white/70 font-medium">Pantau distribusi APD karyawan</p>
-            </div>
+            <StatBanner eyebrow="SHE" title="Monitoring APD" subtitle="Pantau distribusi APD karyawan" />
           </div>
 
           {/* Stats Cards - Clickable */}

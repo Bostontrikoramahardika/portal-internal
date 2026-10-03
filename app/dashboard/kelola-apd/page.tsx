@@ -11,6 +11,7 @@ import {
   FileSpreadsheet, Check, X, Info, Save, Eye
 } from 'lucide-react'
 
+import StatBanner from '@/app/components/std/StatBanner'
 // ════════════════════════════════════════════
 // TYPES
 // ════════════════════════════════════════════
@@ -146,31 +147,11 @@ export default function KelolaApdPage() {
   ]
 
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
       
 
       {/* ── Header ── */}
-      <div className="hidden">
-        <h1 className="text-white text-2xl font-black tracking-tight">🦺 Kelola APD</h1>
-        <p className="text-blue-200 text-sm mt-1">Manajemen Alat Pelindung Diri</p>
-
-        {/* Tab bar */}
-        <div className="flex gap-2 mt-4 overflow-x-auto pb-1 scrollbar-hide">
-          {tabs.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all
-                ${activeTab === t.key
-                  ? 'bg-white text-[#003D79] shadow-lg'
-                  : 'bg-white/20 text-white/80 hover:bg-white/30'
-                }`}
-            >
-              {t.icon}{t.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <StatBanner eyebrow="SHE" title="Kelola APD" subtitle="Manajemen Alat Pelindung Diri" />
 
       {/* ── Tab Content ── */}
       <div className="px-4 py-4">

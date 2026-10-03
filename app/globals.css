@@ -325,3 +325,11 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+
+/* STD: scrollbar horizontal selalu terlihat (penting di HP) */
+.std-scroll-x{scrollbar-width:thin;scrollbar-color:#94a3b8 #e2e8f0;-webkit-overflow-scrolling:touch}
+.std-scroll-x::-webkit-scrollbar{height:8px}
+.std-scroll-x::-webkit-scrollbar-track{background:#e2e8f0;border-radius:999px}
+.std-scroll-x::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:999px;border:2px solid #e2e8f0}
+.std-scroll-x::-webkit-scrollbar-thumb:active{background:#0b2a5b}

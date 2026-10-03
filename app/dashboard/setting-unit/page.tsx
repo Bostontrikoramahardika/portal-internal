@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
+import StatBanner from '@/app/components/std/StatBanner'
 interface Unit {
   id: string
   kode_unit: string
@@ -277,7 +278,7 @@ export default function SettingUnitPage() {
   }) : ''
 
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
       
 
       {/* HERO */}
@@ -288,11 +289,7 @@ export default function SettingUnitPage() {
           className="mb-3 flex items-center gap-1.5 text-white/60 hover:text-white text-sm relative z-10">
           ← Kembali
         </button>
-        <div className="relative z-10">
-          <p className="text-[9px] font-black uppercase tracking-widest text-blue-300 mb-1">GL Produksi Tools</p>
-          <h1 className="text-xl font-black text-white">🎯 Setting Unit</h1>
-          <p className="text-blue-200 text-sm mt-1">Assign operator ke unit per shift</p>
-        </div>
+        <StatBanner eyebrow="Leader" title="Setting Unit" subtitle="GL Produksi Tools" />
       </div>
 
       <div className="px-4 space-y-4 relative z-10">

@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react'
 import { Download, Upload, CheckCircle, AlertCircle, FileSpreadsheet, ArrowLeft } from 'lucide-react'
 
+import StatBanner from '@/app/components/std/StatBanner'
 export default function ImportMcuPage() {
   const [sites, setSites] = useState<string[]>([])
   const [selectedSite, setSelectedSite] = useState('')
@@ -106,7 +107,7 @@ export default function ImportMcuPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       
 
       {/* Header */}
@@ -121,10 +122,7 @@ export default function ImportMcuPage() {
           <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center">
             <FileSpreadsheet size={28} />
           </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Import MCU Massal</h1>
-            <p className="text-blue-100/80 text-sm mt-1">Upload data MCU banyak karyawan via Excel</p>
-          </div>
+          <StatBanner eyebrow="Import Data" title="Import MCU Massal" subtitle="Upload data MCU banyak karyawan via Excel" />
         </div>
       </div>
 

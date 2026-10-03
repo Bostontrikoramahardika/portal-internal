@@ -10,6 +10,7 @@ import {
   Calendar, ChevronDown, ChevronUp, Download, Info
 } from 'lucide-react'
 
+import StatBanner from '@/app/components/std/StatBanner'
 interface Finding {
   id: string
   jenis_temuan: string
@@ -193,8 +194,9 @@ export default function McuSayaPage() {
   const hasOpenFu = latestMcu?.status_mcu === 'OPEN'
 
   return (
-    <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa]" style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+    <div className="text-slate-800">
+      <div className="space-y-3">
+        <StatBanner eyebrow="Profil Saya" title="MCU Saya" subtitle="Medical Check-Up pribadi" />
 
         {/* Header */}
         <div className="bg-white rounded-[2rem] shadow-xl p-6">

@@ -8,6 +8,7 @@
 import { useEffect, useState, useRef } from 'react'
 import html2canvas from 'html2canvas-pro'
 
+import StatBanner from '@/app/components/std/StatBanner'
 interface Member {
   nrp: string
   nama: string
@@ -153,7 +154,7 @@ export default function CrewOnDutyPage() {
   }
 
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
       
 
       
@@ -161,12 +162,7 @@ export default function CrewOnDutyPage() {
       <div className="bg-[#003D79] text-white p-4 lg:p-6 shadow-lg">
         <div className="flex items-center gap-3">
           <div className="text-3xl lg:text-4xl">👷</div>
-          <div>
-            <h1 className="text-lg lg:text-2xl font-black tracking-tight">CREW ON DUTY</h1>
-            <p className="text-blue-200 text-[10px] lg:text-xs font-bold mt-0.5">
-              Personel Plant yang bertugas hari ini
-            </p>
-          </div>
+          <StatBanner eyebrow="Leader" title="Crew On Duty" subtitle="Personel Plant yang bertugas hari ini" />
         </div>
       </div>
 

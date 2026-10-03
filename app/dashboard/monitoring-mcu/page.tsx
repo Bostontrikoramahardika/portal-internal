@@ -13,6 +13,7 @@ import {
   XCircle, Filter, ChevronRight
 } from 'lucide-react'
 
+import StatBanner from '@/app/components/std/StatBanner'
 // ─── Types ──────────────────────────────────────────────────
 interface McuColumn {
   no: number
@@ -363,10 +364,7 @@ export default function MonitoringMcuPage() {
               <div className="w-12 h-12 bg-[#003D79] rounded-2xl flex items-center justify-center shadow-lg">
                 <HeartPulse className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-black text-slate-800 tracking-tight">Monitoring MCU</h1>
-                <p className="text-xs text-slate-500">Medical Check Up — {stats.total} karyawan</p>
-              </div>
+              <StatBanner eyebrow="HR" title="Monitoring MCU" subtitle="Medical Check Up — {stats.total} karyawan" />
             </div>
             <div className="flex items-center gap-2">
               <button

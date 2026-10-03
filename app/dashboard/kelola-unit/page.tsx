@@ -4,6 +4,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
+import StatBanner from '@/app/components/std/StatBanner'
 interface Unit {
   id: string
   kode_unit: string
@@ -221,7 +222,7 @@ function KelolaUnitContent() {
   const uniqueKategori = [...new Set(units.map(u => u.kategori))].sort()
 
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
       
 
       {/* HERO */}
@@ -232,11 +233,7 @@ function KelolaUnitContent() {
           className="mb-3 flex items-center gap-1.5 text-white/60 hover:text-white text-sm relative z-10">
           ← Kembali
         </button>
-        <div className="relative z-10">
-          <p className="text-[9px] font-black uppercase tracking-widest text-blue-300 mb-1">Master Data</p>
-          <h1 className="text-xl font-black text-white">🚜 Kelola Unit</h1>
-          <p className="text-blue-200 text-sm mt-1">Master unit alat berat per site</p>
-        </div>
+        <StatBanner eyebrow="Plant" title="Kelola Unit" subtitle="Master Data" />
       </div>
 
       <div className="px-4 space-y-4 relative z-10">

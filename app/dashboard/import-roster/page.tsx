@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+import StatBanner from '@/app/components/std/StatBanner'
 const ROSTER_TEMP_KEY = 'btm_roster_import_temp_v1'
 
 interface Category {
@@ -418,7 +419,7 @@ export default function ImportRosterPage() {
   // RENDER
   // ═══════════════════════════════════════
   return (
-    <div className="bg-[#f4f7fa] p-2 sm:p-3 lg:p-4 pb-24 text-slate-800">
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
       
 
 
@@ -430,11 +431,7 @@ export default function ImportRosterPage() {
           className="mb-3 flex items-center gap-1.5 text-white/60 hover:text-white text-sm relative z-10">
           ← Kembali
         </button>
-        <div className="relative z-10">
-          <p className="text-[9px] font-black uppercase tracking-widest text-blue-300 mb-1">Import Data</p>
-          <h1 className="text-xl font-black text-white">📤 Import Roster Bulanan</h1>
-          <p className="text-blue-200 text-sm mt-1">Multi-sheet Excel · Template · Riwayat</p>
-        </div>
+        <StatBanner eyebrow="Import Data" title="Import Roster Bulanan" subtitle="Import Data" />
       </div>
 
       <div className="px-4 space-y-4 relative z-10">
