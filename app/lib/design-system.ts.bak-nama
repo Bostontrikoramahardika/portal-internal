@@ -84,8 +84,3 @@ export const BTM_CLASSES = {
   badgeInfo: 'bg-[#e0f2fe] text-[#0369a1] text-[10px] font-bold px-2.5 py-1 rounded-full',
   input: 'w-full px-3 py-2.5 bg-white border border-[#e2e8f0] rounded-[10px] text-sm text-[#1a2332] placeholder-[#8896a7] focus:outline-none focus:ring-2 focus:ring-[#003d79]/20 focus:border-[#003d79] transition-all',
 } as const;
-
-
-/** Nama aplikasi - satu sumber untuk seluruh tampilan */
-export const BTM_APP_NAME = 'BTM Mobile App'
-export const BTM_APP_SHORT = 'BTM Mobile'

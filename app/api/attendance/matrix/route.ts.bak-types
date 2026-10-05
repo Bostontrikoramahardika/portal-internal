@@ -280,8 +280,8 @@ export async function GET(req: NextRequest) {
   })
 
   // ---------- LEMBUR disetujui pada bulan ini ----------
-  const nrpSemua = employees.map((e: any) => e.nrp)
-  const lemburMap: Record<string, any[]> = {}
+  const nrpSemua = employees.map((e) => e.nrp)
+  const lemburMap = {}
   if (nrpSemua.length) {
     const awalBln = tahun + '-' + String(bln).padStart(2,'0') + '-01'
     const akhirBln = tahun + '-' + String(bln).padStart(2,'0') + '-' + String(jmlHari).padStart(2,'0')
@@ -297,17 +297,17 @@ export async function GET(req: NextRequest) {
        String(l.status_pjo).toUpperCase() === 'APPROVED'))
 
     const approverNrp = Array.from(new Set(
-      disetujui.flatMap((l: any) => [l.pjo_nrp, l.atasan_nrp]).filter(Boolean).map(String)))
-    const namaMap: Record<string, string> = {}
+      disetujui.flatMap((l) => [l.pjo_nrp, l.atasan_nrp]).filter(Boolean).map(String)))
+    const namaMap = {}
     if (approverNrp.length) {
       const { data: ap } = await supabaseAdmin
         .from('employees').select('nrp, nama, jabatan').in('nrp', approverNrp)
-      ;(ap || []).forEach((x: any) => {
+      ;(ap || []).forEach((x) => {
         namaMap[String(x.nrp)] = x.jabatan ? x.nama + ' (' + x.jabatan + ')' : x.nama
       })
     }
 
-    disetujui.forEach((l: any) => {
+    disetujui.forEach((l) => {
       const k = String(l.nrp)
       if (!lemburMap[k]) lemburMap[k] = []
       lemburMap[k].push({
@@ -316,8 +316,8 @@ export async function GET(req: NextRequest) {
         disetujui_oleh: namaMap[String(l.pjo_nrp)] || namaMap[String(l.atasan_nrp)] || null,
       })
     })
-    Object.keys(lemburMap).forEach((k: string) =>
-      lemburMap[k].sort((x: any, y: any) => String(x.tanggal).localeCompare(String(y.tanggal))))
+    Object.keys(lemburMap).forEach((k) =>
+      lemburMap[k].sort((x, y) => String(x.tanggal).localeCompare(String(y.tanggal))))
   }
 
   const attMap: Record<string, any> = {}

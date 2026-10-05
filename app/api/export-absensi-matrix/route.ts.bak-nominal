@@ -256,25 +256,9 @@ const { data: attendance } = await supabase
       }
     }
 
-    const nominalMap: Record<string, any> = {}
-    {
-      const bulanKey = tahunP + '-' + bulanP
-      const { data: per } = await supabase
-        .from('rekap_periode').select('id').eq('bulan', bulanKey)
-        .order('created_at', { ascending: false }).limit(1).maybeSingle()
-      if (per?.id) {
-        const { data: it } = await supabase
-          .from('rekap_item')
-          .select('nrp, nominal_lembur, total_lembur, jml_piket, nominal_piket, total_piket, status')
-          .eq('periode_id', per.id)
-        ;(it || []).forEach((x: any) => (nominalMap[String(x.nrp)] = x))
-      }
-    }
-
     const header = ['NO', 'NRP', 'NAMA', 'JABATAN', 'SITE', ...dayHeaders,
                     'HDR', 'DS', 'NS', 'CT', 'CR', 'KMP', 'S', 'I', 'IR', 'A', 'OFF', '%',
-                    'LEMBUR', 'NOMINAL LEMBUR', 'TOTAL LEMBUR',
-                    'PIKET', 'NOMINAL PIKET', 'TOTAL PIKET', 'STATUS KIRIM', 'EMAIL']
+                    'LEMBUR', 'EMAIL']
 
     const excelRows: any[][] = [header]
 
@@ -306,14 +290,7 @@ const { data: attendance } = await supabase
         : 0
 
       row.push(counter.HDR, counter.DS, counter.NS, counter.CT, counter.CR, counter.KMP, counter.S, counter.I, counter.IR, counter.A, counter.OFF, persen,
-               lemburHitung[String(nrp)] || 0,
-               Number(nominalMap[String(nrp)]?.nominal_lembur || 0),
-               Number(nominalMap[String(nrp)]?.total_lembur || 0),
-               Number(nominalMap[String(nrp)]?.jml_piket || 0),
-               Number(nominalMap[String(nrp)]?.nominal_piket || 0),
-               Number(nominalMap[String(nrp)]?.total_piket || 0),
-               nominalMap[String(nrp)]?.status || '-',
-               emp.email || '')
+               lemburHitung[String(nrp)] || 0, emp.email || '')
       excelRows.push(row)
     })
 

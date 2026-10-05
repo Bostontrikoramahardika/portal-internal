@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     const nrpList = Array.from(new Set(rosterRaw.map((r: any) => r.nrp)))
     const { data: employees } = await supabase
       .from('employees')
-      .select('nrp, nama, jabatan, departemen, site, email')
+      .select('nrp, nama, jabatan, departemen, site')
       .in('nrp', nrpList)
 
     const empMap = new Map<string, any>()
@@ -233,48 +233,8 @@ const { data: attendance } = await supabase
       dayHeaders.push(String(d))
     }
 
-    const lemburHitung: Record<string, number> = {}
-    {
-      const nrpList = (employees || []).map((e: any) => String(e.nrp))
-      if (nrpList.length) {
-        const { data: ot } = await supabase
-          .from('overtime_requests')
-          .select('nrp, status_final, status_atasan, status_pjo')
-          .in('nrp', nrpList)
-          .gte('tanggal', tahunP + '-' + bulanP + '-01')
-          .lte('tanggal', tahunP + '-' + bulanP + '-' + String(lastDayNum).padStart(2, '0'))
-        ;(ot || []).forEach((l: any) => {
-          const fin = String(l.status_final || '').toUpperCase()
-          const ata = String(l.status_atasan || '').toUpperCase()
-          const pjo = String(l.status_pjo || '').toUpperCase()
-          if (fin.includes('DITOLAK') || ata === 'REJECTED' || pjo === 'REJECTED') return
-          if (fin.includes('APPROVED') || fin.includes('DISETUJUI') || ata === 'APPROVED') {
-            const k = String(l.nrp)
-            lemburHitung[k] = (lemburHitung[k] || 0) + 1
-          }
-        })
-      }
-    }
-
-    const nominalMap: Record<string, any> = {}
-    {
-      const bulanKey = tahunP + '-' + bulanP
-      const { data: per } = await supabase
-        .from('rekap_periode').select('id').eq('bulan', bulanKey)
-        .order('created_at', { ascending: false }).limit(1).maybeSingle()
-      if (per?.id) {
-        const { data: it } = await supabase
-          .from('rekap_item')
-          .select('nrp, nominal_lembur, total_lembur, jml_piket, nominal_piket, total_piket, status')
-          .eq('periode_id', per.id)
-        ;(it || []).forEach((x: any) => (nominalMap[String(x.nrp)] = x))
-      }
-    }
-
     const header = ['NO', 'NRP', 'NAMA', 'JABATAN', 'SITE', ...dayHeaders,
-                    'HDR', 'DS', 'NS', 'CT', 'CR', 'KMP', 'S', 'I', 'IR', 'A', 'OFF', '%',
-                    'LEMBUR', 'NOMINAL LEMBUR', 'TOTAL LEMBUR',
-                    'PIKET', 'NOMINAL PIKET', 'TOTAL PIKET', 'STATUS KIRIM', 'EMAIL']
+                    'HDR', 'CT', 'CR', 'KMP', 'S', 'I', 'IR', 'A', 'OFF', '%']
 
     const excelRows: any[][] = [header]
 
@@ -282,7 +242,7 @@ const { data: attendance } = await supabase
       const emp = empMap.get(nrp)
       const row: any[] = [idx + 1, nrp, emp.nama, emp.jabatan || '-', emp.site || '-']
 
-      const counter: any = { HDR: 0, DS: 0, NS: 0, CT: 0, CR: 0, KMP: 0, S: 0, I: 0, IR: 0, A: 0, OFF: 0, TOTAL_KERJA: 0 }
+      const counter: any = { HDR: 0, CT: 0, CR: 0, KMP: 0, S: 0, I: 0, IR: 0, A: 0, OFF: 0, TOTAL_KERJA: 0 }
 
       for (let d = 1; d <= lastDayNum; d++) {
         const dateStr = `${tahunP}-${bulanP}-${String(d).padStart(2, '0')}`
@@ -290,7 +250,7 @@ const { data: attendance } = await supabase
         row.push(kode)
 
         // Hitung stats
-        if (kode === 'DS' || kode === 'NS') { counter.HDR++; counter.TOTAL_KERJA++; if (kode === 'DS') counter.DS++; else counter.NS++ }
+        if (kode === 'DS' || kode === 'NS') { counter.HDR++; counter.TOTAL_KERJA++ }
         else if (kode === 'CT') { counter.CT++; counter.TOTAL_KERJA++ }
         else if (kode === 'CR') { counter.CR++ }
         else if (kode === 'SCK' || kode === 'MCK') { counter.KMP++; counter.HDR++; counter.TOTAL_KERJA++ }
@@ -305,15 +265,7 @@ const { data: attendance } = await supabase
         ? Math.round((counter.HDR / counter.TOTAL_KERJA) * 1000) / 10
         : 0
 
-      row.push(counter.HDR, counter.DS, counter.NS, counter.CT, counter.CR, counter.KMP, counter.S, counter.I, counter.IR, counter.A, counter.OFF, persen,
-               lemburHitung[String(nrp)] || 0,
-               Number(nominalMap[String(nrp)]?.nominal_lembur || 0),
-               Number(nominalMap[String(nrp)]?.total_lembur || 0),
-               Number(nominalMap[String(nrp)]?.jml_piket || 0),
-               Number(nominalMap[String(nrp)]?.nominal_piket || 0),
-               Number(nominalMap[String(nrp)]?.total_piket || 0),
-               nominalMap[String(nrp)]?.status || '-',
-               emp.email || '')
+      row.push(counter.HDR, counter.CT, counter.CR, counter.KMP, counter.S, counter.I, counter.IR, counter.A, counter.OFF, persen)
       excelRows.push(row)
     })
 

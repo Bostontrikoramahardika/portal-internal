@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 
 import StatBanner from '@/app/components/std/StatBanner'
 import KirimRekapPanel from '@/app/dashboard/kirim-rekap/page'
-import LemburPanel from './LemburPanel'
 // ─── Types ─────────────────────────────────────────────────
 interface Day {
   tanggal: string; day: number; code: string; type: string
@@ -94,7 +93,7 @@ export default function ManajemenAbsensiPage() {
 
   // Export state
   const [exporting, setExporting] = useState<'matrix' | 'detail' | null>(null)
-  const [tabUtama, setTabUtama] = useState<'matriks' | 'lembur' | 'kirim'>('matriks')
+  const [tabUtama, setTabUtama] = useState<'matriks' | 'kirim'>('matriks')
 
   // Handler Export Matrix (grid tanggal 1-31)
   const handleExportMatrix = async () => {
@@ -182,7 +181,7 @@ export default function ManajemenAbsensiPage() {
 
   const BilahTab = () => (
     <div className="flex gap-1.5 p-1 mb-3 rounded-2xl bg-slate-100 border border-slate-200">
-      {([['matriks', 'Matriks'], ['lembur', 'Lembur'], ['kirim', 'Kirim Rekap']] as const).map(([id, l]) => (
+      {([['matriks', 'Matriks Absensi'], ['kirim', 'Kirim Rekap']] as const).map(([id, l]) => (
         <button key={id} type="button" onClick={() => setTabUtama(id)}
           className={'flex-1 px-3 py-2 rounded-xl text-[12px] font-black uppercase tracking-wide transition-all active:scale-95 ' +
             (tabUtama === id ? 'bg-[#003d79] text-white shadow' : 'text-slate-500')}>
@@ -191,15 +190,6 @@ export default function ManajemenAbsensiPage() {
       ))}
     </div>
   )
-
-  if (tabUtama === 'lembur') {
-    return (
-      <div className="text-slate-800">
-        <BilahTab />
-        <LemburPanel />
-      </div>
-    )
-  }
 
   if (tabUtama === 'kirim') {
     return (

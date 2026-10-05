@@ -13,7 +13,6 @@ import AppFooter from '@/app/components/AppFooter'
 import MenuTabs from '@/app/components/MenuTabs'
 import { AuthProvider } from '@/app/lib/AuthContext'
 
-import { BTM_APP_NAME, BTM_APP_SHORT } from '@/app/lib/design-system'
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
   const rawPathname = usePathname()
@@ -167,35 +166,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const siteKaryawan = currentUser?.site || '-'
   const userInitial = namaKaryawan.charAt(0).toUpperCase()
 
-  const rapikanJudul = (g) => {
-    const t = String(g || '').trim()
-    if (!t) return 'Lainnya'
-    if (t === t.toUpperCase() || t === t.toLowerCase()) {
-      return t.toLowerCase().split(' ')
-        .map((w) => (w.length > 3 ? w.charAt(0).toUpperCase() + w.slice(1) : w.toUpperCase()))
-        .join(' ')
-    }
-    return t
-  }
-  const grupSidebar = (() => {
-    const peta = new Map()
-    ;(menus || []).forEach((m) => {
-      if (!m || !m.menu_key) return
-      if (m.parent_menu_key) return
-      if (String(m.nav_tab || '').toLowerCase() === 'hidden') return
-      const grup = String(m.menu_group || 'Lainnya')
-      const k = grup.trim().toLowerCase()
-      if (!peta.has(k)) peta.set(k, { judul: rapikanJudul(grup), urut: Number(m.sort_order) || 0, items: [] })
-      const g = peta.get(k)
-      g.urut = Math.min(g.urut, Number(m.sort_order) || 0)
-      if (!g.items.some((x) => x.menu_key === m.menu_key)) g.items.push(m)
-    })
-    return Array.from(peta.values())
-      .map((g) => ({ ...g, items: g.items.sort((x, y) => (Number(x.sort_order)||0) - (Number(y.sort_order)||0)) }))
-      .filter((g) => g.items.length > 0)
-      .sort((x, y) => x.urut - y.urut || x.judul.localeCompare(y.judul))
-  })()
-
   return (
     <AuthProvider
       user={currentUser}
@@ -212,7 +182,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Image src="/btm-fix.png" alt="BTM" width={18} height={18} className="object-contain" />
             </div>
             <div className="leading-none">
-              <h1 className="text-[11px] font-black uppercase text-[#003D79] tracking-tight whitespace-nowrap">{BTM_APP_SHORT}</h1>
+              <h1 className="text-[11px] font-black uppercase text-[#003D79] tracking-tight whitespace-nowrap">BTM Mobile</h1>
               <p className="text-[8px] font-bold text-slate-400 mt-0.5">v1.7.0</p>
             </div>
           </div>
@@ -256,7 +226,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center font-black text-sm text-white">
                 B
               </div>
-              <span className="font-black tracking-tight text-base">{BTM_APP_SHORT}</span>
+              <span className="font-black tracking-tight text-base">BTM PORTAL</span>
             </Link>
           </div>
 
@@ -277,33 +247,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Dashboard
             </Link>
 
-            {grupSidebar.map((grup) => (
-              <div key={grup.judul} className="pt-3">
-                <div className="px-3 pb-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                  {grup.judul}
-                </div>
-                {grup.items.map((item) => {
-                  const label = String(item.menu_label || item.menu_key).replace(/^[^A-Za-z0-9(]+/, '')
-                  const href = item.href || '/dashboard?menu=' + item.menu_key
-                  const cur = searchParams ? searchParams.get('menu') : null
-                  const im = href.includes('menu=') ? href.split('menu=')[1]?.split('&')[0] : null
-                  const isActive = im ? cur === im : pathname === href && !cur
-                  return (
-                    <Link
-                      key={item.menu_key}
-                      href={href}
-                      className={[
-                        'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors',
-                        isActive ? 'bg-[#003d79] text-white' : 'text-slate-600 hover:bg-slate-100',
-                      ].join(' ')}
-                    >
-                      <span className="text-sm leading-none">{item.menu_icon || '\u25A2'}</span>
-                      <span className="truncate">{label}</span>
-                    </Link>
-                  )
-                })}
-              </div>
-            ))}
+            {menus.map((item, idx) => {
+              const label = item.title || item.menu_label || item.name || 'Menu'
+              const href = item.href || (item.menu_key ? `/dashboard?menu=${item.menu_key}` : '#')
+              
+              const currentMenuParam = searchParams ? searchParams.get('menu') : null
+              const itemMenuParam = href.includes('menu=') ? href.split('menu=')[1]?.split('&')[0] : null
+              
+              const isActive = itemMenuParam 
+                ? (currentMenuParam === itemMenuParam)
+                : (pathname === href && !currentMenuParam)
+
+              return (
+                <Link
+                  key={item.id || item.menu_key || href || idx}
+                  href={href}
+                  className={[
+                    'flex items-center justify-start px-3 py-2 rounded-xl text-xs font-semibold transition-colors',
+                    isActive ? 'bg-[#003d79] text-white' : 'text-slate-600 hover:bg-slate-100'
+                  ].join(' ')}
+                >
+                  <div className="flex items-center gap-3 truncate">
+                    <span className="text-sm">{item.icon || '📌'}</span>
+                    <span className="truncate">{label}</span>
+                  </div>
+                  {item.badge && (
+                    <span className="text-[10px] font-black bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
           </div>
 
           <div className="p-4 border-t border-[#e2e8f0] bg-slate-50">
@@ -328,19 +303,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <main className="flex-1 min-w-0 flex flex-col h-auto pt-[3.75rem] lg:pt-0 pb-24 lg:pb-8">
           {/* HEADER DESKTOP ONLY */}
-          <header className="hidden lg:flex w-full items-center justify-between gap-4 h-16 px-8 bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-base font-black text-[#003D79] tracking-tight">{BTM_APP_NAME}</h1>
+          <header className="hidden lg:flex items-center justify-start h-16 px-8 bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40">
+            <div>
+              <h1 className="text-base font-black text-[#003D79] tracking-tight">Portal Internal BTM</h1>
               <p className="text-[11px] text-slate-500 font-medium">Selamat datang, <strong className="text-slate-800">{namaKaryawan}</strong> ({nrpKaryawan}) — <span className="text-blue-600 font-bold">{siteKaryawan}</span></p>
             </div>
             
-            <div className="flex items-center gap-3 shrink-0 ml-auto">
-              <div className="text-right leading-tight">
-                <div className="text-[12px] font-black text-[#003D79] uppercase">{namaKaryawan}</div>
-                <div className="text-[10px] font-bold text-slate-400">
-                  {nrpKaryawan}{siteKaryawan ? <span className="text-blue-600"> &middot; {siteKaryawan}</span> : null}
-                </div>
-              </div>
+            <div className="flex items-center gap-4">
               <button
                 type="button"
                 onClick={() => setIsNotifOpen(true)}

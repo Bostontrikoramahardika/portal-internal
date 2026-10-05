@@ -1,0 +1,507 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import StatBanner from '@/app/components/std/StatBanner'
+
+function hdr() {
+  const h: Record<string, string> = { 'Content-Type': 'application/json' }
+  try {
+    const t = localStorage.getItem('btm_session_token_v1')
+    if (t) h['Authorization'] = 'Bearer ' + t
+  } catch {}
+  return h
+}
+const rupiah = (n: any) => 'Rp ' + Number(n || 0).toLocaleString('id-ID')
+const bulanIni = () => new Date().toISOString().slice(0, 7)
+
+export default function KirimRekapPage() {
+  const [tab, setTab] = useState<'susun' | 'pantau'>('susun')
+  const [bulan, setBulan] = useState(bulanIni())
+  const [rows, setRows] = useState<any[]>([])
+  const [pilih, setPilih] = useState<Record<string, boolean>>({})
+  const [nominal, setNominal] = useState<Record<string, { lembur: number; piket: number; jmlPiket: number; jmlLembur?: number }>>({})
+  const [pesan, setPesan] = useState('Mohon dicek dan dikonfirmasi.')
+  const [batas, setBatas] = useState('')
+  const [muat, setMuat] = useState(false)
+  const [kirim, setKirim] = useState(false)
+  const [hasil, setHasil] = useState<string>('')
+
+  const [periodeList, setPeriodeList] = useState<any[]>([])
+  const [periodePilih, setPeriodePilih] = useState('')
+  const [pantau, setPantau] = useState<any[]>([])
+  const [ringkas, setRingkas] = useState<any>(null)
+  const [pilihUlang, setPilihUlang] = useState<Record<string, boolean>>({})
+  const [filterSite, setFilterSite] = useState('ALL')
+  const [filterNama, setFilterNama] = useState('')
+  const [filterGol, setFilterGol] = useState('ALL')
+  const [detailLembur, setDetailLembur] = useState<any>(null)
+
+  async function muatMatrix() {
+    setMuat(true)
+    try {
+      const d = await fetch('/api/attendance/matrix?bulan=' + bulan, { credentials: 'include', headers: hdr() })
+        .then((r) => r.json())
+      const semua: any[] = []
+      ;(d?.groups || []).forEach((g: any) =>
+        (g.rows || []).forEach((r: any) => semua.push({ ...r, _gol: g.dept || r.departemen || 'Lainnya' })))
+      setRows(semua)
+      const p: Record<string, boolean> = {}
+      semua.forEach((r) => (p[r.nrp] = true))
+      setPilih(p)
+    } catch {}
+    setMuat(false)
+  }
+
+  useEffect(() => { muatMatrix() }, [bulan])
+
+  useEffect(() => {
+    fetch('/api/rekap-absensi?mode=periode', { credentials: 'include', headers: hdr() })
+      .then((r) => r.json()).then((d) => setPeriodeList(d?.rows || [])).catch(() => {})
+  }, [hasil])
+
+  useEffect(() => {
+    if (!periodePilih) return
+    fetch('/api/rekap-absensi?mode=hr&periode=' + periodePilih, { credentials: 'include', headers: hdr() })
+      .then((r) => r.json())
+      .then((d) => { setPantau(d?.rows || []); setRingkas(d?.ringkasan || null) })
+      .catch(() => {})
+  }, [periodePilih])
+
+  const siteList = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.site).filter(Boolean))).sort(), [rows])
+  const golList = useMemo(
+    () => Array.from(new Set(rows.map((r) => r._gol).filter(Boolean))).sort(), [rows])
+
+  const rowsTampil = useMemo(() => rows.filter((r) => {
+    if (filterSite !== 'ALL' && r.site !== filterSite) return false
+    if (filterGol !== 'ALL' && r._gol !== filterGol) return false
+    if (filterNama && !String(r.nama || '').toLowerCase().includes(filterNama.toLowerCase())) return false
+    return true
+  }), [rows, filterSite, filterGol, filterNama])
+
+  const grupTampil = useMemo(() => {
+    const urut = ['Staff', 'Plant', 'Operator', 'Lainnya']
+    const peta: Record<string, any[]> = {}
+    rowsTampil.forEach((r) => {
+      const g = r._gol || 'Lainnya'
+      if (!peta[g]) peta[g] = []
+      peta[g].push(r)
+    })
+    const kunci = Object.keys(peta).sort((x, y) => {
+      const ix = urut.indexOf(x), iy = urut.indexOf(y)
+      return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy) || x.localeCompare(y)
+    })
+    return kunci.map((k) => ({ nama: k, rows: peta[k] }))
+  }, [rowsTampil])
+
+  const terpilih = useMemo(() => rowsTampil.filter((r) => pilih[r.nrp]), [rowsTampil, pilih])
+
+  function toggleGrup(rowsGrup: any[], nyala: boolean) {
+    setPilih((s) => {
+      const n = { ...s }
+      rowsGrup.forEach((r) => (n[r.nrp] = nyala))
+      return n
+    })
+  }
+
+  function setNom(nrp: string, k: 'lembur' | 'piket' | 'jmlPiket' | 'jmlLembur', v: number) {
+    setNominal((s) => ({ ...s, [nrp]: { lembur: 0, piket: 0, jmlPiket: 0, ...(s[nrp] || {}), [k]: v } }))
+  }
+
+  function jmlLemburDipakai(r: any) {
+    const n = nominal[r.nrp]
+    return n?.jmlLembur !== undefined ? Number(n.jmlLembur) : Number(r.summary?.lembur || 0)
+  }
+
+  async function kirimRekap() {
+    if (!terpilih.length) { alert('Pilih minimal satu karyawan'); return }
+    if (!confirm('Kirim rekap ' + bulan + ' ke ' + terpilih.length + ' karyawan?')) return
+    setKirim(true)
+    try {
+      const karyawan = terpilih.map((r) => {
+        const n = nominal[r.nrp] || { lembur: 0, piket: 0, jmlPiket: 0 }
+        return {
+          nrp: r.nrp, nama: r.nama, departemen: r._gol || r.departemen, jabatan: r.jabatan,
+          ringkasan: { days: r.days, summary: r.summary, lembur: r.lembur },
+          jml_lembur: jmlLemburDipakai(r),
+          nominal_lembur: Number(n.lembur || 0),
+          jml_piket: Number(n.jmlPiket || 0),
+          nominal_piket: Number(n.piket || 0),
+        }
+      })
+      const res = await fetch('/api/rekap-absensi', {
+        method: 'POST', credentials: 'include', headers: hdr(),
+        body: JSON.stringify({ bulan, pesan, batas_konfirmasi: batas || null, karyawan }),
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d?.error || 'Gagal mengirim')
+      setHasil('Terkirim ke ' + d.terkirim + ' karyawan')
+      setPeriodePilih(d.periode_id); setTab('pantau')
+    } catch (e: any) { alert(e?.message || 'Gagal') }
+    setKirim(false)
+  }
+
+  async function kirimUlang() {
+    const target = pantau.filter((r) => pilihUlang[r.id])
+    if (!target.length) { alert('Pilih karyawan yang mau dikirimi rekap versi baru'); return }
+    const per = periodeList.find((p) => p.id === periodePilih)
+    if (!per) return
+    if (!confirm('Kirim rekap VERSI BARU ke ' + target.length + ' karyawan?')) return
+
+    const d = await fetch('/api/attendance/matrix?bulan=' + per.bulan, { credentials: 'include', headers: hdr() })
+      .then((r) => r.json())
+    const semua: any[] = []
+    ;(d?.groups || []).forEach((g: any) => (g.rows || []).forEach((r: any) => semua.push(r)))
+
+    const karyawan = target.map((t) => {
+      const baru = semua.find((x) => String(x.nrp) === String(t.nrp))
+      return {
+        nrp: t.nrp, nama: t.nama_karyawan, departemen: t.departemen, jabatan: t.jabatan,
+        ringkasan: baru ? { days: baru.days, summary: baru.summary, lembur: baru.lembur } : t.ringkasan,
+        jml_lembur: Number(baru?.summary?.lembur ?? t.jml_lembur ?? 0),
+        nominal_lembur: Number(t.nominal_lembur || 0),
+        jml_piket: Number(t.jml_piket || 0),
+        nominal_piket: Number(t.nominal_piket || 0),
+      }
+    })
+
+    const res = await fetch('/api/rekap-absensi', {
+      method: 'POST', credentials: 'include', headers: hdr(),
+      body: JSON.stringify({
+        bulan: per.bulan, site: per.site, pesan, batas_konfirmasi: batas || null,
+        karyawan, ulang_dari: periodePilih,
+      }),
+    })
+    const j = await res.json()
+    if (!res.ok) { alert(j?.error || 'Gagal'); return }
+    setPilihUlang({}); setPeriodePilih(j.periode_id)
+    setHasil('Versi baru terkirim ke ' + j.terkirim + ' karyawan')
+  }
+
+  const Lencana = ({ s }: { s: string }) => {
+    const w = s === 'SETUJU' ? 'bg-emerald-100 text-emerald-700'
+      : s === 'PROTES' ? 'bg-amber-100 text-amber-700'
+      : s === 'DIBACA' ? 'bg-sky-100 text-sky-700'
+      : s === 'DIREVISI' ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500'
+    return <span className={'px-2 py-0.5 rounded-full text-[9px] font-black uppercase ' + w}>{s}</span>
+  }
+
+  return (
+    <div className="space-y-3 text-slate-800">
+      <StatBanner eyebrow="HR" title="Kirim Rekap Absensi"
+        subtitle="Rekonsiliasi dengan karyawan" onRefresh={muatMatrix} refreshing={muat} />
+
+      <div className="flex gap-1.5 p-1 rounded-2xl bg-slate-100 border border-slate-200">
+        {[['susun', 'Susun & Kirim'], ['pantau', 'Pantau Status']].map(([id, l]) => (
+          <button key={id} onClick={() => setTab(id as any)}
+            className={'flex-1 px-3 py-2 rounded-xl text-[12px] font-black uppercase tracking-wide active:scale-95 ' +
+              (tab === id ? 'bg-[#003d79] text-white shadow' : 'text-slate-500')}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'susun' && (
+        <>
+          <div className="bg-white rounded-2xl border border-slate-200 p-3 space-y-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Bulan</label>
+                <input type="month" value={bulan} onChange={(e) => setBulan(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Batas konfirmasi</label>
+                <input type="date" value={batas} onChange={(e) => setBatas(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Pesan untuk karyawan</label>
+              <textarea value={pesan} onChange={(e) => setPesan(e.target.value)} rows={3}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 p-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Site</label>
+              <select value={filterSite} onChange={(e) => setFilterSite(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold">
+                <option value="ALL">Semua Site</option>
+                {siteList.map((x) => <option key={x} value={x}>{x}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Golongan</label>
+              <select value={filterGol} onChange={(e) => setFilterGol(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold">
+                <option value="ALL">Semua</option>
+                {golList.map((x) => <option key={x} value={x}>{x}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Nama</label>
+              <input value={filterNama} onChange={(e) => setFilterNama(e.target.value)}
+                placeholder="Cari nama..."
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm" />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-[11px] font-bold px-1">
+            <span className="text-slate-500">{terpilih.length} dari {rowsTampil.length} karyawan dipilih</span>
+            <div className="flex gap-2">
+              <button onClick={() => { const p: any = {}; rowsTampil.forEach((r) => (p[r.nrp] = true)); setPilih(p) }}
+                className="px-2.5 py-1 rounded-lg bg-slate-100 text-[10px] font-black uppercase">Semua</button>
+              <button onClick={() => setPilih({})}
+                className="px-2.5 py-1 rounded-lg bg-slate-100 text-[10px] font-black uppercase">Kosongkan</button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="std-scroll-x overflow-x-auto pb-1">
+              <table className="w-full text-left text-[11px]">
+                <thead className="bg-[#003D79] text-white">
+                  <tr>
+                    <th className="px-2 py-2 sticky left-0 z-30 bg-[#003D79] min-w-[150px]">Nama / Jabatan</th>
+                    <th className="px-2 py-2 text-center">Hadir</th>
+                    <th className="px-2 py-2 text-center">Lembur</th>
+                    <th className="px-2 py-2">Nominal / Lembur</th>
+                    <th className="px-2 py-2 text-right">Total Lembur</th>
+                    <th className="px-2 py-2 text-center">Piket</th>
+                    <th className="px-2 py-2">Nominal / Piket</th>
+                    <th className="px-2 py-2 text-right">Total Piket</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {grupTampil.map((grup) => {
+                    const semuaTercentang = grup.rows.every((r: any) => pilih[r.nrp])
+                    const adaTercentang = grup.rows.some((r: any) => pilih[r.nrp])
+                    return (
+                      <>
+                      <tr key={'h-' + grup.nama} className="bg-slate-100 border-y border-slate-200">
+                        <td colSpan={8} className="px-2 py-1.5 sticky left-0 z-20 bg-slate-100">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={semuaTercentang}
+                              ref={(el) => { if (el) el.indeterminate = !semuaTercentang && adaTercentang }}
+                              onChange={(e) => toggleGrup(grup.rows, e.target.checked)}
+                            />
+                            <span className="text-[11px] font-black uppercase tracking-wider text-[#0b2a5b]">
+                              {grup.nama} ({grup.rows.length} orang)
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400">
+                              {grup.rows.filter((r: any) => pilih[r.nrp]).length} dipilih
+                            </span>
+                          </label>
+                        </td>
+                      </tr>
+                      {grup.rows.map((r: any, i: number) => {
+                    const n = nominal[r.nrp] || { lembur: 0, piket: 0, jmlPiket: 0 }
+                    const bg = i % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                    return (
+                      <tr key={r.nrp} className={bg}>
+                        <td className={'px-2 py-1.5 sticky left-0 z-10 font-bold ' + bg}>
+                          <label className="flex items-start gap-1.5">
+                            <input type="checkbox" className="mt-1" checked={!!pilih[r.nrp]}
+                              onChange={(e) => setPilih((s) => ({ ...s, [r.nrp]: e.target.checked }))} />
+                            <span className="min-w-0">
+                              <span className="block truncate">{r.nama}</span>
+                              <span className="block text-[9px] font-medium text-slate-400 truncate">
+                                {r.jabatan || '-'}{r.site ? ' / ' + r.site : ''}
+                              </span>
+                            </span>
+                          </label>
+                        </td>
+                        <td className="px-2 py-1.5 text-center font-bold">{r.summary?.hariHadir ?? 0}</td>
+                        <td className="px-2 py-1.5">
+                          <div className="flex items-center gap-1 justify-center">
+                            <input type="number" min={0} value={jmlLemburDipakai(r)}
+                              onChange={(e) => setNom(r.nrp, 'jmlLembur', Math.max(0, Number(e.target.value) || 0))}
+                              className="w-12 px-1 py-1 rounded border border-slate-200 text-[11px] text-center font-bold" />
+                            <button type="button" title="Lihat rincian lembur"
+                              onClick={() => setDetailLembur({ nama: r.nama, list: r.lembur || [] })}
+                              disabled={!Number(r.summary?.lembur)}
+                              className={'w-5 h-5 rounded-full text-[10px] font-black shrink-0 ' +
+                                (Number(r.summary?.lembur)
+                                  ? 'bg-[#0b2a5b] text-white hover:bg-blue-700'
+                                  : 'bg-slate-100 text-slate-300')}>
+                              i
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] font-bold text-slate-400">Rp</span>
+                            <input type="number" min={0} value={n.lembur}
+                              onChange={(e) => setNom(r.nrp, 'lembur', Number(e.target.value) || 0)}
+                              className="w-24 px-1.5 py-1 rounded border border-slate-200 text-[11px]" />
+                          </div>
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-black text-[#0b2a5b] whitespace-nowrap">
+                          {rupiah(jmlLemburDipakai(r) * Number(n.lembur || 0))}
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input type="number" min={0} value={n.jmlPiket}
+                            onChange={(e) => setNom(r.nrp, 'jmlPiket', Number(e.target.value) || 0)}
+                            className="w-14 px-1.5 py-1 rounded border border-slate-200 text-[11px] text-center" />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] font-bold text-slate-400">Rp</span>
+                            <input type="number" min={0} value={n.piket}
+                              onChange={(e) => setNom(r.nrp, 'piket', Number(e.target.value) || 0)}
+                              className="w-24 px-1.5 py-1 rounded border border-slate-200 text-[11px]" />
+                          </div>
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-black text-[#0b2a5b] whitespace-nowrap">
+                          {rupiah(Number(n.jmlPiket || 0) * Number(n.piket || 0))}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                      </>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <button onClick={kirimRekap} disabled={kirim || !terpilih.length}
+            className="w-full py-3 rounded-2xl bg-[#0b2a5b] text-white font-black text-sm uppercase tracking-wide active:scale-95 disabled:opacity-50">
+            {kirim ? 'Mengirim...' : 'Kirim Rekap ke ' + terpilih.length + ' Karyawan'}
+          </button>
+          {hasil && <p className="text-center text-[11px] font-black text-emerald-600">{hasil}</p>}
+        </>
+      )}
+
+      {detailLembur && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4"
+          onClick={() => setDetailLembur(null)}>
+          <div className="absolute inset-0 bg-slate-900/60" />
+          <div className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 bg-[#0b2a5b] text-white flex items-center justify-between">
+              <div className="min-w-0">
+                <div className="text-[9px] font-black uppercase tracking-widest text-blue-200">Rincian Lembur</div>
+                <div className="text-sm font-black truncate">{detailLembur.nama}</div>
+              </div>
+              <button onClick={() => setDetailLembur(null)}
+                className="w-7 h-7 rounded-full bg-white/15 text-white font-bold shrink-0">&#10005;</button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-3 space-y-2">
+              {(!detailLembur.list || detailLembur.list.length === 0) && (
+                <p className="py-6 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Tidak ada lembur
+                </p>
+              )}
+              {(detailLembur.list || []).map((l: any, i: number) => (
+                <div key={i} className="border border-slate-200 rounded-xl p-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-black text-[#0b2a5b]">
+                      {String(l.tanggal || '').slice(8, 10)}/{String(l.tanggal || '').slice(5, 7)}/{String(l.tanggal || '').slice(0, 4)}
+                    </span>
+                    {l.jam_mulai && (
+                      <span className="text-[10px] font-bold text-slate-500 tabular-nums">
+                        {String(l.jam_mulai).slice(0, 5)} - {String(l.jam_selesai || '').slice(0, 5)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-700 mt-1 leading-snug">{l.alasan || '-'}</p>
+                  {l.disetujui_oleh && (
+                    <p className="text-[9px] text-slate-400 mt-1">Disetujui: {l.disetujui_oleh}</p>
+                  )}
+                  {l.tahap === 'MENUNGGU_PJO' && (
+                    <p className="text-[9px] font-bold text-amber-600 mt-0.5">Menunggu persetujuan PJO</p>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="px-3 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total</span>
+              <span className="text-sm font-black text-[#0b2a5b]">
+                {(detailLembur.list || []).length} kali lembur
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'pantau' && (
+        <>
+          <select value={periodePilih} onChange={(e) => setPeriodePilih(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-bold">
+            <option value="">-- Pilih periode --</option>
+            {periodeList.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.bulan} - {p.site} - v{p.versi || 1} - {String(p.dikirim_at || '').slice(0, 10)}
+              </option>
+            ))}
+          </select>
+
+          {ringkas && (
+            <div className="grid grid-cols-4 gap-2">
+              {[['Terkirim', ringkas.terkirim], ['Dibaca', ringkas.dibaca],
+                ['Setuju', ringkas.setuju], ['Protes', ringkas.protes]].map(([l, v]) => (
+                <div key={String(l)} className="bg-white rounded-xl border border-slate-200 p-2.5 text-center">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{String(l)}</div>
+                  <div className="text-lg font-black text-[#0b2a5b]">{Number(v || 0)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {pantau.some((r) => r.status === 'PROTES') && (
+            <div className="flex items-center justify-between gap-2 p-3 rounded-2xl bg-amber-50 border border-amber-200">
+              <span className="text-[11px] font-bold text-amber-800">
+                {pantau.filter((r) => r.status === 'PROTES').length} karyawan mengajukan revisi
+              </span>
+              <div className="flex gap-2">
+                <button onClick={() => {
+                    const p: any = {}
+                    pantau.filter((r) => r.status === 'PROTES').forEach((r) => (p[r.id] = true))
+                    setPilihUlang(p)
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-[10px] font-black uppercase text-amber-700">
+                  Pilih semua
+                </button>
+                <button onClick={kirimUlang}
+                  className="px-2.5 py-1 rounded-lg bg-[#0b2a5b] text-white text-[10px] font-black uppercase">
+                  Kirim Ulang
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {pantau.map((r) => (
+              <div key={r.id} className="bg-white rounded-2xl border border-slate-200 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex gap-2">
+                    <input type="checkbox" className="mt-1" checked={!!pilihUlang[r.id]}
+                      onChange={(e) => setPilihUlang((s) => ({ ...s, [r.id]: e.target.checked }))} />
+                    <div className="min-w-0">
+                      <div className="text-sm font-black text-slate-800">{r.nama_karyawan}</div>
+                      <div className="text-[9px] font-medium text-slate-400">
+                        {r.jabatan || '-'}{r.departemen ? ' / ' + r.departemen : ''}
+                      </div>
+                      <div className="text-[10px] font-bold text-slate-500 mt-0.5">
+                        Lembur {rupiah(r.total_lembur)} - Piket {rupiah(r.total_piket)}
+                      </div>
+                      {r.catatan_karyawan && (
+                        <p className="text-[11px] text-amber-700 mt-1">{r.catatan_karyawan}</p>
+                      )}
+                    </div>
+                  </div>
+                  <Lencana s={r.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}

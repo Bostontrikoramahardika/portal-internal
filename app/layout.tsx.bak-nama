@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'BTM Mobile App',
-  description: 'BTM Mobile App - Portal Internal',
+  title: 'BTM Portal Internal',
+  description: 'Aplikasi Portal Internal BTM',
 };
 
 export default function RootLayout({

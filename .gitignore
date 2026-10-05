@@ -48,3 +48,7 @@ imports/
 
 .vercel
 .env*
+
+# file kerja sementara - jangan masuk repo
+rahgarfeh.txt
+struktur-excel.txt

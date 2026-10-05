@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 
 import StatBanner from '@/app/components/std/StatBanner'
 import KirimRekapPanel from '@/app/dashboard/kirim-rekap/page'
-import LemburPanel from './LemburPanel'
 // ─── Types ─────────────────────────────────────────────────
 interface Day {
   tanggal: string; day: number; code: string; type: string
@@ -94,7 +93,7 @@ export default function ManajemenAbsensiPage() {
 
   // Export state
   const [exporting, setExporting] = useState<'matrix' | 'detail' | null>(null)
-  const [tabUtama, setTabUtama] = useState<'matriks' | 'lembur' | 'kirim'>('matriks')
+  const [tabUtama, setTabUtama] = useState<'matriks' | 'kirim'>('matriks')
 
   // Handler Export Matrix (grid tanggal 1-31)
   const handleExportMatrix = async () => {
@@ -182,7 +181,7 @@ export default function ManajemenAbsensiPage() {
 
   const BilahTab = () => (
     <div className="flex gap-1.5 p-1 mb-3 rounded-2xl bg-slate-100 border border-slate-200">
-      {([['matriks', 'Matriks'], ['lembur', 'Lembur'], ['kirim', 'Kirim Rekap']] as const).map(([id, l]) => (
+      {([['matriks', 'Matriks Absensi'], ['kirim', 'Kirim Rekap']] as const).map(([id, l]) => (
         <button key={id} type="button" onClick={() => setTabUtama(id)}
           className={'flex-1 px-3 py-2 rounded-xl text-[12px] font-black uppercase tracking-wide transition-all active:scale-95 ' +
             (tabUtama === id ? 'bg-[#003d79] text-white shadow' : 'text-slate-500')}>
@@ -191,15 +190,6 @@ export default function ManajemenAbsensiPage() {
       ))}
     </div>
   )
-
-  if (tabUtama === 'lembur') {
-    return (
-      <div className="text-slate-800">
-        <BilahTab />
-        <LemburPanel />
-      </div>
-    )
-  }
 
   if (tabUtama === 'kirim') {
     return (
@@ -379,21 +369,21 @@ export default function ManajemenAbsensiPage() {
                 {/* Header */}
                 <thead className="bg-[#003D79] text-white sticky top-0 z-20">
                   <tr>
-                    <th className="px-2 py-2 text-left sticky left-0 bg-[#003D79] z-10 min-w-[28px]">#</th>
-                    <th className="px-2 py-2 text-left sticky left-[28px] bg-[#003D79] z-10 min-w-[120px]">Nama</th>
-                    <th className="px-2 py-2 text-left min-w-[88px]">Jabatan</th>
+                    <th className="px-2 py-2 text-left sticky left-0 bg-[#003D79] z-10 min-w-[40px]">#</th>
+                    <th className="px-2 py-2 text-left sticky left-[40px] bg-[#003D79] z-10 min-w-[140px]">Nama</th>
+                    <th className="px-2 py-2 text-left min-w-[110px]">Jabatan</th>
                     {Array.from({ length: jmlHari }, (_, i) => i + 1).map(d => (
-                      <th key={d} className="px-0.5 py-2 text-center min-w-[22px] font-bold">
+                      <th key={d} className="px-1 py-2 text-center min-w-[32px] font-bold">
                         {String(d).padStart(2,'0')}
                       </th>
                     ))}
-                    <th className="px-2 py-2 text-center min-w-[38px] bg-emerald-700">%</th>
-                    <th className="px-1 py-2 text-center min-w-[26px]">S</th>
-                    <th className="px-1 py-2 text-center min-w-[26px]">I</th>
-                    <th className="px-1 py-2 text-center min-w-[26px]">A</th>
-                    <th className="px-1 py-2 text-center min-w-[32px]">Off</th>
-                    <th className="px-1 py-2 text-center min-w-[36px]">Cuti</th>
-                    <th className="px-1 py-2 text-center min-w-[44px]">Aksi</th>
+                    <th className="px-2 py-2 text-center min-w-[45px] bg-emerald-700">%</th>
+                    <th className="px-2 py-2 text-center min-w-[35px]">S</th>
+                    <th className="px-2 py-2 text-center min-w-[35px]">I</th>
+                    <th className="px-2 py-2 text-center min-w-[35px]">A</th>
+                    <th className="px-2 py-2 text-center min-w-[45px]">Off</th>
+                    <th className="px-2 py-2 text-center min-w-[50px]">Cuti</th>
+                    <th className="px-2 py-2 text-center min-w-[60px]">Aksi</th>
                   </tr>
                 </thead>
 
