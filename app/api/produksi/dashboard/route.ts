@@ -187,6 +187,17 @@ export async function GET(req: NextRequest) {
     const bolehKelola = session.is_super_admin ||
       (session.roles || []).some((r) => ROLE_KELOLA.includes(r))
 
+    // ── cuaca per tanggal terakhir (aman bila tabel belum ada) ──
+    let cuaca: any = null
+    if (tglTerakhir) {
+      const { data: cw, error: cwErr } = await supabaseAdmin
+        .from('produksi_cuaca')
+        .select('tanggal, cuaca_s1, cuaca_s2')
+        .eq('site', site).lte('tanggal', tglTerakhir)
+        .order('tanggal', { ascending: false }).limit(1)
+      cuaca = cwErr ? null : cw?.[0] || null
+    }
+
     return NextResponse.json({
       ok: true, site, bulan, hari_bulan: hariBulan,
       total_hm: r2(totalHM), hm_ds: r2(hmDS), hm_ns: r2(hmNS),
@@ -204,6 +215,7 @@ export async function GET(req: NextRequest) {
       per_egi: perEGI,
       per_unit: unitRows,
       boleh_kelola: bolehKelola,
+      cuaca,
     })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Gagal memuat dashboard produksi' }, { status: 500 })

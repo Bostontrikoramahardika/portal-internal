@@ -79,3 +79,15 @@ alter table ts_opt add column if not exists standby numeric(12,2);
 alter table ts_opt add column if not exists pa numeric(6,2);
 alter table ts_opt add column if not exists ma numeric(6,2);
 alter table ts_opt add column if not exists ua numeric(6,2);
+
+-- ═══ CUACA HARIAN (input manual — replika blok CUACA Excel) ═══
+-- kunci (site, tanggal): kirim ulang = memperbarui, tidak menumpuk.
+create table if not exists produksi_cuaca (
+  id uuid primary key default gen_random_uuid(),
+  site text not null,
+  tanggal date not null,
+  cuaca_s1 text not null default 'cerah',
+  cuaca_s2 text not null default 'cerah',
+  updated_at timestamptz not null default now(),
+  unique (site, tanggal)
+);

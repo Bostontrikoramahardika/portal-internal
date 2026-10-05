@@ -124,6 +124,43 @@ function SelPct({ v, ambang = 100 }: { v: number | null; ambang?: number }) {
   )
 }
 
+function IkonCuaca({ jenis }: { jenis: string }) {
+  const sinar = (cx: number, cy: number) =>
+    [0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+      <line key={a}
+        x1={cx + 12 * Math.cos((a * Math.PI) / 180)} y1={cy + 12 * Math.sin((a * Math.PI) / 180)}
+        x2={cx + 16 * Math.cos((a * Math.PI) / 180)} y2={cy + 16 * Math.sin((a * Math.PI) / 180)}
+        stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" />
+    ))
+  if (jenis === 'hujan') return (
+    <svg viewBox="0 0 48 48" className="w-9 h-9 mx-auto">
+      <ellipse cx="24" cy="16" rx="13" ry="8" fill="#94a3b8" />
+      <ellipse cx="15" cy="19" rx="8" ry="6" fill="#94a3b8" />
+      <ellipse cx="33" cy="19" rx="8" ry="6" fill="#94a3b8" />
+      {[16, 24, 32].map((x) => (
+        <line key={x} x1={x} y1={28} x2={x - 3} y2={38} stroke="#0ea5e9" strokeWidth="3" strokeLinecap="round" />
+      ))}
+    </svg>
+  )
+  if (jenis === 'berawan') return (
+    <svg viewBox="0 0 48 48" className="w-9 h-9 mx-auto">
+      <circle cx="17" cy="15" r="8" fill="#fbbf24" />
+      {sinar(17, 15)}
+      <ellipse cx="28" cy="27" rx="13" ry="8" fill="#e2e8f0" stroke="#94a3b8" />
+    </svg>
+  )
+  return (
+    <svg viewBox="0 0 48 48" className="w-9 h-9 mx-auto">
+      <circle cx="24" cy="24" r="10" fill="#fbbf24" />
+      {sinar(24, 24)}
+    </svg>
+  )
+}
+const LABEL_CUACA: Record<string, string> = { cerah: 'Cerah', berawan: 'Berawan', hujan: 'Hujan' }
+function fmtTglPanjang(iso: string) {
+  return `${String(Number(iso.slice(8, 10))).padStart(2, '0')} ${labelBulan(iso.slice(0, 7))}`
+}
+
 /* ═══════════════ TAB 1 — DASHBOARD ═══════════════ */
 
 function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void; bolehImport: boolean }) {
@@ -132,6 +169,10 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
   const [d, setD] = useState<any>(null)
   const [memuat, setMemuat] = useState(false)
   const [err, setErr] = useState('')
+  const [cwTgl, setCwTgl] = useState('')
+  const [cwS1, setCwS1] = useState('cerah')
+  const [cwS2, setCwS2] = useState('cerah')
+  const [muatCw, setMuatCw] = useState(false)
 
   const muat = useCallback(async () => {
     setMemuat(true); setErr('')
@@ -147,11 +188,32 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
 
   useEffect(() => { muat() }, [muat])
 
+  useEffect(() => {
+    if (d?.cuaca) { setCwTgl(d.cuaca.tanggal); setCwS1(d.cuaca.cuaca_s1); setCwS2(d.cuaca.cuaca_s2) }
+    else if (d?.tgl_terakhir && !cwTgl) setCwTgl(d.tgl_terakhir)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [d])
+
+  async function simpanCuaca() {
+    if (!cwTgl) return
+    setMuatCw(true)
+    try {
+      const r = await fetch('/api/produksi/cuaca', {
+        method: 'POST', credentials: 'include', headers: hdr(),
+        body: JSON.stringify({ site, tanggal: cwTgl, s1: cwS1, s2: cwS2 }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || 'Gagal simpan cuaca')
+      await muat()
+    } catch (e: any) { setErr(e?.message || 'Gagal simpan cuaca') }
+    setMuatCw(false)
+  }
+
   // ── kerangka laporan selalu tampil (nol bila belum ada data) ──
   const D: any = d || {
     baris_data: 0, total_hm: 0, hm_ds: 0, hm_ns: 0, achievement_pct: 0,
     target: null, estimasi: 0, per_hari_target: 0, tgl_terakhir: null,
-    per_hari: [], per_hari_atr: [], per_egi: [], per_unit: [], boleh_kelola: false,
+    per_hari: [], per_hari_atr: [], per_egi: [], per_unit: [], boleh_kelola: false, cuaca: null,
   }
   const hariHM = (D.per_hari || []).length ? D.per_hari : Array(31).fill(0)
   const hariATR = (D.per_hari_atr || []).length ? D.per_hari_atr : Array(31).fill(null)
@@ -251,6 +313,49 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
                   <BarisExcel key={e.egi} label={e.egi} nilai={fmtP(e.ma)} />
                 ))}
               </KartuSeksi>
+
+            {/* CUACA — replika blok Excel */}
+            <div className="bg-white rounded-xl border border-slate-200 p-2">
+              <div className="text-[9px] font-black uppercase tracking-wider text-slate-500 text-center border-b border-slate-100 pb-1 mb-1">
+                Cuaca Tgl {D.cuaca ? fmtTglPanjang(D.cuaca.tanggal) : '–'}
+              </div>
+              <div className="grid grid-cols-2 gap-1 text-center">
+                <div>
+                  <div className="text-[8px] font-black uppercase text-slate-400">Shift 1</div>
+                  <IkonCuaca jenis={D.cuaca?.cuaca_s1 || 'cerah'} />
+                  <div className="text-[9px] font-bold text-slate-600">{LABEL_CUACA[D.cuaca?.cuaca_s1] || '–'}</div>
+                </div>
+                <div>
+                  <div className="text-[8px] font-black uppercase text-slate-400">Shift 2</div>
+                  <IkonCuaca jenis={D.cuaca?.cuaca_s2 || 'cerah'} />
+                  <div className="text-[9px] font-bold text-slate-600">{LABEL_CUACA[D.cuaca?.cuaca_s2] || '–'}</div>
+                </div>
+              </div>
+              {D.boleh_kelola && (
+                <div className="mt-1.5 space-y-1 border-t border-slate-100 pt-1">
+                  <input type="date" value={cwTgl} onChange={(e) => setCwTgl(e.target.value)}
+                    className="w-full px-1.5 py-0.5 rounded border border-slate-200 text-[9px] font-bold" />
+                  <div className="grid grid-cols-2 gap-1">
+                    <select value={cwS1} onChange={(e) => setCwS1(e.target.value)}
+                      className="px-1 py-0.5 rounded border border-slate-200 text-[9px] font-bold">
+                      <option value="cerah">S1 ☀ Cerah</option>
+                      <option value="berawan">S1 ⛅ Berawan</option>
+                      <option value="hujan">S1 🌧 Hujan</option>
+                    </select>
+                    <select value={cwS2} onChange={(e) => setCwS2(e.target.value)}
+                      className="px-1 py-0.5 rounded border border-slate-200 text-[9px] font-bold">
+                      <option value="cerah">S2 ☀ Cerah</option>
+                      <option value="berawan">S2 ⛅ Berawan</option>
+                      <option value="hujan">S2 🌧 Hujan</option>
+                    </select>
+                  </div>
+                  <button onClick={simpanCuaca} disabled={muatCw || !cwTgl}
+                    className="w-full py-1 rounded bg-[#003D79] text-white text-[9px] font-black uppercase tracking-wider disabled:opacity-50">
+                    {muatCw ? 'menyimpan…' : 'Simpan Cuaca'}
+                  </button>
+                </div>
+              )}
+            </div>
         </div>
 
         <div className="space-y-1.5">
