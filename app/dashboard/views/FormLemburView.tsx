@@ -91,7 +91,7 @@ export default function FormLemburView({ title, onSuccess, data }: any) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-3 lg:space-y-6">
+    <div className="max-w-4xl lg:max-w-none mx-auto space-y-3 lg:space-y-6">
       <div className="bg-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border border-slate-100 shadow-sm">
         <h2 className="text-base font-black mb-3 lg:mb-5 tracking-tight"> {title}</h2>
         <form onSubmit={handleSubmit} className="space-y-2.5 lg:space-y-4">

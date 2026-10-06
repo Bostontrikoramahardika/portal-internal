@@ -131,7 +131,7 @@ export default function FormSakitView({ title, onSuccess, data }: any) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 lg:space-y-6 animate-in fade-in duration-500">
+    <div className="max-w-4xl lg:max-w-none mx-auto space-y-4 lg:space-y-6 animate-in fade-in duration-500">
       <div className="bg-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border shadow-xl">
         <h2 className="text-sm lg:text-2xl font-black mb-2">{currentConfig.icon} {title}</h2>
         <p className="text-xs text-slate-400 mb-4 lg:mb-6 font-medium">Laporkan ketidakhadiran dengan bukti dokumen lengkap.</p>

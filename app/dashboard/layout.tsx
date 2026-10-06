@@ -196,6 +196,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .sort((x, y) => x.urut - y.urut || x.judul.localeCompare(y.judul))
   })()
 
+  const itemAktif = (item: any) => {
+    const href = item.href || '/dashboard?menu=' + item.menu_key
+    const cur = searchParams ? searchParams.get('menu') : null
+    const im = href.includes('menu=') ? href.split('menu=')[1]?.split('&')[0] : null
+    return im ? cur === im : pathname === href && !cur
+  }
+  const [grupBuka, setGrupBuka] = useState<string>('')
+  useEffect(() => {
+    const g = grupSidebar.find((gr: any) => gr.items.some((it: any) => itemAktif(it)))
+    if (g) setGrupBuka((b) => b || g.judul)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, searchParams, menus])
+
   return (
     <AuthProvider
       user={currentUser}
@@ -277,11 +290,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Dashboard
             </Link>
 
-            {grupSidebar.map((grup) => (
-              <div key={grup.judul} className="pt-3">
-                <div className="px-3 pb-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                  {grup.judul}
-                </div>
+            {grupSidebar.map((grup) => {
+              const buka = grupBuka === grup.judul
+              return (
+              <div key={grup.judul} className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setGrupBuka(buka ? '' : grup.judul)}
+                  className={[
+                    'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl transition-colors',
+                    buka ? 'bg-slate-100 text-[#003d79]' : 'text-slate-600 hover:bg-slate-100',
+                  ].join(' ')}
+                >
+                  <span className="text-[10px] font-black uppercase tracking-widest">{grup.judul}</span>
+                  <svg className={'w-3 h-3 shrink-0 transition-transform ' + (buka ? 'rotate-90' : '')}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                {buka && <div className="mt-1 space-y-0.5 pl-1">
                 {grup.items.map((item) => {
                   const label = String(item.menu_label || item.menu_key).replace(/^[^A-Za-z0-9(]+/, '')
                   const href = item.href || '/dashboard?menu=' + item.menu_key
@@ -302,8 +329,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
                   )
                 })}
+                </div>}
               </div>
-            ))}
+              )
+            })}
           </div>
 
           <div className="p-4 border-t border-[#e2e8f0] bg-slate-50">
@@ -356,7 +385,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </header>
 
-          <div className="px-3 pt-2 pb-24 lg:px-8 lg:pt-6 lg:pb-10 max-w-lg lg:max-w-7xl w-full mx-auto">
+          <div className="px-3 pt-2 pb-24 lg:px-8 lg:pt-6 lg:pb-10 max-w-lg lg:max-w-none w-full mx-auto">
             <Suspense fallback={null}><MenuTabs menus={menus} /></Suspense>
             {children}
           </div>
@@ -374,15 +403,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {isNotifOpen && (
         <>
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[999]" onClick={() => setIsNotifOpen(false)} />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[1000] overflow-hidden">
-            <div className="p-8 bg-[#003D79] text-white flex justify-start items-center">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-[1000] overflow-hidden lg:top-20 lg:right-6 lg:left-auto lg:translate-x-0 lg:translate-y-0 lg:w-[400px] lg:max-w-none lg:rounded-2xl">
+            <div className="p-8 lg:p-4 bg-[#003D79] text-white flex justify-start items-center">
               <div>
-                <h3 className="font-black text-xl tracking-tight uppercase">Pusat Notifikasi</h3>
+                <h3 className="font-black text-xl lg:text-sm tracking-tight uppercase">Pusat Notifikasi</h3>
                 <p className="text-blue-200 text-[10px] font-bold uppercase tracking-[0.2em]">Update Real-time</p>
               </div>
-              <button onClick={() => setIsNotifOpen(false)} className="bg-white/10 hover:bg-white/20 h-10 w-10 flex items-center justify-center rounded-full transition-colors">✕</button>
+              <button onClick={() => setIsNotifOpen(false)} className="bg-white/10 hover:bg-white/20 h-10 w-10 lg:h-8 lg:w-8 flex items-center justify-center rounded-full transition-colors">✕</button>
             </div>
-            <div className="p-6 max-h-[70vh] overflow-y-auto bg-slate-50/50 space-y-4">
+            <div className="p-6 lg:p-3 max-h-[70vh] overflow-y-auto bg-slate-50/50 space-y-4 lg:space-y-2">
               {notifCount === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-5xl mb-4 opacity-20">🏝️</div>
