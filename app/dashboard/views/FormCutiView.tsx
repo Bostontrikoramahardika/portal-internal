@@ -258,7 +258,7 @@ setForm({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-3 lg:space-y-6">
+    <div className="max-w-4xl lg:max-w-none mx-auto space-y-3 lg:space-y-6">
       {mode === 'form' ? (
         /* MODE FORM PENGAJUAN CUTI */
         <div className="bg-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] border border-slate-100 shadow-sm">

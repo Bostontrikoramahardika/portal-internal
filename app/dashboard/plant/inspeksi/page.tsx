@@ -2,24 +2,10 @@
 
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { 
-  Wrench, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Trash2, 
-  Send, 
-  Plus, 
-  ExternalLink,
-  Calendar,
-  User,
-  MapPin,
-  Clock,
-  ShieldAlert,
-  FileText
-} from 'lucide-react';
+import { Wrench, AlertTriangle, Trash2, Send, Plus } from 'lucide-react';
 
 import StatBanner from '@/app/components/std/StatBanner'
+import { CHECKLIST_TEMPLATES, getInspectionReference, resolveInspectionModel, supportsExcavatorAttachment } from './checklist-templates'
 interface UnitData {
   id: string;
   kode_unit: string;
@@ -31,9 +17,14 @@ interface UnitData {
   status: string;
 }
 
+const getUnitModelDescriptor = (unit: UnitData): string =>
+  `${unit.kode_unit} ${unit.nama_unit} ${unit.model_unit} ${unit.kategori}`;
+
 interface ChecklistItem {
   id: string;
+  section: string;
   item: string;
+  actual: string;
   status: 'BAIK' | 'RUSAK' | 'NA';
   keterangan: string;
 }
@@ -67,9 +58,13 @@ export default function FormInspeksiPage() {
   const [tanggal, setTanggal] = useState<string>(new Date().toISOString().split('T')[0]);
   const [shift, setShift] = useState<string>('Siang (Shift 1)');
   const [pekerjaan, setPekerjaan] = useState<string>('');
+  const [operatorName, setOperatorName] = useState<string>('');
+  const [mechanicName, setMechanicName] = useState<string>('');
   const [hmActual, setHmActual] = useState<string>('');
   const [lokasi, setLokasi] = useState<string>('');
   const [attachment, setAttachment] = useState<string>('KOSONG');
+  const [inspectionScore, setInspectionScore] = useState<string>('');
+  const [inspectionNote, setInspectionNote] = useState<string>('');
 
   const [checklistGeneral, setChecklistGeneral] = useState<ChecklistItem[]>([]);
   const [checklistAttachment, setChecklistAttachment] = useState<ChecklistItem[]>([]);
@@ -123,51 +118,87 @@ export default function FormInspeksiPage() {
     fetchUnits();
   }, [userInfo.site]);
 
-  // Handle Pilih Unit
+  // Pilih template internal untuk empat model yang telah direview; template import tetap menjadi fallback model lain.
   const handleSelectUnit = async (kode: string) => {
     setSelectedUnitKode(kode);
     const found = siteUnits.find(u => u.kode_unit === kode) || null;
     setSelectedUnit(found);
+    setAttachment('KOSONG');
+    setChecklistAttachment([]);
 
-    if (found) {
-      const modelKey = found.model_unit || 'GENERAL';
-      try {
-        const res = await fetch(`/api/plant/format-inspeksi?key=${encodeURIComponent(modelKey)}`);
-        const json = await res.json();
-        if (json.success && Array.isArray(json.items) && json.items.length > 0) {
-          setChecklistGeneral(json.items.map((it: string, idx: number) => ({
-            id: `gen-${idx + 1}`,
-            item: it,
-            status: 'BAIK',
-            keterangan: ''
-          })));
-          return;
-        }
-      } catch (err) {}
-
-      // Default jika belum di-import
-      const typeStr = (found.kode_unit + ' ' + found.model_unit + ' ' + found.kategori).toUpperCase();
-      setChecklistGeneral(getTemplateChecklist(typeStr));
-    } else {
+    if (!found) {
       setChecklistGeneral([]);
+      return;
     }
+
+    const modelKey = resolveInspectionModel(getUnitModelDescriptor(found));
+    if (modelKey !== 'PC200' && modelKey !== 'OTHER') {
+      const sections = CHECKLIST_TEMPLATES[modelKey].sections;
+      setChecklistGeneral(sections.flatMap((section, sectionIndex) =>
+        section.items.map((item, itemIndex) => ({
+          id: `gen-${sectionIndex + 1}-${itemIndex + 1}`,
+          section: section.title,
+          item,
+          actual: '',
+          status: 'BAIK' as const,
+          keterangan: ''
+        }))
+      ));
+      return;
+    }
+
+    const templateKey = found.model_unit || 'GENERAL';
+    try {
+      const res = await fetch(`/api/plant/format-inspeksi?key=${encodeURIComponent(templateKey)}`);
+      const json = await res.json();
+      if (json.success && Array.isArray(json.items) && json.items.length > 0) {
+        setChecklistGeneral(json.items.map((item: string, idx: number) => ({
+          id: `gen-${idx + 1}`,
+          section: 'PEMERIKSAAN UMUM',
+          item,
+          actual: '',
+          status: 'BAIK' as const,
+          keterangan: ''
+        })));
+        return;
+      }
+    } catch (err) {
+      console.error('Gagal memuat template inspeksi:', err);
+    }
+
+    // Fallback lama dipertahankan untuk PC200 dan model yang belum memiliki template khusus.
+    const typeStr = getUnitModelDescriptor(found).toUpperCase();
+    setChecklistGeneral(getTemplateChecklist(typeStr));
   };
 
   const getTemplateChecklist = (type: string): ChecklistItem[] => {
+    let section = 'PEMERIKSAAN UMUM';
     let items: string[] = [
-      'Oli Mesin & Level Radiator Coolant',
-      'Kebocoran Oli Hidrolik & Hose Main Pump',
-      'Sistem Swing, Reduction Gear & Pinion',
-      'Track Link, Shoe, Roller, Idler & Sprocket',
-      'Boom, Arm, Bucket & Cylinder Pin',
-      'Sistem Kelistrikan, Lampu Kerja & Horn',
-      'Kabin Operator & System AC',
-      'Emergency Stop, Safety Belt & APAR'
+      'Level/kebocoran engine oil dan coolant',
+      'Kebocoran hydraulic oil, hose, dan fitting',
+      'Fungsi power train / travel dan bunyi abnormal',
+      'Kondisi undercarriage sesuai tipe unit',
+      'Work equipment, pin/bushing, dan kelonggaran',
+      'Kelistrikan, lampu kerja, alarm, dan horn',
+      'Kabin operator, seat belt, dan APAR'
     ];
+
+    if (type.includes('GRADER')) {
+      section = 'MOTOR GRADER';
+      items = ['Engine/cooling/fuel', 'Transmission dan tandem drive', 'Ban, axle, frame, dan articulation', 'Steering, brake, dan hydraulic', 'Circle, drawbar, moldboard, dan cutting edge', 'Kelistrikan dan safety'];
+    } else if (type.includes('DOZER') || type.includes('BULLDOZER')) {
+      section = 'CRAWLER DOZER';
+      items = ['Engine/cooling/fuel', 'Power train, steering, dan brake', 'Hydraulic system', 'Track shoe, link, roller, idler, sprocket, dan tension', 'Blade/ripper dan work equipment', 'Kelistrikan dan safety'];
+    } else if (type.includes('EXCAVATOR') || type.includes('PC')) {
+      section = 'EXCAVATOR';
+      items = ['Engine/cooling/fuel', 'Hydraulic, swing, dan travel', 'Undercarriage', 'Boom, arm, linkage, dan cylinder', 'Kelistrikan dan safety'];
+    }
 
     return items.map((item, idx) => ({
       id: `gen-${idx + 1}`,
+      section,
       item,
+      actual: '',
       status: 'BAIK',
       keterangan: ''
     }));
@@ -175,36 +206,41 @@ export default function FormInspeksiPage() {
 
   const handleAttachmentChange = async (val: string) => {
     setAttachment(val);
-    if (val !== 'KOSONG') {
-      try {
-        const res = await fetch(`/api/plant/format-inspeksi?key=${encodeURIComponent(val)}`);
-        const json = await res.json();
-        if (json.success && Array.isArray(json.items) && json.items.length > 0) {
-          setChecklistAttachment(json.items.map((it: string, idx: number) => ({
-            id: `att-${idx + 1}`,
-            item: it,
-            status: 'BAIK',
-            keterangan: ''
-          })));
-          return;
-        }
-      } catch (err) {}
-
-      if (val === 'BREAKER') {
-        setChecklistAttachment([
-          { id: 'att-1', item: 'Kondisi Chisel / Moil Point Breaker', status: 'BAIK', keterangan: '' },
-          { id: 'att-2', item: 'Kebocoran Hoses & Fitting Breaker', status: 'BAIK', keterangan: '' },
-          { id: 'att-3', item: 'Accumulator Pressure & Baut Bracket', status: 'BAIK', keterangan: '' }
-        ]);
-      } else if (val === 'BUCKET') {
-        setChecklistAttachment([
-          { id: 'att-1', item: 'Kondisi Tooth Bucket & Lock Pin', status: 'BAIK', keterangan: '' },
-          { id: 'att-2', item: 'Side Cutter & Wear Plate Bucket', status: 'BAIK', keterangan: '' },
-          { id: 'att-3', item: 'Bush & Pin Bucket Assembly', status: 'BAIK', keterangan: '' }
-        ]);
-      }
-    } else {
+    if (val === 'KOSONG') {
       setChecklistAttachment([]);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/plant/format-inspeksi?key=${encodeURIComponent(val)}`);
+      const json = await res.json();
+      if (json.success && Array.isArray(json.items) && json.items.length > 0) {
+        setChecklistAttachment(json.items.map((item: string, idx: number) => ({
+          id: `att-${idx + 1}`,
+          section: val === 'BREAKER' ? 'HYDRAULIC BREAKER' : 'BUCKET',
+          item,
+          actual: '',
+          status: 'BAIK' as const,
+          keterangan: ''
+        })));
+        return;
+      }
+    } catch (err) {
+      console.error('Gagal memuat template attachment:', err);
+    }
+
+    if (val === 'BREAKER') {
+      setChecklistAttachment([
+        { id: 'att-1', section: 'HYDRAULIC BREAKER', item: 'Kondisi chisel / moil point', actual: '', status: 'BAIK', keterangan: '' },
+        { id: 'att-2', section: 'HYDRAULIC BREAKER', item: 'Kebocoran hose dan fitting', actual: '', status: 'BAIK', keterangan: '' },
+        { id: 'att-3', section: 'HYDRAULIC BREAKER', item: 'Accumulator/bracket: kondisi luar dan baut', actual: '', status: 'BAIK', keterangan: '' }
+      ]);
+    } else if (val === 'BUCKET') {
+      setChecklistAttachment([
+        { id: 'att-1', section: 'BUCKET', item: 'Tooth / adapter dan lock pin', actual: '', status: 'BAIK', keterangan: '' },
+        { id: 'att-2', section: 'BUCKET', item: 'Cutting edge, side cutter, dan wear plate', actual: '', status: 'BAIK', keterangan: '' },
+        { id: 'att-3', section: 'BUCKET', item: 'Pin/bushing dan kelonggaran linkage', actual: '', status: 'BAIK', keterangan: '' }
+      ]);
     }
   };
 
@@ -212,8 +248,24 @@ export default function FormInspeksiPage() {
     setChecklistGeneral(prev => prev.map(item => item.id === id ? { ...item, status } : item));
   };
 
+  const updateGeneralActual = (id: string, actual: string) => {
+    setChecklistGeneral(prev => prev.map(item => item.id === id ? { ...item, actual } : item));
+  };
+
   const updateGeneralKet = (id: string, keterangan: string) => {
     setChecklistGeneral(prev => prev.map(item => item.id === id ? { ...item, keterangan } : item));
+  };
+
+  const updateAttachmentStatus = (id: string, status: 'BAIK' | 'RUSAK' | 'NA') => {
+    setChecklistAttachment(prev => prev.map(item => item.id === id ? { ...item, status } : item));
+  };
+
+  const updateAttachmentActual = (id: string, actual: string) => {
+    setChecklistAttachment(prev => prev.map(item => item.id === id ? { ...item, actual } : item));
+  };
+
+  const updateAttachmentKet = (id: string, keterangan: string) => {
+    setChecklistAttachment(prev => prev.map(item => item.id === id ? { ...item, keterangan } : item));
   };
 
   const addTemuan = () => setCatatanTemuan(prev => [...prev, { deskripsi: '', tindakan: '', prioritas: 'MEDIUM' }]);
@@ -232,23 +284,46 @@ export default function FormInspeksiPage() {
     setSubmitting(true);
     setSuccessMsg(null);
 
+    const modelKey = resolveInspectionModel(getUnitModelDescriptor(selectedUnit));
     const payload = {
       unit_id: selectedUnit.id,
       no_lambung: selectedUnit.kode_unit,
+      no_unit: selectedUnit.kode_unit,
       model_unit: selectedUnit.model_unit,
       sn_unit: selectedUnit.serial_number,
       tanggal,
       inspector: userInfo.name,
+      inspector_nrp: userInfo.nrp,
+      inspector_nama: userInfo.name,
       site: userInfo.site,
       shift,
       pekerjaan,
+      operator: operatorName,
+      mekanik: mechanicName,
       hm_actual: hmActual,
+      hm_akhir: hmActual,
       lokasi,
       attachment,
       checklist_general: checklistGeneral,
       checklist_attachment: checklistAttachment,
+      checklist: {
+        general: checklistGeneral,
+        attachment: checklistAttachment,
+        operator: operatorName,
+        mekanik: mechanicName,
+        inspection_score: inspectionScore ? Number(inspectionScore) : null,
+        inspector_note: inspectionNote,
+        pekerjaan,
+        hm_actual: hmActual,
+        lokasi
+      },
       catatan_temuan: catatanTemuan,
-      backlog_items: backlogItems
+      temuan_tindakan: catatanTemuan,
+      backlog_items: backlogItems,
+      type_breaker: attachment === 'BREAKER' ? 'BREAKER' : '',
+      type_chisel: '',
+      status_kelayakan: 'READY',
+      jenis_unit: (modelKey === 'OTHER' || modelKey === 'PC210-10M0' || modelKey === 'PC200') ? selectedUnit.model_unit : modelKey
     };
 
     try {
@@ -273,6 +348,21 @@ export default function FormInspeksiPage() {
   };
 
   const currentPeriod = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  const selectedModelKey = selectedUnit
+    ? resolveInspectionModel(getUnitModelDescriptor(selectedUnit))
+    : 'OTHER';
+  const standardNote = selectedUnit
+    ? getInspectionReference(selectedModelKey, selectedUnit.model_unit)
+    : '';
+  const showAttachmentControls = selectedUnit
+    ? supportsExcavatorAttachment(getUnitModelDescriptor(selectedUnit))
+    : false;
+  const checklistGroups = Array.from(checklistGeneral.reduce((groups, item, index) => {
+    const group = groups.get(item.section) || [];
+    group.push({ item, index });
+    groups.set(item.section, group);
+    return groups;
+  }, new Map<string, { item: ChecklistItem; index: number }[]>()));
 
   return (
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
@@ -281,15 +371,10 @@ export default function FormInspeksiPage() {
 
       <div className="max-w-4xl mx-auto space-y-3">
         
-        {/* Header Title Section */}
-        <div className="bg-[#003d79] rounded-xl p-3 sm:p-4 text-white shadow-md text-center space-y-1">
-          <h1 className="text-xl sm:text-2xl font-black tracking-wide uppercase">
-            FORM INSPEKSI UNIT
-          </h1>
-          <p className="text-xs sm:text-sm font-semibold opacity-90">{userInfo.site}</p>
-          <div className="inline-block bg-[#003d79]/80 text-blue-100 px-3 py-0.5 rounded-full text-xs font-medium">
-            Periode {currentPeriod}
-          </div>
+        {/* Info ringkas di bawah StatBanner; hindari header biru ganda */}
+        <div className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+          <span className="font-semibold text-slate-700">{userInfo.site}</span>
+          <span>Periode {currentPeriod}</span>
         </div>
 
         {/* Success Alert */}
@@ -301,6 +386,10 @@ export default function FormInspeksiPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="rounded-xl border border-slate-200 border-l-4 border-l-blue-600 bg-white p-3 text-xs text-slate-700 sm:text-sm">
+            <strong className="block font-bold text-blue-900">Form Inspeksi Berkala · Tim Plant</strong>
+            <span className="mt-1 block">Form pemeriksaan berkala Tim Plant, terpisah dari pemeriksaan harian operator dan servis OEM berbasis HM. Catat actual, status, dan tindak lanjut temuan.</span>
+          </div>
 
           {/* GRID HEADER DATA UNIT */}
           <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
@@ -368,9 +457,33 @@ export default function FormInspeksiPage() {
               />
             </div>
 
+            {/* Operator */}
+            <div className="space-y-1">
+              <label className="font-semibold text-slate-700">5. Operator</label>
+              <input
+                type="text"
+                value={operatorName}
+                onChange={(e) => setOperatorName(e.target.value)}
+                placeholder="Nama operator"
+                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+              />
+            </div>
+
+            {/* Mekanik */}
+            <div className="space-y-1">
+              <label className="font-semibold text-slate-700">6. Mekanik</label>
+              <input
+                type="text"
+                value={mechanicName}
+                onChange={(e) => setMechanicName(e.target.value)}
+                placeholder="Nama mekanik pemeriksa"
+                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+              />
+            </div>
+
             {/* Shift */}
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">5. Shift *</label>
+              <label className="font-semibold text-slate-700">7. Shift *</label>
               <select
                 value={shift}
                 onChange={(e) => setShift(e.target.value)}
@@ -383,7 +496,7 @@ export default function FormInspeksiPage() {
 
             {/* Pekerjaan */}
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">6. Pekerjaan Unit *</label>
+              <label className="font-semibold text-slate-700">8. Pekerjaan Unit *</label>
               <input
                 type="text"
                 placeholder="Contoh: Overburden / Ripping / Loading"
@@ -396,7 +509,7 @@ export default function FormInspeksiPage() {
 
             {/* SN Unit */}
             <div className="space-y-1">
-              <label className="font-semibold text-blue-800">7. SN Unit (Serial Number)</label>
+              <label className="font-semibold text-blue-800">9. SN Unit (Serial Number)</label>
               <input
                 type="text"
                 value={selectedUnit?.serial_number || '-'}
@@ -407,7 +520,7 @@ export default function FormInspeksiPage() {
 
             {/* HM Actual */}
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">8. HM Actual *</label>
+              <label className="font-semibold text-slate-700">10. HM Actual *</label>
               <input
                 type="number"
                 step="0.1"
@@ -421,7 +534,7 @@ export default function FormInspeksiPage() {
 
             {/* Lokasi */}
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">9. Lokasi Unit *</label>
+              <label className="font-semibold text-slate-700">11. Lokasi Unit *</label>
               <input
                 type="text"
                 placeholder="Contoh: PIT 2 / Disposal West"
@@ -432,22 +545,24 @@ export default function FormInspeksiPage() {
               />
             </div>
 
-            {/* Attachment Terpasang */}
-            <div className="space-y-1 sm:col-span-2 md:col-span-3 pt-1 border-t border-slate-100">
-              <label className="font-semibold text-slate-800 flex items-center gap-1">
-                <Wrench className="w-4 h-4 text-blue-600" />
-                <span>10. Attachment Terpasang</span>
-              </label>
-              <select
-                value={attachment}
-                onChange={(e) => handleAttachmentChange(e.target.value)}
-                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white font-medium"
-              >
-                <option value="KOSONG">Tanpa Attachment / Kosong</option>
-                <option value="BUCKET">Bucket Unit</option>
-                <option value="BREAKER">Hydraulic Breaker</option>
-              </select>
-            </div>
+            {showAttachmentControls && (
+              <div className="space-y-1 sm:col-span-2 md:col-span-3 pt-1 border-t border-slate-100">
+                <label className="font-semibold text-slate-800 flex items-center gap-1">
+                  <Wrench className="w-4 h-4 text-blue-600" />
+                  <span>12. Attachment Terpasang · Excavator</span>
+                </label>
+                <select
+                  value={attachment}
+                  onChange={(e) => handleAttachmentChange(e.target.value)}
+                  className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white font-medium"
+                >
+                  <option value="KOSONG">Tidak ada / kosong</option>
+                  <option value="BUCKET">Bucket Unit</option>
+                  <option value="BREAKER">Hydraulic Breaker</option>
+                </select>
+                <p className="text-[11px] text-slate-500">Checklist Bucket dan Breaker terpisah; tidak berlaku untuk dozer atau grader.</p>
+              </div>
+            )}
 
           </div>
 
@@ -474,53 +589,45 @@ export default function FormInspeksiPage() {
                 </h2>
               </div>
 
-              <div className="space-y-2">
-                {checklistGeneral.map((chk, index) => (
-                  <div key={chk.id} className="p-2 sm:p-3 rounded-lg border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm">
-                    <div className="font-medium text-slate-800 flex-1">
-                      {index + 1}. {chk.item}
-                    </div>
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+                <strong className="block font-bold">Standar / Rujukan</strong>
+                <p className="mt-1">{standardNote}</p>
+                <p className="mt-1 text-blue-800">Catat hasil aktual. Nilai wear/repair limit tidak diasumsikan; cocokkan ke manual unit yang benar.</p>
+              </div>
 
-                    <div className="flex items-center gap-2">
-                      <div className="flex border border-slate-300 rounded-lg overflow-hidden bg-white">
-                        <button
-                          type="button"
-                          onClick={() => updateGeneralStatus(chk.id, 'BAIK')}
-                          className={`px-2.5 py-1 text-xs font-bold transition-all ${
-                            chk.status === 'BAIK' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-100'
-                          }`}
-                        >
-                          BAIK
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateGeneralStatus(chk.id, 'RUSAK')}
-                          className={`px-2.5 py-1 text-xs font-bold transition-all ${
-                            chk.status === 'RUSAK' ? 'bg-red-600 text-white' : 'text-slate-600 hover:bg-slate-100'
-                          }`}
-                        >
-                          RUSAK
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateGeneralStatus(chk.id, 'NA')}
-                          className={`px-2.5 py-1 text-xs font-bold transition-all ${
-                            chk.status === 'NA' ? 'bg-slate-600 text-white' : 'text-slate-600 hover:bg-slate-100'
-                          }`}
-                        >
-                          N/A
-                        </button>
-                      </div>
-
-                      {chk.status === 'RUSAK' && (
-                        <input
-                          type="text"
-                          placeholder="Detail kerusakan..."
-                          value={chk.keterangan}
-                          onChange={(e) => updateGeneralKet(chk.id, e.target.value)}
-                          className="p-1.5 text-xs border border-red-300 rounded focus:ring-1 focus:ring-red-500 bg-white"
-                        />
-                      )}
+              <div className="space-y-4">
+                {checklistGroups.map(([sectionName, entries]) => (
+                  <div key={sectionName}>
+                    <h3 className="mb-2 border-b border-slate-200 pb-1 text-[11px] font-black uppercase tracking-wide text-blue-800">{sectionName}</h3>
+                    <div className="space-y-2">
+                      {entries.map(({ item: chk, index }) => (
+                        <div key={chk.id} className="rounded-lg border border-slate-200 bg-slate-50/60 p-2 sm:p-3">
+                          <div className="font-medium text-slate-800 text-xs sm:text-sm">{index + 1}. {chk.item}</div>
+                          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <input
+                              type="text"
+                              value={chk.actual}
+                              onChange={(e) => updateGeneralActual(chk.id, e.target.value)}
+                              placeholder="Actual / hasil ukur atau kondisi"
+                              className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white p-2 text-xs focus:ring-2 focus:ring-blue-500"
+                            />
+                            <div className="flex w-fit overflow-hidden rounded-lg border border-slate-300 bg-white">
+                              <button type="button" onClick={() => updateGeneralStatus(chk.id, 'BAIK')} className={`px-3 py-1.5 text-xs font-bold ${chk.status === 'BAIK' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>OK</button>
+                              <button type="button" onClick={() => updateGeneralStatus(chk.id, 'RUSAK')} className={`px-3 py-1.5 text-xs font-bold ${chk.status === 'RUSAK' ? 'bg-red-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>NG</button>
+                              <button type="button" onClick={() => updateGeneralStatus(chk.id, 'NA')} className={`px-3 py-1.5 text-xs font-bold ${chk.status === 'NA' ? 'bg-slate-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>N/A</button>
+                            </div>
+                          </div>
+                          {chk.status === 'RUSAK' && (
+                            <input
+                              type="text"
+                              value={chk.keterangan}
+                              onChange={(e) => updateGeneralKet(chk.id, e.target.value)}
+                              placeholder="Temuan / tindak lanjut"
+                              className="mt-2 w-full rounded-lg border border-red-300 bg-white p-2 text-xs focus:ring-1 focus:ring-red-500"
+                            />
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -540,33 +647,31 @@ export default function FormInspeksiPage() {
 
               <div className="space-y-2">
                 {checklistAttachment.map((chk, index) => (
-                  <div key={chk.id} className="p-2 sm:p-3 rounded-lg border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm">
-                    <div className="font-medium text-slate-800 flex-1">
-                      {index + 1}. {chk.item}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="flex border border-slate-300 rounded-lg overflow-hidden bg-white">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setChecklistAttachment(prev => prev.map(item => item.id === chk.id ? { ...item, status: 'BAIK' } : item));
-                          }}
-                          className={`px-2.5 py-1 text-xs font-bold ${chk.status === 'BAIK' ? 'bg-emerald-600 text-white' : 'text-slate-600'}`}
-                        >
-                          BAIK
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setChecklistAttachment(prev => prev.map(item => item.id === chk.id ? { ...item, status: 'RUSAK' } : item));
-                          }}
-                          className={`px-2.5 py-1 text-xs font-bold ${chk.status === 'RUSAK' ? 'bg-red-600 text-white' : 'text-slate-600'}`}
-                        >
-                          RUSAK
-                        </button>
+                  <div key={chk.id} className="rounded-lg border border-slate-200 bg-slate-50 p-2 sm:p-3">
+                    <div className="font-medium text-slate-800 text-xs sm:text-sm">{index + 1}. {chk.item}</div>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <input
+                        type="text"
+                        value={chk.actual}
+                        onChange={(e) => updateAttachmentActual(chk.id, e.target.value)}
+                        placeholder="Actual / hasil pemeriksaan"
+                        className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white p-2 text-xs"
+                      />
+                      <div className="flex w-fit overflow-hidden rounded-lg border border-slate-300 bg-white">
+                        <button type="button" onClick={() => updateAttachmentStatus(chk.id, 'BAIK')} className={`px-3 py-1.5 text-xs font-bold ${chk.status === 'BAIK' ? 'bg-emerald-600 text-white' : 'text-slate-600'}`}>OK</button>
+                        <button type="button" onClick={() => updateAttachmentStatus(chk.id, 'RUSAK')} className={`px-3 py-1.5 text-xs font-bold ${chk.status === 'RUSAK' ? 'bg-red-600 text-white' : 'text-slate-600'}`}>NG</button>
+                        <button type="button" onClick={() => updateAttachmentStatus(chk.id, 'NA')} className={`px-3 py-1.5 text-xs font-bold ${chk.status === 'NA' ? 'bg-slate-600 text-white' : 'text-slate-600'}`}>N/A</button>
                       </div>
                     </div>
+                    {chk.status === 'RUSAK' && (
+                      <input
+                        type="text"
+                        value={chk.keterangan}
+                        onChange={(e) => updateAttachmentKet(chk.id, e.target.value)}
+                        placeholder="Temuan / tindak lanjut"
+                        className="mt-2 w-full rounded-lg border border-red-300 bg-white p-2 text-xs"
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -624,7 +729,7 @@ export default function FormInspeksiPage() {
                         <select
                           value={tm.prioritas}
                           onChange={(e) => {
-                            const val = e.target.value as any;
+                            const val = e.target.value as TemuanItem['prioritas'];
                             setCatatanTemuan(prev => prev.map((t, i) => i === idx ? { ...t, prioritas: val } : t));
                           }}
                           className="w-full p-1.5 border border-slate-300 rounded bg-white font-semibold"
@@ -748,6 +853,41 @@ export default function FormInspeksiPage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {selectedUnit && (
+            <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-slate-200 space-y-3">
+              <div className="border-b pb-2">
+                <h2 className="font-bold text-slate-800 text-sm sm:text-base uppercase">Kesimpulan Inspeksi · Inspector</h2>
+                <p className="mt-1 text-[11px] text-slate-500">Isi nilai 1–100 dan keterangan dari Inspector.</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700 text-xs">Nilai inspeksi (1–100) *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    step="1"
+                    value={inspectionScore}
+                    onChange={(e) => setInspectionScore(e.target.value)}
+                    required
+                    placeholder="1–100"
+                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700 text-xs">Keterangan Inspector</label>
+                  <textarea
+                    value={inspectionNote}
+                    onChange={(e) => setInspectionNote(e.target.value)}
+                    rows={3}
+                    placeholder="Ringkasan kondisi, temuan penting, atau rekomendasi"
+                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                  />
+                </div>
+              </div>
             </div>
           )}
 

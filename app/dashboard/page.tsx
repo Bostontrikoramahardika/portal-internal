@@ -394,7 +394,7 @@ function IdentityView({ data }: { data: any }) {
   )
 
   return (
-    <div className="max-w-2xl mx-auto space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6 pb-32 animate-in fade-in duration-500">
+    <div className="max-w-2xl lg:max-w-none mx-auto space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6 pb-32 animate-in fade-in duration-500">
       <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
         <SectionTitle>Personal Information</SectionTitle>
         <div className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
@@ -1092,7 +1092,7 @@ function AbsensiClockView({ title }: any) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto animate-in fade-in duration-700">
+    <div className="max-w-4xl lg:max-w-none mx-auto animate-in fade-in duration-700">
       
       {/* 🌟 BANNER KECIL: Notifikasi Dokumen Expired */}
       {dokumenExpired.length > 0 && (
@@ -1877,7 +1877,7 @@ function ImportExcel({ title, table }: any) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
+    <div className="max-w-4xl lg:max-w-none mx-auto animate-in fade-in duration-500">
       <h2 className="text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight"> {title}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-slate-900 text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden">
@@ -1927,7 +1927,7 @@ function ChangeLoginView({ title }: any) {
   }
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="max-w-lg lg:max-w-3xl mx-auto">
       <h2 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black mb-6">🔑 {title}</h2>
       <div className="bg-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border-2 border-slate-50 shadow-2xl">
         {msg.text && <div className={`p-4 rounded-2xl mb-6 text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
@@ -1960,7 +1960,7 @@ function ExportAbsensiView({ title }: any) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl lg:max-w-none mx-auto">
       <h2 className="text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight"> {title}</h2>
       <div className="bg-white p-10 rounded-[3rem] border shadow-2xl space-y-8">
         <div className="flex justify-between items-center border-b pb-6 border-slate-50">
@@ -2029,7 +2029,7 @@ function RosterUpload({ title }: any) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto animate-in fade-in duration-500">
+    <div className="max-w-2xl lg:max-w-none mx-auto animate-in fade-in duration-500">
       <h2 className="text-xl lg:text-3xl font-black mb-8 text-slate-900 tracking-tight">📅 {title}</h2>
       <div className="bg-white p-10 rounded-[3rem] border-4 border-slate-50 shadow-2xl">
         {msg.text && <div className={`p-4 rounded-2xl mb-8 text-sm font-black ${msg.type === 'ok' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>{msg.text}</div>}
@@ -2068,7 +2068,7 @@ function KPISayaRaportView({ data }: any) {
   )
 
   return (
-    <div className="max-w-4xl mx-auto pb-10 animate-in fade-in duration-700">
+    <div className="max-w-4xl lg:max-w-none mx-auto pb-10 animate-in fade-in duration-700">
       <div className="bg-slate-900 text-white p-10 rounded-t-[3rem] relative overflow-hidden shadow-2xl border-x border-t border-slate-800">
         <div className="absolute top-0 right-0 p-12 opacity-5 text-[10rem] font-black italic select-none pointer-events-none tracking-tighter">BTM</div>
         <div className="relative z-10">
