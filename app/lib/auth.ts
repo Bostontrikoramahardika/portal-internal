@@ -27,7 +27,10 @@ const ROLE_PRIORITY = [
   'gl_produksi',
   'gl_plant',
 
-  // ── Level 5: Karyawan ──
+  // ── Level 5: Team Plant (mekanik / helper / welder) ──
+  'plant_team',
+
+  // ── Level 6: Karyawan ──
   'employee',
 
   // ── Legacy (backward compat) ──
@@ -71,7 +74,10 @@ export async function loginByNrp(nrp: string) {
   if (!roles.includes('karyawan')) roles.push('karyawan')
   
   // Ambil scope_site dari role yang punya scope (biasanya hrga_site/admin_site)
-  const scopeSite = (roleRows || []).find(r => r.scope_site)?.scope_site || null
+  // 🌟 Team Plant: scope role plant_team diprioritaskan (dipakai untuk akun
+  // yang kolom employees.site-nya NULL tetapi tetap punya akses site PPA-MLP).
+  const plantTeamScope = (roleRows || []).find(r => r.role === 'plant_team' && r.scope_site)?.scope_site
+  const scopeSite = plantTeamScope || (roleRows || []).find(r => r.scope_site)?.scope_site || null
 
   // 3. Buat session token
   const token = uuidv4()
@@ -124,8 +130,18 @@ export async function getSession(token: string) {
     .eq('nrp', data.nrp)
     .single()
 
-  // 🌟 v1.5.0: Ambil scope_site dari session ATAU dari roles (fallback)
-  let scopeSite = data.scope_site || null
+  // 🌟 v1.5.0: Ambil scope_site dari session, tapi kalau user punya role
+  // plant_team, scope dari role itu yang dipakai (penting untuk akun dengan
+  // employees.site NULL agar tetap mendapat akses site PPA-MLP).
+  const { data: freshScopes } = await supabase
+    .from('roles')
+    .select('role, scope_site')
+    .eq('nrp', data.nrp)
+    .eq('active', true)
+    .not('scope_site', 'is', null)
+
+  const plantTeamScope = (freshScopes || []).find((r: any) => r.role === 'plant_team' && r.scope_site)?.scope_site
+  let scopeSite = plantTeamScope || data.scope_site || null
   if (!scopeSite) {
     const { data: roleData } = await supabase
       .from('roles')

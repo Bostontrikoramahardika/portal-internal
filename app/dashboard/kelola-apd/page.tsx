@@ -135,9 +135,33 @@ function getNextBulan() {
 // MAIN COMPONENT
 // ════════════════════════════════════════════
 export default function KelolaApdPage() {
+  // ── Deteksi Team Plant dari cache sesi portal ──
+  // Team Plant hanya boleh membuka Plan dalam mode baca-saja.
+  const [isPlantTeam, setIsPlantTeam] = useState(false)
+
+  useEffect(() => {
+    try {
+      const raw =
+        localStorage.getItem('btm_user_cache_v1') ||
+        localStorage.getItem('btm_user_v1') ||
+        localStorage.getItem('btm_user_session') ||
+        localStorage.getItem('user')
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      const roleList: string[] = Array.isArray(parsed.roles)
+        ? parsed.roles.map((r: any) => String(r || '').toLowerCase())
+        : [String(parsed.role || '').toLowerCase()]
+      setIsPlantTeam(roleList.includes('plant_team'))
+    } catch {}
+  }, [])
+
   const [activeTab, setActiveTab] = useState<Tab>('verifikasi')
 
-  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
+  useEffect(() => {
+    if (isPlantTeam) setActiveTab('plan')
+  }, [isPlantTeam])
+
+  const allTabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'verifikasi', label: 'Verifikasi', icon: <CheckCircle size={15} /> },
     { key: 'monitoring', label: 'Monitoring', icon: <BarChart3 size={15} /> },
     { key: 'master', label: 'Master', icon: <Shield size={15} /> },
@@ -145,6 +169,8 @@ export default function KelolaApdPage() {
     { key: 'stok', label: 'Stok', icon: <Box size={15} /> },
     { key: 'plan', label: 'Plan Bulanan', icon: <Calendar size={15} /> },
   ]
+
+  const tabs = isPlantTeam ? allTabs.filter(t => t.key === 'plan') : allTabs
 
   return (
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
@@ -160,7 +186,7 @@ export default function KelolaApdPage() {
         {activeTab === 'master' && <TabMaster />}
         {activeTab === 'distribusi' && <TabDistribusi />}
         {activeTab === 'stok' && <TabStok />}
-        {activeTab === 'plan' && <TabPlan />}
+        {activeTab === 'plan' && <TabPlan readOnly={isPlantTeam} />}
       </div>
     </div>
   )
@@ -1521,7 +1547,7 @@ function TabStok() {
 // ════════════════════════════════════════════
 // TAB 6: PLAN BULANAN
 // ════════════════════════════════════════════
-function TabPlan() {
+function TabPlan({ readOnly = false }: { readOnly?: boolean }) {
   const [bulan, setBulan] = useState(getNextBulan())
   const [data, setData] = useState<PlanRow[]>([])
   const [summary, setSummary] = useState<PlanSummary | null>(null)
@@ -1610,7 +1636,9 @@ function TabPlan() {
       {/* Header + Filter */}
       <div>
         <h2 className="font-black text-[#003D79]">Plan Bulanan</h2>
-        <p className="text-xs text-[#5a6a7e]">Auto-generate dari lifetime APD</p>
+        <p className="text-xs text-[#5a6a7e]">
+          {readOnly ? 'Mode baca-saja — hanya menampilkan Plan site Anda.' : 'Auto-generate dari lifetime APD'}
+        </p>
       </div>
 
       <div className="flex gap-2">
@@ -1698,11 +1726,14 @@ function TabPlan() {
                             {item.override && (
                               <div className="flex items-center gap-1 mt-1">
                                 <span className="text-[9px] text-purple-600 font-bold">⚙️ Override aktif</span>
-                                <button onClick={() => handleRemoveOverride(item.override.id)}
-                                  className="text-[9px] text-rose-500 underline">Hapus</button>
+                                {!readOnly && (
+                                  <button onClick={() => handleRemoveOverride(item.override.id)}
+                                    className="text-[9px] text-rose-500 underline">Hapus</button>
+                                )}
                               </div>
                             )}
                           </div>
+                          {!readOnly && (
                           <button
                             onClick={() => {
                               setOverrideModal({ nrp: row.nrp, name: row.name, jenis_apd: item.jenis_apd, current: item.override })
@@ -1713,6 +1744,7 @@ function TabPlan() {
                             className="p-2 bg-purple-50 text-purple-600 rounded-xl ml-2 hover:bg-purple-100 transition-colors">
                             <Edit2 size={12} />
                           </button>
+                          )}
                         </div>
                       )
                     })}
@@ -1725,7 +1757,7 @@ function TabPlan() {
       )}
 
       {/* Override Modal */}
-      {overrideModal && (
+      {!readOnly && overrideModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
           <div className="bg-white rounded-[2rem] w-full max-w-md p-6 shadow-2xl">
             <h3 className="font-black text-[#003D79] text-lg mb-1">⚙️ Override Plan</h3>

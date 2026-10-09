@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requireAuth } from "@/app/lib/auth";
+import { canManageStock, resolveAllowedSites } from "@/app/lib/site-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -8,14 +10,35 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 );
 
-export async function GET(req: Request) {
+// ════════════════════════════════════════════════════════════════
+// GET — riwayat pengeluaran barang (OUT). Wajib login, dibatasi scope.
+// Team Plant hanya bisa melihat (baca-saja).
+// ════════════════════════════════════════════════════════════════
+export async function GET(req: NextRequest) {
   try {
-    const { data, error } = await supabase
+    const auth = await requireAuth(req);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.message }, { status: auth.status });
+    }
+    const session: any = auth.session;
+
+    const { sites, restricted } = await resolveAllowedSites(session, null);
+
+    let query = supabase
       .from("stock_movements")
       .select("*")
       .eq("movement_type", "OUT")
       .order("created_at", { ascending: false })
       .limit(50);
+
+    if (restricted) {
+      if (sites.length === 0) {
+        return NextResponse.json({ success: true, data: [] });
+      }
+      query = query.in("site", sites);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -26,8 +49,25 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+// ════════════════════════════════════════════════════════════════
+// POST — pengeluaran stok. Hanya role logistik & approver.
+// Team Plant TIDAK BOLEH mengubah stok.
+// ════════════════════════════════════════════════════════════════
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.message }, { status: auth.status });
+    }
+    const session: any = auth.session;
+
+    if (!canManageStock(session)) {
+      return NextResponse.json(
+        { success: false, error: "Akses ditolak. Hanya tim logistik/gudang yang dapat mengeluarkan stok." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const {
       barang_id,
@@ -36,8 +76,6 @@ export async function POST(req: Request) {
       qty,
       tujuan_unit,
       penerima_mekanik,
-      operator_nrp,
-      operator_name,
       keterangan,
       is_scan = false
     } = body;
@@ -46,6 +84,10 @@ export async function POST(req: Request) {
     if (issueQty <= 0) {
       return NextResponse.json({ success: false, error: "Jumlah pengeluaran harus lebih dari 0." }, { status: 400 });
     }
+
+    // Identitas operator dari session, bukan dari browser.
+    const operatorNrp = session.nrp;
+    const operatorName = session.nama || session.nrp;
 
     let itemQuery = supabase.from("stock_barang").select("*");
     if (barang_id) {
@@ -100,14 +142,18 @@ export async function POST(req: Request) {
         reference_no: "OUT-" + Date.now().toString().slice(-6),
         tujuan_unit: tujuan_unit || "WORKSHOP",
         penerima_mekanik: penerima_mekanik || "Mekanik Site",
-        operator_nrp: operator_nrp || "SYSTEM",
-        operator_name: operator_name || "Logistik Officer",
+        operator_nrp: operatorNrp,
+        operator_name: operatorName,
         site: item.site || "MLP",
         keterangan: keterangan || (is_scan ? "Pengeluaran via Barcode Scan" : "Pengeluaran Part Manual"),
         created_at: nowIso
       }])
       .select()
       .single();
+
+    if (moveErr) {
+      return NextResponse.json({ success: false, error: moveErr.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
 import { getWitaToday } from '@/app/lib/timezone'
+import { isPlantTeam, resolveAllowedSites } from '@/app/lib/site-scope'
 
 // ═══ GET — Generate plan bulanan + ambil overrides ═══
 export async function GET(req: NextRequest) {
@@ -11,8 +12,10 @@ export async function GET(req: NextRequest) {
 
   const session: any = auth.session!
   const userRoles: string[] = Array.isArray(session.roles) ? session.roles : []
+  const plantTeam = isPlantTeam(session)
 
-  const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho', 'pjo_site', 'manager_ops']
+  // plant_team hanya boleh MELIHAT plan (mode baca-saja) di scope site-nya.
+  const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho', 'pjo_site', 'manager_ops', 'plant_team']
   if (!allowed.some(r => userRoles.includes(r))) {
     return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
   }
@@ -22,6 +25,12 @@ export async function GET(req: NextRequest) {
   const site = searchParams.get('site')
 
   if (!bulan) return NextResponse.json({ error: 'bulan wajib diisi (format: 2026-08)' }, { status: 400 })
+
+  // Scope site: plant_team dipaksa ke site miliknya, walau ada ?site= lain.
+  const { sites: scopedSites, restricted } = await resolveAllowedSites(session, site)
+  if (plantTeam && restricted && scopedSites.length === 0) {
+    return NextResponse.json({ ok: true, bulan, data: [], summary: null, overrides: [], read_only: true })
+  }
 
   const [y, m] = bulan.split('-').map(Number)
   const bulanStart = `${y}-${String(m).padStart(2, '0')}-01`
@@ -35,7 +44,12 @@ export async function GET(req: NextRequest) {
     .select('nrp, nama, site, departemen, jabatan')
     .is('tanggal_resign', null)
 
-  if (site && site !== 'ALL') empQuery = empQuery.eq('site', site)
+  if (restricted) {
+    // plant_team / user ber-scope: hanya karyawan pada site scope-nya.
+    empQuery = empQuery.in('site', scopedSites)
+  } else if (site && site !== 'ALL') {
+    empQuery = empQuery.eq('site', site)
+  }
 
   const { data: employees } = await empQuery
 
@@ -153,7 +167,7 @@ export async function GET(req: NextRequest) {
     override_add: plan.reduce((s, p) => s + p.items.filter((i: any) => i.reason?.includes('OVERRIDE_ADD')).length, 0),
   }
 
-  return NextResponse.json({ ok: true, bulan, data: plan, summary, overrides: overrides || [] })
+  return NextResponse.json({ ok: true, bulan, data: plan, summary, overrides: overrides || [], read_only: plantTeam })
 }
 
 // ═══ POST/PUT — Simpan override plan ═══
@@ -163,6 +177,11 @@ export async function POST(req: NextRequest) {
 
   const session: any = auth.session!
   const userRoles: string[] = Array.isArray(session.roles) ? session.roles : []
+
+  // Team Plant hanya boleh melihat plan — override tetap khusus HR/SHE.
+  if (isPlantTeam(session)) {
+    return NextResponse.json({ error: 'Team Plant hanya dapat melihat Plan (baca-saja).' }, { status: 403 })
+  }
 
   const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho']
   if (!allowed.some(r => userRoles.includes(r))) {
@@ -209,6 +228,11 @@ export async function DELETE(req: NextRequest) {
 
   const session: any = auth.session!
   const userRoles: string[] = Array.isArray(session.roles) ? session.roles : []
+
+  // Team Plant tidak boleh menghapus override plan.
+  if (isPlantTeam(session)) {
+    return NextResponse.json({ error: 'Team Plant hanya dapat melihat Plan (baca-saja).' }, { status: 403 })
+  }
 
   const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho']
   if (!allowed.some(r => userRoles.includes(r))) {

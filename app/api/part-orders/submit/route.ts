@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       keterangan: keterangan || '',
       prioritas: prioritas || 'Normal',
       requester_id: null, // session pakai custom, bukan auth.users
+      requester_nrp: session.nrp, // agar order baru muncul di daftar "My Orders"
       requester_name: session.nama || session.nrp,
       requester_role: session.primaryRole || 'karyawan',
       status: 'Pending'

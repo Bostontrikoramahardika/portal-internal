@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requireAuth } from "@/app/lib/auth";
+import { canManageStock, resolveAllowedSites, resolvePrimarySiteValue } from "@/app/lib/site-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -8,38 +10,89 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 );
 
-export async function GET(req: Request) {
+// ════════════════════════════════════════════════════════════════
+// GET — riwayat barang masuk (IN).
+// Team Plant hanya menerima riwayat receipt site-nya, tanpa antrean
+// cross-check (cross-check adalah wewenang logistik/approver).
+// ════════════════════════════════════════════════════════════════
+export async function GET(req: NextRequest) {
   try {
-    const { data: receipts, error } = await supabase
+    const auth = await requireAuth(req);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.message }, { status: auth.status });
+    }
+    const session: any = auth.session;
+    const bolehKelola = canManageStock(session);
+
+    const { sites, restricted } = await resolveAllowedSites(session, null);
+
+    let receiptQuery = supabase
       .from("stock_movements")
       .select("*")
       .eq("movement_type", "IN")
       .order("created_at", { ascending: false })
       .limit(50);
 
+    if (restricted) {
+      if (sites.length === 0) {
+        return NextResponse.json({ success: true, receipts: [], pending_crosscheck_prs: [] });
+      }
+      receiptQuery = receiptQuery.in("site", sites);
+    }
+
+    const { data: receipts, error } = await receiptQuery;
+
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
-    // Ambil juga daftar PR yang APPROVED dan belum READY untuk cross-check queue
-    const { data: pendingPrs } = await supabase
-      .from("purchase_requests")
-      .select("*")
-      .in("status", ["APPROVED", "PO_ISSUED", "IN_PAYMENT"])
-      .eq("is_ready", false);
+    // Antrean cross-check hanya untuk role logistik/approver.
+    let pendingPrs: any[] = [];
+    if (bolehKelola) {
+      let prQuery = supabase
+        .from("purchase_requests")
+        .select("*")
+        .in("status", ["APPROVED", "PO_ISSUED", "IN_PAYMENT"])
+        .eq("is_ready", false);
+
+      if (restricted) {
+        prQuery = prQuery.in("site", sites);
+      }
+
+      const { data } = await prQuery;
+      pendingPrs = data || [];
+    }
 
     return NextResponse.json({
       success: true,
       receipts: receipts || [],
-      pending_crosscheck_prs: pendingPrs || []
+      pending_crosscheck_prs: pendingPrs,
+      can_manage_stock: bolehKelola,
     });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message || "Internal server error" }, { status: 500 });
   }
 }
 
-export async function POST(req: Request) {
+// ════════════════════════════════════════════════════════════════
+// POST — catat LPB / barang masuk. Hanya role logistik & approver.
+// Team Plant TIDAK BOLEH mengubah stok.
+// ════════════════════════════════════════════════════════════════
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.message }, { status: auth.status });
+    }
+    const session: any = auth.session;
+
+    if (!canManageStock(session)) {
+      return NextResponse.json(
+        { success: false, error: "Akses ditolak. Hanya tim logistik/gudang yang dapat mencatat barang masuk." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const {
       nomor_lpb,
@@ -51,8 +104,6 @@ export async function POST(req: Request) {
       kondisi = "BAIK",
       lokasi_simpan = "Gudang Utama",
       penerima,
-      operator_nrp,
-      site = "MLP",
       keterangan
     } = body;
 
@@ -60,6 +111,11 @@ export async function POST(req: Request) {
     if (!nama_barang || inQty <= 0) {
       return NextResponse.json({ success: false, error: "Nama barang dan kuantitas barang masuk wajib diisi valid." }, { status: 400 });
     }
+
+    // Identitas & site dari session, bukan dari browser.
+    const operatorNrp = session.nrp;
+    const operatorName = session.nama || session.nrp;
+    const site = (await resolvePrimarySiteValue(session)) || body.site || "MLP";
 
     const autoLpb = nomor_lpb || ("LPB-" + site + "-" + Date.now().toString().slice(-6));
     const nowIso = new Date().toISOString();
@@ -112,9 +168,9 @@ export async function POST(req: Request) {
       reference_type: "LPB",
       reference_no: autoLpb,
       tujuan_unit: lokasi_simpan,
-      penerima_mekanik: penerima || "Staff Gudang",
-      operator_nrp: operator_nrp || "SYSTEM",
-      operator_name: penerima || "Logistik Checker",
+      penerima_mekanik: penerima || operatorName,
+      operator_nrp: operatorNrp,
+      operator_name: operatorName,
       site,
       keterangan: (keterangan || "") + " [Kondisi: " + kondisi + ", Ref PO: " + (nomor_po || "-") + "]",
       created_at: nowIso

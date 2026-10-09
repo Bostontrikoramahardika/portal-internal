@@ -9,6 +9,17 @@ interface UserSession {
   nama: string;
   role: string;
   site: string;
+  roles?: string[];
+}
+
+// Token sesi portal (localStorage) — dikirim sebagai Authorization: Bearer.
+function getAuthHeaders(extra?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = { ...(extra || {}) };
+  try {
+    const token = typeof window !== "undefined" ? localStorage.getItem("btm_session_token_v1") : null;
+    if (token) headers["Authorization"] = "Bearer " + token;
+  } catch {}
+  return headers;
 }
 
 interface MasterItem {
@@ -110,8 +121,14 @@ export default function PlantLogistikDashboardPage() {
   });
 
   // Role Privilege Checkers
+  const isPlantTeam = useMemo(() => {
+    const list = (user.roles && user.roles.length > 0 ? user.roles : [user.role]) || [];
+    return list.some((r) => String(r || "").toLowerCase() === "plant_team");
+  }, [user.roles, user.role]);
+
   const isManagementOrLogistic = useMemo(() => {
     const r = (user.role || "").toLowerCase();
+    if (r === "plant_team") return false;
     return r.includes("logistik") || r.includes("gl") || r.includes("pengawas") || r.includes("pjo") || r.includes("ho") || r.includes("admin") || r.includes("superadmin");
   }, [user.role]);
 
@@ -120,17 +137,34 @@ export default function PlantLogistikDashboardPage() {
     return r.includes("ho") || r.includes("superadmin");
   }, [user.role]);
 
+  // Team Plant boleh MELIHAT (baca-saja), tapi tidak boleh approval / ubah stok.
+  const canApprovePr = !isPlantTeam && isManagementOrLogistic;
+  const canManageStock = !isPlantTeam && isManagementOrLogistic;
+  const canMonitorPr = isManagementOrLogistic || isPlantTeam;
+
   // Read current user session from storage
+  // Sumber utama: cache portal (btm_user_cache_v1 / btm_user_v1) yang berisi
+  // array `roles` + `scope_site`. Key lama tetap didukung sebagai fallback.
   useEffect(() => {
     try {
-      const sessionRaw = localStorage.getItem("btm_user_session") || localStorage.getItem("user");
+      const sessionRaw =
+        localStorage.getItem("btm_user_cache_v1") ||
+        localStorage.getItem("btm_user_v1") ||
+        localStorage.getItem("btm_user_session") ||
+        localStorage.getItem("user");
       if (sessionRaw) {
         const parsed = JSON.parse(sessionRaw);
+        const roleList: string[] = Array.isArray(parsed.roles)
+          ? parsed.roles.filter(Boolean)
+          : parsed.role
+            ? [String(parsed.role)]
+            : [];
         setUser({
           nrp: parsed.nrp || "2600101",
           nama: parsed.nama || parsed.name || "User Portal",
-          role: parsed.role || "mekanik",
-          site: parsed.site || "MLP"
+          role: parsed.primaryRole || roleList[0] || parsed.role || "mekanik",
+          site: parsed.scope_site || parsed.site || "MLP",
+          roles: roleList
         });
       }
     } catch (e) {}
@@ -139,12 +173,13 @@ export default function PlantLogistikDashboardPage() {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
+      const authHeaders = getAuthHeaders();
       const [resStock, resMyPr, resAllPr, resReceipts, resIssues] = await Promise.all([
-        fetch("/api/plant/logistik/stok?site=" + user.site).then((r) => r.json()).catch(() => ({ success: false, data: [] })),
-        fetch("/api/plant/logistik/pr?requester_nrp=" + user.nrp + "&site=" + user.site).then((r) => r.json()).catch(() => ({ success: false, data: [] })),
-        fetch("/api/plant/logistik/pr?view_all=true&role=" + user.role + "&site=" + user.site).then((r) => r.json()).catch(() => ({ success: false, data: [] })),
-        fetch("/api/plant/logistik/barang-masuk").then((r) => r.json()).catch(() => ({ success: false, receipts: [], pending_crosscheck_prs: [] })),
-        fetch("/api/plant/logistik/pengeluaran").then((r) => r.json()).catch(() => ({ success: false, data: [] }))
+        fetch("/api/plant/logistik/stok?site=" + encodeURIComponent(user.site), { headers: authHeaders }).then((r) => r.json()).catch(() => ({ success: false, data: [] })),
+        fetch("/api/plant/logistik/pr?view=mine", { headers: authHeaders }).then((r) => r.json()).catch(() => ({ success: false, data: [] })),
+        fetch("/api/plant/logistik/pr?view=all&site=" + encodeURIComponent(user.site), { headers: authHeaders }).then((r) => r.json()).catch(() => ({ success: false, data: [] })),
+        fetch("/api/plant/logistik/barang-masuk", { headers: authHeaders }).then((r) => r.json()).catch(() => ({ success: false, receipts: [], pending_crosscheck_prs: [] })),
+        fetch("/api/plant/logistik/pengeluaran", { headers: authHeaders }).then((r) => r.json()).catch(() => ({ success: false, data: [] }))
       ]);
 
       if (resStock.success) setMasterItems(resStock.data || []);
@@ -195,16 +230,11 @@ export default function PlantLogistikDashboardPage() {
     }
     setLoading(true);
     try {
+      // Identitas pemohon & site ditentukan server dari session (token).
       const res = await fetch("/api/plant/logistik/pr", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...prForm,
-          requester_nrp: user.nrp,
-          requester_name: user.nama,
-          requester_role: user.role,
-          site: user.site
-        })
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ ...prForm })
       });
       const json = await res.json();
       if (json.success) {
@@ -229,13 +259,10 @@ export default function PlantLogistikDashboardPage() {
     try {
       const res = await fetch("/api/plant/logistik/pr/approve", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           pr_id: actionModal.prId,
           action: actionModal.action,
-          approver_nrp: user.nrp,
-          approver_name: user.nama,
-          approver_role: user.role,
           reason: actionModal.reasonText
         })
       });
@@ -265,12 +292,8 @@ export default function PlantLogistikDashboardPage() {
     try {
       const res = await fetch("/api/plant/logistik/pengeluaran", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...issueForm,
-          operator_nrp: user.nrp,
-          operator_name: user.nama
-        })
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ ...issueForm })
       });
       const json = await res.json();
       if (json.success) {
@@ -322,13 +345,8 @@ export default function PlantLogistikDashboardPage() {
     try {
       const res = await fetch("/api/plant/logistik/barang-masuk", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...lpbForm,
-          operator_nrp: user.nrp,
-          penerima: lpbForm.penerima || user.nama,
-          site: user.site
-        })
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ ...lpbForm, penerima: lpbForm.penerima || user.nama })
       });
       const json = await res.json();
       if (json.success) {
@@ -351,8 +369,8 @@ export default function PlantLogistikDashboardPage() {
     try {
       const res = await fetch("/api/plant/logistik/cross-check", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pr_id: prId, verified_by: user.nama + " (" + user.role + ")" })
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ pr_id: prId })
       });
       const json = await res.json();
       if (json.success) {
@@ -456,7 +474,7 @@ export default function PlantLogistikDashboardPage() {
           2. Stock Gudang ({masterItems.length})
         </button>
 
-        {isManagementOrLogistic && (
+        {canMonitorPr && (
           <button
             onClick={() => setActiveTab("monitoring_all")}
             className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "monitoring_all" ? "bg-[#003d79] text-white shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
@@ -471,10 +489,10 @@ export default function PlantLogistikDashboardPage() {
           className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "pengeluaran" ? "bg-[#003d79] text-white shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
         >
           <svg className="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-          4. Pengeluaran Barang
+          {canManageStock ? "4. Pengeluaran Barang" : "4. Riwayat Pengeluaran"}
         </button>
 
-        {isManagementOrLogistic && (
+        {canMonitorPr && (
           <button
             onClick={() => setActiveTab("barang_masuk")}
             className={"px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 " + (activeTab === "barang_masuk" ? "bg-[#003d79] text-white shadow-md" : "bg-[#f4f7fa] text-[#5a6a7e] hover:text-[#1a2332] border border-[#e2e8f0]")}
@@ -773,7 +791,7 @@ export default function PlantLogistikDashboardPage() {
       )}
 
       {/* SUB-TAB 3: MONITORING SEMUA PERMINTAAN (Role-Gated) */}
-      {activeTab === "monitoring_all" && isManagementOrLogistic && (
+      {activeTab === "monitoring_all" && canMonitorPr && (
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-[#f4f7fa] border border-[#e2e8f0] p-4 rounded-2xl">
             <div>
@@ -781,7 +799,11 @@ export default function PlantLogistikDashboardPage() {
                 <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
                 Monitoring Seluruh Permintaan {isHoRole ? "(ALL SITE)" : "(Site " + user.site + ")"}
               </h2>
-              <p className="text-xs text-[#5a6a7e]">Akses khusus: Logistik, GL Plant, PJO, dan Head Office (HO).</p>
+              <p className="text-xs text-[#5a6a7e]">
+                {isPlantTeam
+                  ? "Mode baca-saja untuk Team Plant — hanya PR pada site Anda. Persetujuan dilakukan GL Plant / PJO / HO."
+                  : "Akses khusus: Logistik, GL Plant, PJO, dan Head Office (HO)."}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               {isHoRole && (
@@ -860,7 +882,7 @@ export default function PlantLogistikDashboardPage() {
                           Log
                         </button>
                         {/* Approval Buttons conditionally shown by status */}
-                        {((pr.status === "PENDING_GL" && (user.role.toLowerCase().includes("gl") || isHoRole)) ||
+                        {canApprovePr && ((pr.status === "PENDING_GL" && (user.role.toLowerCase().includes("gl") || isHoRole)) ||
                           (pr.status === "PENDING_PJO" && (user.role.toLowerCase().includes("pjo") || isHoRole)) ||
                           (pr.status === "PENDING_HO" && isHoRole)) && (
                           <>
@@ -891,7 +913,8 @@ export default function PlantLogistikDashboardPage() {
       {/* SUB-TAB 4: PENGELUARAN BARANG (Manual & Scan Integration) */}
       {activeTab === "pengeluaran" && (
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Form Pengeluaran */}
+          {/* Form Pengeluaran — hanya role logistik/approver (Team Plant baca-saja) */}
+          {canManageStock && (
           <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-2xl p-5 shadow-xl space-y-4 lg:col-span-1">
             <div className="border-b border-[#e2e8f0] pb-3 flex items-center justify-between">
               <div>
@@ -999,9 +1022,10 @@ export default function PlantLogistikDashboardPage() {
               </button>
             </form>
           </div>
+          )}
 
           {/* Riwayat Pengeluaran Barang */}
-          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-2xl p-5 shadow-xl space-y-4 lg:col-span-2">
+          <div className={"bg-[#f4f7fa] border border-[#e2e8f0] rounded-2xl p-5 shadow-xl space-y-4 " + (canManageStock ? "lg:col-span-2" : "lg:col-span-3")}>
             <div className="border-b border-[#e2e8f0] pb-3 flex items-center justify-between">
               <div>
                 <h2 className="text-base font-bold text-[#1a2332]">Log Pengeluaran Part Terkini</h2>
@@ -1046,7 +1070,7 @@ export default function PlantLogistikDashboardPage() {
       )}
 
       {/* SUB-TAB 5: BARANG MASUK (LPB) & CROSS-CHECK QUEUE */}
-      {activeTab === "barang_masuk" && isManagementOrLogistic && (
+      {activeTab === "barang_masuk" && canManageStock && (
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form Penerimaan Barang Masuk */}
           <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-2xl p-5 shadow-xl space-y-4 lg:col-span-1">
@@ -1203,6 +1227,62 @@ export default function PlantLogistikDashboardPage() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 5 (Team Plant / baca-saja): RIWAYAT BARANG MASUK */}
+      {activeTab === "barang_masuk" && !canManageStock && (
+        <div className="max-w-7xl mx-auto space-y-4">
+          <div className="bg-[#f4f7fa] border border-[#e2e8f0] rounded-2xl p-5 shadow-xl space-y-4">
+            <div className="border-b border-[#e2e8f0] pb-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-[#1a2332]">Riwayat Barang Masuk (LPB)</h2>
+                <p className="text-xs text-[#5a6a7e]">Mode baca-saja — pencatatan LPB & cross-check dilakukan tim logistik/gudang.</p>
+              </div>
+              <span className="px-2.5 py-1 bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm font-mono rounded-lg text-xs font-bold text-[#5a6a7e]">
+                {receiptMovements.length} Transaksi
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-[#5a6a7e] min-w-[650px]">
+                <thead className="bg-[#f4f7fa]/80 text-[#5a6a7e] border-b border-[#e2e8f0] font-semibold">
+                  <tr>
+                    <th className="p-3">Waktu</th>
+                    <th className="p-3">No. LPB / Ref PO</th>
+                    <th className="p-3">Part &amp; PN</th>
+                    <th className="p-3">Qty Masuk</th>
+                    <th className="p-3">Lokasi Simpan</th>
+                    <th className="p-3">Penerima</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {receiptMovements.length === 0 ? (
+                    <tr><td colSpan={6} className="p-8 text-center text-slate-500">Belum ada riwayat barang masuk untuk site Anda.</td></tr>
+                  ) : (
+                    receiptMovements.map((m) => (
+                      <tr key={m.id} className="hover:bg-white transition">
+                        <td className="p-3 font-mono">
+                          {m.created_at ? new Date(m.created_at).toLocaleDateString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "-"}
+                        </td>
+                        <td className="p-3">
+                          <div className="font-mono font-bold text-[#003d79]">{m.reference_no || "-"}</div>
+                          <div className="text-[10px]">{m.kode_barang || "-"}</div>
+                        </td>
+                        <td className="p-3">
+                          <div className="font-semibold text-[#1a2332]">{m.nama_barang}</div>
+                          <div className="text-[10px] font-mono">PN: {m.part_number || "-"}</div>
+                        </td>
+                        <td className="p-3 font-mono font-bold text-emerald-600">+{m.qty}</td>
+                        <td className="p-3">{m.tujuan_unit || "-"}</td>
+                        <td className="p-3">{m.operator_name || m.penerima_mekanik || "-"}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

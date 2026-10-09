@@ -327,9 +327,16 @@ export default function FormInspeksiPage() {
     };
 
     try {
+      // Kirim token portal (kalau ada) selain cookie — penting untuk PWA iOS.
+      const authHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      try {
+        const token = localStorage.getItem('btm_session_token_v1');
+        if (token) authHeaders['Authorization'] = 'Bearer ' + token;
+      } catch {}
+
       const res = await fetch('/api/plant/inspeksi', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify(payload)
       });
 
