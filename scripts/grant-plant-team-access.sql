@@ -36,7 +36,7 @@ SELECT
   -- CATATAN: 'plant_dashboard' (halaman /dashboard/plant) sengaja TIDAK
   -- dimasukkan karena halaman itu juga punya aksi tambah/ubah unit & upload
   -- format inspeksi. Tambahkan sendiri ke array ini kalau memang diinginkan.
-  ARRAY['plant_inspeksi','plant_logistik','kelola_apd',
+  ARRAY['plant_inspeksi','plant_logistik',
         'plant_katalog','plant_orders','logistik']::text[] AS menu_diizinkan,
   12::int                                           AS target_helper,
    2::int                                           AS target_helper_site_null,
