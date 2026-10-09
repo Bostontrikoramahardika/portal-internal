@@ -14,8 +14,13 @@ export async function GET(req: NextRequest) {
   const userRoles: string[] = Array.isArray(session.roles) ? session.roles : []
   const plantTeam = isPlantTeam(session)
 
-  // plant_team hanya boleh MELIHAT plan (mode baca-saja) di scope site-nya.
-  const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho', 'pjo_site', 'manager_ops', 'plant_team']
+  // Kebijakan final: Team Plant TIDAK boleh mengakses Kelola APD (SHE) sama
+  // sekali — menu tidak diberikan dan API menolak (403), termasuk baca-saja.
+  if (plantTeam) {
+    return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
+  }
+
+  const allowed = ['super_admin', 'hr_ho', 'hr_site', 'she_site', 'spv_she_ho', 'pjo_site', 'manager_ops']
   if (!allowed.some(r => userRoles.includes(r))) {
     return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 })
   }
