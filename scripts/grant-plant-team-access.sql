@@ -8,7 +8,7 @@
 --
 --  YANG DILAKUKAN
 --   1. Mencari pegawai aktif Helper Plant / Mechanic A2B / Welder site PPA-MLP
---      + 2 NRP khusus (employees.site NULL): 2100126 & 2410926.
+--      + 2 NRP khusus (employees.site NULL): 2400926 & 2410926.
 --   2. Memvalidasi jumlah: TOTAL 22 akun (12 Helper [2 di antaranya site NULL],
 --      5 Mechanic A2B, 5 Welder). Kalau tidak pas → BATAL, tidak ada perubahan.
 --   3. Memberi role `plant_team` dengan scope_site PPA-MLP (tidak menyentuh
@@ -27,7 +27,7 @@ BEGIN;
 CREATE TEMP TABLE cfg_plant_team ON COMMIT DROP AS
 SELECT
   'PPA-MLP'::text                                   AS scope_site,
-  ARRAY['2100126','2410926']::text[]                AS nrp_tambahan,
+  ARRAY['2400926','2410926']::text[]                AS nrp_tambahan,
   ARRAY['helper']::text[]                           AS kata_jabatan_helper,
   ARRAY['mechanic','mekanik']::text[]               AS kata_jabatan_mechanic,
   ARRAY['welder']::text[]                           AS kata_jabatan_welder,
@@ -250,4 +250,4 @@ ORDER BY sort_order;
 -- 6d. Pastikan kolom employees.site untuk 2 NRP khusus TIDAK berubah (harus NULL)
 SELECT nrp, nama, site
 FROM employees
-WHERE nrp IN ('2100126','2410926');
+WHERE nrp IN ('2400926','2410926');
