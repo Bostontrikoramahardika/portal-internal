@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#003D79",
   "theme_color": "#003D79",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "scope": "/",
   "prefer_related_applications": false,
   "categories": ["business", "productivity"],
