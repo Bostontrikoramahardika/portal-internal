@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { translatePartName } from '@/app/lib/part-translations'
+import PageHeader from '@/app/components/PageHeader'
 
 interface Unit {
   id: string
@@ -129,7 +130,7 @@ function ZoomableImage({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-slate-200 select-none">
-      <div className="absolute top-2 right-2 z-10 flex gap-1 bg-white/90 backdrop-blur rounded-lg shadow p-1">
+      <div className="absolute top-2 right-2 z-10 flex gap-1 bg-white/90 backdrop-blur rounded-xl shadow p-1">
         <button onClick={zoomOut} className="w-8 h-8 flex items-center justify-center text-lg font-bold hover:bg-slate-100 rounded">−</button>
         <button onClick={resetZoom} className="px-2 h-8 text-xs font-bold hover:bg-slate-100 rounded">{Math.round(scale * 100)}%</button>
         <button onClick={zoomIn} className="w-8 h-8 flex items-center justify-center text-lg font-bold hover:bg-slate-100 rounded">+</button>
@@ -537,7 +538,7 @@ export default function PartsCatalogPage() {
             <button
               onClick={() => selectUnit(u)}
               className={`w-full text-left px-3 py-2.5 text-sm font-bold flex items-center gap-2 border-b ${
-                selectedUnit?.id === u.id ? 'bg-blue-50 text-[#003D79]' : 'hover:bg-slate-50'
+                selectedUnit?.id === u.id ? 'bg-sky-50 text-[#003D79]' : 'hover:bg-slate-50'
               }`}
             >
               <span>{expandedUnitId === u.id ? '▼' : '▶'}</span>
@@ -578,26 +579,41 @@ export default function PartsCatalogPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-100px)] bg-slate-50 flex flex-col">
-      {/* ═══════ HEADER ═══════ */}
-      <div className="bg-white border-b px-3 py-2 flex flex-wrap items-center gap-2 sticky top-0 z-30">
-        <a
-          href="/dashboard"
-          className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-bold text-slate-700"
-          title="Kembali ke Dashboard"
-        >
-          ←
-        </a>
-        <h1 className="text-base md:text-lg font-black text-[#003D79] whitespace-nowrap">📚 Parts Catalog</h1>
+    <div className="min-h-screen bg-[#f4f7fa] flex flex-col">
+      {/* ═══════ HEADER STANDAR ═══════ */}
+      <div className="px-3 pt-3 max-w-7xl mx-auto w-full">
+        <PageHeader
+          title="Parts Catalog"
+          subtitle="Katalog part per unit & assembly"
+          backUrl="/dashboard"
+          rightAction={
+            <div className="flex items-center gap-1.5">
+              <a
+                href="/part-orders"
+                className="px-3 py-1.5 bg-white/10 border border-white/15 rounded-xl text-[11px] font-bold hover:bg-white/20 active:scale-95 transition-all whitespace-nowrap"
+              >
+                📋 Orders
+              </a>
+              {isSuperAdmin && (
+                <button
+                  onClick={() => setShowImport(true)}
+                  className="px-3 py-1.5 bg-emerald-500/90 border border-emerald-300/30 rounded-xl text-[11px] font-bold hover:bg-emerald-500 active:scale-95 transition-all whitespace-nowrap"
+                >
+                  📥 Import
+                </button>
+              )}
+            </div>
+          }
+        />
 
         {/* Desktop search inline */}
-        <div className="hidden md:flex flex-1 items-center gap-2 min-w-[200px]">
+        <div className="hidden md:flex bg-white rounded-2xl border border-slate-200 shadow-sm p-2.5 items-center gap-2 mb-2">
           <button
             onClick={handleBackCatalog}
             type="button"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white rounded-[14px] border border-[#e2e8f0] shadow-sm hover:bg-[#003d79] text-white hover:text-slate-950 text-[#1a2332] border border-[#e2e8f0] text-xs font-semibold transition-all mr-2 shrink-0"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white shadow-sm hover:bg-slate-50 text-[#003d79] text-xs font-semibold transition-all shrink-0"
           >
-            <span className="text-[#003d79] font-bold">←</span>
+            <span className="font-bold">←</span>
             <span className="hidden sm:inline">Kembali</span>
           </button>
           <input
@@ -606,60 +622,41 @@ export default function PartsCatalogPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (setShowSearch(true), doSearch())}
-            className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+            className="flex-1 px-3 py-1.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#003D79]"
           />
           <button
             onClick={() => { setShowSearch(true); doSearch() }}
-            className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-sm font-bold hover:bg-blue-800"
+            className="px-3 py-1.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57] active:scale-95 transition-all"
           >
             🔍
           </button>
         </div>
-
-        <div className="flex-1 md:hidden"></div>
-
-        {/* Desktop only: Orders + Import */}
-        <a
-          href="/part-orders"
-          className="hidden md:inline-flex px-3 py-1.5 bg-[#003d79] text-white text-white rounded-lg text-sm font-bold hover:bg-[#002a57] text-white whitespace-nowrap items-center"
-        >
-          📋 Orders
-        </a>
-
-        {isSuperAdmin && (
-          <button
-            onClick={() => setShowImport(true)}
-            className="hidden md:inline-flex px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 whitespace-nowrap items-center"
-          >
-            📥 Import
-          </button>
-        )}
       </div>
 
       {/* ═══════ MOBILE TOP BAR ═══════ */}
-      <div className="md:hidden bg-[#003D79] px-2 py-2 flex gap-2 sticky top-[52px] z-20">
+      <div className="md:hidden bg-[#003D79] px-2 py-2 flex gap-2 sticky top-0 z-30 mt-2 rounded-2xl mx-2 w-auto">
         <button
           onClick={() => setBrowseOpen(true)}
-          className="flex-1 bg-white text-[#003D79] px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
+          className="flex-1 bg-white text-[#003D79] px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1"
         >
           ☰ Browse
         </button>
         <button
           onClick={() => setShowSearch(true)}
-          className="flex-1 bg-white/20 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
+          className="flex-1 bg-white/20 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1"
         >
           🔍 Cari
         </button>
 <a
   href="/part-orders"
-  className="flex-1 bg-[#003d79] text-white text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
+  className="flex-1 bg-[#003d79] text-white text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1"
 >
   🛒 Orders
 </a>
 {cart.length > 0 && (
   <button
     onClick={() => setShowBulkOrder(true)}
-    className="relative px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold"
+    className="relative px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold"
     title={`${cart.length} part di cart`}
   >
     🛍️
@@ -738,7 +735,7 @@ export default function PartsCatalogPage() {
                 </div>
                 <button
                   onClick={toggleSelectAll}
-                  className="px-2 py-1 bg-white border border-slate-300 rounded text-[10px] font-bold text-slate-700 whitespace-nowrap"
+                  className="px-2 py-1 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-700 whitespace-nowrap"
                 >
                   {selectedIds.size === items.length ? '☐ Batal' : '☑ Semua'}
                 </button>
@@ -769,7 +766,7 @@ export default function PartsCatalogPage() {
                         key={it.id}
                         onClick={() => it.part_number && toggleSelect(it.id)}
                         className={`px-2 py-2 flex items-center gap-2 ${
-                          isSelected ? 'bg-blue-50' : inCart ? 'bg-emerald-50/50' : 'bg-white'
+                          isSelected ? 'bg-sky-50' : inCart ? 'bg-emerald-50/50' : 'bg-white'
                         } ${it.part_number ? 'cursor-pointer active:bg-blue-100' : 'opacity-60'}`}
                       >
                         {/* Checkbox */}
@@ -836,7 +833,7 @@ export default function PartsCatalogPage() {
         {cart.length > 0 && (
           <button
             onClick={() => setShowBulkOrder(true)}
-            className="fixed bottom-0 left-0 right-0 md:hidden bg-[#003D79] hover:bg-blue-800 text-white py-3 px-4 font-bold text-sm flex items-center justify-center gap-2 shadow-2xl z-20 border-t-2 border-blue-400"
+            className="fixed bottom-0 left-0 right-0 md:hidden bg-[#003D79] hover:bg-[#002a57] text-white py-3 px-4 font-bold text-sm flex items-center justify-center gap-2 shadow-2xl z-20 border-t-2 border-blue-400"
           >
             🛒 Order {cart.length} Part
             {new Set(cart.map(c => c.unit_code)).size > 1 && (
@@ -852,7 +849,7 @@ export default function PartsCatalogPage() {
       {/* ═══════ DESKTOP: 3-PANEL LAYOUT ═══════ */}
       <div className="hidden md:grid md:grid-cols-12 gap-2 p-2 flex-1 overflow-hidden">
         {/* LEFT PANEL - TREE */}
-        <div className="md:col-span-3 bg-white border rounded-lg overflow-hidden flex flex-col h-full">
+        <div className="md:col-span-3 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
           <div className="bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 border-b">
             UNITS / ASSEMBLIES
           </div>
@@ -862,7 +859,7 @@ export default function PartsCatalogPage() {
         </div>
 
         {/* MIDDLE PANEL - IMAGE */}
-        <div className="md:col-span-5 bg-white border rounded-lg overflow-hidden flex flex-col h-full">
+        <div className="md:col-span-5 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
           <div className="bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 border-b flex justify-between items-center gap-2">
             <span className="truncate flex-1">{selectedAssembly ? selectedAssembly.assembly_name : 'ASSEMBLY IMAGE'}</span>
             {selectedAssembly?.image_drive_web_view_link && (
@@ -890,7 +887,7 @@ export default function PartsCatalogPage() {
         </div>
 
         {/* RIGHT PANEL - PARTS */}
-        <div className="md:col-span-4 bg-white border rounded-lg overflow-hidden flex flex-col h-full">
+        <div className="md:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
           <div className="bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 border-b">
             PARTS LIST {items.length > 0 && `(${items.length})`}
           </div>
@@ -914,7 +911,7 @@ export default function PartsCatalogPage() {
                 </thead>
                 <tbody>
                   {items.map(it => (
-                    <tr key={it.id} className="border-b hover:bg-blue-50">
+                    <tr key={it.id} className="border-b hover:bg-sky-50">
                       <td className="px-2 py-1.5 text-center">{it.ref_no ?? '-'}</td>
                       <td className="px-2 py-1.5 font-mono font-bold text-[#003D79]">{it.part_number || '-'}</td>
                       <td className="px-2 py-1.5">{it.part_name || '-'}</td>
@@ -970,11 +967,11 @@ export default function PartsCatalogPage() {
                 onChange={e => setSearch(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && doSearch()}
                 autoFocus
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#003D79]"
               />
               <button
                 onClick={doSearch}
-                className="px-4 py-2 bg-[#003D79] text-white rounded-lg text-sm font-bold hover:bg-blue-800"
+                className="px-4 py-2 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002a57]"
               >
                 Cari
               </button>
@@ -995,7 +992,7 @@ export default function PartsCatalogPage() {
                     <button
                       key={r.id}
                       onClick={() => openFromSearch(r)}
-                      className="w-full text-left px-3 py-2.5 hover:bg-blue-50 flex flex-col gap-0.5"
+                      className="w-full text-left px-3 py-2.5 hover:bg-sky-50 flex flex-col gap-0.5"
                     >
                       <div className="font-mono font-bold text-[#003D79] text-sm">{r.part_number}</div>
                       <div className="text-xs text-slate-700">{r.part_name}</div>
@@ -1021,11 +1018,11 @@ export default function PartsCatalogPage() {
             <div className="p-5 space-y-3">
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Unit Code *</label>
-                <input type="text" value={importUnitCode} onChange={e => setImportUnitCode(e.target.value)} disabled={importing} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="PC200-8" />
+                <input type="text" value={importUnitCode} onChange={e => setImportUnitCode(e.target.value)} disabled={importing} className="w-full px-3 py-2 border rounded-xl text-sm" placeholder="PC200-8" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Unit Name (opsional)</label>
-                <input type="text" value={importUnitName} onChange={e => setImportUnitName(e.target.value)} disabled={importing} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Excavator PC200-8" />
+                <input type="text" value={importUnitName} onChange={e => setImportUnitName(e.target.value)} disabled={importing} className="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Excavator PC200-8" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">File Excel (.xlsx)</label>
@@ -1037,7 +1034,7 @@ export default function PartsCatalogPage() {
               </label>
 
               {importResult && (
-                <div className={`p-3 rounded-lg text-xs ${importResult.success ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
+                <div className={`p-3 rounded-xl text-xs ${importResult.success ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
                   {importResult.success ? (
                     <>
                       <div className="font-bold mb-1">✅ {importResult.message}</div>
@@ -1055,7 +1052,7 @@ export default function PartsCatalogPage() {
                 </div>
               )}
 
-              <button onClick={doImport} disabled={importing} className="w-full py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 disabled:opacity-50">
+              <button onClick={doImport} disabled={importing} className="w-full py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 disabled:opacity-50">
                 {importing ? '⏳ Importing...' : '📥 Start Import'}
               </button>
             </div>
@@ -1073,7 +1070,7 @@ export default function PartsCatalogPage() {
               <button onClick={closeOrderModal} className="text-white/80 hover:text-white">✕</button>
             </div>
             <div className="p-5 space-y-3">
-              <div className="bg-slate-50 p-3 rounded-lg text-xs space-y-1">
+              <div className="bg-slate-50 p-3 rounded-xl text-xs space-y-1">
                 <div className="flex gap-2"><span className="font-bold text-slate-500 w-20">Part No:</span><span className="font-mono font-bold text-[#003D79]">{orderPart.part_number}</span></div>
                 <div className="flex gap-2"><span className="font-bold text-slate-500 w-20">Name:</span><span className="flex-1">{orderPart.part_name}</span></div>
                 <div className="flex gap-2"><span className="font-bold text-slate-500 w-20">Unit:</span><span>{selectedUnit?.unit_code}</span></div>
@@ -1082,17 +1079,17 @@ export default function PartsCatalogPage() {
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Machine Unit * <span className="text-[#5a6a7e] font-normal">(unit yang rusak)</span></label>
-                <input type="text" value={orderMachine} onChange={e => setOrderMachine(e.target.value)} disabled={orderSubmitting} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79]" placeholder="Contoh: PC200-7 Unit 03" />
+                <input type="text" value={orderMachine} onChange={e => setOrderMachine(e.target.value)} disabled={orderSubmitting} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#003D79]" placeholder="Contoh: PC200-7 Unit 03" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Qty *</label>
-                  <input type="number" min={1} value={orderQty} onChange={e => setOrderQty(parseInt(e.target.value) || 1)} disabled={orderSubmitting} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79]" />
+                  <input type="number" min={1} value={orderQty} onChange={e => setOrderQty(parseInt(e.target.value) || 1)} disabled={orderSubmitting} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#003D79]" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Prioritas</label>
-                  <select value={orderPrioritas} onChange={e => setOrderPrioritas(e.target.value as any)} disabled={orderSubmitting} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79]">
+                  <select value={orderPrioritas} onChange={e => setOrderPrioritas(e.target.value as any)} disabled={orderSubmitting} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#003D79]">
                     <option value="Normal">Normal</option>
                     <option value="Urgent">🔥 Urgent</option>
                   </select>
@@ -1101,20 +1098,20 @@ export default function PartsCatalogPage() {
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Keterangan</label>
-                <textarea value={orderKeterangan} onChange={e => setOrderKeterangan(e.target.value)} disabled={orderSubmitting} rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79] resize-none" placeholder="Contoh: bocor di sisi kiri, perlu ganti segera" />
+                <textarea value={orderKeterangan} onChange={e => setOrderKeterangan(e.target.value)} disabled={orderSubmitting} rows={3} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#003D79] resize-none" placeholder="Contoh: bocor di sisi kiri, perlu ganti segera" />
               </div>
 
               {orderMsg && (
-                <div className={`p-2 rounded-lg text-xs font-bold text-center ${orderMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                <div className={`p-2 rounded-xl text-xs font-bold text-center ${orderMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
                   {orderMsg}
                 </div>
               )}
 
               <div className="flex gap-2 pt-2">
-                <button onClick={closeOrderModal} disabled={orderSubmitting} className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold text-sm">
+                <button onClick={closeOrderModal} disabled={orderSubmitting} className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-sm">
                   Batal
                 </button>
-                <button onClick={submitOrder} disabled={orderSubmitting} className="flex-1 py-2 bg-[#003D79] hover:bg-blue-800 text-white rounded-lg font-bold text-sm disabled:opacity-50">
+                <button onClick={submitOrder} disabled={orderSubmitting} className="flex-1 py-2 bg-[#003D79] hover:bg-[#002a57] text-white rounded-xl font-bold text-sm disabled:opacity-50">
                   {orderSubmitting ? '⏳ Submitting...' : '🛒 Submit Order'}
                 </button>
               </div>
@@ -1174,7 +1171,7 @@ export default function PartsCatalogPage() {
                           min={1}
                           value={item.qty}
                           onChange={e => updateCartQty(item.id, parseInt(e.target.value) || 1)}
-                          className="w-12 text-center border border-slate-300 rounded py-1 text-sm font-bold"
+                          className="w-12 text-center border border-slate-200 rounded py-1 text-sm font-bold"
                         />
                         <button
                           onClick={() => updateCartQty(item.id, item.qty + 1)}
@@ -1207,7 +1204,7 @@ export default function PartsCatalogPage() {
                     value={bulkMachine}
                     onChange={e => setBulkMachine(e.target.value)}
                     disabled={bulkSubmitting}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79]"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#003D79]"
                     placeholder="Contoh: PC200-7 Unit 03"
                   />
                 </div>
@@ -1218,7 +1215,7 @@ export default function PartsCatalogPage() {
                       value={bulkPrioritas}
                       onChange={e => setBulkPrioritas(e.target.value as any)}
                       disabled={bulkSubmitting}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"
                     >
                       <option value="Normal">Normal</option>
                       <option value="Urgent">🔥 Urgent</option>
@@ -1228,7 +1225,7 @@ export default function PartsCatalogPage() {
                     <button
                       onClick={clearCart}
                       disabled={bulkSubmitting}
-                      className="w-full h-full mt-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-bold"
+                      className="w-full h-full mt-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-xs font-bold"
                     >
                       🗑️ Clear Cart
                     </button>
@@ -1241,13 +1238,13 @@ export default function PartsCatalogPage() {
                     onChange={e => setBulkKeterangan(e.target.value)}
                     disabled={bulkSubmitting}
                     rows={2}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#003D79] resize-none"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#003D79] resize-none"
                     placeholder="Contoh: perlu segera, unit sedang breakdown"
                   />
                 </div>
 
                 {bulkMsg && (
-                  <div className={`p-2 rounded-lg text-xs font-bold text-center ${
+                  <div className={`p-2 rounded-xl text-xs font-bold text-center ${
                     bulkMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' :
                     bulkMsg.startsWith('⚠️') ? 'bg-amber-50 text-amber-700' :
                     'bg-red-50 text-red-700'
@@ -1259,7 +1256,7 @@ export default function PartsCatalogPage() {
                 <button
                   onClick={submitBulkOrder}
                   disabled={bulkSubmitting || cart.length === 0}
-                  className="w-full py-3 bg-[#003D79] hover:bg-blue-800 text-white rounded-lg font-bold text-sm disabled:opacity-50"
+                  className="w-full py-3 bg-[#003D79] hover:bg-[#002a57] text-white rounded-xl font-bold text-sm disabled:opacity-50"
                 >
                   {bulkSubmitting ? '⏳ Submitting...' : `🛒 Submit ${cart.length} Order`}
                 </button>

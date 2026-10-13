@@ -1,6 +1,7 @@
 'use client';
 
 import PageHeader from "@/app/components/PageHeader";
+import { StdPage, EmptyState } from '@/app/components/std';
 import { useEffect, useState } from 'react'
 
 interface Order {
@@ -24,18 +25,18 @@ interface Order {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  'Pending':       'bg-slate-100 text-slate-700 border-slate-300',
-  'Approved':      'bg-blue-100 text-blue-800 border-blue-300',
-  'Rejected':      'bg-red-100 text-red-800 border-red-300',
-  'Available':     'bg-emerald-100 text-emerald-800 border-emerald-300',
-  'Not Available': 'bg-amber-100 text-amber-800 border-amber-300',
+  'Pending':       'bg-amber-100 text-amber-700 border-amber-200',
+  'Approved':      'bg-sky-100 text-sky-700 border-sky-200',
+  'Rejected':      'bg-red-100 text-red-700 border-red-200',
+  'Available':     'bg-emerald-100 text-emerald-700 border-emerald-200',
+  'Not Available': 'bg-slate-100 text-slate-600 border-slate-200',
 }
 
 const STATUS_ICONS: Record<string, string> = {
   'Pending':       '⏳',
   'Approved':      '✅',
   'Rejected':      '❌',
-  'Available':     '📦',
+  'Available':      '📦',
   'Not Available': '🚫',
 }
 
@@ -127,86 +128,88 @@ export default function PartOrdersPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-100px)] bg-slate-50 flex flex-col">
-      <PageHeader title="Part Orders" backUrl="/dashboard" />
-
-      {/* HEADER */}
-      <div className="bg-white border-b px-3 py-2 flex flex-wrap items-center gap-2 sticky top-0 z-30">
-        <h1 className="text-base md:text-lg font-black text-[#003D79] whitespace-nowrap">📋 Part Orders</h1>
-        <div className="flex-1"></div>
-        <a
-          href="/parts-catalog"
-          className="px-3 py-1.5 bg-[#003D79] text-white rounded-lg text-xs md:text-sm font-bold hover:bg-blue-800 whitespace-nowrap"
-        >
-          📚 Katalog
-        </a>
-      </div>
-
-      {/* FILTER BAR */}
-      <div className="bg-white border-b px-3 py-2 flex flex-wrap items-center gap-2">
-        {isAdmin && (
-          <div className="flex bg-slate-100 rounded-lg p-0.5">
-            <button
-              onClick={() => setMode('my')}
-              className={`px-3 py-1 text-xs font-bold rounded-md ${
-                mode === 'my' ? 'bg-white shadow text-[#003D79]' : 'text-slate-500'
-              }`}
+    <div className="min-h-screen bg-[#f4f7fa]">
+      <StdPage footer width="xl">
+        <PageHeader
+          title="Part Orders"
+          subtitle="Pengajuan & pemantauan order part"
+          backUrl="/dashboard"
+          rightAction={
+            <a
+              href="/parts-catalog"
+              className="px-3 py-1.5 bg-white/10 border border-white/15 rounded-xl text-[11px] font-bold hover:bg-white/20 active:scale-95 transition-all whitespace-nowrap"
             >
-              🙋 My Orders
-            </button>
-            <button
-              onClick={() => setMode('all')}
-              className={`px-3 py-1 text-xs font-bold rounded-md ${
-                mode === 'all' ? 'bg-white shadow text-[#003D79]' : 'text-slate-500'
-              }`}
-            >
-              👥 Manage All
-            </button>
+              📚 Katalog
+            </a>
+          }
+        />
+
+        {/* FILTER — kartu standar */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-2.5 flex flex-wrap items-center gap-2">
+          {isAdmin && (
+            <div className="flex bg-slate-100 rounded-xl p-0.5">
+              <button
+                onClick={() => setMode('my')}
+                className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+                  mode === 'my' ? 'bg-white shadow text-[#003D79]' : 'text-slate-500'
+                }`}
+              >
+                🙋 Order Saya
+              </button>
+              <button
+                onClick={() => setMode('all')}
+                className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+                  mode === 'all' ? 'bg-white shadow text-[#003D79]' : 'text-slate-500'
+                }`}
+              >
+                👥 Semua
+              </button>
+            </div>
+          )}
+
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}
+            className="px-3 py-1.5 border border-slate-200 rounded-xl text-[11px] font-bold bg-white text-slate-700 focus:outline-none focus:border-[#003D79]"
+          >
+            <option value="">Semua Status</option>
+            <option value="Pending">⏳ Pending</option>
+            <option value="Approved">✅ Approved</option>
+            <option value="Rejected">❌ Rejected</option>
+            <option value="Available">📦 Available</option>
+            <option value="Not Available">🚫 Not Available</option>
+          </select>
+
+          <div className="flex-1"></div>
+
+          <div className="text-[11px] font-bold text-slate-500">
+            Total: <span className="text-[#003D79]">{orders.length}</span>
           </div>
-        )}
 
-        <select
-          value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value)}
-          className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs md:text-sm focus:outline-none focus:border-blue-500"
-        >
-          <option value="">Semua Status</option>
-          <option value="Pending">⏳ Pending</option>
-          <option value="Approved">✅ Approved</option>
-          <option value="Rejected">❌ Rejected</option>
-          <option value="Available">📦 Available</option>
-          <option value="Not Available">🚫 Not Available</option>
-        </select>
-
-        <div className="flex-1"></div>
-
-        <div className="text-xs text-slate-500">
-          Total: <span className="font-bold text-slate-700">{orders.length}</span>
+          <button
+            onClick={fetchOrders}
+            className="w-8 h-8 rounded-xl border border-slate-200 bg-white text-sm hover:bg-slate-50 active:scale-95 transition-all"
+            title="Refresh"
+          >
+            🔄
+          </button>
         </div>
 
-        <button
-          onClick={fetchOrders}
-          className="px-2 py-1 text-xs text-slate-600 hover:text-slate-900"
-          title="Refresh"
-        >
-          🔄
-        </button>
-      </div>
-
-      {/* ORDERS LIST */}
-      <div className="flex-1 overflow-auto p-2">
+        {/* DAFTAR ORDER */}
         {loading ? (
-          <div className="text-center py-10 text-[#5a6a7e] text-sm">Loading...</div>
+          <EmptyState variant="loading" />
         ) : orders.length === 0 ? (
-          <div className="text-center py-10 text-[#5a6a7e] text-sm">
-            {mode === 'my' ? 'Belum ada order dari kamu' : 'Belum ada order'}
-          </div>
+          <EmptyState
+            variant="empty"
+            title="Belum Ada Order"
+            text={mode === 'my' ? 'Belum ada order yang kamu ajukan' : 'Belum ada order masuk'}
+          />
         ) : (
-          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2.5 md:grid-cols-2">
             {orders.map(o => (
               <div
                 key={o.id}
-                className={`bg-white border rounded-lg p-3 shadow-sm hover:shadow ${
+                className={`bg-white border border-slate-200 rounded-2xl p-3 shadow-sm ${
                   o.prioritas === 'Urgent' ? 'border-l-4 border-l-red-500' : ''
                 }`}
               >
@@ -224,51 +227,51 @@ export default function PartOrdersPage() {
                   <div className="text-xs text-slate-700 line-clamp-2">{o.part_name}</div>
                 </div>
 
-                <div className="space-y-1 text-[11px] text-slate-600 border-t pt-2">
+                <div className="space-y-1 text-[11px] text-slate-600 border-t border-slate-100 pt-2">
                   <div className="flex justify-between gap-2">
-                    <span className="text-[#5a6a7e]">Unit:</span>
+                    <span className="text-slate-400 font-bold">Unit</span>
                     <span className="font-bold text-right">{o.unit_code}</span>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <span className="text-[#5a6a7e]">Machine:</span>
+                    <span className="text-slate-400 font-bold">Machine</span>
                     <span className="font-bold text-right truncate">{o.machine_unit}</span>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <span className="text-[#5a6a7e]">Qty:</span>
+                    <span className="text-slate-400 font-bold">Qty</span>
                     <span className="font-bold text-right">{o.qty}</span>
                   </div>
                   {mode === 'all' && (
                     <div className="flex justify-between gap-2">
-                      <span className="text-[#5a6a7e]">Requester:</span>
+                      <span className="text-slate-400 font-bold">Pemohon</span>
                       <span className="font-bold text-right truncate">{o.requester_name}</span>
                     </div>
                   )}
                   <div className="flex justify-between gap-2">
-                    <span className="text-[#5a6a7e]">Diminta:</span>
+                    <span className="text-slate-400 font-bold">Diminta</span>
                     <span className="text-right">{fmtDate(o.created_at)}</span>
                   </div>
                 </div>
 
                 {o.keterangan && (
-                  <div className="mt-2 pt-2 border-t">
-                    <div className="text-[10px] text-[#5a6a7e] font-bold mb-0.5">KETERANGAN:</div>
+                  <div className="mt-2 pt-2 border-t border-slate-100">
+                    <div className="text-[10px] text-slate-400 font-bold mb-0.5 uppercase">Keterangan</div>
                     <div className="text-[11px] text-slate-700 italic">{o.keterangan}</div>
                   </div>
                 )}
 
                 {o.catatan_admin && (
-                  <div className="mt-2 pt-2 border-t bg-blue-50 -mx-3 -mb-3 px-3 py-2 rounded-b-lg">
-                    <div className="text-[10px] text-blue-500 font-bold mb-0.5">
+                  <div className="mt-2 bg-sky-50 border border-sky-100 rounded-xl px-3 py-2">
+                    <div className="text-[10px] text-sky-600 font-bold mb-0.5">
                       💬 CATATAN ADMIN {o.handled_by && `• ${o.handled_by}`}
                     </div>
-                    <div className="text-[11px] text-blue-900">{o.catatan_admin}</div>
+                    <div className="text-[11px] text-sky-900">{o.catatan_admin}</div>
                   </div>
                 )}
 
                 {isAdmin && mode === 'all' && (
                   <button
                     onClick={() => openEditModal(o)}
-                    className="mt-2 w-full py-1.5 bg-[#003D79] hover:bg-blue-800 text-white rounded text-xs font-bold"
+                    className="mt-2 w-full py-2 bg-[#003D79] hover:bg-[#002a57] text-white rounded-xl text-xs font-bold active:scale-[.98] transition-all"
                   >
                     ✏️ Update Status
                   </button>
@@ -277,23 +280,23 @@ export default function PartOrdersPage() {
             ))}
           </div>
         )}
-      </div>
+      </StdPage>
 
-      {/* UPDATE STATUS MODAL */}
+      {/* MODAL UPDATE STATUS */}
       {editOrder && (
         <>
-          <div className="fixed inset-0 bg-[#f4f7fa]/60 z-50" onClick={closeEditModal} />
+          <div className="fixed inset-0 bg-slate-900/50 z-50" onClick={closeEditModal} />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-2xl shadow-2xl z-50 overflow-hidden">
             <div className="bg-[#003D79] text-white px-5 py-3 flex justify-between items-center">
-              <h3 className="font-bold">✏️ Update Order Status</h3>
+              <h3 className="font-bold text-sm">✏️ Update Order Status</h3>
               <button onClick={closeEditModal} className="text-white/80 hover:text-white">✕</button>
             </div>
             <div className="p-5 space-y-3">
-              <div className="bg-slate-50 p-3 rounded-lg text-xs space-y-1">
+              <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-xs space-y-1">
                 <div className="font-mono font-bold text-[#003D79]">{editOrder.part_number}</div>
                 <div className="text-slate-700">{editOrder.part_name}</div>
-                <div className="text-slate-500 pt-1 border-t mt-1">
-                  Requester: <span className="font-bold">{editOrder.requester_name}</span> | Qty: <span className="font-bold">{editOrder.qty}</span>
+                <div className="text-slate-500 pt-1 border-t border-slate-200 mt-1">
+                  Pemohon: <span className="font-bold">{editOrder.requester_name}</span> | Qty: <span className="font-bold">{editOrder.qty}</span>
                 </div>
               </div>
 
@@ -303,8 +306,8 @@ export default function PartOrdersPage() {
                   {['Pending', 'Approved', 'Rejected', 'Available', 'Not Available'].map(s => (
                     <label
                       key={s}
-                      className={`flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer text-sm ${
-                        newStatus === s ? 'border-[#003D79] bg-blue-50' : 'border-slate-200 hover:bg-slate-50'
+                      className={`flex items-center gap-2 px-3 py-2 border rounded-xl cursor-pointer text-sm ${
+                        newStatus === s ? 'border-[#003D79] bg-sky-50' : 'border-slate-200 hover:bg-slate-50'
                       }`}
                     >
                       <input
@@ -328,13 +331,13 @@ export default function PartOrdersPage() {
                   onChange={e => setNewCatatan(e.target.value)}
                   disabled={updating}
                   rows={3}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 resize-none"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#003D79] resize-none"
                   placeholder="Contoh: Barang tersedia di gudang site, akan dikirim hari ini"
                 />
               </div>
 
               {updateMsg && (
-                <div className={`p-2 rounded-lg text-xs font-bold text-center ${
+                <div className={`p-2 rounded-xl text-xs font-bold text-center ${
                   updateMsg.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
                 }`}>
                   {updateMsg}
@@ -345,14 +348,14 @@ export default function PartOrdersPage() {
                 <button
                   onClick={closeEditModal}
                   disabled={updating}
-                  className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold text-sm"
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm"
                 >
                   Batal
                 </button>
                 <button
                   onClick={submitUpdate}
                   disabled={updating}
-                  className="flex-1 py-2 bg-[#003D79] hover:bg-blue-800 text-white rounded-lg font-bold text-sm disabled:opacity-50"
+                  className="flex-1 py-2 bg-[#003D79] hover:bg-[#002a57] text-white rounded-xl font-bold text-sm disabled:opacity-50"
                 >
                   {updating ? '⏳ Updating...' : '💾 Save'}
                 </button>
@@ -361,12 +364,6 @@ export default function PartOrdersPage() {
           </div>
         </>
       )}
-    
-      {/* Standard App Footer */}
-      <footer className="mt-8 mb-20 sm:mb-6 text-center text-xs text-[#8896a7] italic opacity-60">
-        <p>BTM Mobile APP V1.7.0</p>
-        <p className="text-[10px]">Powered By rck_Production</p>
-      </footer>
-</div>
+    </div>
   )
 }
