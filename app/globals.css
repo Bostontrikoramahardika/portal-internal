@@ -333,3 +333,13 @@ body {
 .std-scroll-x::-webkit-scrollbar-track{background:#e2e8f0;border-radius:999px}
 .std-scroll-x::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:999px;border:2px solid #e2e8f0}
 .std-scroll-x::-webkit-scrollbar-thumb:active{background:#0b2a5b}
+
+/* ═══════════════════════════════════════════════════════════
+   📱 PERBAIKAN RESPONSIF (HP / tablet / desktop / rotasi)
+   - overflow-x: clip → halaman tidak bisa bergeser ke samping
+     saat layar diputar atau ada konten lebar (sticky tetap jalan)
+   - min-height: 100dvh → tinggi mengikuti layar HP modern
+     (bilah alamat browser yang muncul/tenggelam tidak bikin loncat)
+   ═══════════════════════════════════════════════════════════ */
+html, body { overflow-x: clip; }
+body { min-height: 100dvh; }

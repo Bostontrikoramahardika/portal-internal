@@ -209,6 +209,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams, menus])
 
+  // ═══════════════════════════════════════════════
+  // 🔙 TOMBOL BACK GLOBAL
+  // Berlaku otomatis untuk semua halaman di bawah /dashboard.
+  // Aturan:
+  //  - /dashboard tanpa ?menu=  → halaman utama, tombol TIDAK muncul
+  //  - /dashboard?menu=xxx      → kembali ke /dashboard (halaman utama)
+  //  - /dashboard/plant/inspeksi→ naik satu level ke /dashboard/plant
+  //  - /dashboard/plant         → kembali ke /dashboard
+  // ═══════════════════════════════════════════════
+  const menuParam = searchParams ? searchParams.get('menu') : null
+  const isDashboardHome = pathname === '/dashboard' && !menuParam
+  const showBack = !isDashboardHome
+
+  const backTarget = (() => {
+    if (pathname === '/dashboard') return '/dashboard'
+    const seg = pathname.split('/').filter(Boolean)
+    if (seg.length <= 1) return '/dashboard'
+    seg.pop()
+    return '/' + seg.join('/')
+  })()
+
+  function goBack() {
+    router.push(backTarget)
+  }
+
   return (
     <AuthProvider
       user={currentUser}
@@ -219,9 +244,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* HEADER MOBILE — COMPACT + ROUNDED */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-[60] px-2.5 pt-1.5">
         <div className="bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-[0_4px_20px_rgba(0,61,121,0.08)] rounded-2xl px-3 py-1.5 flex items-center justify-start">
+          {/* 🔙 Tombol Back — otomatis hilang di halaman utama */}
+          {showBack && (
+            <button
+              type="button"
+              onClick={goBack}
+              aria-label="Kembali"
+              title="Kembali"
+              className="w-8 h-8 rounded-xl bg-[#003D79] hover:bg-[#002a57] active:scale-90 transition-all flex items-center justify-center shrink-0 mr-2 shadow-sm"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5" />
+                <path d="M12 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+
           {/* Kiri: Logo + App Name */}
           <div className="flex items-center gap-2 shrink-0 min-w-0">
-            <div className="w-7 h-7 rounded-xl bg-[#003D79] flex items-center justify-center shadow-sm overflow-hidden">
+            <div className="w-7 h-7 rounded-xl bg-white ring-1 ring-slate-200 flex items-center justify-center shadow-sm overflow-hidden">
               <Image src="/btm-fix.png" alt="BTM" width={18} height={18} className="object-contain" />
             </div>
             <div className="leading-none">
@@ -264,12 +305,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* DESKTOP SIDEBAR & MAIN AREA */}
       <div className="flex flex-1">
         <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-[#e2e8f0] h-auto shrink-0 sticky top-0 h-screen">
-          <div className="h-14 flex items-center px-6 border-b border-[#e2e8f0] bg-[#003d79] text-white">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center font-black text-sm text-white">
-                B
+          <div className="h-16 flex items-center px-5 border-b border-[#002a57] bg-gradient-to-br from-[#00468c] via-[#003D79] to-[#002a57] text-white shadow-[0_2px_10px_rgba(0,42,87,0.35)]">
+            <Link href="/dashboard" className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow overflow-hidden shrink-0">
+                <Image src="/btm-fix.png" alt="BTM" width={26} height={26} className="object-contain" />
               </div>
-              <span className="font-black tracking-tight text-base">{BTM_APP_SHORT}</span>
+              <div className="leading-none">
+                <div className="font-black tracking-tight text-[15px]">{BTM_APP_SHORT}</div>
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <span className="text-[8px] font-black tracking-widest bg-white/15 border border-white/25 rounded-full px-1.5 py-0.5">v1.7.0</span>
+                  <span className="text-[8px] font-bold tracking-widest text-blue-200">PORTAL INTERNAL</span>
+                </div>
+              </div>
             </Link>
           </div>
 
@@ -335,32 +382,62 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             })}
           </div>
 
-          <div className="p-4 border-t border-[#e2e8f0] bg-slate-50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-[#003d79] text-white flex items-center justify-center font-bold text-xs">
-                {userInitial}
+          <div className="p-3 border-t border-[#e2e8f0]">
+            <div className="rounded-2xl border border-[#e2e8f0] bg-gradient-to-b from-white to-slate-50 shadow-[0_4px_14px_rgba(0,61,121,0.08)] p-3">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00468c] to-[#002a57] text-white flex items-center justify-center font-black text-sm shadow shrink-0">
+                  {userInitial}
+                </div>
+                <div className="truncate min-w-0">
+                  <p className="text-xs font-black text-slate-800 truncate">{namaKaryawan}</p>
+                  <p className="text-[10px] font-bold text-slate-500 truncate">
+                    {nrpKaryawan}
+                    {siteKaryawan ? <span className="text-blue-600"> &middot; {siteKaryawan}</span> : null}
+                  </p>
+                  <span className="inline-block mt-1 text-[8px] font-black tracking-widest uppercase text-[#003D79] bg-[#e0edf9] border border-blue-200 rounded-full px-1.5 py-0.5">
+                    {currentUser?.role || 'KARYAWAN'}
+                  </span>
+                </div>
               </div>
-              <div className="truncate">
-                <p className="text-xs font-bold text-slate-800 truncate">{namaKaryawan}</p>
-                <p className="text-[10px] text-slate-500 truncate">{currentUser?.role || 'KARYAWAN'}</p>
-              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 rounded-xl text-xs font-black transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <path d="M16 17l5-5-5-5" />
+                  <path d="M21 12H9" />
+                </svg>
+                Keluar Aplikasi
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="w-full py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold transition-colors"
-            >
-              Keluar
-            </button>
           </div>
         </aside>
 
         <main className="flex-1 min-w-0 flex flex-col h-auto pt-[3.75rem] lg:pt-0 pb-24 lg:pb-8">
           {/* HEADER DESKTOP ONLY */}
           <header className="hidden lg:flex w-full items-center justify-between gap-4 h-16 px-8 bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-base font-black text-[#003D79] tracking-tight">{BTM_APP_NAME}</h1>
-              <p className="text-[11px] text-slate-500 font-medium">Selamat datang, <strong className="text-slate-800">{namaKaryawan}</strong> ({nrpKaryawan}) — <span className="text-blue-600 font-bold">{siteKaryawan}</span></p>
+            <div className="min-w-0 flex-1 flex items-center gap-3">
+              {/* 🔙 Tombol Back — otomatis hilang di halaman utama */}
+              {showBack && (
+                <button
+                  type="button"
+                  onClick={goBack}
+                  aria-label="Kembali"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#e8f0f8] hover:bg-[#d6e4f2] text-[#003D79] font-bold text-xs transition-all active:scale-95 border border-[#003D79]/10 shrink-0"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 12H5" />
+                    <path d="M12 19l-7-7 7-7" />
+                  </svg>
+                  Kembali
+                </button>
+              )}
+              <div className="min-w-0">
+                <h1 className="text-base font-black text-[#003D79] tracking-tight truncate">{BTM_APP_NAME}</h1>
+                <p className="text-[11px] text-slate-500 font-medium">Selamat datang, <strong className="text-slate-800">{namaKaryawan}</strong> ({nrpKaryawan}) — <span className="text-blue-600 font-bold">{siteKaryawan}</span></p>
+              </div>
             </div>
             
             <div className="flex items-center gap-3 shrink-0 ml-auto">
@@ -385,7 +462,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </header>
 
-          <div className="px-3 pt-2 pb-24 lg:px-8 lg:pt-6 lg:pb-10 max-w-lg lg:max-w-none w-full mx-auto">
+          <div className="px-3 pt-2 pb-24 lg:px-8 lg:pt-6 lg:pb-10 max-w-lg md:max-w-3xl lg:max-w-none w-full mx-auto">
             <Suspense fallback={null}><MenuTabs menus={menus} /></Suspense>
             {children}
           </div>

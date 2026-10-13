@@ -253,7 +253,7 @@ export default function MobileBottomNav({ menus = [] }: MobileBottomNavProps) {
         </div>
       )}
 
-      <nav className="fixed bottom-2.5 left-2.5 right-2.5 z-50 bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-[0_8px_30px_rgba(0,61,121,0.12)] rounded-2xl px-2 py-1.5 lg:hidden">
+      <nav className="fixed bottom-[max(0.625rem,env(safe-area-inset-bottom))] left-2.5 right-2.5 z-50 bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-[0_8px_30px_rgba(0,61,121,0.12)] rounded-2xl px-2 py-1.5 lg:hidden">
         <div className="flex items-center justify-around h-[60px] px-1 relative">
           {tabs.map((tab) => {
             if (tab.isScanner) {

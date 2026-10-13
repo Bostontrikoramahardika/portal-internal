@@ -152,6 +152,7 @@ function DashboardContent() {
   'setting_site',
   'config_global',
   'reset_password_admin',
+  'ganti_password',
   'system_audit',
   'approval_center',
   'kelola_hak_cuti',
@@ -294,6 +295,7 @@ useEffect(() => {
   if (menuKey === 'kelola_site_master' || menuKey === 'setting_site') return <SitesManagerView />
   if (menuKey === 'config_global') return <GlobalConfigView />
   if (menuKey === 'reset_password_admin') return <ResetPasswordAdminView />
+  if (menuKey === 'ganti_password') return <ChangePasswordView title="Ganti Password" />
   if (menuKey === 'system_audit') return <SystemAuditView />
   if (menuKey === 'approval_center') return <ApprovalCenterView />
   if (menuKey === 'role_manager') return <RoleManagerView title="Kelola Role Karyawan" />

@@ -26,9 +26,12 @@ export default function TableView({ data, onReload }: any) {
   const isApproval = access_mode?.includes('APPROVAL')
 
   // ---- RESPONSIF: kolom menyesuaikan lebar layar ----
+  // 🔐 Super admin boleh melihat kolom password; password_hash tetap selalu disembunyikan
+  const { isSuperAdmin: saBolehLihatPassword } = useAuth()
   const KOLOM_RAHASIA = [
     'google_refresh_token', 'google_access_token', 'last_signature',
-    'google_connected_at', 'google_access_enabled', 'password', 'password_hash',
+    'google_connected_at', 'google_access_enabled', 'password_hash',
+    ...(saBolehLihatPassword ? [] : ['password']),
   ]
   const KOLOM_RINGKAS = 4
   const [layarSempit, setLayarSempit] = useState(false)

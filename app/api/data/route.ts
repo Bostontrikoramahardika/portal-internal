@@ -1206,10 +1206,13 @@ const menuInfo = isSuperAdmin
     if (qErr) return NextResponse.json({ error: qErr.message }, { status: 500 })
     
     const enriched = await enrichWithNames(rows || [], target_table)
-    const KOLOM_SENSITIF = [
-      'google_refresh_token', 'google_access_token',
-      'password', 'password_hash', 'session_token',
-    ]
+    // 🔐 Super admin boleh melihat password karyawan; token & hash tetap selalu disembunyikan
+    const KOLOM_SENSITIF = isSuperAdmin
+      ? ['google_refresh_token', 'google_access_token', 'password_hash', 'session_token']
+      : [
+          'google_refresh_token', 'google_access_token',
+          'password', 'password_hash', 'session_token',
+        ]
     const aman = (enriched || []).map((row) => {
       const o = {}
       for (const key of Object.keys(row || {})) {
@@ -1218,7 +1221,7 @@ const menuInfo = isSuperAdmin
       return o
     })
 
-    const columns = getColumns(aman, target_table).filter(
+    const columns = getColumns(aman, target_table, isSuperAdmin).filter(
       (c) => !KOLOM_SENSITIF.includes(c)
     )
 
@@ -1335,9 +1338,13 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
   })
 }
 
-function getColumns(rows: any[], table?: string): string[] {
+function getColumns(rows: any[], table?: string, superAdmin = false): string[] {
   if (!rows || rows.length === 0) return []
-  const visibleKeys = Object.keys(rows[0]).filter((k: string) => !HIDDEN_COLUMNS.includes(k))
+  // 🔐 Khusus super admin: NRP, password & terakhir diganti ikut tampil
+  const BOLEH_SUPER_ADMIN = ['nrp', 'password', 'password_last_changed']
+  const visibleKeys = Object.keys(rows[0]).filter(
+    (k: string) => !HIDDEN_COLUMNS.includes(k) || (superAdmin && BOLEH_SUPER_ADMIN.includes(k))
+  )
   
   // 🆕 Custom column order untuk table employees
   if (table === 'employees') {
