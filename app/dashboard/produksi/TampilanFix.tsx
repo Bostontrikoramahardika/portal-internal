@@ -77,18 +77,19 @@ function WeeklyCompare({ minggu, bulan }: { minggu: any[]; bulan: string }) {
       </p>
     )
   }
-  function beda(a: number | null, b: number | null) {
-    if (a == null || b == null) return '—'
-    const d = a - b
-    return (d >= 0 ? '+' : '') + fmt(d)
+  function pctCh(a: number | null, b: number | null) {
+    if (a == null || b == null || !Number(b)) return null
+    return ((Number(a) - Number(b)) / Math.abs(Number(b))) * 100
   }
-  const rows = [
-    ['HM', ini.hm, lalu.hm, false],
-    ['STB', ini.stb, lalu.stb, false],
-    ['PA %', ini.pa, lalu.pa, true],
-    ['MA %', ini.ma, lalu.ma, true],
-    ['UA %', ini.ua, lalu.ua, true],
-  ] as const
+  const rows: [string, any, any, boolean, boolean][] = [
+    ['HM', ini.hm, lalu.hm, false, false],
+    ['STB', ini.stb, lalu.stb, false, true],
+    ['PA %', ini.pa, lalu.pa, true, false],
+    ['MA %', ini.ma, lalu.ma, true, false],
+    ['UA %', ini.ua, lalu.ua, true, false],
+    ['FC L/HM', ini.fc, lalu.fc, false, true],
+    ['Fuel L', ini.fuel, lalu.fuel, false, true],
+  ]
   return (
     <div className="overflow-x-auto px-3 pb-3">
       <table className="w-full text-[10px]">
@@ -97,20 +98,27 @@ function WeeklyCompare({ minggu, bulan }: { minggu: any[]; bulan: string }) {
             <th className="px-2 py-2 text-left">Metrik</th>
             <th className="px-2 py-2 text-right">Minggu ini<br />{ini.label?.replace(bulan, labelBulan(bulan))}</th>
             <th className="px-2 py-2 text-right">Minggu lalu<br />{lalu.label?.replace(bulan, labelBulan(bulan))}</th>
-            <th className="px-2 py-2 text-right">Selisih</th>
+            <th className="px-2 py-2 text-right">Naik / turun</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map(([n, a, b, pct]) => (
-            <tr key={n} className="border-t border-slate-100">
-              <td className="px-2 py-1.5 font-black">{n}</td>
-              <td className="px-2 py-1.5 text-right tabular-nums font-black">{pct ? fmtP(a as any) : fmt1(a as any)}</td>
-              <td className="px-2 py-1.5 text-right tabular-nums">{pct ? fmtP(b as any) : fmt1(b as any)}</td>
-              <td className={'px-2 py-1.5 text-right tabular-nums font-black ' + (Number(a) >= Number(b) ? 'text-emerald-700' : 'text-amber-700')}>
-                {beda(a as any, b as any)}{pct ? ' pt' : ''}
-              </td>
-            </tr>
-          ))}
+          {rows.map(([n, a, b, isPct, worseIfUp]) => {
+            const p = pctCh(a, b)
+            const naik = p != null && p > 0.05
+            const turun = p != null && p < -0.05
+            const bagus = p == null ? null : (worseIfUp ? turun : naik)
+            const label = p == null ? '—' : `${p >= 0 ? '▲ +' : '▼ '}${fmt1(Math.abs(p))}%`
+            return (
+              <tr key={n} className="border-t border-slate-100">
+                <td className="px-2 py-1.5 font-black">{n}</td>
+                <td className="px-2 py-1.5 text-right tabular-nums font-black">{isPct ? fmtP(a) : fmt1(a)}</td>
+                <td className="px-2 py-1.5 text-right tabular-nums">{isPct ? fmtP(b) : fmt1(b)}</td>
+                <td className={'px-2 py-1.5 text-right tabular-nums font-black ' + (bagus == null ? 'text-slate-400' : bagus ? 'text-emerald-700' : 'text-rose-600')}>
+                  {label}
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>
@@ -376,6 +384,32 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
               </div>
             </div>
           ))}
+        </div>
+      </Panel>
+
+      <Panel judul="FC per EGI (chart lingkaran)" desc="Aktual L/HM vs target EGI. Di atas target = boros (merah). ▲% vs target." tag="FC">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 px-3 pb-3">
+          {(d.per_egi || []).map((e: any) => {
+            const akt = e.fc
+            const tgt = e.fc_target
+            const vs = e.fc_vs_pct
+            const boros = akt != null && tgt != null && akt > tgt
+            const pRing = tgt && akt != null ? Math.min(100, (akt / tgt) * 100) : (akt != null ? 50 : 0)
+            return (
+              <div key={e.egi} className="rounded-xl border border-slate-100 bg-slate-50 p-2 text-center">
+                <div className="text-[10px] font-black text-[#183d63] mb-1">{e.egi}</div>
+                <div className="flex justify-center">
+                  <Ring p={Number(pRing || 0)} size={80} color={boros ? '#b54450' : '#199b8c'}>
+                    <span className="text-[11px] font-black text-[#173f65]">{akt == null ? '—' : fmt1(akt)}</span>
+                  </Ring>
+                </div>
+                <div className="mt-1 text-[9px] text-slate-400">target {tgt == null ? '—' : fmt1(tgt)} L/HM</div>
+                <div className={'text-[10px] font-black ' + (vs == null ? 'text-slate-300' : vs > 0 ? 'text-rose-600' : 'text-emerald-700')}>
+                  {vs == null ? 'isi target FC' : `${vs >= 0 ? '▲ +' : '▼ '}${fmt1(Math.abs(vs))}%`}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </Panel>
 

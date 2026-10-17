@@ -263,7 +263,7 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
       <TampilanFix d={D} bulan={bulan} />
 
       {D.boleh_kelola && (
-        <FormTarget site={site} bulan={bulan} target={D.target} units={D.armada || D.per_unit} onSaved={muat} />
+        <FormTarget site={site} bulan={bulan} target={D.target} units={D.armada || D.per_unit} fcTarget={D.fc_target} onSaved={muat} />
       )}
     </div>
   )
@@ -290,7 +290,9 @@ function KartuSet({ judul, desc, children }: { judul: string; desc: string; chil
   )
 }
 
-function FormTarget({ site, bulan, target, units, onSaved }: { site: string; bulan: string; target: any; units?: any[]; onSaved: () => void }) {
+const EGI_FC = ['PC200SPR', 'PC200RB', 'D65', 'D85', 'GD705']
+
+function FormTarget({ site, bulan, target, units, fcTarget, onSaved }: { site: string; bulan: string; target: any; units?: any[]; fcTarget?: Record<string, any>; onSaved: () => void }) {
   const [th, bl] = bulan.split('-').map(Number)
   const hariBulan = (th && bl) ? new Date(th, bl, 0).getDate() : 31
   const [tj, setTj] = useState('')
@@ -299,9 +301,7 @@ function FormTarget({ site, bulan, target, units, onSaved }: { site: string; bul
   const [ma, setMa] = useState('92')
   const [ua, setUa] = useState('')
   const [tarifMap, setTarifMap] = useState<Record<string, string>>({})
-  const [fc, setFc] = useState('')
-  const [fcLiter, setFcLiter] = useState('')
-  const [fcLingkup, setFcLingkup] = useState('site')
+  const [fcMap, setFcMap] = useState<Record<string, string>>({})
   const [bdCount, setBdCount] = useState('2')
   const [bdLingkup, setBdLingkup] = useState('unit-shift')
   const [bdPeriode, setBdPeriode] = useState('periode')
@@ -324,6 +324,15 @@ function FormTarget({ site, bulan, target, units, onSaved }: { site: string; bul
     setTarifMap(m)
   }, [units])
 
+  useEffect(() => {
+    const m: Record<string, string> = {}
+    for (const e of EGI_FC) {
+      const v = fcTarget?.[e]
+      m[e] = v != null && v !== '' ? String(v) : ''
+    }
+    setFcMap(m)
+  }, [fcTarget])
+
   async function kirim() {
     setSimpan(true); setPesan('')
     try {
@@ -333,6 +342,7 @@ function FormTarget({ site, bulan, target, units, onSaved }: { site: string; bul
           site, bulan, target_jam: Number(tj), faktor: Number(fk),
           pa_target: Number(pa), ma_target: Number(ma),
           tarifs: Object.entries(tarifMap).map(([kode_unit, tarif_hm]) => ({ kode_unit, tarif_hm })),
+          fc_targets: Object.entries(fcMap).map(([egi, fc_target]) => ({ egi, fc_target })),
         }),
       })
       const j = await r.json()
@@ -411,21 +421,33 @@ function FormTarget({ site, bulan, target, units, onSaved }: { site: string; bul
         </Field>
       </KartuSet>
 
-      <KartuSet judul="D. Target FC fuel" desc="Liter per HM. Fuel laporan = rate unit × HM.">
-        <Field label="Batas/target FC (L/HM)">
-          <input type="number" min={0} step={0.01} value={fc} onChange={(e) => setFc(e.target.value)} placeholder="cth: 3.50" className={inp} />
-        </Field>
-        <Field label="Estimasi liter harian">
-          <input type="number" min={0} value={fcLiter} onChange={(e) => setFcLiter(e.target.value)} className={inp} />
-        </Field>
-        <Field label="Lingkup" span2>
-          <select value={fcLingkup} onChange={(e) => setFcLingkup(e.target.value)} className={inp}>
-            <option value="site">Default site</option>
-            <option value="egi">Per EGI</option>
-            <option value="unit">Per unit</option>
-          </select>
-        </Field>
-      </KartuSet>
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-3 pt-3 pb-1">
+          <div className="text-[12px] font-black text-[#1a3d62]">D. Target FC per EGI (L/HM)</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Batas liter per jam. Aktual = rate unit × HM ÷ HM. Di bawah target = lebih hemat.</div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[10px]">
+            <thead className="bg-slate-50"><tr>
+              <th className="px-2 py-2 text-left">EGI</th>
+              <th className="px-2 py-2 text-right">Target FC (L/HM)</th>
+            </tr></thead>
+            <tbody>
+              {EGI_FC.map((e) => (
+                <tr key={e} className="border-t border-slate-100">
+                  <td className="px-2 py-1.5 font-black">{e}</td>
+                  <td className="px-2 py-1">
+                    <input type="number" min={0} step={0.01} value={fcMap[e] ?? ''}
+                      onChange={(ev) => setFcMap((p) => ({ ...p, [e]: ev.target.value }))}
+                      placeholder="cth: 3.50"
+                      className="w-full px-2 py-1 rounded-lg border border-slate-200 text-right font-bold" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <KartuSet judul="E. Aturan BD berulang" desc="Jam BD (durasi) tidak digabung ke HM BD.">
         <Field label={'Jumlah kejadian untuk "berulang"'}>
@@ -460,7 +482,7 @@ function FormTarget({ site, bulan, target, units, onSaved }: { site: string; bul
 
       <button onClick={kirim} disabled={simpan || !tj}
         className="w-full py-2.5 rounded-xl bg-[#003D79] text-white font-black text-[11px] uppercase tracking-wider disabled:opacity-50">
-        {simpan ? 'Menyimpan…' : 'Simpan Target HM · PA · MA'}
+        {simpan ? 'Menyimpan…' : 'Simpan Target HM · PA · MA · tarif unit · FC EGI'}
       </button>
       {pesan && <p className="text-[10px] font-bold text-center text-slate-500">{pesan}</p>}
       <p className="text-[9px] text-slate-400 text-center">
@@ -636,6 +658,7 @@ function PengaturanImport() {
   const [site, setSite] = useState('PPA-MLP')
   const [target, setTarget] = useState<any>(null)
   const [units, setUnits] = useState<any[]>([])
+  const [fcTarget, setFcTarget] = useState<any>({})
   const [boleh, setBoleh] = useState(false)
   const [err, setErr] = useState('')
 
@@ -650,6 +673,7 @@ function PengaturanImport() {
           setTarget(j.target)
           setBoleh(Boolean(j.boleh_kelola))
           setUnits(j.armada || j.per_unit || [])
+          setFcTarget(j.fc_target || {})
         }
       })
       .catch((e) => setErr(e?.message || 'Gagal'))
@@ -673,7 +697,7 @@ function PengaturanImport() {
       </div>
       {err && <EmptyState variant="error" text={err} />}
       {boleh
-        ? <FormTarget site={site} bulan={bulan} target={target} units={units} onSaved={muat} />
+        ? <FormTarget site={site} bulan={bulan} target={target} units={units} fcTarget={fcTarget} onSaved={muat} />
         : <p className="text-[10px] text-slate-400 text-center">Hanya HR/Admin yang bisa mengubah target.</p>}
     </div>
   )

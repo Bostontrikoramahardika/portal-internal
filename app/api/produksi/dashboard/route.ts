@@ -78,6 +78,11 @@ export async function GET(req: NextRequest) {
       .eq('site', site).eq('bulan', bulan).maybeSingle()
 
     const { data: konfig } = await supabaseAdmin.from('ts_unit_config').select('*')
+    const { data: fcRows } = await supabaseAdmin.from('ts_fc_target').select('egi, fc_target').eq('site', site)
+    const petaFc: Record<string, number> = {}
+    ;(fcRows || []).forEach((r: any) => {
+      if (r.egi != null && r.fc_target != null) petaFc[String(r.egi)] = Number(r.fc_target)
+    })
     const petaKonfig: Record<string, any> = {}
     ;(konfig || []).forEach((k: any) => (petaKonfig[k.kode_unit] = k))
 
@@ -112,7 +117,7 @@ export async function GET(req: NextRequest) {
     }
     const perOp: Record<string, OpAgg> = {}
 
-    type Wk = { key: string; hm: number; stb: number; paSum: number; paCnt: number; maSum: number; maCnt: number; uaSum: number; uaCnt: number; min: string; max: string }
+    type Wk = { key: string; hm: number; stb: number; fuel: number; paSum: number; paCnt: number; maSum: number; maCnt: number; uaSum: number; uaCnt: number; min: string; max: string }
     const perMinggu: Record<string, Wk> = {}
 
     for (const r of (rows || []) as any[]) {
@@ -185,10 +190,12 @@ export async function GET(req: NextRequest) {
 
       const wk = isoWeekKey(tglStr)
       const w = perMinggu[wk] || (perMinggu[wk] = {
-        key: wk, hm: 0, stb: 0, paSum: 0, paCnt: 0, maSum: 0, maCnt: 0, uaSum: 0, uaCnt: 0, min: tglStr, max: tglStr,
+        key: wk, hm: 0, stb: 0, fuel: 0, paSum: 0, paCnt: 0, maSum: 0, maCnt: 0, uaSum: 0, uaCnt: 0, min: tglStr, max: tglStr,
       })
       w.hm += hm
       w.stb += stb
+      const fuelRateRow = cfg.fuel_lph != null ? Number(cfg.fuel_lph) : null
+      if (fuelRateRow != null && isFinite(fuelRateRow)) w.fuel += fuelRateRow * hm
       if (tglStr < w.min) w.min = tglStr
       if (tglStr > w.max) w.max = tglStr
       if (pa != null) { w.paSum += pa; w.paCnt++ }
@@ -220,13 +227,15 @@ export async function GET(req: NextRequest) {
         : null)
     }
 
-    const aggEGI: Record<string, { hm: number; stb: number; paSum: number; paCnt: number; maSum: number; maCnt: number }> = {}
+    const aggEGI: Record<string, { hm: number; stb: number; fuel: number; paSum: number; paCnt: number; maSum: number; maCnt: number }> = {}
     for (const u of Object.values(perUnit)) {
       const cfg = petaKonfig[u.kode]
       const egi = cfg?.egi || egiFallback(u.kode).egi
-      const a = aggEGI[egi] || (aggEGI[egi] = { hm: 0, stb: 0, paSum: 0, paCnt: 0, maSum: 0, maCnt: 0 })
+      const a = aggEGI[egi] || (aggEGI[egi] = { hm: 0, stb: 0, fuel: 0, paSum: 0, paCnt: 0, maSum: 0, maCnt: 0 })
       a.hm += u.mtd
       a.stb += u.stb
+      const fr = cfg?.fuel_lph != null ? Number(cfg.fuel_lph) : 0
+      if (fr) a.fuel += u.mtd * fr
       a.paSum += u.paSum; a.paCnt += u.paCnt
       a.maSum += u.maSum; a.maCnt += u.maCnt
     }
@@ -234,6 +243,9 @@ export async function GET(req: NextRequest) {
       const a = aggEGI[e]
       const hm = a?.hm || 0
       const stb = a?.stb || 0
+      const fuel = a?.fuel || 0
+      const fcAkt = hm && fuel ? r2(fuel / hm) : null
+      const fcT = petaFc[e] != null ? Number(petaFc[e]) : null
       return {
         egi: e,
         hm: r2(hm),
@@ -241,6 +253,10 @@ export async function GET(req: NextRequest) {
         pa: a?.paCnt ? r2(a.paSum / a.paCnt) : null,
         ma: a?.maCnt ? r2(a.maSum / a.maCnt) : null,
         ua: hm + stb > 0 ? r2((hm / (hm + stb)) * 100) : null,
+        fuel: r2(fuel),
+        fc: fcAkt,
+        fc_target: fcT,
+        fc_vs_pct: fcAkt != null && fcT ? r2(((fcAkt - fcT) / fcT) * 100) : null,
       }
     })
 
@@ -341,6 +357,8 @@ export async function GET(req: NextRequest) {
         pa: w.paCnt ? r2(w.paSum / w.paCnt) : null,
         ma: w.maCnt ? r2(w.maSum / w.maCnt) : null,
         ua: w.uaCnt ? r2(w.uaSum / w.uaCnt) : (w.hm + w.stb > 0 ? r2((w.hm / (w.hm + w.stb)) * 100) : null),
+        fuel: r2(w.fuel || 0),
+        fc: w.hm && w.fuel ? r2(w.fuel / w.hm) : null,
       }))
 
     const bolehKelola = session.is_super_admin ||
@@ -377,6 +395,7 @@ export async function GET(req: NextRequest) {
       estimasi: r2(estimasi),
       achievement_pct: Math.round(achievement * 10000) / 100,
       per_egi: perEGI,
+      fc_target: Object.fromEntries(EGI_ORDER.map((e) => [e, petaFc[e] != null ? Number(petaFc[e]) : null])),
       per_unit: unitRows,
       armada,
       revenue_total: r2(revenueTotal),
@@ -471,7 +490,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (tarifPeringatan) return NextResponse.json({ ok: true, peringatan: tarifPeringatan })
+    const fcTargets = Array.isArray(body?.fc_targets) ? body.fc_targets : []
+    let fcPeringatan: string | null = null
+    for (const t of fcTargets) {
+      const egi = String(t?.egi || '').trim()
+      if (!egi) continue
+      const val = t?.fc_target === '' || t?.fc_target == null ? null : Number(t.fc_target)
+      const { error: fe } = await supabaseAdmin.from('ts_fc_target').upsert({
+        site, egi, fc_target: val != null && isFinite(val) ? val : null,
+      }, { onConflict: 'site,egi' })
+      if (fe && /ts_fc_target|does not exist|column/i.test(fe.message || '')) {
+        fcPeringatan = 'Target tersimpan. Tabel FC per EGI belum ada — jalankan scripts/produksi-fc-egi.sql di Supabase.'
+        break
+      }
+      if (fe) return NextResponse.json({ error: fe.message }, { status: 500 })
+    }
+
+    const peringatan = tarifPeringatan || fcPeringatan
+    if (peringatan) return NextResponse.json({ ok: true, peringatan })
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Gagal menyimpan target' }, { status: 500 })
