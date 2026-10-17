@@ -125,56 +125,101 @@ function WeeklyCompare({ minggu, bulan }: { minggu: any[]; bulan: string }) {
   )
 }
 
-function BatangHari({ data, warna = '#e11d48' }: { data: number[]; warna?: string }) {
-  const max = Math.max(1, ...data)
+function potongHari(arr: number[] | undefined, n: number) {
+  const a = arr || []
+  const sampai = Math.max(1, n)
+  return a.slice(0, sampai)
+}
+
+function BatangHari({ data, warna = '#e11d48', sampai, onPilih, pilih }: {
+  data: number[]; warna?: string; sampai: number; onPilih?: (i: number) => void; pilih?: number | null
+}) {
+  const d = potongHari(data, sampai)
+  const max = Math.max(1, ...d)
   return (
     <div className="overflow-x-auto px-2 pb-2">
-      <div className="flex items-end gap-0.5 h-28 min-w-[640px]">
-        {data.map((v, i) => (
-          <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-            {v > 0 && <div className="text-[7px] font-black text-rose-700 mb-0.5">{v % 1 ? fmt1(v) : v}</div>}
-            <div className="w-full max-w-[16px] rounded-t" style={{ height: `${(v / max) * 100}%`, background: warna, minHeight: v > 0 ? 4 : 1 }} />
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-0.5 min-w-[640px] mt-1">
-        {data.map((_, i) => (
-          <div key={i} className="flex-1 text-center text-[8px] text-slate-400">{i + 1}</div>
+      <div className="flex items-end gap-[3px] h-32 min-w-[520px]">
+        {d.map((v, i) => (
+          <button key={i} type="button" onClick={() => onPilih?.(i)}
+            className={'flex-1 flex flex-col items-center justify-end h-full rounded-t ' + (pilih === i ? 'bg-rose-50' : '')}>
+            <div className="text-[8px] font-black text-rose-800 mb-0.5 h-3">{v > 0 ? (v % 1 ? fmt1(v) : v) : ''}</div>
+            <div className="w-full max-w-[18px] rounded-t shadow-sm" style={{ height: `${Math.max(v > 0 ? 8 : 2, (v / max) * 100)}%`, background: warna }} />
+            <div className={'text-[8px] font-black mt-1 ' + (pilih === i ? 'text-[#003D79]' : 'text-slate-400')}>{i + 1}</div>
+          </button>
         ))}
       </div>
     </div>
   )
 }
 
-function GarisHari({ series, labels }: { series: { nama: string; warna: string; data: number[] }[]; labels: string[] }) {
-  const n = Math.max(1, ...series.map((s) => s.data.length))
-  const max = Math.max(1, ...series.flatMap((s) => s.data))
-  const W = Math.max(640, n * 22)
-  const H = 140
-  const pad = 18
-  function X(i: number) { return pad + (i * (W - pad * 2)) / Math.max(1, n - 1) }
-  function Y(v: number) { return H - pad - (v / max) * (H - pad * 2) }
+function GarisHari({ series, sampai, bulan }: { series: { nama: string; warna: string; data: number[] }[]; sampai: number; bulan: string }) {
+  const [pilih, setPilih] = useState<number | null>(sampai > 0 ? sampai - 1 : 0)
+  const n = Math.max(1, sampai)
+  const sliced = series.map((s) => ({ ...s, data: potongHari(s.data, n) }))
+  const max = Math.max(1, ...sliced.flatMap((s) => s.data))
+  const W = Math.max(560, n * 36)
+  const H = 200
+  const padL = 36, padR = 12, padT = 16, padB = 28
+  function X(i: number) { return padL + (n === 1 ? 0 : (i * (W - padL - padR)) / (n - 1)) }
+  function Y(v: number) { return padT + (1 - v / max) * (H - padT - padB) }
+  const idx = pilih == null ? n - 1 : Math.min(pilih, n - 1)
   return (
-    <div className="overflow-x-auto px-2 pb-2">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[640px] h-36">
-        {series.map((s) => {
-          const d = s.data.map((v, i) => `${i === 0 ? 'M' : 'L'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')
-          return (
-            <g key={s.nama}>
-              <path d={d} fill="none" stroke={s.warna} strokeWidth="2.2" />
-              {s.data.map((v, i) => (
-                <circle key={i} cx={X(i)} cy={Y(v)} r="2.4" fill={s.warna} />
-              ))}
+    <div className="px-2 pb-3">
+      <div className="overflow-x-auto">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[560px] h-52 select-none">
+          {[0, 0.25, 0.5, 0.75, 1].map((t) => {
+            const y = Y(max * t)
+            return (
+              <g key={t}>
+                <line x1={padL} x2={W - padR} y1={y} y2={y} stroke="#edf1f5" strokeWidth="1" />
+                <text x={padL - 6} y={y + 3} textAnchor="end" fontSize="9" fill="#94a3b8">{fmt1(max * t)}</text>
+              </g>
+            )
+          })}
+          {pilih != null && (
+            <line x1={X(idx)} x2={X(idx)} y1={padT} y2={H - padB} stroke="#003D79" strokeWidth="1.5" strokeDasharray="4 3" />
+          )}
+          {sliced.map((s) => {
+            const d = s.data.map((v, i) => `${i === 0 ? 'M' : 'L'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')
+            const area = `${d} L${X(s.data.length - 1).toFixed(1)},${H - padB} L${X(0).toFixed(1)},${H - padB} Z`
+            return (
+              <g key={s.nama}>
+                <path d={area} fill={s.warna} opacity="0.08" />
+                <path d={d} fill="none" stroke={s.warna} strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
+                {s.data.map((v, i) => (
+                  <circle key={i} cx={X(i)} cy={Y(v)} r={idx === i ? 5.5 : 3.2} fill="#fff" stroke={s.warna} strokeWidth={idx === i ? 3 : 2} />
+                ))}
+              </g>
+            )
+          })}
+          {Array.from({ length: n }, (_, i) => (
+            <g key={'h' + i}>
+              <rect x={X(i) - 14} y={padT} width="28" height={H - padT - padB} fill="transparent" className="cursor-pointer"
+                onClick={() => setPilih(i)} />
+              <text x={X(i)} y={H - 8} textAnchor="middle" fontSize="9" fontWeight="700" fill={idx === i ? '#003D79' : '#94a3b8'}>{i + 1}</text>
             </g>
-          )
-        })}
-      </svg>
-      <div className="flex flex-wrap gap-3 px-2 text-[9px] font-bold">
-        {series.map((s) => (
-          <span key={s.nama} className="inline-flex items-center gap-1">
-            <i className="inline-block w-3 h-0.5" style={{ background: s.warna }} /> {s.nama}
+          ))}
+        </svg>
+      </div>
+      <div className="flex flex-wrap gap-2 px-1 mt-1">
+        {sliced.map((s) => (
+          <span key={s.nama} className="inline-flex items-center gap-1.5 text-[10px] font-black text-slate-600 bg-slate-50 border border-slate-100 rounded-full px-2 py-0.5">
+            <i className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: s.warna }} /> {s.nama}
           </span>
         ))}
+      </div>
+      <div className="mt-2 rounded-xl border border-[#c7dbef] bg-[#eff6fd] px-3 py-2">
+        <div className="text-[10px] font-black uppercase tracking-wider text-[#164c7d]">
+          Tanggal {String(idx + 1).padStart(2, '0')} {labelBulan(bulan)} · klik titik/tanggal lain
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-1.5">
+          {sliced.map((s) => (
+            <div key={s.nama} className="rounded-lg bg-white border border-slate-100 px-2 py-1.5">
+              <div className="text-[9px] font-bold text-slate-400">{s.nama}</div>
+              <div className="text-[15px] font-black tabular-nums" style={{ color: s.warna }}>{fmt1(s.data[idx] || 0)}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -349,14 +394,15 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
       </div>
 
       <Blok no="02b" judul="Rangkuman harian · BD, HM, STB, operator" sub="Batang = unit BD/stop (ada catatan TS Opt). Garis = HM, STB, unit BD, operator, unit tanpa operator." />
-      <Panel judul="Total Breakdown / stop operasi per hari" desc="Jumlah unit yang ada Catatan Breakdown di TS Opt hari itu. Bukan jam BD (kolom jam BD tidak ada di TS Opt)." tag="BATANG">
-        <BatangHari data={d.per_hari_bd_unit || Array(hariBulan).fill(0)} warna="#e11d48" />
-        <p className="px-3 pb-2 text-[9px] text-slate-400">Merah = unit stop/BD tercatat. 0 = tidak ada catatan BD hari itu.</p>
+      <Panel judul="Total Breakdown / stop operasi per hari" desc={`Hanya tanggal berjalan 01–${String(Math.max(1, hariTerisi)).padStart(2, '0')} ${labelBulan(bulan)}. Klik batang untuk pilih hari.`} tag="BATANG">
+        <BatangHari data={d.per_hari_bd_unit || []} warna="#e11d48" sampai={hariTerisi || 1} />
+        <p className="px-3 pb-2 text-[9px] text-slate-400">Merah = unit ada Catatan BD. Bukan jam BD.</p>
       </Panel>
       <div className="mt-2.5">
-        <Panel judul="Perbandingan harian (garis)" desc="HM, STB jam, unit BD, jumlah operator, unit tanpa nama operator.">
+        <Panel judul="Perbandingan harian (garis)" desc={`Tanggal berjalan saja. Klik titik atau angka tanggal — kartu di bawah menampilkan jumlah hari itu.`}>
           <GarisHari
-            labels={(d.per_hari || []).map((_: any, i: number) => String(i + 1))}
+            sampai={hariTerisi || 1}
+            bulan={bulan}
             series={[
               { nama: 'HM', warna: '#0a5bd3', data: d.per_hari || [] },
               { nama: 'STB (jam)', warna: '#d09534', data: d.per_hari_stb || [] },
