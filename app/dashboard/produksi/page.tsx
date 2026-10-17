@@ -338,6 +338,26 @@ function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: str
         {simpan ? 'Menyimpan…' : 'Simpan Target'}
       </button>
       {pesan && <p className="mt-1.5 text-[10px] font-bold text-center text-slate-500">{pesan}</p>}
+
+      <div className="mt-3 space-y-2 border-t border-slate-100 pt-2">
+        <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">Pengaturan lain (tampilan)</div>
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-2">
+          <div className="text-[10px] font-black text-[#183d63] mb-1">B. Tarif / harga unit (Revenue)</div>
+          <p className="text-[10px] text-slate-500">Belum dihitung di live. Isi tarif per HM nanti setelah harga unit diputuskan — jangan pakai angka simulasi.</p>
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-2">
+          <div className="text-[10px] font-black text-[#183d63] mb-1">C. UA</div>
+          <p className="text-[10px] text-slate-500">UA dipantau, tanpa acuan. Tidak membuat “perlu perhatian”.</p>
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-2">
+          <div className="text-[10px] font-black text-[#183d63] mb-1">D. Target FC fuel</div>
+          <p className="text-[10px] text-slate-500">Fuel live = rate liter/jam unit × HM. Target FC belum disimpan.</p>
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-2">
+          <div className="text-[10px] font-black text-[#183d63] mb-1">E. Aturan BD berulang</div>
+          <p className="text-[10px] text-slate-500">Belum dipasang. Jam BD ≠ HM BD, belum ada kolom durasi di TS Opt.</p>
+        </div>
+      </div>
     </div>
   )
 }

@@ -15,12 +15,12 @@ function labelBulan(b: string) {
   return `${NAMA_BULAN[Number(bl) - 1] || bl} ${th}`
 }
 
-function Ring({ p, size, children }: { p: number; size: number; children: ReactNode }) {
+function Ring({ p, size, children, color = '#0a5bd3' }: { p: number; size: number; children: ReactNode; color?: string }) {
   const v = Math.max(0, Math.min(100, p))
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flex: `0 0 ${size}px`,
-      background: `conic-gradient(#0a5bd3 ${v}%, #e7edf3 0)`,
+      background: `conic-gradient(${color} ${v}%, #e7edf3 0)`,
       display: 'grid', placeItems: 'center', position: 'relative',
     }}>
       <div style={{
@@ -64,6 +64,57 @@ function pill(v: number | null, ambang: number | null) {
   const ok = !cek || v >= ambang
   const cls = !cek ? 'bg-slate-100 text-slate-700' : ok ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-700'
   return <span className={'inline-block min-w-[48px] text-center rounded px-1.5 py-0.5 text-[10px] font-black ' + cls}>{fmt(v)}%</span>
+}
+
+function WeeklyCompare({ minggu, bulan }: { minggu: any[]; bulan: string }) {
+  const ini = minggu?.[minggu.length - 1]
+  const lalu = minggu?.[minggu.length - 2]
+  if (!ini) return <p className="px-3 pb-3 text-[11px] text-slate-400">Belum ada data minggu.</p>
+  if (!lalu) {
+    return (
+      <p className="px-3 pb-3 text-[11px] text-slate-400">
+        Minggu ini: {ini.label?.replace(bulan, labelBulan(bulan))}. Minggu lalu belum ada di import — upload TS Opt minggu sebelumnya untuk perbandingan.
+      </p>
+    )
+  }
+  function beda(a: number | null, b: number | null) {
+    if (a == null || b == null) return '—'
+    const d = a - b
+    return (d >= 0 ? '+' : '') + fmt(d)
+  }
+  const rows = [
+    ['HM', ini.hm, lalu.hm, false],
+    ['STB', ini.stb, lalu.stb, false],
+    ['PA %', ini.pa, lalu.pa, true],
+    ['MA %', ini.ma, lalu.ma, true],
+    ['UA %', ini.ua, lalu.ua, true],
+  ] as const
+  return (
+    <div className="overflow-x-auto px-3 pb-3">
+      <table className="w-full text-[10px]">
+        <thead className="bg-slate-50">
+          <tr>
+            <th className="px-2 py-2 text-left">Metrik</th>
+            <th className="px-2 py-2 text-right">Minggu ini<br />{ini.label?.replace(bulan, labelBulan(bulan))}</th>
+            <th className="px-2 py-2 text-right">Minggu lalu<br />{lalu.label?.replace(bulan, labelBulan(bulan))}</th>
+            <th className="px-2 py-2 text-right">Selisih</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([n, a, b, pct]) => (
+            <tr key={n} className="border-t border-slate-100">
+              <td className="px-2 py-1.5 font-black">{n}</td>
+              <td className="px-2 py-1.5 text-right tabular-nums font-black">{pct ? fmtP(a as any) : fmt1(a as any)}</td>
+              <td className="px-2 py-1.5 text-right tabular-nums">{pct ? fmtP(b as any) : fmt1(b as any)}</td>
+              <td className={'px-2 py-1.5 text-right tabular-nums font-black ' + (Number(a) >= Number(b) ? 'text-emerald-700' : 'text-amber-700')}>
+                {beda(a as any, b as any)}{pct ? ' pt' : ''}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }
 
 export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
@@ -298,7 +349,34 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
         </Panel>
       </div>
 
-      <Blok no="04" judul="Analisis mingguan PA · MA · UA" sub="Satu acuan site. Pecahan HM vs STB dari TS Opt." />
+      <Panel judul="PA · MA · UA per EGI (chart lingkaran)" desc="Satu acuan site: PA 90 · MA 92. UA dipantau, tanpa acuan." tag="CHART">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-3 pb-3">
+          {(d.per_egi || []).map((e: any) => (
+            <div key={e.egi} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+              <div className="text-[11px] font-black text-[#183d63] mb-2">{e.egi}</div>
+              <div className="flex justify-around items-center">
+                {([
+                  ['PA', e.pa, paAcu, '#0a5bd3'],
+                  ['MA', e.ma, maAcu, '#199b8c'],
+                  ['UA', e.ua, null, '#d09534'],
+                ] as const).map(([lab, val, acu, col]) => (
+                  <div key={lab} className="text-center">
+                    <Ring p={Number(val || 0)} size={72} color={col}>
+                      <span className="text-[10px] font-black text-[#173f65]">{val == null ? '—' : fmt1(val)}</span>
+                    </Ring>
+                    <div className="mt-1 text-[9px] font-black uppercase text-slate-400">{lab}</div>
+                    <div className={'text-[9px] font-bold ' + (acu != null && val != null && val < acu ? 'text-rose-600' : 'text-slate-400')}>
+                      {acu == null ? 'dipantau' : val != null && val >= acu ? '≥ ' + fmt1(acu) : '< ' + fmt1(acu)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
+      <Blok no="04" judul="Review performa mingguan" sub="Bandingkan minggu ini vs minggu lalu dari TS Opt yang sama." />
       <div className="grid grid-cols-3 gap-2.5">
         {[
           ['PA minggu berjalan', mingguIni?.pa, paAcu],
@@ -312,6 +390,9 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
           </div>
         ))}
       </div>
+      <Panel judul="Perbandingan minggu ini vs minggu lalu" desc="Hanya muncul jika kedua minggu ada di import TS Opt." tag="REVIEW">
+        <WeeklyCompare minggu={minggu} bulan={bulan} />
+      </Panel>
       <div className="grid gap-2.5 md:grid-cols-2 mt-2.5">
         <Panel judul="PA / MA / UA per minggu">
           <div className="px-3 pb-3 space-y-1">
