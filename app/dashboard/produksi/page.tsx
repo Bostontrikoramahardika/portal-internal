@@ -269,14 +269,46 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
   )
 }
 
-function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: string; target: any; onSaved: () => void }) {
-  const [tj, setTj] = useState('')
-  const [fk, setFk] = useState('')
-  const [simpan, setSimpan] = useState(false)
-  const [pesan, setPesan] = useState('')
+function Field({ label, children, span2 }: { label: string; children: any; span2?: boolean }) {
+  return (
+    <div className={span2 ? 'col-span-2' : ''}>
+      <label className="block text-[10px] font-bold text-slate-400 mb-1">{label}</label>
+      {children}
+    </div>
+  )
+}
+const inp = 'w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold bg-white'
+function KartuSet({ judul, desc, children }: { judul: string; desc: string; children: any }) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="px-3 pt-3 pb-1">
+        <div className="text-[12px] font-black text-[#1a3d62]">{judul}</div>
+        <div className="text-[10px] text-slate-400 mt-0.5">{desc}</div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 p-3 pt-2">{children}</div>
+    </div>
+  )
+}
 
+function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: string; target: any; onSaved: () => void }) {
+  const [th, bl] = bulan.split('-').map(Number)
+  const hariBulan = (th && bl) ? new Date(th, bl, 0).getDate() : 31
+  const [tj, setTj] = useState('')
+  const [fk, setFk] = useState('88')
   const [pa, setPa] = useState('90')
   const [ma, setMa] = useState('92')
+  const [ua, setUa] = useState('')
+  const [tarifDasar, setTarifDasar] = useState('per-hm')
+  const [tarifRp, setTarifRp] = useState('')
+  const [fc, setFc] = useState('')
+  const [fcLiter, setFcLiter] = useState('')
+  const [fcLingkup, setFcLingkup] = useState('site')
+  const [bdCount, setBdCount] = useState('2')
+  const [bdLingkup, setBdLingkup] = useState('unit-shift')
+  const [bdPeriode, setBdPeriode] = useState('periode')
+  const [simpan, setSimpan] = useState(false)
+  const [pesan, setPesan] = useState('')
+  const harian = Number(tj) > 0 ? Number(tj) / hariBulan : 0
 
   useEffect(() => {
     setTj(target ? String(target.target_jam || '') : '')
@@ -297,47 +329,109 @@ function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: str
       })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || 'Gagal')
-      setPesan(j?.peringatan ? '⚠️ ' + j.peringatan : '✅ Target tersimpan')
+      setPesan(j?.peringatan ? '⚠️ ' + j.peringatan : '✅ Target HM, PA, MA tersimpan')
       onSaved()
     } catch (e: any) { setPesan('❌ ' + (e?.message || 'Gagal')) }
     setSimpan(false)
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-2">
-      <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2">
-        🎯 Pengaturan site ({labelBulan(bulan)})
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="block text-[10px] font-bold text-slate-400 mb-1">Target HM bulan</label>
-          <input type="number" min={0} value={tj} onChange={(e) => setTj(e.target.value)} placeholder="cth: 10500"
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
-        </div>
-        <div>
-          <label className="block text-[10px] font-bold text-slate-400 mb-1">Faktor Excel tersisa (%)</label>
-          <input type="number" min={0} max={100} value={fk} onChange={(e) => setFk(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
-        </div>
-        <div>
-          <label className="block text-[10px] font-bold text-slate-400 mb-1">Acuan PA (%)</label>
-          <input type="number" min={0} max={100} step={0.1} value={pa} onChange={(e) => setPa(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
-        </div>
-        <div>
-          <label className="block text-[10px] font-bold text-slate-400 mb-1">Acuan MA (%)</label>
-          <input type="number" min={0} max={100} step={0.1} value={ma} onChange={(e) => setMa(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
-        </div>
-      </div>
-      <p className="mt-1.5 text-[9px] text-slate-400">
-        Target harian monitoring = target bulan ÷ hari kalender. UA dipantau, tanpa acuan. Satu acuan PA/MA untuk seluruh site.
-      </p>
+    <div className="space-y-2">
+      <KartuSet judul="A. Target HM" desc="Satu target per bulan. Harian otomatis = bulan ÷ hari kalender.">
+        <Field label="Bulan terpilih"><input readOnly value={labelBulan(bulan)} className={inp + ' bg-slate-50'} /></Field>
+        <Field label="Hari kalender"><input readOnly value={String(hariBulan)} className={inp + ' bg-slate-50'} /></Field>
+        <Field label="Target HM bulanan">
+          <input type="number" min={0} value={tj} onChange={(e) => setTj(e.target.value)} placeholder="cth: 11000" className={inp} />
+        </Field>
+        <Field label="Target HM harian (otomatis)">
+          <input readOnly value={harian ? harian.toLocaleString('id-ID', { maximumFractionDigits: 1 }) : '—'} className={inp + ' bg-slate-50'} />
+        </Field>
+        <Field label="Faktor Excel tersisa (%)">
+          <input type="number" min={0} max={100} value={fk} onChange={(e) => setFk(e.target.value)} className={inp} />
+        </Field>
+      </KartuSet>
+
+      <KartuSet judul="B. Tarif / harga unit (Revenue)" desc="Isi dasar tarif. Belum dipakai hitung pendapatan sampai rumus resmi ada.">
+        <Field label="Dasar tarif">
+          <select value={tarifDasar} onChange={(e) => setTarifDasar(e.target.value)} className={inp}>
+            <option value="per-hm">Per HM</option>
+            <option value="per-hari">Per hari</option>
+            <option value="bulanan">Bulanan</option>
+            <option value="kontrak">Sesuai kontrak</option>
+          </select>
+        </Field>
+        <Field label="Nilai tarif (Rp)">
+          <input type="number" min={0} step={1000} value={tarifRp} onChange={(e) => setTarifRp(e.target.value)} placeholder="isi angka" className={inp} />
+        </Field>
+      </KartuSet>
+
+      <KartuSet judul="C. Target PA, MA, UA" desc="Satu acuan untuk seluruh site. UA boleh kosong.">
+        <Field label="Acuan PA (%)">
+          <input type="number" min={0} max={100} step={0.1} value={pa} onChange={(e) => setPa(e.target.value)} className={inp} />
+        </Field>
+        <Field label="Acuan MA (%)">
+          <input type="number" min={0} max={100} step={0.1} value={ma} onChange={(e) => setMa(e.target.value)} className={inp} />
+        </Field>
+        <Field label="Acuan UA (%) · kosong = dipantau" span2>
+          <input type="number" min={0} max={100} step={0.1} value={ua} onChange={(e) => setUa(e.target.value)} placeholder="Belum ditetapkan" className={inp} />
+        </Field>
+      </KartuSet>
+
+      <KartuSet judul="D. Target FC fuel" desc="Liter per HM. Fuel laporan = rate unit × HM.">
+        <Field label="Batas/target FC (L/HM)">
+          <input type="number" min={0} step={0.01} value={fc} onChange={(e) => setFc(e.target.value)} placeholder="cth: 3.50" className={inp} />
+        </Field>
+        <Field label="Estimasi liter harian">
+          <input type="number" min={0} value={fcLiter} onChange={(e) => setFcLiter(e.target.value)} className={inp} />
+        </Field>
+        <Field label="Lingkup" span2>
+          <select value={fcLingkup} onChange={(e) => setFcLingkup(e.target.value)} className={inp}>
+            <option value="site">Default site</option>
+            <option value="egi">Per EGI</option>
+            <option value="unit">Per unit</option>
+          </select>
+        </Field>
+      </KartuSet>
+
+      <KartuSet judul="E. Aturan BD berulang" desc="Jam BD (durasi) tidak digabung ke HM BD.">
+        <Field label={'Jumlah kejadian untuk "berulang"'}>
+          <input type="number" min={1} value={bdCount} onChange={(e) => setBdCount(e.target.value)} className={inp} />
+        </Field>
+        <Field label="Lingkup hitung">
+          <select value={bdLingkup} onChange={(e) => setBdLingkup(e.target.value)} className={inp}>
+            <option value="unit-shift">Per unit + shift</option>
+            <option value="unit">Per unit saja</option>
+          </select>
+        </Field>
+        <Field label="Jangka waktu" span2>
+          <select value={bdPeriode} onChange={(e) => setBdPeriode(e.target.value)} className={inp}>
+            <option value="periode">Mengikuti periode laporan</option>
+            <option value="7hari">7 hari berjalan</option>
+            <option value="bulan">Satu bulan kalender</option>
+          </select>
+        </Field>
+      </KartuSet>
+
+      <KartuSet judul="F. Kategori HM" desc="HM Travel, HM BD, dan Jam BD tetap terpisah.">
+        <label className="col-span-2 flex items-center gap-2 text-[11px] font-bold text-slate-600">
+          <input type="checkbox" checked readOnly /> Tampilkan HM Travel terpisah
+        </label>
+        <label className="col-span-2 flex items-center gap-2 text-[11px] font-bold text-slate-600">
+          <input type="checkbox" checked readOnly /> Tampilkan HM BD terpisah
+        </label>
+        <label className="col-span-2 flex items-center gap-2 text-[11px] font-bold text-slate-600">
+          <input type="checkbox" checked readOnly /> Jam BD tidak digabung ke HM BD
+        </label>
+      </KartuSet>
+
       <button onClick={kirim} disabled={simpan || !tj}
-        className="mt-2 w-full py-2 rounded-xl bg-[#003D79] text-white font-black text-[11px] uppercase tracking-wider disabled:opacity-50">
-        {simpan ? 'Menyimpan…' : 'Simpan Target'}
+        className="w-full py-2.5 rounded-xl bg-[#003D79] text-white font-black text-[11px] uppercase tracking-wider disabled:opacity-50">
+        {simpan ? 'Menyimpan…' : 'Simpan Target HM · PA · MA'}
       </button>
-      {pesan && <p className="mt-1.5 text-[10px] font-bold text-center text-slate-500">{pesan}</p>}
+      {pesan && <p className="text-[10px] font-bold text-center text-slate-500">{pesan}</p>}
+      <p className="text-[9px] text-slate-400 text-center">
+        Tombol simpan menulis Target HM, faktor, PA, MA ke database. Tarif / FC / BD tersimpan di isian ini untuk diisi — rumus pendapatan belum dipasang.
+      </p>
     </div>
   )
 }
