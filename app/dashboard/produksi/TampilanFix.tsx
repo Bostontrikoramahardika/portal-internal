@@ -138,6 +138,104 @@ function potongHari(arr: number[] | undefined, n: number) {
   return a.slice(0, sampai)
 }
 
+function BatangPaMaHari({ pa, ma, ambang, sampai }: { pa: (number | null)[]; ma: (number | null)[]; ambang: number; sampai: number }) {
+  const n = Math.max(1, sampai)
+  const paD = (pa || []).slice(0, n)
+  const maD = (ma || []).slice(0, n)
+  const H = 120
+  const [pilih, setPilih] = useState<number | null>(n - 1)
+  const lineBottom = 28 + (Math.min(100, ambang) / 100) * H
+  const idx = pilih == null ? n - 1 : Math.min(pilih, n - 1)
+  function warna(v: number | null) {
+    if (v == null) return '#e2e8f0'
+    return v < ambang ? '#e11d48' : '#16a34a'
+  }
+  function tinggi(v: number | null) {
+    const n = v == null ? 0 : Math.max(0, Math.min(100, v))
+    return (n / 100) * H
+  }
+  return (
+    <div className="px-2 pb-2">
+      <div className="flex gap-3 px-1 pb-1 text-[9px] font-black text-slate-500">
+        <span>█ kiri = PA</span><span>█ kanan = MA</span><span className="text-red-600">— garis {fmt1(ambang)}%</span>
+      </div>
+      <div className="overflow-x-auto">
+        <div className="relative min-w-[560px]" style={{ height: H + 28 }}>
+          <div className="absolute left-0 right-0 z-10 border-t-2 border-red-500 pointer-events-none" style={{ bottom: lineBottom }} />
+          <div className="absolute inset-x-0 bottom-7 flex items-end gap-[4px]" style={{ height: H }}>
+            {paD.map((_, i) => (
+              <button key={i} type="button" onClick={() => setPilih(i)}
+                className="flex-1 h-full flex items-end justify-center gap-[1px]">
+                <div className="w-[45%] max-w-[12px] rounded-t" style={{ height: `${tinggi(paD[i])}px`, background: warna(paD[i]), minHeight: 2 }} />
+                <div className="w-[45%] max-w-[12px] rounded-t" style={{ height: `${tinggi(maD[i])}px`, background: warna(maD[i]), minHeight: 2 }} />
+              </button>
+            ))}
+          </div>
+          <div className="absolute inset-x-0 bottom-0 flex gap-[4px]">
+            {paD.map((_, i) => (
+              <div key={i} className={'flex-1 text-center text-[8px] font-black ' + (idx === i ? 'text-[#003D79]' : 'text-slate-400')}>{i + 1}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="mt-2 rounded-lg bg-slate-50 border border-slate-100 px-2 py-1.5 text-[11px] font-bold text-slate-600">
+        Tanggal {idx + 1}: PA {paD[idx] == null ? '—' : fmt1(paD[idx]) + '%'}
+        {paD[idx] != null ? (paD[idx]! >= ambang ? ' hijau' : ' merah') : ''}
+        {' · '}MA {maD[idx] == null ? '—' : fmt1(maD[idx]) + '%'}
+        {maD[idx] != null ? (maD[idx]! >= ambang ? ' hijau' : ' merah') : ''}
+        {' · garis '}{fmt1(ambang)}%
+      </div>
+    </div>
+  )
+}
+
+function BatangPaUnit({ units, ambang }: { units: any[]; ambang: number }) {
+  const list = (units || []).slice().sort((a: any, b: any) => String(a.kode).localeCompare(String(b.kode)))
+  const [pilih, setPilih] = useState<string | null>(list[0]?.kode || null)
+  const H = 130
+  const u = list.find((x: any) => x.kode === pilih)
+  return (
+    <div className="px-2 pb-2">
+      <div className="overflow-x-auto">
+        <div className="relative" style={{ minWidth: Math.max(520, list.length * 28), height: H + 36 }}>
+          <div className="absolute left-0 right-0 z-10 border-t-2 border-red-500 pointer-events-none"
+            style={{ bottom: 36 + (Math.min(100, ambang) / 100) * H }} />
+          <div className="absolute inset-x-0 bottom-9 flex items-end gap-[3px]" style={{ height: H }}>
+            {list.map((x: any) => {
+              const v = x.pa
+              const n = v == null ? 0 : Math.max(0, Math.min(100, v))
+              const bawah = v != null && v < ambang
+              const warna = v == null ? '#e2e8f0' : bawah ? '#e11d48' : '#16a34a'
+              return (
+                <button key={x.kode} type="button" onClick={() => setPilih(x.kode)}
+                  className="flex-1 h-full flex flex-col items-center justify-end min-w-[22px]">
+                  {v != null && (
+                    <div className="text-[7px] font-black mb-0.5" style={{ color: bawah ? '#b91c1c' : '#15803d' }}>{fmt1(v)}</div>
+                  )}
+                  <div className="w-full max-w-[16px] rounded-t" style={{ height: `${(n / 100) * H}px`, background: warna, minHeight: 3 }} />
+                </button>
+              )
+            })}
+          </div>
+          <div className="absolute inset-x-0 bottom-0 flex gap-[3px]">
+            {list.map((x: any) => (
+              <div key={x.kode} className={'flex-1 text-center text-[7px] font-black truncate min-w-[22px] ' + (pilih === x.kode ? 'text-[#003D79]' : 'text-slate-400')}
+                style={{ writingMode: 'vertical-rl' as any, transform: 'rotate(180deg)', height: 32 }}>{x.kode}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+      {u && (
+        <div className="mt-2 rounded-lg bg-slate-50 border border-slate-100 px-2 py-1.5 text-[11px] font-bold text-slate-600">
+          {u.kode} · {u.jenis} · PA {u.pa == null ? '—' : fmt1(u.pa) + '%'}
+          {u.pa != null ? (u.pa >= ambang ? ' · hijau (≥ garis)' : ' · merah (di bawah garis)') : ''}
+          {' · garis '}{fmt1(ambang)}%
+        </div>
+      )}
+    </div>
+  )
+}
+
 function BatangTargetHari({ data, ambang, sampai }: { data: (number | null)[]; ambang: number | null; sampai: number }) {
   const d = (data || []).slice(0, Math.max(1, sampai))
   const H = 120
@@ -569,12 +667,12 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
           </table>
         </div>
       </Panel>
-      <Panel judul="Actual PA / Day" desc={`Garis merah = acuan PA ${fmt1(paAcu)}%. Hijau ≥ garis, merah di bawah. Tanggal berjalan saja. Klik batang.`} tag="PLAN">
-        <BatangTargetHari data={d.per_hari_pa || []} ambang={paAcu} sampai={hariTerisi || 1} />
+      <Panel judul="Actual PA & MA / Day" desc={`Dua batang per tanggal: kiri PA, kanan MA. Garis merah = acuan PA ${fmt1(paAcu)}% (MA ikut garis yang sama). Hijau ≥ garis, merah di bawah. Klik hari.`} tag="PLAN 90%">
+        <BatangPaMaHari pa={d.per_hari_pa || []} ma={d.per_hari_ma || []} ambang={paAcu} sampai={hariTerisi || 1} />
       </Panel>
       <div className="mt-2.5">
-        <Panel judul="Actual MA / Day" desc={`Garis merah = acuan MA ${fmt1(maAcu)}%. Hijau ≥ garis, merah di bawah.`} tag="PLAN">
-          <BatangTargetHari data={d.per_hari_ma || []} ambang={maAcu} sampai={hariTerisi || 1} />
+        <Panel judul="PA per unit" desc={`Satu batang per unit. Garis merah = acuan PA ${fmt1(paAcu)}%. Klik unit.`} tag="PER UNIT">
+          <BatangPaUnit units={units} ambang={paAcu} />
         </Panel>
       </div>
       <div className="mt-2.5">
