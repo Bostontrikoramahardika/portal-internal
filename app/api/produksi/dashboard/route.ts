@@ -92,6 +92,9 @@ export async function GET(req: NextRequest) {
     const perHariStb: number[] = Array(hariBulan + 1).fill(0)
     const aktifPerHari: Record<number, Set<string>> = {}
     const semuaPerHari: Record<number, Set<string>> = {}
+    const bdPerHari: Record<number, Set<string>> = {}
+    const opPerHari: Record<number, Set<string>> = {}
+    const tanpaOpPerHari: Record<number, Set<string>> = {}
 
     let totalHM = 0
     let totalStb = 0
@@ -141,6 +144,17 @@ export async function GET(req: NextRequest) {
         else perHariNS[tgl] += hm
         if (!semuaPerHari[tgl]) semuaPerHari[tgl] = new Set()
         semuaPerHari[tgl].add(r.kode_unit)
+        const namaHari = String(r.nama_operator || '').trim()
+        if (!opPerHari[tgl]) opPerHari[tgl] = new Set()
+        if (namaHari) opPerHari[tgl].add(namaHari)
+        else {
+          if (!tanpaOpPerHari[tgl]) tanpaOpPerHari[tgl] = new Set()
+          tanpaOpPerHari[tgl].add(r.kode_unit)
+        }
+        if (r.catatan) {
+          if (!bdPerHari[tgl]) bdPerHari[tgl] = new Set()
+          bdPerHari[tgl].add(r.kode_unit)
+        }
         if (hm > 0) {
           if (!aktifPerHari[tgl]) aktifPerHari[tgl] = new Set()
           aktifPerHari[tgl].add(r.kode_unit)
@@ -225,6 +239,14 @@ export async function GET(req: NextRequest) {
       perHariAtr.push(semua && semua.size
         ? Math.round(((aktif?.size || 0) / semua.size) * 1000) / 10
         : null)
+    }
+    const perHariBdUnit: number[] = []
+    const perHariOp: number[] = []
+    const perHariTanpaOp: number[] = []
+    for (let i = 1; i <= hariBulan; i++) {
+      perHariBdUnit.push(bdPerHari[i]?.size || 0)
+      perHariOp.push(opPerHari[i]?.size || 0)
+      perHariTanpaOp.push(tanpaOpPerHari[i]?.size || 0)
     }
 
     const aggEGI: Record<string, { hm: number; stb: number; fuel: number; paSum: number; paCnt: number; maSum: number; maCnt: number }> = {}
@@ -382,6 +404,9 @@ export async function GET(req: NextRequest) {
       per_hari_ds: perHariDS.slice(1).map(r2),
       per_hari_ns: perHariNS.slice(1).map(r2),
       per_hari_stb: perHariStb.slice(1).map(r2),
+      per_hari_bd_unit: perHariBdUnit,
+      per_hari_op: perHariOp,
+      per_hari_tanpa_op: perHariTanpaOp,
       per_hari_atr: perHariAtr,
       hari_terisi: hariTerisi,
       tgl_terakhir: tglTerakhir,

@@ -125,6 +125,61 @@ function WeeklyCompare({ minggu, bulan }: { minggu: any[]; bulan: string }) {
   )
 }
 
+function BatangHari({ data, warna = '#e11d48' }: { data: number[]; warna?: string }) {
+  const max = Math.max(1, ...data)
+  return (
+    <div className="overflow-x-auto px-2 pb-2">
+      <div className="flex items-end gap-0.5 h-28 min-w-[640px]">
+        {data.map((v, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+            {v > 0 && <div className="text-[7px] font-black text-rose-700 mb-0.5">{v % 1 ? fmt1(v) : v}</div>}
+            <div className="w-full max-w-[16px] rounded-t" style={{ height: `${(v / max) * 100}%`, background: warna, minHeight: v > 0 ? 4 : 1 }} />
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-0.5 min-w-[640px] mt-1">
+        {data.map((_, i) => (
+          <div key={i} className="flex-1 text-center text-[8px] text-slate-400">{i + 1}</div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function GarisHari({ series, labels }: { series: { nama: string; warna: string; data: number[] }[]; labels: string[] }) {
+  const n = Math.max(1, ...series.map((s) => s.data.length))
+  const max = Math.max(1, ...series.flatMap((s) => s.data))
+  const W = Math.max(640, n * 22)
+  const H = 140
+  const pad = 18
+  function X(i: number) { return pad + (i * (W - pad * 2)) / Math.max(1, n - 1) }
+  function Y(v: number) { return H - pad - (v / max) * (H - pad * 2) }
+  return (
+    <div className="overflow-x-auto px-2 pb-2">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[640px] h-36">
+        {series.map((s) => {
+          const d = s.data.map((v, i) => `${i === 0 ? 'M' : 'L'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')
+          return (
+            <g key={s.nama}>
+              <path d={d} fill="none" stroke={s.warna} strokeWidth="2.2" />
+              {s.data.map((v, i) => (
+                <circle key={i} cx={X(i)} cy={Y(v)} r="2.4" fill={s.warna} />
+              ))}
+            </g>
+          )
+        })}
+      </svg>
+      <div className="flex flex-wrap gap-3 px-2 text-[9px] font-bold">
+        {series.map((s) => (
+          <span key={s.nama} className="inline-flex items-center gap-1">
+            <i className="inline-block w-3 h-0.5" style={{ background: s.warna }} /> {s.nama}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
   const [filter, setFilter] = useState('Semua')
   const [klip, setKlip] = useState<any>(null)
@@ -290,6 +345,26 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
           <div className="h-28 grid place-items-center text-[11px] text-slate-400 px-4 text-center">
             Tidak dihitung. Isi tarif/harga unit dulu di pengaturan — jangan pakai angka simulasi.
           </div>
+        </Panel>
+      </div>
+
+      <Blok no="02b" judul="Rangkuman harian · BD, HM, STB, operator" sub="Batang = unit BD/stop (ada catatan TS Opt). Garis = HM, STB, unit BD, operator, unit tanpa operator." />
+      <Panel judul="Total Breakdown / stop operasi per hari" desc="Jumlah unit yang ada Catatan Breakdown di TS Opt hari itu. Bukan jam BD (kolom jam BD tidak ada di TS Opt)." tag="BATANG">
+        <BatangHari data={d.per_hari_bd_unit || Array(hariBulan).fill(0)} warna="#e11d48" />
+        <p className="px-3 pb-2 text-[9px] text-slate-400">Merah = unit stop/BD tercatat. 0 = tidak ada catatan BD hari itu.</p>
+      </Panel>
+      <div className="mt-2.5">
+        <Panel judul="Perbandingan harian (garis)" desc="HM, STB jam, unit BD, jumlah operator, unit tanpa nama operator.">
+          <GarisHari
+            labels={(d.per_hari || []).map((_: any, i: number) => String(i + 1))}
+            series={[
+              { nama: 'HM', warna: '#0a5bd3', data: d.per_hari || [] },
+              { nama: 'STB (jam)', warna: '#d09534', data: d.per_hari_stb || [] },
+              { nama: 'Unit BD stop', warna: '#e11d48', data: d.per_hari_bd_unit || [] },
+              { nama: 'Jumlah operator', warna: '#199b8c', data: d.per_hari_op || [] },
+              { nama: 'Unit tanpa operator', warna: '#7c3aed', data: d.per_hari_tanpa_op || [] },
+            ]}
+          />
         </Panel>
       </div>
 
