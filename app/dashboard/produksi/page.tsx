@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StdPage, EmptyState } from '@/app/components/std'
+import TampilanFix from './TampilanFix'
 
 function hdr() {
   const h: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -226,25 +227,6 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
 
   return (
     <div className="space-y-2">
-      {/* banner biru seperti Excel */}
-      <div className="rounded-xl overflow-hidden shadow-md">
-        <div className="bg-gradient-to-r from-[#0a5bd3] to-[#003D79] py-2 text-center">
-          <div className="text-white text-[13px] font-black tracking-wide uppercase">
-            Pencapaian HM Site {site}
-          </div>
-        </div>
-        <div className="bg-blue-100/70 py-1 text-center text-[10px] font-bold text-[#0b2a5b]">
-          {D.baris_data
-            ? `Tanggal 01 – ${String(tglAkhir || 1).padStart(2, '0')} ${labelBulan(bulan)}`
-            : labelBulan(bulan)}
-          <button onClick={muat} disabled={memuat}
-            className="ml-2 text-[9px] font-black uppercase text-[#003D79] underline disabled:opacity-50">
-            {memuat ? 'memuat…' : 'refresh'}
-          </button>
-        </div>
-      </div>
-
-      {/* filter */}
       <div className="bg-white rounded-xl border border-slate-200 p-2 grid grid-cols-2 gap-2">
         <div>
           <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Bulan</label>
@@ -271,221 +253,14 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
         </button>
       )}
 
-      <KpiMonitoring d={D} bulan={bulan} />
-
-      {(<>
-      {/* ═══ 2 kolom persis Excel: kiri ringkasan · kanan grafik+tabel (di HP maupun desktop) ═══ */}
-      <div className="grid gap-1.5 items-start" style={{ gridTemplateColumns: 'minmax(0,34%) minmax(0,1fr)' }}>
-        <div className="space-y-1.5">
-            <div className="bg-white rounded-xl border border-slate-200 p-2 text-center">
-              <Donut pct={D.achievement_pct} total={D.total_hm} />
-              <div className="mt-1 text-[9px] font-black uppercase tracking-wider text-slate-400">Achievement</div>
-              <div className="text-lg font-black text-[#0a5bd3]">{fmtP(D.achievement_pct)}</div>
-            </div>
-
-              <div className="bg-white rounded-xl border border-slate-200 p-2">
-                <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-1 mb-1">Target</div>
-                <BarisExcel label="Total Target" nilai={`${fmt1(D.target?.target_jam)} Jam`} />
-                <BarisExcel label={`Tersisa (${fmt(D.target?.faktor ?? 88)}%)`} nilai={`${fmt1(D.target?.tersisa)} Jam`} />
-                <BarisExcel label="Per Hari" nilai={`${fmt1(D.per_hari_target)} Jam`} />
-                <BarisExcel label={`Estimasi (${fmt(D.achievement_pct)}%)`} nilai={`${fmt1(D.estimasi)} Jam`} sorot />
-              </div>
-              <div className="bg-white rounded-xl border border-slate-200 p-2">
-                <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-1 mb-1">HM per Shift</div>
-                <BarisExcel label={`Shift I / DS (${pctDS}%)`} nilai={`${fmt1(D.hm_ds)} Jam`} />
-                <BarisExcel label={`Shift II / NS (${100 - pctDS}%)`} nilai={`${fmt1(D.hm_ns)} Jam`} />
-              </div>
-
-            {/* EGI: sum / avg / pa / ma */}
-              <KartuSeksi judul="Sum HM per EGI">
-                {(D.per_egi || []).map((e: any) => (
-                  <BarisExcel key={e.egi} label={e.egi} nilai={`${fmt(e.hm)} Jam`} />
-                ))}
-              </KartuSeksi>
-              <KartuSeksi judul="Avg HM per EGI">
-                {(D.per_egi || []).map((e: any) => (
-                  <BarisExcel key={e.egi} label={e.egi} nilai={`${fmt(e.avg)} Jam`} />
-                ))}
-              </KartuSeksi>
-              <KartuSeksi judul="PA per EGI">
-                {(D.per_egi || []).map((e: any) => (
-                  <BarisExcel key={e.egi} label={e.egi} nilai={fmtP(e.pa)} />
-                ))}
-              </KartuSeksi>
-              <KartuSeksi judul="MA per EGI">
-                {(D.per_egi || []).map((e: any) => (
-                  <BarisExcel key={e.egi} label={e.egi} nilai={fmtP(e.ma)} />
-                ))}
-              </KartuSeksi>
-
-            {/* CUACA — replika blok Excel */}
-            <div className="bg-white rounded-xl border border-slate-200 p-2">
-              <div className="text-[9px] font-black uppercase tracking-wider text-slate-500 text-center border-b border-slate-100 pb-1 mb-1">
-                Cuaca Tgl {D.cuaca ? fmtTglPanjang(D.cuaca.tanggal) : '–'}
-              </div>
-              <div className="grid grid-cols-2 gap-1 text-center">
-                <div>
-                  <div className="text-[8px] font-black uppercase text-slate-400">Shift 1</div>
-                  <IkonCuaca jenis={D.cuaca?.cuaca_s1 || 'cerah'} />
-                  <div className="text-[9px] font-bold text-slate-600">{LABEL_CUACA[D.cuaca?.cuaca_s1] || '–'}</div>
-                </div>
-                <div>
-                  <div className="text-[8px] font-black uppercase text-slate-400">Shift 2</div>
-                  <IkonCuaca jenis={D.cuaca?.cuaca_s2 || 'cerah'} />
-                  <div className="text-[9px] font-bold text-slate-600">{LABEL_CUACA[D.cuaca?.cuaca_s2] || '–'}</div>
-                </div>
-              </div>
-              {D.boleh_kelola && (
-                <div className="mt-1.5 space-y-1 border-t border-slate-100 pt-1">
-                  <input type="date" value={cwTgl} onChange={(e) => setCwTgl(e.target.value)}
-                    className="w-full px-1.5 py-0.5 rounded border border-slate-200 text-[9px] font-bold" />
-                  <div className="grid grid-cols-2 gap-1">
-                    <select value={cwS1} onChange={(e) => setCwS1(e.target.value)}
-                      className="px-1 py-0.5 rounded border border-slate-200 text-[9px] font-bold">
-                      <option value="cerah">S1 ☀ Cerah</option>
-                      <option value="berawan">S1 ⛅ Berawan</option>
-                      <option value="hujan">S1 🌧 Hujan</option>
-                    </select>
-                    <select value={cwS2} onChange={(e) => setCwS2(e.target.value)}
-                      className="px-1 py-0.5 rounded border border-slate-200 text-[9px] font-bold">
-                      <option value="cerah">S2 ☀ Cerah</option>
-                      <option value="berawan">S2 ⛅ Berawan</option>
-                      <option value="hujan">S2 🌧 Hujan</option>
-                    </select>
-                  </div>
-                  <button onClick={simpanCuaca} disabled={muatCw || !cwTgl}
-                    className="w-full py-1 rounded bg-[#003D79] text-white text-[9px] font-black uppercase tracking-wider disabled:opacity-50">
-                    {muatCw ? 'menyimpan…' : 'Simpan Cuaca'}
-                  </button>
-                </div>
-              )}
-            </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <KartuSeksi judul="Pencapaian HM per Hari">
-            <div className="overflow-x-auto pb-1">
-              <div className="relative min-w-[520px]">
-                {/* garis target merah putus-putus */}
-                {D.per_hari_target > 0 && (
-                  <div className="absolute left-0 right-0 border-t-2 border-dashed border-rose-500 z-10"
-                    style={{ bottom: `${(D.per_hari_target / maxHari) * 96 + 28}px` }} />
-                )}
-                <div className="flex items-end gap-[3px] h-24">
-                  {hariHM.map((v: number, i: number) => (
-                    <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                      {v > 0 && (
-                        <div className="text-[7px] font-black text-[#003D79] mb-0.5"
-                          style={{ writingMode: 'vertical-rl' as any }}>
-                          {fmt1(v)}
-                        </div>
-                      )}
-                      <div className="w-full max-w-[18px] rounded-t bg-gradient-to-t from-[#003D79] to-[#0a5bd3]"
-                        style={{ height: `${(v / maxHari) * 96}px` }} />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-[3px] mt-1">
-                  {hariHM.map((_: any, i: number) => (
-                    <div key={i} className="flex-1 text-center text-[8px] font-bold text-slate-500 border-t border-slate-200 pt-0.5">
-                      {String(i + 1).padStart(2, '0')}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-[3px]">
-                  {hariHM.map((v: number, i: number) => (
-                    <div key={i} className="flex-1 text-center text-[8px] font-bold text-slate-400">
-                      {v > 0 ? Math.round(v) : '-'}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </KartuSeksi>
-
-          {/* ATR unit per hari */}
-          <KartuSeksi judul="Persentase (%) ATR Unit per Hari">
-            <div className="overflow-x-auto pb-1">
-              <div className="min-w-[520px]">
-                <div className="flex items-end gap-[3px] h-16">
-                  {hariATR.map((v: number | null, i: number) => (
-                    <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                      {v != null && (
-                        <div className="text-[7px] font-black mb-0.5"
-                          style={{ writingMode: 'vertical-rl' as any, color: v >= 100 ? '#003D79' : '#e11d48' }}>
-                          {fmt(v)}
-                        </div>
-                      )}
-                      <div className={'w-full max-w-[18px] rounded-t ' +
-                        (v == null ? 'bg-slate-100' : v >= 100 ? 'bg-[#0a5bd3]' : 'bg-rose-600')}
-                        style={{ height: v == null ? 2 : `${(v / 100) * 64}px` }} />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-[3px] mt-1">
-                  {hariATR.map((_: any, i: number) => (
-                    <div key={i} className="flex-1 text-center text-[8px] font-bold text-slate-500 border-t border-slate-200 pt-0.5">
-                      {String(i + 1).padStart(2, '0')}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </KartuSeksi>
-
-          {/* tabel unit */}
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="rounded-t-2xl bg-gradient-to-r from-[#003D79] to-[#0a5bd3] text-white text-center text-[10px] font-black uppercase tracking-wider py-1">
-              Sum HM per EGI — per Unit · {(D.per_unit || []).length} unit
-            </div>
-            <div className="overflow-x-auto pb-2">
-              <table className="w-full text-[10px]">
-                <thead className="bg-[#0a5bd3] text-white">
-                  <tr>
-                    <th className="px-1.5 py-2 sticky left-0 z-10 bg-[#0a5bd3] text-left min-w-[34px]">No</th>
-                    <th className="px-1.5 py-2 text-left min-w-[74px]">Jenis Unit</th>
-                    <th className="px-1.5 py-2 text-left min-w-[64px]">Tipe</th>
-                    <th className="px-1.5 py-2 text-left min-w-[76px]">C/N</th>
-                    <th className="px-1.5 py-2 text-right min-w-[52px]">HM S1</th>
-                    <th className="px-1.5 py-2 text-right min-w-[52px]">HM S2</th>
-                    <th className="px-1.5 py-2 text-right min-w-[56px]">Total</th>
-                    <th className="px-1.5 py-2 text-center min-w-[56px]">PA (%)</th>
-                    <th className="px-1.5 py-2 text-center min-w-[56px]">MA (%)</th>
-                    <th className="px-1.5 py-2 text-center min-w-[56px]">UA (%)</th>
-                    <th className="px-1.5 py-2 text-left min-w-[110px]">Ket</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(D.per_unit || []).map((u: any, i: number) => {
-                    const bg = i % 2 === 0 ? 'bg-white' : 'bg-slate-50'
-                    return (
-                      <tr key={u.kode} className={bg}>
-                        <td className={'px-1.5 py-0.5 sticky left-0 z-10 italic text-slate-500 ' + bg}>{i + 1}</td>
-                        <td className="px-1.5 py-0.5 italic">{u.jenis}</td>
-                        <td className="px-1.5 py-0.5">{u.egi.replace('SPR', '').replace('RB', 'RB')}</td>
-                        <td className="px-1.5 py-0.5 italic font-bold">{u.kode}</td>
-                        <td className={'px-1.5 py-0.5 text-right tabular-nums ' +
-                          (u.s1 > 0 ? 'bg-emerald-100 text-emerald-800 font-bold' : 'bg-rose-100 text-rose-600')}>{fmt(u.s1)}</td>
-                        <td className={'px-1.5 py-0.5 text-right tabular-nums ' +
-                          (u.s2 > 0 ? 'bg-emerald-100 text-emerald-800 font-bold' : 'bg-rose-100 text-rose-600')}>{fmt(u.s2)}</td>
-                        <td className="px-1.5 py-0.5 text-right tabular-nums font-black text-[#0b2a5b]">{fmt(u.mtd)}</td>
-                        <SelPct v={u.pa} ambang={Number(D.target?.pa_target ?? 90)} />
-                        <SelPct v={u.ma} ambang={Number(D.target?.ma_target ?? 92)} />
-                        <SelPct v={u.ua} ambang={null} />
-                        <td className="px-1.5 py-0.5 italic text-slate-500">{u.ket || ''}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+      <div className="flex justify-end">
+        <button onClick={muat} disabled={memuat}
+          className="text-[9px] font-black uppercase text-[#003D79] underline disabled:opacity-50">
+          {memuat ? 'memuat…' : 'refresh'}
+        </button>
       </div>
-        </>
-      )}
 
-      <MonitoringBlok d={D} bulan={bulan} />
+      <TampilanFix d={D} bulan={bulan} />
 
       {D.boleh_kelola && (
         <FormTarget site={site} bulan={bulan} target={D.target} onSaved={muat} />
