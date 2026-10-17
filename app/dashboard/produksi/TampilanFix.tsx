@@ -138,6 +138,54 @@ function potongHari(arr: number[] | undefined, n: number) {
   return a.slice(0, sampai)
 }
 
+function BatangTargetHari({ data, ambang, sampai }: { data: (number | null)[]; ambang: number | null; sampai: number }) {
+  const d = (data || []).slice(0, Math.max(1, sampai))
+  const H = 120
+  const [pilih, setPilih] = useState<number | null>(d.length ? d.length - 1 : null)
+  const lineBottom = ambang != null ? 28 + (Math.min(100, ambang) / 100) * H : null
+  const idx = pilih == null ? null : Math.min(pilih, d.length - 1)
+  const val = idx != null ? d[idx] : null
+  return (
+    <div className="px-2 pb-2">
+      <div className="overflow-x-auto">
+        <div className="relative min-w-[520px]" style={{ height: H + 28 }}>
+          {lineBottom != null && (
+            <div className="absolute left-0 right-0 z-10 border-t-2 border-red-500 pointer-events-none" style={{ bottom: lineBottom }} />
+          )}
+          <div className="absolute inset-x-0 bottom-7 flex items-end gap-[3px]" style={{ height: H }}>
+            {d.map((v, i) => {
+              const n = v == null ? 0 : Math.max(0, Math.min(100, v))
+              const bawah = ambang != null && v != null && v < ambang
+              const warna = v == null ? '#e2e8f0' : bawah ? '#e11d48' : '#16a34a'
+              return (
+                <button key={i} type="button" onClick={() => setPilih(i)}
+                  className="flex-1 h-full flex flex-col items-center justify-end">
+                  {v != null && (
+                    <div className="text-[7px] font-black mb-0.5" style={{ color: bawah ? '#b91c1c' : '#15803d' }}>{fmt1(v)}</div>
+                  )}
+                  <div className="w-full max-w-[18px] rounded-t" style={{ height: `${(n / 100) * H}px`, background: warna, minHeight: v != null ? 4 : 1 }} />
+                </button>
+              )
+            })}
+          </div>
+          <div className="absolute inset-x-0 bottom-0 flex gap-[3px]">
+            {d.map((_, i) => (
+              <div key={i} className={'flex-1 text-center text-[8px] font-black ' + (idx === i ? 'text-[#003D79]' : 'text-slate-400')}>{i + 1}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+      {idx != null && (
+        <div className="mt-2 rounded-lg bg-slate-50 border border-slate-100 px-2 py-1.5 text-[11px] font-bold text-slate-600">
+          Tanggal {idx + 1}: aktual {val == null ? '—' : fmt1(val) + '%'}
+          {ambang != null ? ` · plan ${fmt1(ambang)}%` : ' · tanpa acuan'}
+          {ambang != null && val != null ? (val >= ambang ? ' · hijau (di atas garis)' : ' · merah (di bawah garis)') : ''}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function BatangHari({ data, warna = '#e11d48', sampai, onPilih, pilih }: {
   data: number[]; warna?: string; sampai: number; onPilih?: (i: number) => void; pilih?: number | null
 }) {
@@ -521,26 +569,20 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
           </table>
         </div>
       </Panel>
-      <div className="grid gap-2.5 md:grid-cols-2 mt-2.5">
-        <Panel judul="PA, MA, UA per EGI" desc="Satu acuan site, bukan per EGI.">
-          <div className="overflow-x-auto">
-            <table className="w-full text-[10px]">
-              <thead className="bg-slate-50"><tr>{['EGI', 'SUM', 'AVG', 'PA', 'MA', 'UA'].map((h) => <th key={h} className="px-2 py-2 text-left font-black">{h}</th>)}</tr></thead>
-              <tbody>
-                {(d.per_egi || []).map((e: any) => (
-                  <tr key={e.egi} className="border-t border-slate-100">
-                    <td className="px-2 py-1.5 font-black">{e.egi}</td>
-                    <td className="px-2 py-1.5 tabular-nums">{fmt(e.hm)}</td>
-                    <td className="px-2 py-1.5 tabular-nums">{fmt(e.avg)}</td>
-                    <td className="px-2 py-1.5">{pill(e.pa, paAcu)}</td>
-                    <td className="px-2 py-1.5">{pill(e.ma, maAcu)}</td>
-                    <td className="px-2 py-1.5">{pill(e.ua, null)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <Panel judul="Actual PA / Day" desc={`Garis merah = acuan PA ${fmt1(paAcu)}%. Hijau ≥ garis, merah di bawah. Tanggal berjalan saja. Klik batang.`} tag="PLAN">
+        <BatangTargetHari data={d.per_hari_pa || []} ambang={paAcu} sampai={hariTerisi || 1} />
+      </Panel>
+      <div className="mt-2.5">
+        <Panel judul="Actual MA / Day" desc={`Garis merah = acuan MA ${fmt1(maAcu)}%. Hijau ≥ garis, merah di bawah.`} tag="PLAN">
+          <BatangTargetHari data={d.per_hari_ma || []} ambang={maAcu} sampai={hariTerisi || 1} />
         </Panel>
+      </div>
+      <div className="mt-2.5">
+        <Panel judul="Actual UA / Day" desc="UA dipantau, tanpa garis acuan." tag="DIPANTAU">
+          <BatangTargetHari data={d.per_hari_ua || []} ambang={null} sampai={hariTerisi || 1} />
+        </Panel>
+      </div>
+      <div className="grid gap-2.5 md:grid-cols-2 mt-2.5">
         <Panel judul="2 tertinggi / 2 terendah per EGI" tag="PER EGI">
           <div className="grid grid-cols-2 gap-2 px-3 pb-3 text-[10px]">
             {([['Tertinggi', d.top_egi], ['Terendah', d.low_egi]] as const).map(([judul, data]) => (
@@ -559,33 +601,6 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
           </div>
         </Panel>
       </div>
-
-      <Panel judul="PA · MA · UA per EGI (chart lingkaran)" desc="Satu acuan site: PA 90 · MA 92. UA dipantau, tanpa acuan." tag="CHART">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-3 pb-3">
-          {(d.per_egi || []).map((e: any) => (
-            <div key={e.egi} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
-              <div className="text-[11px] font-black text-[#183d63] mb-2">{e.egi}</div>
-              <div className="flex justify-around items-center">
-                {([
-                  ['PA', e.pa, paAcu, '#0a5bd3'],
-                  ['MA', e.ma, maAcu, '#199b8c'],
-                  ['UA', e.ua, null, '#d09534'],
-                ] as const).map(([lab, val, acu, col]) => (
-                  <div key={lab} className="text-center">
-                    <Ring p={Number(val || 0)} size={72} color={col}>
-                      <span className="text-[10px] font-black text-[#173f65]">{val == null ? '—' : fmt1(val)}</span>
-                    </Ring>
-                    <div className="mt-1 text-[9px] font-black uppercase text-slate-400">{lab}</div>
-                    <div className={'text-[9px] font-bold ' + (acu != null && val != null && val < acu ? 'text-rose-600' : 'text-slate-400')}>
-                      {acu == null ? 'dipantau' : val != null && val >= acu ? '≥ ' + fmt1(acu) : '< ' + fmt1(acu)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </Panel>
 
       <Panel judul="FC per EGI (chart lingkaran)" desc="Aktual L/HM vs target EGI. Di atas target = boros (merah). ▲% vs target." tag="FC">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 px-3 pb-3">

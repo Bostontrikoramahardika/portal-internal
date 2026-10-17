@@ -91,6 +91,12 @@ export async function GET(req: NextRequest) {
     const perHariNS: number[] = Array(hariBulan + 1).fill(0)
     const perHariStb: number[] = Array(hariBulan + 1).fill(0)
     const perHariRev: number[] = Array(hariBulan + 1).fill(0)
+    const perHariPaSum: number[] = Array(hariBulan + 1).fill(0)
+    const perHariPaCnt: number[] = Array(hariBulan + 1).fill(0)
+    const perHariMaSum: number[] = Array(hariBulan + 1).fill(0)
+    const perHariMaCnt: number[] = Array(hariBulan + 1).fill(0)
+    const perHariUaSum: number[] = Array(hariBulan + 1).fill(0)
+    const perHariUaCnt: number[] = Array(hariBulan + 1).fill(0)
     const aktifPerHari: Record<number, Set<string>> = {}
     const semuaPerHari: Record<number, Set<string>> = {}
     const bdPerHari: Record<number, Set<string>> = {}
@@ -143,6 +149,9 @@ export async function GET(req: NextRequest) {
         perHariStb[tgl] += stb
         const tarifHari = cfg.tarif_hm != null ? Number(cfg.tarif_hm) : null
         if (tarifHari != null && isFinite(tarifHari)) perHariRev[tgl] += hm * tarifHari
+        if (pa != null) { perHariPaSum[tgl] += pa; perHariPaCnt[tgl]++ }
+        if (ma != null) { perHariMaSum[tgl] += ma; perHariMaCnt[tgl]++ }
+        if (ua != null) { perHariUaSum[tgl] += ua; perHariUaCnt[tgl]++ }
         if (shift === 1) perHariDS[tgl] += hm
         else perHariNS[tgl] += hm
         if (!semuaPerHari[tgl]) semuaPerHari[tgl] = new Set()
@@ -251,6 +260,14 @@ export async function GET(req: NextRequest) {
       perHariOp.push(opPerHari[i]?.size || 0)
       perHariTanpaOp.push(tanpaOpPerHari[i]?.size || 0)
     }
+    const avgHari = (sum: number[], cnt: number[]) => {
+      const out: (number | null)[] = []
+      for (let i = 1; i <= hariBulan; i++) out.push(cnt[i] ? r2(sum[i] / cnt[i]) : null)
+      return out
+    }
+    const perHariPa = avgHari(perHariPaSum, perHariPaCnt)
+    const perHariMa = avgHari(perHariMaSum, perHariMaCnt)
+    const perHariUa = avgHari(perHariUaSum, perHariUaCnt)
 
     const aggEGI: Record<string, { hm: number; stb: number; fuel: number; paSum: number; paCnt: number; maSum: number; maCnt: number }> = {}
     for (const u of Object.values(perUnit)) {
@@ -414,6 +431,9 @@ export async function GET(req: NextRequest) {
       per_hari_op: perHariOp,
       per_hari_tanpa_op: perHariTanpaOp,
       per_hari_atr: perHariAtr,
+      per_hari_pa: perHariPa,
+      per_hari_ma: perHariMa,
+      per_hari_ua: perHariUa,
       hari_terisi: hariTerisi,
       tgl_terakhir: tglTerakhir,
       baris_data: (rows || []).length,
