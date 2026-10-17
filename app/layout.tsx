@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import FormKeys from './components/FormKeys';
 
 export const metadata: Metadata = {
   title: 'BTM Mobile App',
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className="antialiased bg-[#f4f7fa] text-slate-800 font-sans">
+        <FormKeys />
         {children}
       </body>
     </html>

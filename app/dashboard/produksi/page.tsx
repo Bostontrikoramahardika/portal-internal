@@ -354,7 +354,8 @@ function FormTarget({ site, bulan, target, units, fcTarget, onSaved }: { site: s
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-enter-root>
+      <p className="text-[10px] text-slate-500 px-0.5">Enter = kolom berikutnya (kolom terakhir = simpan). Ctrl+S = simpan.</p>
       <KartuSet judul="A. Target HM" desc="Satu target per bulan. Harian otomatis = bulan ÷ hari kalender.">
         <Field label="Bulan terpilih"><input readOnly value={labelBulan(bulan)} className={inp + ' bg-slate-50'} /></Field>
         <Field label="Hari kalender"><input readOnly value={String(hariBulan)} className={inp + ' bg-slate-50'} /></Field>
@@ -480,13 +481,13 @@ function FormTarget({ site, bulan, target, units, fcTarget, onSaved }: { site: s
         </label>
       </KartuSet>
 
-      <button onClick={kirim} disabled={simpan || !tj}
+      <button data-save onClick={kirim} disabled={simpan || !tj}
         className="w-full py-2.5 rounded-xl bg-[#003D79] text-white font-black text-[11px] uppercase tracking-wider disabled:opacity-50">
         {simpan ? 'Menyimpan…' : 'Simpan Target HM · PA · MA · tarif unit · FC EGI'}
       </button>
       {pesan && <p className="text-[10px] font-bold text-center text-slate-500">{pesan}</p>}
       <p className="text-[9px] text-slate-400 text-center">
-        Tombol simpan menulis Target HM, faktor, PA, MA ke database. Tarif / FC / BD tersimpan di isian ini untuk diisi — rumus pendapatan belum dipasang.
+        Enter pindah kolom. Ctrl+S atau tombol Simpan menulis Target HM, faktor, PA, MA, tarif unit, FC EGI.
       </p>
     </div>
   )
