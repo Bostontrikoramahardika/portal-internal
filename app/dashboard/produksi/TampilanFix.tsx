@@ -308,16 +308,18 @@ function BatangHari({ data, warna = '#e11d48', sampai, onPilih, pilih }: {
 }
 
 function GarisHari({ series, sampai, onPilih }: { series: { nama: string; warna: string; data: number[] }[]; sampai: number; onPilih?: (i: number) => void }) {
-  const [pilih, setPilih] = useState<number | null>(sampai > 0 ? sampai - 1 : 0)
+  const [pilih, setPilih] = useState<number | null>(null)
   const n = Math.max(1, sampai)
   const sliced = series.map((s) => ({ ...s, data: potongHari(s.data, n) }))
   const max = Math.max(1, ...sliced.flatMap((s) => s.data))
-  const W = Math.max(560, n * 36)
-  const H = 200
-  const padL = 36, padR = 12, padT = 16, padB = 28
+  const W = Math.max(560, n * 40)
+  const H = 208
+  const padL = 40, padR = 14, padT = 14, padB = 32
   function X(i: number) { return padL + (n === 1 ? 0 : (i * (W - padL - padR)) / (n - 1)) }
   function Y(v: number) { return padT + (1 - v / max) * (H - padT - padB) }
-  const idx = pilih == null ? n - 1 : Math.min(pilih, n - 1)
+  const idx = pilih == null ? null : Math.min(pilih, n - 1)
+  const totHari = idx == null ? 0 : sliced.reduce((s, x) => s + Number(x.data[idx] || 0), 0)
+  const pctStr = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return (
     <div className="px-2 pb-3">
       <div className="overflow-x-auto">
@@ -331,27 +333,26 @@ function GarisHari({ series, sampai, onPilih }: { series: { nama: string; warna:
               </g>
             )
           })}
-          {pilih != null && (
+          {idx != null && (
             <line x1={X(idx)} x2={X(idx)} y1={padT} y2={H - padB} stroke="#003D79" strokeWidth="1.5" strokeDasharray="4 3" />
           )}
           {sliced.map((s) => {
             const d = s.data.map((v, i) => `${i === 0 ? 'M' : 'L'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')
-            const area = `${d} L${X(s.data.length - 1).toFixed(1)},${H - padB} L${X(0).toFixed(1)},${H - padB} Z`
             return (
               <g key={s.nama}>
-                <path d={area} fill={s.warna} opacity="0.08" />
-                <path d={d} fill="none" stroke={s.warna} strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
+                <path d={d} fill="none" stroke={s.warna} strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
                 {s.data.map((v, i) => (
-                  <circle key={i} cx={X(i)} cy={Y(v)} r={idx === i ? 5.5 : 3.2} fill="#fff" stroke={s.warna} strokeWidth={idx === i ? 3 : 2} />
+                  <circle key={i} cx={X(i)} cy={Y(v)} r={idx === i ? 5.5 : 3} fill="#fff" stroke={s.warna} strokeWidth={idx === i ? 3 : 2} />
                 ))}
               </g>
             )
           })}
           {Array.from({ length: n }, (_, i) => (
             <g key={'h' + i}>
-              <rect x={X(i) - 14} y={padT} width="28" height={H - padT - padB} fill="transparent" className="cursor-pointer"
+              <rect x={X(i) - 16} y={padT} width="32" height={H - padT - padB} fill="transparent" className="cursor-pointer"
                 onClick={() => { setPilih(i); onPilih?.(i) }} />
-              <text x={X(i)} y={H - 8} textAnchor="middle" fontSize="9" fontWeight="700" fill={idx === i ? '#003D79' : '#94a3b8'}>{i + 1}</text>
+              <text x={X(i)} y={H - 10} textAnchor="middle" fontSize="10" fontWeight={idx === i ? 800 : 600}
+                fill={idx === i ? '#003D79' : '#94a3b8'}>{String(i + 1).padStart(2, '0')}</text>
             </g>
           ))}
         </svg>
@@ -363,6 +364,28 @@ function GarisHari({ series, sampai, onPilih }: { series: { nama: string; warna:
           </span>
         ))}
       </div>
+      {idx != null ? (
+        <div className="mt-2 rounded-xl border border-[#c7dbef] bg-[#f4f8fd] px-3 py-2">
+          <div className="text-[10px] font-black uppercase tracking-wider text-[#164c7d] mb-1.5">
+            Tanggal {String(idx + 1).padStart(2, '0')} · klik tanggal lain · % dari 4 jam hari itu
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            {sliced.map((s) => {
+              const v = Number(s.data[idx] || 0)
+              const pct = totHari ? (v / totHari) * 100 : 0
+              return (
+                <div key={s.nama} className="rounded-lg bg-white border border-slate-100 px-2 py-1.5">
+                  <div className="text-[9px] font-bold text-slate-400">{s.nama}</div>
+                  <div className="text-[15px] font-black tabular-nums" style={{ color: s.warna }}>{fmt1(v)}</div>
+                  <div className="text-[11px] font-black text-slate-600">{pctStr(pct)}%</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        <p className="mt-2 px-1 text-[10px] text-slate-400">Klik angka tanggal (01, 02, …) untuk lihat jam + persen hari itu, donat ikut pindah.</p>
+      )}
     </div>
   )
 }
@@ -437,9 +460,12 @@ function DonatEmpat({ irisan, sub }: { irisan: { nama: string; nilai: number; wa
           return (
             <div key={x.nama} className="flex items-center justify-between text-[10px] gap-2">
               <span className="inline-flex items-center gap-1.5 font-bold text-slate-600">
-                <i className="w-2 h-2 rounded-full inline-block" style={{ background: x.warna }} /> {x.nama}
+                <i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: x.warna }} /> {x.nama}
               </span>
-              <span className="tabular-nums font-black" style={{ color: x.warna }}>{fmt1(x.nilai)} jam · {pctStr(pct)}%</span>
+              <span className="tabular-nums font-black text-right" style={{ color: x.warna }}>
+                <span className="text-[13px]">{pctStr(pct)}%</span>
+                <span className="block text-[9px] font-bold text-slate-400">{fmt1(x.nilai)} jam</span>
+              </span>
             </div>
           )
         })}
@@ -546,8 +572,8 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
   const kPakai = kHari || d.komposisi_mtd || {}
   const irisan24 = [
     { nama: 'HM', nilai: Number(kPakai.hm || 0), warna: '#0a5bd3' },
-    { nama: 'NO', nilai: Number(kPakai.tanpa_op || 0), warna: '#7c3aed' },
     { nama: 'BD', nilai: Number(kPakai.bd || 0), warna: '#e11d48' },
+    { nama: 'No Opt', nilai: Number(kPakai.tanpa_op || 0), warna: '#7c3aed' },
     { nama: 'Standby', nilai: Number(kPakai.stb || 0), warna: '#d09534' },
   ]
   const jamKal = irisan24.reduce((s, x) => s + x.nilai, 0)
@@ -730,20 +756,31 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
           />
         </Panel>
         <Panel
-          judul={klikHari == null ? 'Donat waktu 24 jam · MTD' : `Donat waktu 24 jam · tgl ${String(klikHari + 1).padStart(2, '0')}`}
-          desc="HM = jam operasi. BD = jam kolom X, atau sisa 12 jam jika ada Catatan Breakdown. NO = jam kolom W, atau sisa 12 jam jika nama operator kosong. Sisa → Standby. Bukan PA/MA/UA."
+          judul={klikHari == null ? 'Donat 24 jam · MTD' : `Donat 24 jam · tgl ${String(klikHari + 1).padStart(2, '0')}`}
+          desc="% = jam ÷ total 4 kategori × 100. Satu unit satu hari = 24 jam. Bukan PA/MA/UA."
           tag="24 JAM"
         >
-          <DonatEmpat irisan={irisan24} sub="24 jam" />
-          <p className="px-3 pb-1 text-[9px] text-slate-400">Total {fmt1(jamKal)} jam · {klikHari == null ? `${d.unit_hari || 0} unit-hari × 24` : 'unit hari itu × 24'} = 100%.</p>
+          {klikHari != null && (
+            <div className="px-3 pt-1">
+              <button type="button" onClick={() => setKlikHari(null)}
+                className="text-[10px] font-black uppercase text-[#003D79] underline">Kembali ke MTD</button>
+            </div>
+          )}
+          <DonatEmpat irisan={irisan24} sub={klikHari == null ? 'MTD' : 'hari'} />
+          <p className="px-3 pb-1 text-[9px] text-slate-400">
+            Total {fmt1(jamKal)} jam = 100%
+            {klikHari == null ? ` · ${d.unit_hari || 0} unit-hari × 24` : ' · unit hari itu × 24'}.
+          </p>
           <div className="px-3 pb-3 grid grid-cols-2 gap-1.5 text-[10px]">
             {irisan24.map((x) => {
               const pct = jamKal ? (x.nilai / jamKal) * 100 : 0
               return (
                 <div key={x.nama} className="rounded-lg bg-slate-50 border border-slate-100 px-2 py-1.5">
                   <div className="text-[9px] font-bold text-slate-400">{x.nama}</div>
-                  <div className="text-[14px] font-black tabular-nums" style={{ color: x.warna }}>{fmt1(x.nilai)} <span className="text-[10px] font-bold text-slate-400">jam</span></div>
-                  <div className="text-[10px] font-black text-slate-500">{pct.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</div>
+                  <div className="text-[16px] font-black tabular-nums leading-tight" style={{ color: x.warna }}>
+                    {pct.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-500">{fmt1(x.nilai)} jam</div>
                 </div>
               )
             })}
