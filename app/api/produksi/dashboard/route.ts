@@ -90,6 +90,7 @@ export async function GET(req: NextRequest) {
     const perHariDS: number[] = Array(hariBulan + 1).fill(0)
     const perHariNS: number[] = Array(hariBulan + 1).fill(0)
     const perHariStb: number[] = Array(hariBulan + 1).fill(0)
+    const perHariRev: number[] = Array(hariBulan + 1).fill(0)
     const aktifPerHari: Record<number, Set<string>> = {}
     const semuaPerHari: Record<number, Set<string>> = {}
     const bdPerHari: Record<number, Set<string>> = {}
@@ -140,6 +141,8 @@ export async function GET(req: NextRequest) {
       if (tgl >= 1 && tgl <= hariBulan) {
         perHari[tgl] += hm
         perHariStb[tgl] += stb
+        const tarifHari = cfg.tarif_hm != null ? Number(cfg.tarif_hm) : null
+        if (tarifHari != null && isFinite(tarifHari)) perHariRev[tgl] += hm * tarifHari
         if (shift === 1) perHariDS[tgl] += hm
         else perHariNS[tgl] += hm
         if (!semuaPerHari[tgl]) semuaPerHari[tgl] = new Set()
@@ -404,6 +407,9 @@ export async function GET(req: NextRequest) {
       per_hari_ds: perHariDS.slice(1).map(r2),
       per_hari_ns: perHariNS.slice(1).map(r2),
       per_hari_stb: perHariStb.slice(1).map(r2),
+      per_hari_rev: perHariRev.slice(1).map(r2),
+      outlook_hm: r2(estimasi),
+      outlook_revenue: hariTerisi && revenueIsi ? r2((revenueTotal / hariTerisi) * hariBulan) : 0,
       per_hari_bd_unit: perHariBdUnit,
       per_hari_op: perHariOp,
       per_hari_tanpa_op: perHariTanpaOp,

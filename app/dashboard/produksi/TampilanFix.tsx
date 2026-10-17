@@ -7,6 +7,13 @@ const fmt = (n: number | null | undefined) =>
 const fmt1 = (n: number | null | undefined) =>
   n == null ? '-' : Number(n).toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 const fmtP = (n: number | null | undefined) => (n == null ? '-' : `${fmt(n)}%`)
+function fmtRp(n: number | null | undefined) {
+  if (n == null || !isFinite(Number(n)) || Number(n) === 0) return '—'
+  const v = Number(n)
+  if (v >= 1e9) return 'Rp ' + (v / 1e9).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' M'
+  if (v >= 1e6) return 'Rp ' + (v / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + ' jt'
+  return 'Rp ' + Math.round(v).toLocaleString('id-ID')
+}
 
 const NAMA_BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
@@ -225,6 +232,44 @@ function GarisHari({ series, sampai, bulan }: { series: { nama: string; warna: s
   )
 }
 
+function OutlookBaris({ aktual, outlook, target, satuan, fmtNilai }: {
+  aktual: number; outlook: number; target: number | null; satuan: string
+  fmtNilai: (n: number) => string
+}) {
+  const max = Math.max(aktual, outlook, target || 0, 1)
+  const pctAkt = target ? (aktual / target) * 100 : null
+  const pctOut = target ? (outlook / target) * 100 : null
+  const rows: [string, number, string][] = [
+    ['Aktual MTD', aktual, '#0a5bd3'],
+    ['Outlook EOM', outlook, '#199b8c'],
+  ]
+  if (target) rows.push(['Target bulan', target, '#94a3b8'])
+  return (
+    <div className="px-3 pb-3 space-y-2">
+      {rows.map(([n, v, c]) => (
+        <div key={n}>
+          <div className="flex justify-between text-[10px] font-bold text-slate-500">
+            <span>{n}</span>
+            <span className="tabular-nums font-black text-[#153b61]">{fmtNilai(v)}{satuan ? ` ${satuan}` : ''}</span>
+          </div>
+          <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden mt-0.5">
+            <div className="h-full rounded-full" style={{ width: `${Math.min(100, (v / max) * 100)}%`, background: c }} />
+          </div>
+        </div>
+      ))}
+      {target != null && target > 0 ? (
+        <div className="text-[10px] text-slate-500">
+          Aktual {fmt1(pctAkt)}% dari target · Outlook {fmt1(pctOut)}% dari target
+        </div>
+      ) : aktual > 0 ? (
+        <div className="text-[10px] text-slate-500">
+          Outlook vs aktual {outlook >= aktual ? '▲ +' : '▼ '}{fmt1(Math.abs(((outlook - aktual) / aktual) * 100))}%
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
   const [filter, setFilter] = useState('Semua')
   const [klip, setKlip] = useState<any>(null)
@@ -294,9 +339,9 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
         {[
           { l: 'HM didapat', v: `${fmt1(d.total_hm)}`, s: 'HM', f: `Target harian ${fmt1(targetHarian)}` },
           { l: 'Revenue / Pendapatan',
-            v: d.revenue_total ? `Rp ${Number(d.revenue_total).toLocaleString('id-ID', { maximumFractionDigits: 0 })}` : '—',
+            v: fmtRp(d.revenue_total),
             s: '',
-            f: d.revenue_unit_isi ? `${d.revenue_unit_isi} unit punya tarif · HM × tarif unit` : 'Isi tarif per unit di Pengaturan' },
+            f: d.revenue_unit_isi ? `${d.revenue_unit_isi} unit ber-tarif · HM × tarif unit` : 'Isi tarif per unit di Pengaturan' },
           { l: 'Jam BD', v: catatanN ? String(catatanN) : '—', s: catatanN ? 'catatan' : '', f: 'Dari kolom Catatan TS Opt' },
           { l: 'Fuel & FC', v: fuel ? fmt1(fuel) : '—', s: fuel ? 'L' : '', f: fc != null ? `FC ${fmt(fc)} L/HM` : 'Dari rate unit × HM' },
         ].map((k) => (
@@ -386,10 +431,44 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
           </div>
           <p className="px-3 pb-2 text-[9px] text-slate-400">Target harian monitoring {fmt1(targetHarian)} jam (bukan rumus Excel 88%).</p>
         </Panel>
-        <Panel judul="Revenue / Pendapatan" desc="Batang pendapatan per hari." tag="TARIF BELUM ADA">
-          <div className="h-28 grid place-items-center text-[11px] text-slate-400 px-4 text-center">
-            Tidak dihitung. Isi tarif/harga unit dulu di pengaturan — jangan pakai angka simulasi.
-          </div>
+        <Panel judul="Revenue / Pendapatan" desc="HM unit × tarif Rp/HM unit itu. Hanya unit yang tarifnya diisi." tag={d.revenue_unit_isi ? `${d.revenue_unit_isi} UNIT` : 'ISI TARIF'}>
+          {d.revenue_total ? (
+            <>
+              <div className="px-3 pb-1 text-[20px] font-black text-[#153b61]">{fmtRp(d.revenue_total)} <small className="text-[11px] text-slate-400 font-bold">aktual MTD</small></div>
+              <BatangHari data={(d.per_hari_rev || []).map((x: number) => x / 1e6)} warna="#199b8c" sampai={hariTerisi || 1} />
+              <p className="px-3 pb-2 text-[9px] text-slate-400">Batang = juta Rp per hari (tanggal berjalan). Outlook bulan {fmtRp(d.outlook_revenue)}.</p>
+            </>
+          ) : (
+            <div className="h-24 grid place-items-center text-[11px] text-slate-500 px-4 text-center">
+              Kosong karena belum ada tarif per unit. Buka Import → Pengaturan → B. isi Rp/HM tiap unit → Simpan.
+            </div>
+          )}
+        </Panel>
+      </div>
+
+      <Blok no="00" judul="Outlook bulan berjalan" sub="Proyeksi s.d. akhir bulan = (aktual ÷ hari terisi) × hari kalender. Bukan target." />
+      <div className="grid gap-2.5 md:grid-cols-2">
+        <Panel judul="Outlook HM" desc={`01–${String(Math.max(1, hariTerisi)).padStart(2, '0')} terisi · sisa ${Math.max(0, hariBulan - hariTerisi)} hari`} tag="HM">
+          <OutlookBaris
+            aktual={Number(d.total_hm || 0)}
+            outlook={Number(d.outlook_hm || d.estimasi || 0)}
+            target={targetJam}
+            satuan="HM"
+            fmtNilai={fmt1}
+          />
+        </Panel>
+        <Panel judul="Outlook pendapatan" desc="Sama rumus laju, pakai revenue aktual (unit ber-tarif)." tag="RP">
+          {d.revenue_total ? (
+            <OutlookBaris
+              aktual={Number(d.revenue_total || 0)}
+              outlook={Number(d.outlook_revenue || 0)}
+              target={null}
+              satuan=""
+              fmtNilai={(n) => fmtRp(n)}
+            />
+          ) : (
+            <p className="px-3 pb-3 text-[11px] text-slate-500">Isi tarif per unit dulu agar outlook pendapatan terhitung.</p>
+          )}
         </Panel>
       </div>
 
