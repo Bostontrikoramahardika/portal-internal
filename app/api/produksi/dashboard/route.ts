@@ -3,18 +3,16 @@ import { getSession } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
 
 // ═══════════════════════════════════════════════════════════════
-// 📈 DASHBOARD PRODUKSI — replika "Laporan Produksi" Excel
-//   GET  ?bulan=YYYY-MM&site=  → semua angka dihitung di server
-//   POST → simpan target bulanan (manual, sesuai Excel)
-// Prinsip: HP hanya menerima angka jadi, bukan data mentah.
-// Data tumbuh bertahap: import harian hanya menambah/memperbarui baris,
-// tidak pernah menulis ulang seluruh tabel.
+// 📈 DASHBOARD PRODUKSI — dari TS Opt (import harian)
+//   GET  ?bulan=YYYY-MM&site=
+//   POST → simpan target bulanan + acuan PA/MA
+// Permission tidak diubah.
 // ═══════════════════════════════════════════════════════════════
 
 const ROLE_KELOLA = ['hr_site', 'hr_ho', 'admin_site']
 const EGI_ORDER = ['PC200SPR', 'PC200RB', 'D65', 'D85', 'GD705']
+const JENIS_ORDER = ['Excavator', 'Bulldozer', 'Grader']
 
-/** Tebak kelompok EGI dari kode unit (fallback bila belum ada di ts_unit_config) */
 function egiFallback(kode: string): { egi: string; jenis: string } {
   const k = String(kode || '').toUpperCase()
   if (k.startsWith('GD')) return { egi: 'GD705', jenis: 'Grader' }
@@ -25,10 +23,32 @@ function egiFallback(kode: string): { egi: string; jenis: string } {
   return { egi: 'LAINNYA', jenis: '-' }
 }
 
+/** PA/MA/UA di TS Opt sering 0–1 (1 = 100%). */
+function normPct(n: any): number | null {
+  if (n == null || n === '') return null
+  const v = Number(n)
+  if (!isFinite(v)) return null
+  return v <= 1.5 ? v * 100 : v
+}
+
+function r2(n: number) {
+  return Math.round(n * 100) / 100
+}
+
 async function sesi(req: NextRequest) {
   const token = req.cookies.get('session_token')?.value
   if (!token) return null
   return await getSession(token)
+}
+
+function isoWeekKey(iso: string) {
+  const d = new Date(iso + 'T00:00:00')
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
+  const day = t.getUTCDay() || 7
+  t.setUTCDate(t.getUTCDate() + 4 - day)
+  const y = t.getUTCFullYear()
+  const w = Math.ceil((((t.getTime() - Date.UTC(y, 0, 1)) / 86400000) + 1) / 7)
+  return `${y}-W${String(w).padStart(2, '0')}`
 }
 
 export async function GET(req: NextRequest) {
@@ -47,7 +67,7 @@ export async function GET(req: NextRequest) {
 
     const { data: rows, error } = await supabaseAdmin
       .from('ts_opt')
-      .select('tanggal, shift, kode_unit, hm_total, standby, pa, ma, ua, catatan')
+      .select('tanggal, shift, kode_unit, tipe_unit, nama_operator, hm_awal, hm_akhir, hm_total, hm_over, standby, pa, ma, ua, catatan')
       .eq('site', site)
       .gte('tanggal', awal)
       .lte('tanggal', akhir)
@@ -61,14 +81,15 @@ export async function GET(req: NextRequest) {
     const petaKonfig: Record<string, any> = {}
     ;(konfig || []).forEach((k: any) => (petaKonfig[k.kode_unit] = k))
 
-    // ── agregat ──
     const perHari: number[] = Array(hariBulan + 1).fill(0)
     const perHariDS: number[] = Array(hariBulan + 1).fill(0)
     const perHariNS: number[] = Array(hariBulan + 1).fill(0)
+    const perHariStb: number[] = Array(hariBulan + 1).fill(0)
     const aktifPerHari: Record<number, Set<string>> = {}
     const semuaPerHari: Record<number, Set<string>> = {}
 
     let totalHM = 0
+    let totalStb = 0
     let hmDS = 0
     let hmNS = 0
     let tglTerakhir: string | null = null
@@ -81,13 +102,36 @@ export async function GET(req: NextRequest) {
     }
     const perUnit: Record<string, UnitAgg> = {}
 
+    type OpAgg = {
+      nama: string; unit: string; jenis: string; egi: string
+      hm: number; stb: number; over: number
+      paSum: number; paCnt: number; maSum: number; maCnt: number
+      uaKosong: number; baris: number
+      catatan: string[]
+      hari: { tgl: string; shift: number; hm: number; awal: number | null; akhir: number | null }[]
+    }
+    const perOp: Record<string, OpAgg> = {}
+
+    type Wk = { key: string; hm: number; stb: number; paSum: number; paCnt: number; maSum: number; maCnt: number; uaSum: number; uaCnt: number; min: string; max: string }
+    const perMinggu: Record<string, Wk> = {}
+
     for (const r of (rows || []) as any[]) {
       const hm = Number(r.hm_total || 0)
-      const tgl = Number(String(r.tanggal).slice(8, 10))
+      const stb = Number(r.standby || 0)
+      const tglStr = String(r.tanggal).slice(0, 10)
+      const tgl = Number(tglStr.slice(8, 10))
       const shift = Number(r.shift)
+      const pa = normPct(r.pa)
+      const ma = normPct(r.ma)
+      const ua = normPct(r.ua)
+      const fb = egiFallback(r.kode_unit)
+      const cfg = petaKonfig[r.kode_unit] || {}
+      const egi = cfg.egi || fb.egi
+      const jenis = cfg.jenis || fb.jenis
 
       if (tgl >= 1 && tgl <= hariBulan) {
         perHari[tgl] += hm
+        perHariStb[tgl] += stb
         if (shift === 1) perHariDS[tgl] += hm
         else perHariNS[tgl] += hm
         if (!semuaPerHari[tgl]) semuaPerHari[tgl] = new Set()
@@ -99,10 +143,10 @@ export async function GET(req: NextRequest) {
       }
 
       totalHM += hm
+      totalStb += stb
       if (shift === 1) hmDS += hm
       else hmNS += hm
-      const t = String(r.tanggal)
-      if (!tglTerakhir || t > tglTerakhir) tglTerakhir = t
+      if (!tglTerakhir || tglStr > tglTerakhir) tglTerakhir = tglStr
 
       const u = perUnit[r.kode_unit] || (perUnit[r.kode_unit] = {
         kode: r.kode_unit, mtd: 0, s1: 0, s2: 0, stb: 0, shifts: 0,
@@ -111,11 +155,45 @@ export async function GET(req: NextRequest) {
       u.mtd += hm
       if (shift === 1) u.s1 += hm
       else u.s2 += hm
-      u.stb += Number(r.standby || 0)
+      u.stb += stb
       u.shifts += 1
-      if (r.pa != null) { u.paSum += Number(r.pa); u.paCnt++ }
-      if (r.ma != null) { u.maSum += Number(r.ma); u.maCnt++ }
+      if (pa != null) { u.paSum += pa; u.paCnt++ }
+      if (ma != null) { u.maSum += ma; u.maCnt++ }
       if (r.catatan) u.ket.add(String(r.catatan))
+
+      const nama = String(r.nama_operator || '').trim() || 'TANPA NAMA'
+      const opKey = `${nama}|${r.kode_unit}`
+      const o = perOp[opKey] || (perOp[opKey] = {
+        nama, unit: r.kode_unit, jenis, egi,
+        hm: 0, stb: 0, over: 0, paSum: 0, paCnt: 0, maSum: 0, maCnt: 0,
+        uaKosong: 0, baris: 0, catatan: [], hari: [],
+      })
+      o.hm += hm
+      o.stb += stb
+      o.over += Number(r.hm_over || 0)
+      o.baris += 1
+      if (pa != null) { o.paSum += pa; o.paCnt++ }
+      if (ma != null) { o.maSum += ma; o.maCnt++ }
+      if (ua == null && hm > 0) o.uaKosong += 1
+      if (r.catatan) o.catatan.push(String(r.catatan))
+      o.hari.push({
+        tgl: tglStr, shift,
+        hm: r2(hm),
+        awal: r.hm_awal != null ? Number(r.hm_awal) : null,
+        akhir: r.hm_akhir != null ? Number(r.hm_akhir) : null,
+      })
+
+      const wk = isoWeekKey(tglStr)
+      const w = perMinggu[wk] || (perMinggu[wk] = {
+        key: wk, hm: 0, stb: 0, paSum: 0, paCnt: 0, maSum: 0, maCnt: 0, uaSum: 0, uaCnt: 0, min: tglStr, max: tglStr,
+      })
+      w.hm += hm
+      w.stb += stb
+      if (tglStr < w.min) w.min = tglStr
+      if (tglStr > w.max) w.max = tglStr
+      if (pa != null) { w.paSum += pa; w.paCnt++ }
+      if (ma != null) { w.maSum += ma; w.maCnt++ }
+      if (ua != null) { w.uaSum += ua; w.uaCnt++ }
     }
 
     const hariTerisi = (rows || []).length
@@ -123,15 +201,16 @@ export async function GET(req: NextRequest) {
       : 0
     const sisaHari = Math.max(hariBulan - hariTerisi, 0)
 
-    // target & proyeksi (rumus mengikuti Excel)
     const targetJam = Number(target?.target_jam || 0)
     const faktor = Number(target?.faktor ?? 88)
     const tersisa = targetJam ? (targetJam * faktor) / 100 : 0
     const perHariTarget = sisaHari > 0 ? tersisa / sisaHari : 0
+    const targetHarianKalender = targetJam && hariBulan ? targetJam / hariBulan : 0
     const estimasi = hariTerisi > 0 ? (totalHM / hariTerisi) * hariBulan : 0
     const achievement = targetJam ? totalHM / targetJam : 0
+    const paTarget = target?.pa_target != null ? Number(target.pa_target) : 90
+    const maTarget = target?.ma_target != null ? Number(target.ma_target) : 92
 
-    // ATR unit per hari (%) = unit beroperasi / unit tercatat hari itu
     const perHariAtr: (number | null)[] = []
     for (let i = 1; i <= hariBulan; i++) {
       const semua = semuaPerHari[i]
@@ -141,29 +220,30 @@ export async function GET(req: NextRequest) {
         : null)
     }
 
-    // per EGI
-    const aggEGI: Record<string, { hm: number; paSum: number; paCnt: number; maSum: number; maCnt: number }> = {}
+    const aggEGI: Record<string, { hm: number; stb: number; paSum: number; paCnt: number; maSum: number; maCnt: number }> = {}
     for (const u of Object.values(perUnit)) {
       const cfg = petaKonfig[u.kode]
       const egi = cfg?.egi || egiFallback(u.kode).egi
-      const a = aggEGI[egi] || (aggEGI[egi] = { hm: 0, paSum: 0, paCnt: 0, maSum: 0, maCnt: 0 })
+      const a = aggEGI[egi] || (aggEGI[egi] = { hm: 0, stb: 0, paSum: 0, paCnt: 0, maSum: 0, maCnt: 0 })
       a.hm += u.mtd
+      a.stb += u.stb
       a.paSum += u.paSum; a.paCnt += u.paCnt
       a.maSum += u.maSum; a.maCnt += u.maCnt
     }
-    const r2 = (n: number) => Math.round(n * 100) / 100
     const perEGI = EGI_ORDER.map((e) => {
       const a = aggEGI[e]
+      const hm = a?.hm || 0
+      const stb = a?.stb || 0
       return {
         egi: e,
-        hm: r2(a?.hm || 0),
-        avg: r2(a && hariTerisi ? a.hm / hariTerisi : 0),
+        hm: r2(hm),
+        avg: r2(a && hariTerisi ? hm / hariTerisi : 0),
         pa: a?.paCnt ? r2(a.paSum / a.paCnt) : null,
         ma: a?.maCnt ? r2(a.maSum / a.maCnt) : null,
+        ua: hm + stb > 0 ? r2((hm / (hm + stb)) * 100) : null,
       }
     })
 
-    // baris per unit
     const unitRows = Object.values(perUnit)
       .map((u) => {
         const cfg = petaKonfig[u.kode] || {}
@@ -184,10 +264,68 @@ export async function GET(req: NextRequest) {
       })
       .sort((a, b) => (a.jenis + a.kode).localeCompare(b.jenis + b.kode))
 
+    const opList = Object.values(perOp).map((o) => {
+      o.hari.sort((a, b) => a.tgl.localeCompare(b.tgl) || a.shift - b.shift)
+      return {
+        nama: o.nama,
+        unit: o.unit,
+        jenis: o.jenis,
+        egi: o.egi,
+        hm: r2(o.hm),
+        stb: r2(o.stb),
+        over: r2(o.over),
+        pa: o.paCnt ? r2(o.paSum / o.paCnt) : null,
+        ma: o.maCnt ? r2(o.maSum / o.maCnt) : null,
+        ua_kosong: o.uaKosong,
+        hari: o.hari,
+        catatan: Array.from(new Set(o.catatan)).slice(0, 3),
+      }
+    }).sort((a, b) => b.hm - a.hm)
+
+    const avgJenis: Record<string, number> = {}
+    for (const j of JENIS_ORDER) {
+      const list = opList.filter((o) => o.jenis === j && o.hm > 0)
+      avgJenis[j] = list.length ? list.reduce((s, o) => s + o.hm, 0) / list.length : 0
+    }
+
+    function topN(jenis: string, n: number, asc: boolean) {
+      return opList
+        .filter((o) => o.jenis === jenis && o.hm > 0)
+        .sort((a, b) => asc ? a.hm - b.hm : b.hm - a.hm)
+        .slice(0, n)
+        .map((o) => ({ nama: o.nama, unit: o.unit, hm: o.hm, avg: r2(avgJenis[jenis] || 0) }))
+    }
+
+    const top_egi = Object.fromEntries(JENIS_ORDER.map((j) => [j, topN(j, 2, false)]))
+    const low_egi = Object.fromEntries(JENIS_ORDER.map((j) => [j, topN(j, 2, true)]))
+
+    const cek: { tag: string; teks: string }[] = []
+    for (const o of opList) {
+      if (o.ua_kosong > 0) cek.push({ tag: 'UA kosong', teks: `${o.nama} · ${o.unit} — ${o.ua_kosong} baris UA kosong` })
+      if (o.hm > 0 && o.stb > o.hm) cek.push({ tag: 'STB > HM', teks: `${o.nama} · STB ${o.stb} > HM ${o.hm}` })
+      if (o.catatan.length) cek.push({ tag: 'Catatan BD', teks: `${o.nama} · ${o.catatan[0]}` })
+      if (o.hari.some((h) => h.hm === 0)) cek.push({ tag: 'HM 0', teks: `${o.nama} punya shift HM 0` })
+      const avg = avgJenis[o.jenis]
+      if (o.hm > 0 && avg > 0 && o.hm < avg * 0.7) {
+        cek.push({ tag: 'Di bawah avg EGI', teks: `${o.nama} ${o.hm} HM vs avg ${o.jenis} ${r2(avg)}` })
+      }
+    }
+
+    const minggu = Object.values(perMinggu)
+      .sort((a, b) => a.min.localeCompare(b.min))
+      .map((w) => ({
+        kunci: w.key,
+        label: `${w.min.slice(8, 10)}–${w.max.slice(8, 10)} ${bulan}`,
+        hm: r2(w.hm),
+        stb: r2(w.stb),
+        pa: w.paCnt ? r2(w.paSum / w.paCnt) : null,
+        ma: w.maCnt ? r2(w.maSum / w.maCnt) : null,
+        ua: w.uaCnt ? r2(w.uaSum / w.uaCnt) : (w.hm + w.stb > 0 ? r2((w.hm / (w.hm + w.stb)) * 100) : null),
+      }))
+
     const bolehKelola = session.is_super_admin ||
       (session.roles || []).some((r) => ROLE_KELOLA.includes(r))
 
-    // ── cuaca per tanggal terakhir (aman bila tabel belum ada) ──
     let cuaca: any = null
     if (tglTerakhir) {
       const { data: cw, error: cwErr } = await supabaseAdmin
@@ -201,19 +339,31 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: true, site, bulan, hari_bulan: hariBulan,
       total_hm: r2(totalHM), hm_ds: r2(hmDS), hm_ns: r2(hmNS),
+      total_stb: r2(totalStb),
       per_hari: perHari.slice(1).map(r2),
       per_hari_ds: perHariDS.slice(1).map(r2),
       per_hari_ns: perHariNS.slice(1).map(r2),
+      per_hari_stb: perHariStb.slice(1).map(r2),
       per_hari_atr: perHariAtr,
       hari_terisi: hariTerisi,
       tgl_terakhir: tglTerakhir,
       baris_data: (rows || []).length,
-      target: target ? { target_jam: targetJam, faktor, tersisa: r2(tersisa) } : null,
+      target: target ? {
+        target_jam: targetJam, faktor, tersisa: r2(tersisa),
+        pa_target: paTarget, ma_target: maTarget,
+      } : { target_jam: 0, faktor: 88, tersisa: 0, pa_target: paTarget, ma_target: maTarget },
       per_hari_target: r2(perHariTarget),
+      target_harian: r2(targetHarianKalender),
       estimasi: r2(estimasi),
       achievement_pct: Math.round(achievement * 10000) / 100,
       per_egi: perEGI,
       per_unit: unitRows,
+      operator: opList,
+      top_egi,
+      low_egi,
+      avg_egi: Object.fromEntries(JENIS_ORDER.map((j) => [j, r2(avgJenis[j] || 0)])),
+      cek: cek.slice(0, 40),
+      minggu,
       boleh_kelola: bolehKelola,
       cuaca,
     })
@@ -236,6 +386,8 @@ export async function POST(req: NextRequest) {
     const bulan = String(body?.bulan || '')
     const targetJam = Number(body?.target_jam || 0)
     const faktor = body?.faktor != null ? Number(body.faktor) : 88
+    const paTarget = body?.pa_target != null ? Number(body.pa_target) : 90
+    const maTarget = body?.ma_target != null ? Number(body.ma_target) : 92
 
     if (!/^\d{4}-\d{2}$/.test(bulan)) return NextResponse.json({ error: 'bulan wajib YYYY-MM' }, { status: 400 })
     if (!(targetJam > 0)) return NextResponse.json({ error: 'target_jam wajib > 0' }, { status: 400 })
@@ -243,15 +395,29 @@ export async function POST(req: NextRequest) {
     const { data: ada } = await supabaseAdmin
       .from('ts_target').select('id').eq('site', site).eq('bulan', bulan).maybeSingle()
 
-    if (ada) {
-      const { error } = await supabaseAdmin.from('ts_target')
-        .update({ target_jam: targetJam, faktor }).eq('id', (ada as any).id)
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    } else {
-      const { error } = await supabaseAdmin.from('ts_target')
-        .insert({ site, bulan, target_jam: targetJam, faktor, dibuat_oleh: String(session.nrp) })
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const penuh = { target_jam: targetJam, faktor, pa_target: paTarget, ma_target: maTarget }
+    const dasar = { target_jam: targetJam, faktor }
+
+    async function tulis(payload: Record<string, any>) {
+      if (ada) {
+        return supabaseAdmin.from('ts_target').update(payload).eq('id', (ada as any).id)
+      }
+      return supabaseAdmin.from('ts_target').insert({
+        ...payload, site, bulan, dibuat_oleh: String(session.nrp),
+      })
     }
+
+    let { error } = await tulis(penuh)
+    if (error && /pa_target|ma_target|column/i.test(error.message || '')) {
+      ({ error } = await tulis(dasar))
+      if (!error) {
+        return NextResponse.json({
+          ok: true,
+          peringatan: 'Target HM tersimpan. Kolom acuan PA/MA belum ada — jalankan scripts/produksi-monitoring.sql di Supabase.',
+        })
+      }
+    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     return NextResponse.json({ ok: true })
   } catch (err: any) {

@@ -52,7 +52,7 @@ export default function ProduksiPage() {
     <StdPage width="full">
       {bolehImport && (
         <div className="mb-3 flex gap-2">
-          {([['laporan', '📈 Laporan Produksi'], ['import', '📥 Import Harian']] as const).map(([id, l]) => (
+          {([['laporan', '📈 Laporan + Monitoring'], ['import', '📥 Import Harian']] as const).map(([id, l]) => (
             <button key={id} onClick={() => setTab(id)}
               className={'flex-1 py-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wide transition-all ' +
                 (tab === id ? 'bg-[#003D79] text-white shadow' : 'bg-white text-slate-400 border border-slate-100')}>
@@ -111,13 +111,14 @@ function Donut({ pct, total }: { pct: number; total: number }) {
 }
 
 /** sel tabel berwarna seperti Excel: hijau ok, merah kalau di bawah ambang */
-function SelPct({ v, ambang = 100 }: { v: number | null; ambang?: number }) {
+function SelPct({ v, ambang = 100 }: { v: number | null; ambang?: number | null }) {
   if (v == null) return <td className="px-1.5 py-0.5 text-center text-slate-300">-</td>
-  const ok = v >= ambang
+  const cek = ambang != null
+  const ok = !cek || v >= ambang
   return (
     <td className="px-1 py-0.5 text-center">
       <span className={'inline-block min-w-[44px] rounded px-1 py-0.5 text-[10px] font-black ' +
-        (ok ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white')}>
+        (!cek ? 'bg-slate-100 text-slate-700' : ok ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white')}>
         {fmt(v)}%
       </span>
     </td>
@@ -212,8 +213,9 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
   // ── kerangka laporan selalu tampil (nol bila belum ada data) ──
   const D: any = d || {
     baris_data: 0, total_hm: 0, hm_ds: 0, hm_ns: 0, achievement_pct: 0,
-    target: null, estimasi: 0, per_hari_target: 0, tgl_terakhir: null,
+    target: null, estimasi: 0, per_hari_target: 0, target_harian: 0, tgl_terakhir: null,
     per_hari: [], per_hari_atr: [], per_egi: [], per_unit: [], boleh_kelola: false, cuaca: null,
+    operator: [], minggu: [], top_egi: {}, low_egi: {}, cek: [], avg_egi: {}, hari_bulan: 31, hari_terisi: 0,
   }
   const hariHM = (D.per_hari || []).length ? D.per_hari : Array(31).fill(0)
   const hariATR = (D.per_hari_atr || []).length ? D.per_hari_atr : Array(31).fill(null)
@@ -465,9 +467,9 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
                         <td className={'px-1.5 py-0.5 text-right tabular-nums ' +
                           (u.s2 > 0 ? 'bg-emerald-100 text-emerald-800 font-bold' : 'bg-rose-100 text-rose-600')}>{fmt(u.s2)}</td>
                         <td className="px-1.5 py-0.5 text-right tabular-nums font-black text-[#0b2a5b]">{fmt(u.mtd)}</td>
-                        <SelPct v={u.pa} />
-                        <SelPct v={u.ma} />
-                        <SelPct v={u.ua} ambang={70} />
+                        <SelPct v={u.pa} ambang={Number(D.target?.pa_target ?? 90)} />
+                        <SelPct v={u.ma} ambang={Number(D.target?.ma_target ?? 92)} />
+                        <SelPct v={u.ua} ambang={null} />
                         <td className="px-1.5 py-0.5 italic text-slate-500">{u.ket || ''}</td>
                       </tr>
                     )
@@ -480,6 +482,8 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
       </div>
         </>
       )}
+
+      <MonitoringBlok d={D} bulan={bulan} />
 
       {D.boleh_kelola && (
         <FormTarget site={site} bulan={bulan} target={D.target} onSaved={muat} />
@@ -494,9 +498,14 @@ function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: str
   const [simpan, setSimpan] = useState(false)
   const [pesan, setPesan] = useState('')
 
+  const [pa, setPa] = useState('90')
+  const [ma, setMa] = useState('92')
+
   useEffect(() => {
-    setTj(target ? String(target.target_jam) : '')
-    setFk(target ? String(target.faktor) : '88')
+    setTj(target ? String(target.target_jam || '') : '')
+    setFk(target ? String(target.faktor ?? 88) : '88')
+    setPa(target?.pa_target != null ? String(target.pa_target) : '90')
+    setMa(target?.ma_target != null ? String(target.ma_target) : '92')
   }, [target, site, bulan])
 
   async function kirim() {
@@ -504,11 +513,14 @@ function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: str
     try {
       const r = await fetch('/api/produksi/dashboard', {
         method: 'POST', credentials: 'include', headers: hdr(),
-        body: JSON.stringify({ site, bulan, target_jam: Number(tj), faktor: Number(fk) }),
+        body: JSON.stringify({
+          site, bulan, target_jam: Number(tj), faktor: Number(fk),
+          pa_target: Number(pa), ma_target: Number(ma),
+        }),
       })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || 'Gagal')
-      setPesan('✅ Target tersimpan')
+      setPesan(j?.peringatan ? '⚠️ ' + j.peringatan : '✅ Target tersimpan')
       onSaved()
     } catch (e: any) { setPesan('❌ ' + (e?.message || 'Gagal')) }
     setSimpan(false)
@@ -517,20 +529,33 @@ function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: str
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-2">
       <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2">
-        🎯 Target HM Bulanan ({labelBulan(bulan)})
+        🎯 Pengaturan site ({labelBulan(bulan)})
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-[10px] font-bold text-slate-400 mb-1">Target Jam</label>
+          <label className="block text-[10px] font-bold text-slate-400 mb-1">Target HM bulan</label>
           <input type="number" min={0} value={tj} onChange={(e) => setTj(e.target.value)} placeholder="cth: 10500"
             className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
         </div>
         <div>
-          <label className="block text-[10px] font-bold text-slate-400 mb-1">Faktor Tersisa (%)</label>
+          <label className="block text-[10px] font-bold text-slate-400 mb-1">Faktor Excel tersisa (%)</label>
           <input type="number" min={0} max={100} value={fk} onChange={(e) => setFk(e.target.value)}
             className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
         </div>
+        <div>
+          <label className="block text-[10px] font-bold text-slate-400 mb-1">Acuan PA (%)</label>
+          <input type="number" min={0} max={100} step={0.1} value={pa} onChange={(e) => setPa(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold text-slate-400 mb-1">Acuan MA (%)</label>
+          <input type="number" min={0} max={100} step={0.1} value={ma} onChange={(e) => setMa(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
+        </div>
       </div>
+      <p className="mt-1.5 text-[9px] text-slate-400">
+        Target harian monitoring = target bulan ÷ hari kalender. UA dipantau, tanpa acuan. Satu acuan PA/MA untuk seluruh site.
+      </p>
       <button onClick={kirim} disabled={simpan || !tj}
         className="mt-2 w-full py-2 rounded-xl bg-[#003D79] text-white font-black text-[11px] uppercase tracking-wider disabled:opacity-50">
         {simpan ? 'Menyimpan…' : 'Simpan Target'}
@@ -543,6 +568,7 @@ function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: str
 /* ═══════════════ TAB 2 — IMPORT HARIAN ═══════════════ */
 
 function ImportHarian() {
+  const [sub, setSub] = useState<'upload' | 'atur'>('upload')
   const [site, setSite] = useState('PPA-MLP')
   const [text, setText] = useState('')
   const [namaFile, setNamaFile] = useState('')
@@ -587,6 +613,19 @@ function ImportHarian() {
 
   return (
     <div className="space-y-2">
+      <div className="flex gap-2">
+        {([['upload', '📥 Upload TS Opt'], ['atur', '🎯 Pengaturan']] as const).map(([id, l]) => (
+          <button key={id} onClick={() => setSub(id)}
+            className={'flex-1 py-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wide ' +
+              (sub === id ? 'bg-[#003D79] text-white' : 'bg-white text-slate-400 border border-slate-100')}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {sub === 'atur' && <PengaturanImport />}
+
+      {sub === 'upload' && <>
       <div className="rounded-xl overflow-hidden shadow-md">
         <div className="bg-gradient-to-r from-[#0a5bd3] to-[#003D79] py-2 text-center text-white text-[12px] font-black uppercase tracking-wide">
           Import Harian — Sheet TS Opt
@@ -681,6 +720,225 @@ function ImportHarian() {
           title={`${hasil.total} Baris Tersimpan`}
           text={`${hasil.baru} baru · ${hasil.timpa} diperbarui. Dashboard sudah ter-update.`} />
       )}
+      </>}
+    </div>
+  )
+}
+
+function PengaturanImport() {
+  const now = new Date()
+  const [bulan, setBulan] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
+  const [site, setSite] = useState('PPA-MLP')
+  const [target, setTarget] = useState<any>(null)
+  const [boleh, setBoleh] = useState(false)
+  const [err, setErr] = useState('')
+
+  const muat = useCallback(() => {
+    fetch(`/api/produksi/dashboard?bulan=${bulan}&site=${encodeURIComponent(site)}`,
+      { credentials: 'include', headers: hdr() })
+      .then((r) => r.json())
+      .then((j) => {
+        if (j?.error) setErr(j.error)
+        else { setErr(''); setTarget(j.target); setBoleh(Boolean(j.boleh_kelola)) }
+      })
+      .catch((e) => setErr(e?.message || 'Gagal'))
+  }, [bulan, site])
+
+  useEffect(() => { muat() }, [muat])
+
+  return (
+    <div className="space-y-2">
+      <div className="bg-white rounded-xl border border-slate-200 p-2 grid grid-cols-2 gap-2">
+        <div>
+          <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Bulan</label>
+          <input type="month" value={bulan} onChange={(e) => setBulan(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
+        </div>
+        <div>
+          <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Site</label>
+          <input value={site} onChange={(e) => setSite(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
+        </div>
+      </div>
+      {err && <EmptyState variant="error" text={err} />}
+      {boleh
+        ? <FormTarget site={site} bulan={bulan} target={target} onSaved={muat} />
+        : <p className="text-[10px] text-slate-400 text-center">Hanya HR/Admin yang bisa mengubah target.</p>}
+    </div>
+  )
+}
+
+function MonitoringBlok({ d, bulan }: { d: any; bulan: string }) {
+  const [filter, setFilter] = useState('Semua')
+  const [klip, setKlip] = useState<any>(null)
+  const paAcu = Number(d.target?.pa_target ?? 90)
+  const maAcu = Number(d.target?.ma_target ?? 92)
+  const targetHarian = Number(d.target_harian || 0)
+  const hariTerisi = Number(d.hari_terisi || 0)
+  const diharapkan = targetHarian * hariTerisi
+  const lajuOk = diharapkan <= 0 || Number(d.total_hm) >= diharapkan * 0.95
+
+  const units = d.per_unit || []
+  let paW = 0, paH = 0, maW = 0, maH = 0, uaW = 0, uaH = 0
+  for (const u of units) {
+    if (u.pa != null) { paW += u.pa * u.mtd; paH += u.mtd }
+    if (u.ma != null) { maW += u.ma * u.mtd; maH += u.mtd }
+    if (u.ua != null) { uaW += u.ua * u.mtd; uaH += u.mtd }
+  }
+  const paSite = paH ? paW / paH : null
+  const maSite = maH ? maW / maH : null
+  const uaSite = uaH ? uaW / uaH : null
+
+  const ops = (d.operator || []).filter((o: any) => filter === 'Semua' || o.jenis === filter)
+  const jenisList = ['Semua', 'Excavator', 'Bulldozer', 'Grader']
+  const kunciOp = (o: any) => `${o?.nama}|${o?.unit}`
+
+  function Kartu({ judul, nilai, sub, ok }: { judul: string; nilai: string; sub: string; ok?: boolean | null }) {
+    const warna = ok == null ? 'text-[#0b2a5b]' : ok ? 'text-emerald-700' : 'text-rose-600'
+    return (
+      <div className="rounded-xl bg-white border border-slate-200 p-2">
+        <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">{judul}</div>
+        <div className={'text-base font-black ' + warna}>{nilai}</div>
+        <div className="text-[9px] text-slate-500">{sub}</div>
+      </div>
+    )
+  }
+
+  function DaftarRank({ judul, data }: { judul: string; data: Record<string, any[]> }) {
+    return (
+      <KartuSeksi judul={judul}>
+        {['Excavator', 'Bulldozer', 'Grader'].map((j) => (
+          <div key={j} className="mb-1.5 last:mb-0">
+            <div className="text-[9px] font-black uppercase text-slate-400">{j}</div>
+            {(data?.[j] || []).length === 0 && <div className="text-[10px] text-slate-300">— belum ada</div>}
+            {(data?.[j] || []).map((r: any, i: number) => (
+              <div key={j + i} className="flex justify-between gap-2 text-[10px]">
+                <span className="truncate font-bold">{i + 1}. {r.nama} · {r.unit}</span>
+                <span className="tabular-nums font-black text-[#0b2a5b] whitespace-nowrap">
+                  {fmt1(r.hm)} <span className="font-bold text-slate-400">(avg {fmt1(r.avg)})</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </KartuSeksi>
+    )
+  }
+
+  return (
+    <div className="space-y-2 pt-1">
+      <div className="rounded-xl bg-gradient-to-r from-[#003D79] to-[#0a5bd3] text-white text-center text-[10px] font-black uppercase tracking-wider py-1.5">
+        Monitoring — TS Opt · {labelBulan(bulan)}
+      </div>
+      <p className="text-[9px] text-slate-400 text-center -mt-1">
+        Target harian = target bulan ÷ {d.hari_bulan || 'hari'} kalender. Acuan PA {fmt1(paAcu)} · MA {fmt1(maAcu)}. UA dipantau, tanpa acuan.
+      </p>
+
+      <div className="grid grid-cols-2 gap-1.5">
+        <Kartu judul="Laju vs kalender" nilai={`${fmt1(d.total_hm)} HM`}
+          sub={`diharapkan ${fmt1(diharapkan)} (${fmt1(targetHarian)} × ${hariTerisi} hari)`}
+          ok={lajuOk} />
+        <Kartu judul="Target harian" nilai={`${fmt1(targetHarian)} jam`}
+          sub={`bulan ${fmt1(d.target?.target_jam)} ÷ ${d.hari_bulan || '-'} hari`} />
+        <Kartu judul="PA site" nilai={fmtP(paSite)} sub={`acuan ${fmt1(paAcu)}%`}
+          ok={paSite == null ? null : paSite >= paAcu} />
+        <Kartu judul="MA site" nilai={fmtP(maSite)} sub={`acuan ${fmt1(maAcu)}%`}
+          ok={maSite == null ? null : maSite >= maAcu} />
+        <Kartu judul="UA site" nilai={fmtP(uaSite)} sub="dipantau — tanpa acuan" ok={null} />
+        <Kartu judul="Standby" nilai={`${fmt1(d.total_stb)} jam`} sub="dari TS Opt" />
+      </div>
+
+      <KartuSeksi judul="Rekap per minggu (ISO)">
+        {(d.minggu || []).length === 0 && <div className="text-[10px] text-slate-300">Belum ada data minggu.</div>}
+        {(d.minggu || []).map((w: any) => (
+          <div key={w.kunci} className="flex justify-between gap-2 py-0.5 text-[10px] border-b border-slate-50 last:border-0">
+            <span className="font-bold text-slate-600">{w.label}</span>
+            <span className="tabular-nums font-black text-[#0b2a5b]">
+              HM {fmt1(w.hm)} · STB {fmt1(w.stb)} · PA {fmtP(w.pa)} · MA {fmtP(w.ma)}
+            </span>
+          </div>
+        ))}
+      </KartuSeksi>
+
+      <div className="grid grid-cols-2 gap-1.5">
+        <DaftarRank judul="2 HM tertinggi per EGI" data={d.top_egi || {}} />
+        <DaftarRank judul="2 HM terendah per EGI" data={d.low_egi || {}} />
+      </div>
+
+      <KartuSeksi judul={`Perlu dicek (${(d.cek || []).length})`}>
+        {(d.cek || []).length === 0 && <div className="text-[10px] text-emerald-700 font-bold">Tidak ada item. UA di bawah acuan tidak dipakai.</div>}
+        {(d.cek || []).slice(0, 20).map((c: any, i: number) => (
+          <div key={i} className="text-[10px] py-0.5 border-b border-slate-50 last:border-0">
+            <span className="font-black text-amber-700">{c.tag}</span>
+            <span className="text-slate-600"> — {c.teks}</span>
+          </div>
+        ))}
+        {(d.cek || []).length > 20 && (
+          <div className="text-[9px] text-slate-400 mt-1">… {(d.cek || []).length - 20} lagi di API</div>
+        )}
+      </KartuSeksi>
+
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-[#003D79] to-[#0a5bd3] text-white text-center text-[10px] font-black uppercase tracking-wider py-1">
+          Papan operator — klik baris untuk HM awal/akhir
+        </div>
+        <div className="flex gap-1 p-1.5 flex-wrap">
+          {jenisList.map((j) => (
+            <button key={j} onClick={() => { setFilter(j); setKlip(null) }}
+              className={'px-2 py-1 rounded-lg text-[9px] font-black uppercase ' +
+                (filter === j ? 'bg-[#003D79] text-white' : 'bg-slate-100 text-slate-500')}>
+              {j}
+            </button>
+          ))}
+        </div>
+        <div className="overflow-x-auto max-h-72">
+          <table className="w-full text-[10px]">
+            <thead className="bg-slate-50 sticky top-0">
+              <tr>
+                <th className="px-1.5 py-1 text-left">Nama</th>
+                <th className="px-1.5 py-1 text-left">Unit</th>
+                <th className="px-1.5 py-1 text-right">HM</th>
+                <th className="px-1.5 py-1 text-right">vs avg EGI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ops.map((o: any, i: number) => {
+                const avg = Number(d.avg_egi?.[o.jenis] || 0)
+                const delta = avg ? o.hm - avg : 0
+                return (
+                  <tr key={o.nama + o.unit + i} onClick={() => setKlip(kunciOp(klip) === kunciOp(o) ? null : o)}
+                    className={'cursor-pointer ' + (i % 2 ? 'bg-slate-50' : 'bg-white') + (kunciOp(klip) === kunciOp(o) ? ' outline outline-2 outline-[#003D79]' : '')}>
+                    <td className="px-1.5 py-0.5 font-bold">{o.nama}</td>
+                    <td className="px-1.5 py-0.5">{o.unit}</td>
+                    <td className="px-1.5 py-0.5 text-right tabular-nums font-black">{fmt1(o.hm)}</td>
+                    <td className={'px-1.5 py-0.5 text-right tabular-nums ' + (delta < 0 ? 'text-rose-600' : 'text-emerald-700')}>
+                      {avg ? (delta >= 0 ? '+' : '') + fmt1(delta) : '-'}
+                    </td>
+                  </tr>
+                )
+              })}
+              {ops.length === 0 && (
+                <tr><td colSpan={4} className="px-2 py-3 text-center text-slate-300">Belum ada operator</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {klip && (
+          <div className="border-t border-slate-200 p-2 bg-slate-50">
+            <div className="text-[10px] font-black text-[#0b2a5b] mb-1">
+              {klip.nama} · {klip.unit} · {klip.jenis} {klip.egi}
+            </div>
+            <div className="max-h-40 overflow-y-auto space-y-0.5">
+              {(klip.hari || []).map((h: any, i: number) => (
+                <div key={i} className="flex justify-between text-[10px] font-mono">
+                  <span>{h.tgl} S{h.shift}</span>
+                  <span>awal {fmt1(h.awal)} → akhir {fmt1(h.akhir)} · HM {fmt1(h.hm)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
