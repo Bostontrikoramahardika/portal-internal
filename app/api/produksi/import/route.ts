@@ -57,6 +57,7 @@ type Baris = {
   hm_awal: number | null; hm_akhir: number | null
   hm_total: number | null; hm_over: number; catatan: string
   hm_kerja: number | null; standby: number | null
+  no_opt: number | null; bd_jam: number | null
   pa: number | null; ma: number | null; ua: number | null
 }
 
@@ -68,7 +69,23 @@ function parsePct(s: any): number | null {
 }
 
 /** Pecah satu baris mentah jadi Baris (atau null kalau bukan baris data) */
-function bacaBaris(cells: string[], siteDefault: string): Baris | null {
+function indeksNoOpt(lines: string[]) {
+  const base = { no_opt: 22, bd_jam: 23, catatan: 24, standby: 25 }
+  for (const line of lines.slice(0, 12)) {
+    const cells = line.split('\t').map((c) => c.trim().toLowerCase())
+    const i = cells.findIndex((c) => c === 'no opt' || c === 'noopt' || c === 'no operation')
+    if (i >= 0) {
+      base.no_opt = i
+      base.bd_jam = i + 1
+      base.catatan = i + 2
+      base.standby = i + 3
+      break
+    }
+  }
+  return base
+}
+
+function bacaBaris(cells: string[], siteDefault: string, kol: { no_opt: number; bd_jam: number; catatan: number; standby: number }): Baris | null {
   const ambil = (i: number) => String(cells[i] ?? '').trim()
 
   if (cells.length >= 17) {
@@ -86,8 +103,9 @@ function bacaBaris(cells: string[], siteDefault: string): Baris | null {
       hm_awal: hmAwal, hm_akhir: hmAkhir,
       hm_total: hmAwal != null && hmAkhir != null ? Math.round((hmAkhir - hmAwal) * 100) / 100 : null,
       hm_over: parseNum(ambil(19)) || parseNum(ambil(20)) || 0,
-      catatan: ambil(24),
-      hm_kerja: parseNum(ambil(21)), standby: parseNum(ambil(25)),
+      catatan: ambil(kol.catatan),
+      hm_kerja: parseNum(ambil(21)), standby: parseNum(ambil(kol.standby)),
+      no_opt: parseNum(ambil(kol.no_opt)), bd_jam: parseNum(ambil(kol.bd_jam)),
       pa: parsePct(ambil(29)), ma: parsePct(ambil(30)), ua: parsePct(ambil(31)),
     }
   }
@@ -108,7 +126,7 @@ function bacaBaris(cells: string[], siteDefault: string): Baris | null {
       hm_total: hmAwal != null && hmAkhir != null ? Math.round((hmAkhir - hmAwal) * 100) / 100 : null,
       hm_over: parseNum(ambil(9)) || 0,
       catatan: ambil(10),
-      hm_kerja: null, standby: null, pa: null, ma: null, ua: null,
+      hm_kerja: null, standby: null, no_opt: null, bd_jam: null, pa: null, ma: null, ua: null,
     }
   }
 
@@ -149,12 +167,13 @@ export async function POST(req: NextRequest) {
     const kunciTerlihat = new Set<string>()
 
     const lines = text.split(/\r?\n/)
+    const kol = indeksNoOpt(lines)
     let no = 0
     for (const line of lines) {
       no++
       if (!line.trim()) continue
       const cells = line.split('\t')
-      const b = bacaBaris(cells, siteDefault)
+      const b = bacaBaris(cells, siteDefault, kol)
       if (!b) continue
 
       const kunci = `${b.site}|${b.tanggal}|${b.shift}|${b.kode}`
@@ -213,6 +232,7 @@ export async function POST(req: NextRequest) {
         hm_awal: b.hm_awal, hm_akhir: b.hm_akhir, hm_total: b.hm_total,
         hm_over: b.hm_over, catatan: b.catatan || null,
         hm_kerja: b.hm_kerja, standby: b.standby,
+        no_opt: b.no_opt, bd_jam: b.bd_jam,
         pa: b.pa, ma: b.ma, ua: b.ua,
         dibuat_oleh: String(session.nrp), updated_at: new Date().toISOString(),
       }
@@ -232,15 +252,32 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 3. commit ──
+    const kolomBdHilang = (msg: string) => /no_opt|bd_jam|column/i.test(msg || '')
+    const tanpaBd = (obj: any) => {
+      const o = { ...obj }
+      delete o.no_opt
+      delete o.bd_jam
+      return o
+    }
+    let peringatanKolom: string | null = null
     if (upBaru.length) {
-      const { error } = await supabaseAdmin.from('ts_opt').insert(upBaru)
+      let { error } = await supabaseAdmin.from('ts_opt').insert(upBaru)
+      if (error && kolomBdHilang(error.message || '')) {
+        peringatanKolom = 'HM/STB tersimpan. Kolom jam BD & No Opt belum ada — jalankan scripts/produksi-bd-noopt.sql di Supabase, lalu import ulang.'
+        ;({ error } = await supabaseAdmin.from('ts_opt').insert(upBaru.map(tanpaBd)))
+      }
       if (error) return NextResponse.json({ error: 'Gagal menyimpan baris baru: ' + error.message }, { status: 500 })
     }
     for (const u of upTimpa) {
-      const { error } = await supabaseAdmin.from('ts_opt').update(u.patch).eq('id', u.id)
+      let { error } = await supabaseAdmin.from('ts_opt').update(u.patch).eq('id', u.id)
+      if (error && kolomBdHilang(error.message || '')) {
+        peringatanKolom = 'HM/STB tersimpan. Kolom jam BD & No Opt belum ada — jalankan scripts/produksi-bd-noopt.sql di Supabase, lalu import ulang.'
+        ;({ error } = await supabaseAdmin.from('ts_opt').update(tanpaBd(u.patch)).eq('id', u.id))
+      }
       if (error) return NextResponse.json({ error: 'Gagal memperbarui: ' + error.message }, { status: 500 })
     }
 
+    if (peringatanKolom) peringatan.push({ baris: 0, pesan: peringatanKolom })
     return NextResponse.json({ ok: true, mode: 'commit', total: dipakai.size, baru, timpa, peringatan })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Gagal import TS Opt' }, { status: 500 })

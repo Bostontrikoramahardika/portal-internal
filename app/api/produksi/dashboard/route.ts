@@ -35,6 +35,28 @@ function r2(n: number) {
   return Math.round(n * 100) / 100
 }
 
+/** 1 shift TS Opt = 12 jam. HM dari hm_total. BD/NO: kolom W/X jika ada;
+ *  kalau kosong: sisa 12−HM−STB → catatan BD = jam BD, nama kosong = jam NO. */
+function pecahShift12(r: any, hm: number, stb: number) {
+  let no = r.no_opt != null && r.no_opt !== '' ? Number(r.no_opt) : 0
+  let bd = r.bd_jam != null && r.bd_jam !== '' ? Number(r.bd_jam) : 0
+  if (!isFinite(no)) no = 0
+  if (!isFinite(bd)) bd = 0
+  let st = r.standby != null && r.standby !== '' ? Number(r.standby) : stb
+  if (!isFinite(st)) st = 0
+  if (no === 0 && bd === 0) {
+    const sisa = Math.max(0, 12 - hm - st)
+    if (sisa > 0.009) {
+      const catatan = String(r.catatan || '').trim()
+      const nama = String(r.nama_operator || '').trim()
+      if (catatan) bd = sisa
+      else if (!nama) no = sisa
+    }
+  }
+  if (hm + no + bd + st < 12) st += 12 - hm - no - bd - st
+  return { hm, no, bd, st }
+}
+
 async function sesi(req: NextRequest) {
   const token = req.cookies.get('session_token')?.value
   if (!token) return null
@@ -65,12 +87,21 @@ export async function GET(req: NextRequest) {
     const awal = `${bulan}-01`
     const akhir = `${bulan}-${String(hariBulan).padStart(2, '0')}`
 
-    const { data: rows, error } = await supabaseAdmin
+    const kolomDasar = 'tanggal, shift, kode_unit, tipe_unit, nama_operator, hm_awal, hm_akhir, hm_total, hm_over, standby, pa, ma, ua, catatan'
+    let { data: rows, error } = await supabaseAdmin
       .from('ts_opt')
-      .select('tanggal, shift, kode_unit, tipe_unit, nama_operator, hm_awal, hm_akhir, hm_total, hm_over, standby, pa, ma, ua, catatan')
+      .select(kolomDasar + ', no_opt, bd_jam')
       .eq('site', site)
       .gte('tanggal', awal)
       .lte('tanggal', akhir)
+    if (error && /no_opt|bd_jam|column/i.test(error.message || '')) {
+      ;({ data: rows, error } = await supabaseAdmin
+        .from('ts_opt')
+        .select(kolomDasar)
+        .eq('site', site)
+        .gte('tanggal', awal)
+        .lte('tanggal', akhir))
+    }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     const { data: target } = await supabaseAdmin
@@ -102,9 +133,12 @@ export async function GET(req: NextRequest) {
     const bdPerHari: Record<number, Set<string>> = {}
     const opPerHari: Record<number, Set<string>> = {}
     const tanpaOpPerHari: Record<number, Set<string>> = {}
+    const unitHari24: Record<string, { tgl: number; hm: number; no: number; bd: number; st: number }> = {}
 
     let totalHM = 0
     let totalStb = 0
+    let totalNoOpt = 0
+    let totalBdJam = 0
     let hmDS = 0
     let hmNS = 0
     let tglTerakhir: string | null = null
@@ -171,10 +205,19 @@ export async function GET(req: NextRequest) {
           if (!aktifPerHari[tgl]) aktifPerHari[tgl] = new Set()
           aktifPerHari[tgl].add(r.kode_unit)
         }
+        const uk = `${tgl}|${r.kode_unit}`
+        const uh = unitHari24[uk] || (unitHari24[uk] = { tgl, hm: 0, no: 0, bd: 0, st: 0 })
+        const pecah = pecahShift12(r, hm, stb)
+        uh.hm += pecah.hm
+        uh.no += pecah.no
+        uh.bd += pecah.bd
+        uh.st += pecah.st
       }
 
       totalHM += hm
       totalStb += stb
+      totalNoOpt += Number(r.no_opt || 0)
+      totalBdJam += Number(r.bd_jam || 0)
       if (shift === 1) hmDS += hm
       else hmNS += hm
       if (!tglTerakhir || tglStr > tglTerakhir) tglTerakhir = tglStr
@@ -416,10 +459,49 @@ export async function GET(req: NextRequest) {
       cuaca = cwErr ? null : cw?.[0] || null
     }
 
+    const tutup24 = (hm: number, no: number, bd: number, st: number) => {
+      let s = st
+      const isi = hm + no + bd + s
+      if (isi < 24) s += 24 - isi
+      else if (isi > 24) s = Math.max(0, s - (isi - 24))
+      return { hm, no, bd, st: s }
+    }
+    const mtd24 = { hm: 0, bd: 0, tanpa_op: 0, stb: 0 }
+    const hari24 = Array.from({ length: hariBulan }, () => ({ hm: 0, bd: 0, tanpa_op: 0, stb: 0 }))
+    let nUnitHari = 0
+    for (const rec of Object.values(unitHari24)) {
+      const t = tutup24(rec.hm, rec.no, rec.bd, rec.st)
+      nUnitHari++
+      mtd24.hm += t.hm
+      mtd24.bd += t.bd
+      mtd24.tanpa_op += t.no
+      mtd24.stb += t.st
+      const i = rec.tgl - 1
+      if (i >= 0 && i < hariBulan) {
+        hari24[i].hm += t.hm
+        hari24[i].bd += t.bd
+        hari24[i].tanpa_op += t.no
+        hari24[i].stb += t.st
+      }
+    }
+
     return NextResponse.json({
       ok: true, site, bulan, hari_bulan: hariBulan,
       total_hm: r2(totalHM), hm_ds: r2(hmDS), hm_ns: r2(hmNS),
       total_stb: r2(totalStb),
+      total_no_opt: r2(totalNoOpt),
+      total_bd_jam: r2(totalBdJam),
+      unit_hari: nUnitHari,
+      jam_kalender: r2(nUnitHari * 24),
+      komposisi_mtd: {
+        hm: r2(mtd24.hm),
+        bd: r2(mtd24.bd),
+        tanpa_op: r2(mtd24.tanpa_op),
+        stb: r2(mtd24.stb),
+      },
+      komposisi_hari: hari24.map((x) => ({
+        hm: r2(x.hm), bd: r2(x.bd), tanpa_op: r2(x.tanpa_op), stb: r2(x.stb),
+      })),
       per_hari: perHari.slice(1).map(r2),
       per_hari_ds: perHariDS.slice(1).map(r2),
       per_hari_ns: perHariNS.slice(1).map(r2),

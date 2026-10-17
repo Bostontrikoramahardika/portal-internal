@@ -197,10 +197,10 @@ function BatangPaUnit({ units, ambang }: { units: any[]; ambang: number }) {
   return (
     <div className="px-2 pb-2">
       <div className="overflow-x-auto">
-        <div className="relative" style={{ minWidth: Math.max(520, list.length * 28), height: H + 36 }}>
+        <div className="relative" style={{ minWidth: Math.max(520, list.length * 36), height: H + 52 }}>
           <div className="absolute left-0 right-0 z-10 border-t-2 border-red-500 pointer-events-none"
-            style={{ bottom: 36 + (Math.min(100, ambang) / 100) * H }} />
-          <div className="absolute inset-x-0 bottom-9 flex items-end gap-[3px]" style={{ height: H }}>
+            style={{ bottom: 52 + (Math.min(100, ambang) / 100) * H }} />
+          <div className="absolute inset-x-0 bottom-[52px] flex items-end gap-[3px]" style={{ height: H }}>
             {list.map((x: any) => {
               const v = x.pa
               const n = v == null ? 0 : Math.max(0, Math.min(100, v))
@@ -217,10 +217,12 @@ function BatangPaUnit({ units, ambang }: { units: any[]; ambang: number }) {
               )
             })}
           </div>
-          <div className="absolute inset-x-0 bottom-0 flex gap-[3px]">
+          <div className="absolute inset-x-0 bottom-0 flex gap-[3px] h-[50px] overflow-visible">
             {list.map((x: any) => (
-              <div key={x.kode} className={'flex-1 text-center text-[7px] font-black truncate min-w-[22px] ' + (pilih === x.kode ? 'text-[#003D79]' : 'text-slate-400')}
-                style={{ writingMode: 'vertical-rl' as any, transform: 'rotate(180deg)', height: 32 }}>{x.kode}</div>
+              <div key={x.kode} className="flex-1 min-w-[28px] relative">
+                <span className={'absolute left-0 top-1 text-[8px] font-bold italic whitespace-nowrap origin-top-left ' + (pilih === x.kode ? 'text-[#003D79]' : 'text-slate-500')}
+                  style={{ transform: 'rotate(-38deg)' }}>{x.kode}</span>
+              </div>
             ))}
           </div>
         </div>
@@ -305,7 +307,7 @@ function BatangHari({ data, warna = '#e11d48', sampai, onPilih, pilih }: {
   )
 }
 
-function GarisHari({ series, sampai, bulan }: { series: { nama: string; warna: string; data: number[] }[]; sampai: number; bulan: string }) {
+function GarisHari({ series, sampai, onPilih }: { series: { nama: string; warna: string; data: number[] }[]; sampai: number; onPilih?: (i: number) => void }) {
   const [pilih, setPilih] = useState<number | null>(sampai > 0 ? sampai - 1 : 0)
   const n = Math.max(1, sampai)
   const sliced = series.map((s) => ({ ...s, data: potongHari(s.data, n) }))
@@ -348,7 +350,7 @@ function GarisHari({ series, sampai, bulan }: { series: { nama: string; warna: s
           {Array.from({ length: n }, (_, i) => (
             <g key={'h' + i}>
               <rect x={X(i) - 14} y={padT} width="28" height={H - padT - padB} fill="transparent" className="cursor-pointer"
-                onClick={() => setPilih(i)} />
+                onClick={() => { setPilih(i); onPilih?.(i) }} />
               <text x={X(i)} y={H - 8} textAnchor="middle" fontSize="9" fontWeight="700" fill={idx === i ? '#003D79' : '#94a3b8'}>{i + 1}</text>
             </g>
           ))}
@@ -360,19 +362,6 @@ function GarisHari({ series, sampai, bulan }: { series: { nama: string; warna: s
             <i className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: s.warna }} /> {s.nama}
           </span>
         ))}
-      </div>
-      <div className="mt-2 rounded-xl border border-[#c7dbef] bg-[#eff6fd] px-3 py-2">
-        <div className="text-[10px] font-black uppercase tracking-wider text-[#164c7d]">
-          Tanggal {String(idx + 1).padStart(2, '0')} {labelBulan(bulan)} · klik titik/tanggal lain
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-1.5">
-          {sliced.map((s) => (
-            <div key={s.nama} className="rounded-lg bg-white border border-slate-100 px-2 py-1.5">
-              <div className="text-[9px] font-bold text-slate-400">{s.nama}</div>
-              <div className="text-[15px] font-black tabular-nums" style={{ color: s.warna }}>{fmt1(s.data[idx] || 0)}</div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   )
@@ -416,10 +405,99 @@ function OutlookBaris({ aktual, outlook, target, satuan, fmtNilai }: {
   )
 }
 
+function DonatEmpat({ irisan, sub }: { irisan: { nama: string; nilai: number; warna: string }[]; sub: string }) {
+  const tot = irisan.reduce((s, x) => s + Math.max(0, x.nilai), 0) || 1
+  let a = -90
+  const R = 34, C = 44
+  const path = (mulai: number, lebar: number) => {
+    if (lebar >= 359.9) return `M ${C} ${C - R} A ${R} ${R} 0 1 1 ${C - 0.01} ${C - R} Z`
+    const r1 = (mulai * Math.PI) / 180, r2 = ((mulai + lebar) * Math.PI) / 180
+    const x1 = C + R * Math.cos(r1), y1 = C + R * Math.sin(r1)
+    const x2 = C + R * Math.cos(r2), y2 = C + R * Math.sin(r2)
+    return `M ${C} ${C} L ${x1} ${y1} A ${R} ${R} 0 ${lebar > 180 ? 1 : 0} 1 ${x2} ${y2} Z`
+  }
+  const pctStr = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return (
+    <div className="flex flex-col items-center gap-2 px-2 py-2">
+      <svg viewBox="0 0 88 88" className="w-36 h-36">
+        {irisan.map((x) => {
+          const lebar = (Math.max(0, x.nilai) / tot) * 360
+          if (lebar < 0.2) return <g key={x.nama} />
+          const d = path(a, lebar)
+          a += lebar
+          return <path key={x.nama} d={d} fill={x.warna} />
+        })}
+        <circle cx={C} cy={C} r="18" fill="#fff" />
+        <text x={C} y={C - 1} textAnchor="middle" fontSize="10" fontWeight="800" fill="#153b61">100%</text>
+        <text x={C} y={C + 11} textAnchor="middle" fontSize="7" fill="#94a3b8">{sub}</text>
+      </svg>
+      <div className="w-full space-y-1">
+        {irisan.map((x) => {
+          const pct = (Math.max(0, x.nilai) / tot) * 100
+          return (
+            <div key={x.nama} className="flex items-center justify-between text-[10px] gap-2">
+              <span className="inline-flex items-center gap-1.5 font-bold text-slate-600">
+                <i className="w-2 h-2 rounded-full inline-block" style={{ background: x.warna }} /> {x.nama}
+              </span>
+              <span className="tabular-nums font-black" style={{ color: x.warna }}>{fmt1(x.nilai)} jam · {pctStr(pct)}%</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function BatangFc({ list, satuan }: { list: { kode: string; nilai: number | null; target?: number | null }[]; satuan: string }) {
+  const [pilih, setPilih] = useState<string | null>(null)
+  const nums = list.map((x) => Number(x.nilai || 0))
+  const max = Math.max(...nums, ...list.map((x) => Number(x.target || 0)), 0.01)
+  const H = 120
+  const satu = list.find((x) => x.kode === pilih) || list[0]
+  return (
+    <div className="px-2 pb-3">
+      <div className="overflow-x-auto">
+        <div className="relative" style={{ minWidth: Math.max(280, list.length * 40), height: H + 44 }}>
+          <div className="absolute inset-x-0 bottom-10 flex items-end gap-1" style={{ height: H }}>
+            {list.map((x) => {
+              const v = Number(x.nilai || 0)
+              const t = x.target != null ? Number(x.target) : null
+              const over = t != null && t > 0 && v > t
+              return (
+                <button key={x.kode} type="button" onClick={() => setPilih(x.kode)}
+                  className="flex-1 min-w-[28px] h-full flex flex-col justify-end items-center relative">
+                  {t != null && t > 0 && (
+                    <i className="absolute left-0 right-0 border-t border-dashed border-rose-400 pointer-events-none" style={{ bottom: `${(t / max) * 100}%` }} />
+                  )}
+                  <span className="text-[8px] font-black tabular-nums mb-0.5" style={{ color: over ? '#e11d48' : '#64748b' }}>{v ? fmt1(v) : '—'}</span>
+                  <div className="w-[70%] rounded-t" style={{ height: `${(v / max) * 100}%`, minHeight: v ? 4 : 0, background: over ? '#e11d48' : pilih === x.kode ? '#003D79' : '#7eb8e8' }} />
+                </button>
+              )
+            })}
+          </div>
+          <div className="absolute inset-x-0 bottom-0 flex gap-1 h-10 overflow-visible">
+            {list.map((x) => (
+              <div key={x.kode} className="flex-1 min-w-[28px] relative">
+                <span className="absolute left-0 top-1 text-[8px] font-bold italic whitespace-nowrap origin-top-left text-slate-500"
+                  style={{ transform: 'rotate(-38deg)' }}>{x.kode}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      {satu && (
+        <div className="mt-1 text-[11px] text-slate-600">{satu.kode}: <b className="text-[#153b61]">{satu.nilai != null ? fmt1(Number(satu.nilai)) : '—'} {satuan}</b>
+          {satu.target != null ? ` · target ${fmt1(Number(satu.target))}` : ''}</div>
+      )}
+    </div>
+  )
+}
+
 export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
   const [filter, setFilter] = useState('Semua')
-  const [klip, setKlip] = useState<any>(null)
+  const [hoverOp, setHoverOp] = useState<any>(null)
   const [cekAll, setCekAll] = useState(false)
+  const [klikHari, setKlikHari] = useState<number | null>(null)
 
   const paAcu = Number(d.target?.pa_target ?? 90)
   const maAcu = Number(d.target?.ma_target ?? 92)
@@ -464,6 +542,25 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
   const cekList = d.cek || []
   const cekTampil = cekAll ? cekList : cekList.slice(0, 6)
   const tglAkhir = d.tgl_terakhir ? String(d.tgl_terakhir).slice(8, 10) : '—'
+  const kHari = (d.komposisi_hari || [])[klikHari ?? -1]
+  const kPakai = kHari || d.komposisi_mtd || {}
+  const irisan24 = [
+    { nama: 'HM', nilai: Number(kPakai.hm || 0), warna: '#0a5bd3' },
+    { nama: 'NO', nilai: Number(kPakai.tanpa_op || 0), warna: '#7c3aed' },
+    { nama: 'BD', nilai: Number(kPakai.bd || 0), warna: '#e11d48' },
+    { nama: 'Standby', nilai: Number(kPakai.stb || 0), warna: '#d09534' },
+  ]
+  const jamKal = irisan24.reduce((s, x) => s + x.nilai, 0)
+  const fcUnit = units.map((u: any) => ({
+    kode: u.kode,
+    nilai: u.mtd > 0 && u.fuel_total != null ? Number(u.fuel_total) / Number(u.mtd) : null,
+    target: null as number | null,
+  }))
+  const fcEgi = (d.per_egi || []).map((e: any) => ({
+    kode: e.egi,
+    nilai: e.fc,
+    target: e.fc_target,
+  }))
 
   return (
     <div className="space-y-2">
@@ -618,29 +715,59 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
         </Panel>
       </div>
 
-      <Blok no="02b" judul="Rangkuman harian · BD, HM, STB, operator" sub="Batang = unit BD/stop (ada catatan TS Opt). Garis = HM, STB, unit BD, operator, unit tanpa operator." />
-      <Panel judul="Total Breakdown / stop operasi per hari" desc={`Hanya tanggal berjalan 01–${String(Math.max(1, hariTerisi)).padStart(2, '0')} ${labelBulan(bulan)}. Klik batang untuk pilih hari.`} tag="BATANG">
-        <BatangHari data={d.per_hari_bd_unit || []} warna="#e11d48" sampai={hariTerisi || 1} />
-        <p className="px-3 pb-2 text-[9px] text-slate-400">Merah = unit ada Catatan BD. Bukan jam BD.</p>
-      </Panel>
-      <div className="mt-2.5">
-        <Panel judul="Perbandingan harian (garis)" desc={`Tanggal berjalan saja. Klik titik atau angka tanggal — kartu di bawah menampilkan jumlah hari itu.`}>
+      <Blok no="02b" judul="Perbandingan harian" sub="Empat garis jam TS Opt: HM, BD, No Opt, Standby. Sama sumber dengan donat. Bukan jumlah unit, bukan PA/MA/UA." />
+      <div className="grid gap-2.5 lg:grid-cols-[1.6fr_1fr]">
+        <Panel judul="Perbandingan harian" desc={`Jam per tanggal 01–${String(Math.max(1, hariTerisi)).padStart(2, '0')} ${labelBulan(bulan)}. Klik tanggal → donat hari itu (24 jam/unit).`}>
           <GarisHari
             sampai={hariTerisi || 1}
-            bulan={bulan}
+            onPilih={(i) => setKlikHari(i)}
             series={[
-              { nama: 'HM', warna: '#0a5bd3', data: d.per_hari || [] },
-              { nama: 'STB (jam)', warna: '#d09534', data: d.per_hari_stb || [] },
-              { nama: 'Unit BD stop', warna: '#e11d48', data: d.per_hari_bd_unit || [] },
-              { nama: 'Jumlah operator', warna: '#199b8c', data: d.per_hari_op || [] },
-              { nama: 'Unit tanpa operator', warna: '#7c3aed', data: d.per_hari_tanpa_op || [] },
+              { nama: 'HM', warna: '#0a5bd3', data: (d.komposisi_hari || []).map((x: any) => Number(x?.hm || 0)) },
+              { nama: 'BD', warna: '#e11d48', data: (d.komposisi_hari || []).map((x: any) => Number(x?.bd || 0)) },
+              { nama: 'No Opt', warna: '#7c3aed', data: (d.komposisi_hari || []).map((x: any) => Number(x?.tanpa_op || 0)) },
+              { nama: 'Standby', warna: '#d09534', data: (d.komposisi_hari || []).map((x: any) => Number(x?.stb || 0)) },
             ]}
           />
         </Panel>
+        <Panel
+          judul={klikHari == null ? 'Donat waktu 24 jam · MTD' : `Donat waktu 24 jam · tgl ${String(klikHari + 1).padStart(2, '0')}`}
+          desc="HM = jam operasi. BD = jam kolom X, atau sisa 12 jam jika ada Catatan Breakdown. NO = jam kolom W, atau sisa 12 jam jika nama operator kosong. Sisa → Standby. Bukan PA/MA/UA."
+          tag="24 JAM"
+        >
+          <DonatEmpat irisan={irisan24} sub="24 jam" />
+          <p className="px-3 pb-1 text-[9px] text-slate-400">Total {fmt1(jamKal)} jam · {klikHari == null ? `${d.unit_hari || 0} unit-hari × 24` : 'unit hari itu × 24'} = 100%.</p>
+          <div className="px-3 pb-3 grid grid-cols-2 gap-1.5 text-[10px]">
+            {irisan24.map((x) => {
+              const pct = jamKal ? (x.nilai / jamKal) * 100 : 0
+              return (
+                <div key={x.nama} className="rounded-lg bg-slate-50 border border-slate-100 px-2 py-1.5">
+                  <div className="text-[9px] font-bold text-slate-400">{x.nama}</div>
+                  <div className="text-[14px] font-black tabular-nums" style={{ color: x.warna }}>{fmt1(x.nilai)} <span className="text-[10px] font-bold text-slate-400">jam</span></div>
+                  <div className="text-[10px] font-black text-slate-500">{pct.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</div>
+                </div>
+              )
+            })}
+          </div>
+        </Panel>
       </div>
 
-      <Blok no="03" judul="Kinerja unit & EGI" sub="HM per unit, PA/MA/UA, satu acuan site." />
-      <Panel judul="Ringkasan unit" desc={`${units.length} unit · acuan PA ${fmt1(paAcu)} / MA ${fmt1(maAcu)} · UA dipantau`} tag="TS OPT">
+      <Blok no="03" judul="PA, UA, BD" sub="PA per unit miring. UA harian tanpa garis. BD = unit ber-catatan." />
+      <Panel judul="PA per unit" desc={`Nama unit miring. Garis merah = acuan PA ${fmt1(paAcu)}%. Klik batang.`} tag="PER UNIT">
+        <BatangPaUnit units={units} ambang={paAcu} />
+      </Panel>
+      <div className="mt-2.5">
+        <Panel judul="Actual UA / Day" desc="UA dipantau, tanpa garis acuan." tag="DIPANTAU">
+          <BatangTargetHari data={d.per_hari_ua || []} ambang={null} sampai={hariTerisi || 1} />
+        </Panel>
+      </div>
+      <div className="mt-2.5">
+        <Panel judul="Total Breakdown stop operasi per hari" desc={`Hanya tanggal berjalan. Merah = unit ada Catatan BD, bukan jam BD.`} tag="BATANG">
+          <BatangHari data={d.per_hari_bd_unit || []} warna="#e11d48" sampai={hariTerisi || 1} />
+        </Panel>
+      </div>
+
+      <Blok no="03b" judul="Ringkasan unit" sub={`${units.length} unit · acuan PA ${fmt1(paAcu)} / MA ${fmt1(maAcu)} · UA dipantau`} />
+      <Panel judul="Ringkasan unit" desc="HM, PA, MA, UA tiap unit dari TS Opt." tag="TS OPT">
         <div className="overflow-x-auto pb-2">
           <table className="w-full text-[10px]">
             <thead className="bg-slate-50 text-slate-500">
@@ -667,19 +794,6 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
           </table>
         </div>
       </Panel>
-      <Panel judul="Actual PA & MA / Day" desc={`Dua batang per tanggal: kiri PA, kanan MA. Garis merah = acuan PA ${fmt1(paAcu)}% (MA ikut garis yang sama). Hijau ≥ garis, merah di bawah. Klik hari.`} tag="PLAN 90%">
-        <BatangPaMaHari pa={d.per_hari_pa || []} ma={d.per_hari_ma || []} ambang={paAcu} sampai={hariTerisi || 1} />
-      </Panel>
-      <div className="mt-2.5">
-        <Panel judul="PA per unit" desc={`Satu batang per unit. Garis merah = acuan PA ${fmt1(paAcu)}%. Klik unit.`} tag="PER UNIT">
-          <BatangPaUnit units={units} ambang={paAcu} />
-        </Panel>
-      </div>
-      <div className="mt-2.5">
-        <Panel judul="Actual UA / Day" desc="UA dipantau, tanpa garis acuan." tag="DIPANTAU">
-          <BatangTargetHari data={d.per_hari_ua || []} ambang={null} sampai={hariTerisi || 1} />
-        </Panel>
-      </div>
       <div className="grid gap-2.5 md:grid-cols-2 mt-2.5">
         <Panel judul="2 tertinggi / 2 terendah per EGI" tag="PER EGI">
           <div className="grid grid-cols-2 gap-2 px-3 pb-3 text-[10px]">
@@ -699,32 +813,6 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
           </div>
         </Panel>
       </div>
-
-      <Panel judul="FC per EGI (chart lingkaran)" desc="Aktual L/HM vs target EGI. Di atas target = boros (merah). ▲% vs target." tag="FC">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 px-3 pb-3">
-          {(d.per_egi || []).map((e: any) => {
-            const akt = e.fc
-            const tgt = e.fc_target
-            const vs = e.fc_vs_pct
-            const boros = akt != null && tgt != null && akt > tgt
-            const pRing = tgt && akt != null ? Math.min(100, (akt / tgt) * 100) : (akt != null ? 50 : 0)
-            return (
-              <div key={e.egi} className="rounded-xl border border-slate-100 bg-slate-50 p-2 text-center">
-                <div className="text-[10px] font-black text-[#183d63] mb-1">{e.egi}</div>
-                <div className="flex justify-center">
-                  <Ring p={Number(pRing || 0)} size={80} color={boros ? '#b54450' : '#199b8c'}>
-                    <span className="text-[11px] font-black text-[#173f65]">{akt == null ? '—' : fmt1(akt)}</span>
-                  </Ring>
-                </div>
-                <div className="mt-1 text-[9px] text-slate-400">target {tgt == null ? '—' : fmt1(tgt)} L/HM</div>
-                <div className={'text-[10px] font-black ' + (vs == null ? 'text-slate-300' : vs > 0 ? 'text-rose-600' : 'text-emerald-700')}>
-                  {vs == null ? 'isi target FC' : `${vs >= 0 ? '▲ +' : '▼ '}${fmt1(Math.abs(vs))}%`}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </Panel>
 
       <Blok no="04" judul="Review performa mingguan" sub="Bandingkan minggu ini vs minggu lalu dari TS Opt yang sama." />
       <div className="grid grid-cols-3 gap-2.5">
@@ -765,6 +853,85 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
         </Panel>
       </div>
 
+      <Blok no="04b" judul="FC" sub="Diagram batang. EGI dulu, unit di bawah. Merah = di atas target EGI." />
+      <Panel judul="FC per EGI" desc="Batang L/HM. Garis putus = target EGI. Klik batang." tag="BATANG">
+        {fcEgi.length ? <BatangFc list={fcEgi} satuan="L/HM" /> : <p className="px-3 pb-3 text-[11px] text-slate-500">Belum ada data FC EGI.</p>}
+      </Panel>
+      <div className="mt-2.5">
+        <Panel judul="FC per unit" desc="Fuel ÷ HM unit. Nama unit miring. Klik batang." tag="PER UNIT">
+          {fcUnit.some((x: any) => x.nilai != null) ? <BatangFc list={fcUnit} satuan="L/HM" /> : <p className="px-3 pb-3 text-[11px] text-slate-500">Fuel unit belum terbaca dari import.</p>}
+        </Panel>
+      </div>
+
+      <Blok no="06" judul="Papan HM per operator" sub="Arahkan mouse ke tanggal/HM: tooltip HM awal, HM akhir, total, unit. Bukan panel di bawah tabel." />
+      <Panel judul="Papan HM per operator" desc="Garis per nama. Diurutkan HM tertinggi. Sel kosong = belum ada baris TS Opt." tag="TS OPT">
+        <div className="flex gap-1 px-3 pb-2 flex-wrap items-center">
+          {['Semua', 'Excavator', 'Bulldozer', 'Grader'].map((j) => (
+            <button key={j} onClick={() => { setFilter(j); setHoverOp(null) }}
+              className={'px-2 py-1 rounded-lg text-[9px] font-black uppercase ' + (filter === j ? 'bg-[#003D79] text-white' : 'bg-slate-100 text-slate-500')}>
+              {j}
+            </button>
+          ))}
+          <span className="ml-auto text-[9px] text-slate-400">{ops.length} baris</span>
+        </div>
+        {hoverOp && (
+          <div className="mx-3 mb-2 rounded-lg border border-[#c7dbef] bg-white shadow-sm px-3 py-2 text-[11px] pointer-events-none">
+            <div className="font-black text-[#183d63]">{hoverOp.op.nama} · unit {hoverOp.op.unit} · tgl {String(hoverOp.day).padStart(2, '0')}</div>
+            {hoverOp.items.map((h: any, i: number) => (
+              <div key={i} className="flex justify-between gap-3 text-slate-600">
+                <span>Shift {h.shift}</span>
+                <span>HM awal {fmt1(h.awal)} → HM akhir {fmt1(h.akhir)} · total {fmt1(h.hm)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="overflow-x-auto max-h-[420px]">
+          <table className="text-[9px] border-collapse w-full">
+            <thead className="bg-[#0a5bd3] text-white sticky top-0 z-20">
+              <tr>
+                <th className="px-1 py-1">#</th>
+                <th className="px-1 py-1 text-left min-w-[110px] sticky left-0 bg-[#0a5bd3] z-30">Nama</th>
+                <th className="px-1 py-1 text-left">Unit</th>
+                <th className="px-1 py-1 text-right">HM</th>
+                <th className="px-1 py-1 text-right">vs avg</th>
+                {days.map((day) => <th key={day} className="px-0.5 py-1 min-w-[28px]">{day}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {ops.map((o: any, i: number) => {
+                const avg = Number(d.avg_egi?.[o.jenis] || 0)
+                const delta = avg ? o.hm - avg : 0
+                const bg = i % 2 ? 'bg-slate-50' : 'bg-white'
+                return (
+                  <tr key={o.nama + o.unit + i} className={bg + ' border-b border-slate-300'}>
+                    <td className="px-1 py-1 font-black border-b border-slate-300">{i + 1}</td>
+                    <td className={'px-1 py-1 font-black whitespace-nowrap sticky left-0 z-10 border-b border-slate-300 ' + bg}>{o.nama}</td>
+                    <td className="px-1 py-1 whitespace-nowrap text-[#155b9c] font-black border-b border-slate-300">{o.unit}</td>
+                    <td className="px-1 py-1 text-right font-black tabular-nums border-b border-slate-300">{fmt1(o.hm)}</td>
+                    <td className={'px-1 py-1 text-right tabular-nums border-b border-slate-300 ' + (delta < 0 ? 'text-amber-700' : 'text-emerald-700')}>
+                      {avg ? (delta >= 0 ? '+' : '') + fmt1(delta) : '-'}
+                    </td>
+                    {days.map((day) => {
+                      const items = isiHari(o, day)
+                      const hm = items.reduce((s: number, h: any) => s + Number(h.hm || 0), 0)
+                      const on = hoverOp && hoverOp.op === o && hoverOp.day === day
+                      if (!items.length) return <td key={day} className="text-center text-slate-200 border-b border-slate-300">·</td>
+                      return (
+                        <td key={day}
+                          onMouseEnter={() => setHoverOp({ op: o, day, items })}
+                          onMouseLeave={() => setHoverOp(null)}
+                          className={'text-center tabular-nums font-black cursor-default border-b border-slate-300 ' + (on ? 'bg-[#003D79] text-white' : 'bg-amber-50 text-[#173e63]')}>
+                          {fmt1(hm)}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
       <Blok no="05" judul="Perlu dicek" sub="Dari TS Opt: UA kosong, STB &gt; HM, catatan BD, HM 0, di bawah avg EGI." />
       <Panel judul={`Perlu dicek hari ini`} tag={`${cekList.length} item`}>
         <ul className="m-0 px-3.5 pb-3 list-none">
@@ -782,74 +949,6 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
         )}
       </Panel>
 
-      <Blok no="06" judul="Papan HM per operator" sub="Klik angka tanggal = klip unit, HM awal, HM akhir. Tanpa Charge, tanpa OFF/CR." />
-      <Panel judul="Papan HM per operator" desc="Diurutkan HM tertinggi. Sel kosong = belum ada baris TS Opt." tag="TS OPT">
-        <div className="flex gap-1 px-3 pb-2 flex-wrap items-center">
-          {['Semua', 'Excavator', 'Bulldozer', 'Grader'].map((j) => (
-            <button key={j} onClick={() => { setFilter(j); setKlip(null) }}
-              className={'px-2 py-1 rounded-lg text-[9px] font-black uppercase ' + (filter === j ? 'bg-[#003D79] text-white' : 'bg-slate-100 text-slate-500')}>
-              {j}
-            </button>
-          ))}
-          <span className="ml-auto text-[9px] text-slate-400">{ops.length} baris</span>
-        </div>
-        <div className="overflow-x-auto max-h-[420px]">
-          <table className="text-[9px] border-collapse">
-            <thead className="bg-[#0a5bd3] text-white sticky top-0 z-20">
-              <tr>
-                <th className="px-1 py-1">#</th>
-                <th className="px-1 py-1 text-left min-w-[88px]">Nama</th>
-                <th className="px-1 py-1 text-left">Unit</th>
-                <th className="px-1 py-1 text-right">HM</th>
-                <th className="px-1 py-1 text-right">vs avg</th>
-                {days.map((day) => <th key={day} className="px-0.5 py-1 min-w-[28px]">{day}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {ops.map((o: any, i: number) => {
-                const avg = Number(d.avg_egi?.[o.jenis] || 0)
-                const delta = avg ? o.hm - avg : 0
-                return (
-                  <tr key={o.nama + o.unit + i} className={i % 2 ? 'bg-slate-50' : 'bg-white'}>
-                    <td className="px-1 py-0.5 font-black">{i + 1}</td>
-                    <td className="px-1 py-0.5 font-bold whitespace-nowrap">{o.nama}</td>
-                    <td className="px-1 py-0.5 whitespace-nowrap text-[#155b9c] font-black">{o.unit}</td>
-                    <td className="px-1 py-0.5 text-right font-black tabular-nums">{fmt1(o.hm)}</td>
-                    <td className={'px-1 py-0.5 text-right tabular-nums ' + (delta < 0 ? 'text-amber-700' : 'text-emerald-700')}>
-                      {avg ? (delta >= 0 ? '+' : '') + fmt1(delta) : '-'}
-                    </td>
-                    {days.map((day) => {
-                      const items = isiHari(o, day)
-                      const hm = items.reduce((s: number, h: any) => s + Number(h.hm || 0), 0)
-                      const on = klip && klip.op === o && klip.day === day
-                      if (!items.length) return <td key={day} className="text-center text-slate-200">·</td>
-                      return (
-                        <td key={day} onClick={() => setKlip(on ? null : { op: o, day, items })}
-                          className={'text-center tabular-nums font-black cursor-pointer ' + (on ? 'bg-[#003D79] text-white' : 'bg-amber-50 text-[#173e63]')}>
-                          {fmt1(hm)}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-        {klip && (
-          <div className="m-3 p-3 rounded-xl border border-amber-200 bg-[#fffef8] text-[11px]">
-            <div className="text-[9px] font-black uppercase tracking-wider text-amber-800 mb-1">Klip HM</div>
-            <div className="font-black text-[#183d63] mb-1">{klip.op.nama} · {klip.op.unit} · tgl {String(klip.day).padStart(2, '0')}</div>
-            {klip.items.map((h: any, i: number) => (
-              <div key={i} className="flex justify-between border-t border-amber-100 py-1">
-                <span>Shift {h.shift}</span>
-                <span>awal {fmt1(h.awal)} → akhir {fmt1(h.akhir)} · HM {fmt1(h.hm)}</span>
-              </div>
-            ))}
-            <button onClick={() => setKlip(null)} className="mt-1 text-[9px] font-black uppercase text-slate-400">Tutup</button>
-          </div>
-        )}
-      </Panel>
     </div>
   )
 }
