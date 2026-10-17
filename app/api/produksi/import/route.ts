@@ -73,7 +73,10 @@ function indeksNoOpt(lines: string[]) {
   const base = { no_opt: 22, bd_jam: 23, catatan: 24, standby: 25 }
   for (const line of lines.slice(0, 12)) {
     const cells = line.split('\t').map((c) => c.trim().toLowerCase())
-    const i = cells.findIndex((c) => c === 'no opt' || c === 'noopt' || c === 'no operation')
+    const i = cells.findIndex((c) => {
+      const t = c.replace(/\s+/g, ' ')
+      return t === 'no opt' || t === 'noopt' || t === 'no operation'
+    })
     if (i >= 0) {
       base.no_opt = i
       base.bd_jam = i + 1
@@ -241,11 +244,20 @@ export async function POST(req: NextRequest) {
       else { baru++; upBaru.push({ ...patch, site: b.site, tanggal: b.tanggal, shift: b.shift, kode_unit: b.kode }) }
     }
 
+    const nBd = [...dipakai.values()].filter((b) => Number(b.bd_jam || 0) > 0).length
+    const nNo = [...dipakai.values()].filter((b) => Number(b.no_opt || 0) > 0).length
+    const nFull = [...dipakai.values()].filter((b) => b.standby != null || b.bd_jam != null || b.no_opt != null).length
+    if (nFull > 0 && nBd === 0 && nNo === 0) {
+      peringatan.push({ baris: 0, pesan: 'Jam BD (kolom X) dan No Opt (kolom W) semua 0. Pakai file TS Opt utuh, bukan tempel 8–12 kolom.' })
+    }
+
     if (mode === 'preview') {
       return NextResponse.json({
         ok: true, mode: 'preview',
         total: dipakai.size, baru, timpa,
         dilewati: lines.length - baris.length,
+        jam_bd_baris: nBd,
+        jam_no_baris: nNo,
         peringatan,
         contoh: baris.slice(0, 10),
       })

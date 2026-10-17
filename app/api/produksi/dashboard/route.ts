@@ -38,13 +38,18 @@ function r2(n: number) {
 /** 1 shift TS Opt = 12 jam. HM dari hm_total. BD/NO: kolom W/X jika ada;
  *  kalau kosong: sisa 12−HM−STB → catatan BD = jam BD, nama kosong = jam NO. */
 function pecahShift12(r: any, hm: number, stb: number) {
-  let no = r.no_opt != null && r.no_opt !== '' ? Number(r.no_opt) : 0
-  let bd = r.bd_jam != null && r.bd_jam !== '' ? Number(r.bd_jam) : 0
-  if (!isFinite(no)) no = 0
-  if (!isFinite(bd)) bd = 0
+  const adaNo = r.no_opt != null && r.no_opt !== ''
+  const adaBd = r.bd_jam != null && r.bd_jam !== ''
+  let no = 0
+  let bd = 0
   let st = r.standby != null && r.standby !== '' ? Number(r.standby) : stb
   if (!isFinite(st)) st = 0
-  if (no === 0 && bd === 0) {
+  if (adaNo || adaBd) {
+    no = adaNo ? Number(r.no_opt) : 0
+    bd = adaBd ? Number(r.bd_jam) : 0
+    if (!isFinite(no)) no = 0
+    if (!isFinite(bd)) bd = 0
+  } else {
     const sisa = Math.max(0, 12 - hm - st)
     if (sisa > 0.009) {
       const catatan = String(r.catatan || '').trim()

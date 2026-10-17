@@ -512,11 +512,18 @@ function ImportHarian() {
     setMuat(true); setErr('')
     try {
       const XLSX = await import('xlsx')
-      const wb = XLSX.read(await f.arrayBuffer())
+      const wb = XLSX.read(await f.arrayBuffer(), { cellDates: true })
       const nama = wb.SheetNames.find((n: string) => /ts\s*opt/i.test(n)) || wb.SheetNames[0]
       const rows = XLSX.utils.sheet_to_json(wb.Sheets[nama], { header: 1, raw: false, defval: '' }) as any[][]
-      setText(rows.map((r) => r.join('\t')).join('\n'))
-      setNamaFile(`${f.name} — hanya sheet "${nama}" (${rows.length} baris)`)
+      const minKol = 32
+      setText(rows.map((r) => {
+        const a = Array.from({ length: Math.max(r.length, minKol) }, (_, i) => {
+          const v = r[i]
+          return v == null ? '' : String(v)
+        })
+        return a.join('\t')
+      }).join('\n'))
+      setNamaFile(`${f.name} — hanya sheet "${nama}" (${rows.length} baris) · kolom W/X/Z ikut`)
     } catch (e2: any) {
       setErr('Gagal membaca file: ' + (e2?.message || 'bukan .xlsx?'))
     }
@@ -610,10 +617,12 @@ function ImportHarian() {
           <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">
             Hasil Pratinjau — belum tersimpan
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {[['Baris Baru', prev.baru, 'text-emerald-600'],
               ['Diperbarui', prev.timpa, 'text-amber-600'],
-              ['Total', prev.total, 'text-[#0b2a5b]']].map(([l, v, w]) => (
+              ['Total', prev.total, 'text-[#0b2a5b]'],
+              ['Ada jam BD', prev.jam_bd_baris ?? 0, 'text-rose-600'],
+              ['Ada jam No Opt', prev.jam_no_baris ?? 0, 'text-violet-600']].map(([l, v, w]) => (
               <div key={String(l)} className="rounded-xl bg-slate-50 border border-slate-100 p-2 text-center">
                 <div className="text-[9px] font-bold uppercase text-slate-400">{l}</div>
                 <div className={'text-lg font-black ' + w}>{Number(v)}</div>
