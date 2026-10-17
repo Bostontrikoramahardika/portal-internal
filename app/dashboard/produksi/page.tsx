@@ -271,6 +271,8 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
         </button>
       )}
 
+      <KpiMonitoring d={D} bulan={bulan} />
+
       {(<>
       {/* ═══ 2 kolom persis Excel: kiri ringkasan · kanan grafik+tabel (di HP maupun desktop) ═══ */}
       <div className="grid gap-1.5 items-start" style={{ gridTemplateColumns: 'minmax(0,34%) minmax(0,1fr)' }}>
@@ -768,16 +770,13 @@ function PengaturanImport() {
   )
 }
 
-function MonitoringBlok({ d, bulan }: { d: any; bulan: string }) {
-  const [filter, setFilter] = useState('Semua')
-  const [klip, setKlip] = useState<any>(null)
+function ringkasSite(d: any) {
   const paAcu = Number(d.target?.pa_target ?? 90)
   const maAcu = Number(d.target?.ma_target ?? 92)
   const targetHarian = Number(d.target_harian || 0)
   const hariTerisi = Number(d.hari_terisi || 0)
   const diharapkan = targetHarian * hariTerisi
   const lajuOk = diharapkan <= 0 || Number(d.total_hm) >= diharapkan * 0.95
-
   const units = d.per_unit || []
   let paW = 0, paH = 0, maW = 0, maH = 0, uaW = 0, uaH = 0
   for (const u of units) {
@@ -785,69 +784,70 @@ function MonitoringBlok({ d, bulan }: { d: any; bulan: string }) {
     if (u.ma != null) { maW += u.ma * u.mtd; maH += u.mtd }
     if (u.ua != null) { uaW += u.ua * u.mtd; uaH += u.mtd }
   }
-  const paSite = paH ? paW / paH : null
-  const maSite = maH ? maW / maH : null
-  const uaSite = uaH ? uaW / uaH : null
+  return {
+    paAcu, maAcu, targetHarian, hariTerisi, diharapkan, lajuOk,
+    paSite: paH ? paW / paH : null,
+    maSite: maH ? maW / maH : null,
+    uaSite: uaH ? uaW / uaH : null,
+  }
+}
 
+function KartuKpi({ judul, nilai, sub, ok }: { judul: string; nilai: string; sub: string; ok?: boolean | null }) {
+  const warna = ok == null ? 'text-[#0b2a5b]' : ok ? 'text-emerald-700' : 'text-rose-600'
+  return (
+    <div className="rounded-xl bg-white border border-slate-200 p-2 min-w-0">
+      <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">{judul}</div>
+      <div className={'text-base font-black tabular-nums ' + warna}>{nilai}</div>
+      <div className="text-[9px] text-slate-500 leading-tight">{sub}</div>
+    </div>
+  )
+}
+
+function KpiMonitoring({ d, bulan }: { d: any; bulan: string }) {
+  const s = ringkasSite(d)
+  return (
+    <div className="space-y-1.5">
+      <div className="rounded-xl bg-gradient-to-r from-[#003D79] to-[#0a5bd3] text-white text-center text-[10px] font-black uppercase tracking-wider py-1.5">
+        Monitoring — TS Opt · {labelBulan(bulan)}
+      </div>
+      <div className="grid grid-cols-3 gap-1.5">
+        <KartuKpi judul="HM MTD" nilai={`${fmt1(d.total_hm)} jam`}
+          sub={`laju vs kalender ${fmt1(s.diharapkan)}`} ok={s.lajuOk} />
+        <KartuKpi judul="Target harian" nilai={`${fmt1(s.targetHarian)} jam`}
+          sub={`bulan ${fmt1(d.target?.target_jam)} ÷ ${d.hari_bulan || '-'} hari`} />
+        <KartuKpi judul="Standby" nilai={`${fmt1(d.total_stb)} jam`} sub="dari TS Opt" />
+        <KartuKpi judul="PA site" nilai={fmtP(s.paSite)} sub={`acuan ${fmt1(s.paAcu)}%`}
+          ok={s.paSite == null ? null : s.paSite >= s.paAcu} />
+        <KartuKpi judul="MA site" nilai={fmtP(s.maSite)} sub={`acuan ${fmt1(s.maAcu)}%`}
+          ok={s.maSite == null ? null : s.maSite >= s.maAcu} />
+        <KartuKpi judul="UA site" nilai={fmtP(s.uaSite)} sub="dipantau — tanpa acuan" ok={null} />
+      </div>
+      <p className="text-[9px] text-slate-400 text-center">
+        Revenue / tarif belum dipasang (harga unit belum diputuskan). Kode OFF/CR tidak dipakai — sel kosong = belum ada baris TS Opt.
+      </p>
+    </div>
+  )
+}
+
+function MonitoringBlok({ d, bulan }: { d: any; bulan: string }) {
+  const [filter, setFilter] = useState('Semua')
+  const [klip, setKlip] = useState<any>(null)
+  const [cekAll, setCekAll] = useState(false)
+  const hariBulan = Number(d.hari_bulan || 31)
+  const days = Array.from({ length: hariBulan }, (_, i) => i + 1)
   const ops = (d.operator || []).filter((o: any) => filter === 'Semua' || o.jenis === filter)
   const jenisList = ['Semua', 'Excavator', 'Bulldozer', 'Grader']
   const kunciOp = (o: any) => `${o?.nama}|${o?.unit}`
 
-  function Kartu({ judul, nilai, sub, ok }: { judul: string; nilai: string; sub: string; ok?: boolean | null }) {
-    const warna = ok == null ? 'text-[#0b2a5b]' : ok ? 'text-emerald-700' : 'text-rose-600'
-    return (
-      <div className="rounded-xl bg-white border border-slate-200 p-2">
-        <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">{judul}</div>
-        <div className={'text-base font-black ' + warna}>{nilai}</div>
-        <div className="text-[9px] text-slate-500">{sub}</div>
-      </div>
-    )
+  function isiHari(o: any, day: number) {
+    return (o.hari || []).filter((h: any) => Number(String(h.tgl).slice(8, 10)) === day)
   }
 
-  function DaftarRank({ judul, data }: { judul: string; data: Record<string, any[]> }) {
-    return (
-      <KartuSeksi judul={judul}>
-        {['Excavator', 'Bulldozer', 'Grader'].map((j) => (
-          <div key={j} className="mb-1.5 last:mb-0">
-            <div className="text-[9px] font-black uppercase text-slate-400">{j}</div>
-            {(data?.[j] || []).length === 0 && <div className="text-[10px] text-slate-300">— belum ada</div>}
-            {(data?.[j] || []).map((r: any, i: number) => (
-              <div key={j + i} className="flex justify-between gap-2 text-[10px]">
-                <span className="truncate font-bold">{i + 1}. {r.nama} · {r.unit}</span>
-                <span className="tabular-nums font-black text-[#0b2a5b] whitespace-nowrap">
-                  {fmt1(r.hm)} <span className="font-bold text-slate-400">(avg {fmt1(r.avg)})</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        ))}
-      </KartuSeksi>
-    )
-  }
+  const cekList = d.cek || []
+  const cekTampil = cekAll ? cekList : cekList.slice(0, 6)
 
   return (
     <div className="space-y-2 pt-1">
-      <div className="rounded-xl bg-gradient-to-r from-[#003D79] to-[#0a5bd3] text-white text-center text-[10px] font-black uppercase tracking-wider py-1.5">
-        Monitoring — TS Opt · {labelBulan(bulan)}
-      </div>
-      <p className="text-[9px] text-slate-400 text-center -mt-1">
-        Target harian = target bulan ÷ {d.hari_bulan || 'hari'} kalender. Acuan PA {fmt1(paAcu)} · MA {fmt1(maAcu)}. UA dipantau, tanpa acuan.
-      </p>
-
-      <div className="grid grid-cols-2 gap-1.5">
-        <Kartu judul="Laju vs kalender" nilai={`${fmt1(d.total_hm)} HM`}
-          sub={`diharapkan ${fmt1(diharapkan)} (${fmt1(targetHarian)} × ${hariTerisi} hari)`}
-          ok={lajuOk} />
-        <Kartu judul="Target harian" nilai={`${fmt1(targetHarian)} jam`}
-          sub={`bulan ${fmt1(d.target?.target_jam)} ÷ ${d.hari_bulan || '-'} hari`} />
-        <Kartu judul="PA site" nilai={fmtP(paSite)} sub={`acuan ${fmt1(paAcu)}%`}
-          ok={paSite == null ? null : paSite >= paAcu} />
-        <Kartu judul="MA site" nilai={fmtP(maSite)} sub={`acuan ${fmt1(maAcu)}%`}
-          ok={maSite == null ? null : maSite >= maAcu} />
-        <Kartu judul="UA site" nilai={fmtP(uaSite)} sub="dipantau — tanpa acuan" ok={null} />
-        <Kartu judul="Standby" nilai={`${fmt1(d.total_stb)} jam`} sub="dari TS Opt" />
-      </div>
-
       <KartuSeksi judul="Rekap per minggu (ISO)">
         {(d.minggu || []).length === 0 && <div className="text-[10px] text-slate-300">Belum ada data minggu.</div>}
         {(d.minggu || []).map((w: any) => (
@@ -861,28 +861,47 @@ function MonitoringBlok({ d, bulan }: { d: any; bulan: string }) {
       </KartuSeksi>
 
       <div className="grid grid-cols-2 gap-1.5">
-        <DaftarRank judul="2 HM tertinggi per EGI" data={d.top_egi || {}} />
-        <DaftarRank judul="2 HM terendah per EGI" data={d.low_egi || {}} />
+        {([['2 HM tertinggi per EGI', d.top_egi], ['2 HM terendah per EGI', d.low_egi]] as const).map(([judul, data]) => (
+          <KartuSeksi key={judul} judul={judul}>
+            {['Excavator', 'Bulldozer', 'Grader'].map((j) => (
+              <div key={j} className="mb-1.5 last:mb-0">
+                <div className="text-[9px] font-black uppercase text-slate-400">{j}</div>
+                {!(data as any)?.[j]?.length && <div className="text-[10px] text-slate-300">— belum ada</div>}
+                {((data as any)?.[j] || []).map((r: any, i: number) => (
+                  <div key={j + i} className="flex justify-between gap-2 text-[10px]">
+                    <span className="truncate font-bold">{i + 1}. {r.nama} · {r.unit}</span>
+                    <span className="tabular-nums font-black text-[#0b2a5b] whitespace-nowrap">
+                      {fmt1(r.hm)} <span className="font-bold text-slate-400">(avg {fmt1(r.avg)})</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </KartuSeksi>
+        ))}
       </div>
 
-      <KartuSeksi judul={`Perlu dicek (${(d.cek || []).length})`}>
-        {(d.cek || []).length === 0 && <div className="text-[10px] text-emerald-700 font-bold">Tidak ada item. UA di bawah acuan tidak dipakai.</div>}
-        {(d.cek || []).slice(0, 20).map((c: any, i: number) => (
+      <KartuSeksi judul={`Perlu dicek (${cekList.length})`}>
+        {cekList.length === 0 && <div className="text-[10px] text-emerald-700 font-bold">Tidak ada item.</div>}
+        {cekTampil.map((c: any, i: number) => (
           <div key={i} className="text-[10px] py-0.5 border-b border-slate-50 last:border-0">
             <span className="font-black text-amber-700">{c.tag}</span>
             <span className="text-slate-600"> — {c.teks}</span>
           </div>
         ))}
-        {(d.cek || []).length > 20 && (
-          <div className="text-[9px] text-slate-400 mt-1">… {(d.cek || []).length - 20} lagi di API</div>
+        {cekList.length > 6 && (
+          <button onClick={() => setCekAll(!cekAll)}
+            className="mt-1 text-[9px] font-black uppercase text-[#003D79] underline">
+            {cekAll ? 'Tutup' : `Lihat semua (${cekList.length})`}
+          </button>
         )}
       </KartuSeksi>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="bg-gradient-to-r from-[#003D79] to-[#0a5bd3] text-white text-center text-[10px] font-black uppercase tracking-wider py-1">
-          Papan operator — klik baris untuk HM awal/akhir
+          Papan HM per operator — klik angka tanggal untuk klip HM awal/akhir
         </div>
-        <div className="flex gap-1 p-1.5 flex-wrap">
+        <div className="flex gap-1 p-1.5 flex-wrap items-center">
           {jenisList.map((j) => (
             <button key={j} onClick={() => { setFilter(j); setKlip(null) }}
               className={'px-2 py-1 rounded-lg text-[9px] font-black uppercase ' +
@@ -890,35 +909,61 @@ function MonitoringBlok({ d, bulan }: { d: any; bulan: string }) {
               {j}
             </button>
           ))}
+          <span className="ml-auto text-[9px] font-bold text-slate-400">{ops.length} operator · urut HM</span>
         </div>
-        <div className="overflow-x-auto max-h-72">
-          <table className="w-full text-[10px]">
-            <thead className="bg-slate-50 sticky top-0">
+        <div className="overflow-x-auto max-h-[420px]">
+          <table className="text-[9px] border-collapse">
+            <thead className="bg-[#0a5bd3] text-white sticky top-0 z-20">
               <tr>
-                <th className="px-1.5 py-1 text-left">Nama</th>
-                <th className="px-1.5 py-1 text-left">Unit</th>
-                <th className="px-1.5 py-1 text-right">HM</th>
-                <th className="px-1.5 py-1 text-right">vs avg EGI</th>
+                <th className="px-1 py-1 sticky left-0 z-30 bg-[#0a5bd3]">#</th>
+                <th className="px-1 py-1 text-left sticky left-6 z-30 bg-[#0a5bd3] min-w-[88px]">Nama</th>
+                <th className="px-1 py-1 text-left min-w-[64px]">Unit</th>
+                <th className="px-1 py-1 text-right min-w-[44px]">HM</th>
+                <th className="px-1 py-1 text-right min-w-[52px]">vs avg</th>
+                {days.map((day) => (
+                  <th key={day} className="px-0.5 py-1 min-w-[28px] text-center font-black">{day}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {ops.map((o: any, i: number) => {
                 const avg = Number(d.avg_egi?.[o.jenis] || 0)
                 const delta = avg ? o.hm - avg : 0
+                const aktif = klip && kunciOp(klip.op) === kunciOp(o)
                 return (
-                  <tr key={o.nama + o.unit + i} onClick={() => setKlip(kunciOp(klip) === kunciOp(o) ? null : o)}
-                    className={'cursor-pointer ' + (i % 2 ? 'bg-slate-50' : 'bg-white') + (kunciOp(klip) === kunciOp(o) ? ' outline outline-2 outline-[#003D79]' : '')}>
-                    <td className="px-1.5 py-0.5 font-bold">{o.nama}</td>
-                    <td className="px-1.5 py-0.5">{o.unit}</td>
-                    <td className="px-1.5 py-0.5 text-right tabular-nums font-black">{fmt1(o.hm)}</td>
-                    <td className={'px-1.5 py-0.5 text-right tabular-nums ' + (delta < 0 ? 'text-rose-600' : 'text-emerald-700')}>
+                  <tr key={o.nama + o.unit + i} className={i % 2 ? 'bg-slate-50' : 'bg-white'}>
+                    <td className={'px-1 py-0.5 sticky left-0 z-10 font-black ' + (i % 2 ? 'bg-slate-50' : 'bg-white')}>
+                      {i + 1}
+                    </td>
+                    <td className={'px-1 py-0.5 sticky left-6 z-10 font-bold whitespace-nowrap ' + (i % 2 ? 'bg-slate-50' : 'bg-white')}>
+                      {o.nama}
+                    </td>
+                    <td className="px-1 py-0.5 whitespace-nowrap">{o.unit}</td>
+                    <td className="px-1 py-0.5 text-right tabular-nums font-black">{fmt1(o.hm)}</td>
+                    <td className={'px-1 py-0.5 text-right tabular-nums ' + (delta < 0 ? 'text-rose-600' : 'text-emerald-700')}>
                       {avg ? (delta >= 0 ? '+' : '') + fmt1(delta) : '-'}
                     </td>
+                    {days.map((day) => {
+                      const items = isiHari(o, day)
+                      const hm = items.reduce((sum: number, h: any) => sum + Number(h.hm || 0), 0)
+                      const pilih = aktif && klip.day === day
+                      if (!items.length) {
+                        return <td key={day} className="px-0.5 py-0.5 text-center text-slate-200">·</td>
+                      }
+                      return (
+                        <td key={day}
+                          onClick={() => setKlip(pilih ? null : { op: o, day, items })}
+                          className={'px-0.5 py-0.5 text-center tabular-nums font-bold cursor-pointer rounded ' +
+                            (pilih ? 'bg-[#003D79] text-white' : hm > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-600')}>
+                          {fmt1(hm)}
+                        </td>
+                      )
+                    })}
                   </tr>
                 )
               })}
               {ops.length === 0 && (
-                <tr><td colSpan={4} className="px-2 py-3 text-center text-slate-300">Belum ada operator</td></tr>
+                <tr><td colSpan={5 + days.length} className="px-2 py-3 text-center text-slate-300">Belum ada operator</td></tr>
               )}
             </tbody>
           </table>
@@ -926,18 +971,22 @@ function MonitoringBlok({ d, bulan }: { d: any; bulan: string }) {
         {klip && (
           <div className="border-t border-slate-200 p-2 bg-slate-50">
             <div className="text-[10px] font-black text-[#0b2a5b] mb-1">
-              {klip.nama} · {klip.unit} · {klip.jenis} {klip.egi}
+              Klip · {klip.op.nama} · {klip.op.unit} · tanggal {String(klip.day).padStart(2, '0')} {labelBulan(bulan)}
             </div>
-            <div className="max-h-40 overflow-y-auto space-y-0.5">
-              {(klip.hari || []).map((h: any, i: number) => (
+            <div className="space-y-0.5">
+              {klip.items.map((h: any, i: number) => (
                 <div key={i} className="flex justify-between text-[10px] font-mono">
-                  <span>{h.tgl} S{h.shift}</span>
+                  <span>Shift {h.shift}</span>
                   <span>awal {fmt1(h.awal)} → akhir {fmt1(h.akhir)} · HM {fmt1(h.hm)}</span>
                 </div>
               ))}
             </div>
+            <button onClick={() => setKlip(null)} className="mt-1 text-[9px] font-black uppercase text-slate-400">Tutup klip</button>
           </div>
         )}
+        <p className="px-2 py-1 text-[9px] text-slate-400">
+          Geser tabel ke kanan untuk tanggal 1–{hariBulan}. Klik sel hijau = klip HM awal/akhir. Tidak ada kolom Charge. Sel titik = belum ada data TS Opt (bukan OFF/CR).
+        </p>
       </div>
     </div>
   )
