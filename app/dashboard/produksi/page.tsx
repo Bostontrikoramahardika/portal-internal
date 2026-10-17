@@ -263,7 +263,7 @@ function DashboardLaporan({ gotoImport, bolehImport }: { gotoImport: () => void;
       <TampilanFix d={D} bulan={bulan} />
 
       {D.boleh_kelola && (
-        <FormTarget site={site} bulan={bulan} target={D.target} onSaved={muat} />
+        <FormTarget site={site} bulan={bulan} target={D.target} units={D.armada || D.per_unit} onSaved={muat} />
       )}
     </div>
   )
@@ -290,7 +290,7 @@ function KartuSet({ judul, desc, children }: { judul: string; desc: string; chil
   )
 }
 
-function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: string; target: any; onSaved: () => void }) {
+function FormTarget({ site, bulan, target, units, onSaved }: { site: string; bulan: string; target: any; units?: any[]; onSaved: () => void }) {
   const [th, bl] = bulan.split('-').map(Number)
   const hariBulan = (th && bl) ? new Date(th, bl, 0).getDate() : 31
   const [tj, setTj] = useState('')
@@ -298,8 +298,7 @@ function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: str
   const [pa, setPa] = useState('90')
   const [ma, setMa] = useState('92')
   const [ua, setUa] = useState('')
-  const [tarifDasar, setTarifDasar] = useState('per-hm')
-  const [tarifRp, setTarifRp] = useState('')
+  const [tarifMap, setTarifMap] = useState<Record<string, string>>({})
   const [fc, setFc] = useState('')
   const [fcLiter, setFcLiter] = useState('')
   const [fcLingkup, setFcLingkup] = useState('site')
@@ -317,6 +316,14 @@ function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: str
     setMa(target?.ma_target != null ? String(target.ma_target) : '92')
   }, [target, site, bulan])
 
+  useEffect(() => {
+    const m: Record<string, string> = {}
+    for (const u of (units || [])) {
+      m[u.kode] = u.tarif_hm != null && u.tarif_hm !== '' ? String(u.tarif_hm) : ''
+    }
+    setTarifMap(m)
+  }, [units])
+
   async function kirim() {
     setSimpan(true); setPesan('')
     try {
@@ -325,6 +332,7 @@ function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: str
         body: JSON.stringify({
           site, bulan, target_jam: Number(tj), faktor: Number(fk),
           pa_target: Number(pa), ma_target: Number(ma),
+          tarifs: Object.entries(tarifMap).map(([kode_unit, tarif_hm]) => ({ kode_unit, tarif_hm })),
         }),
       })
       const j = await r.json()
@@ -351,19 +359,45 @@ function FormTarget({ site, bulan, target, onSaved }: { site: string; bulan: str
         </Field>
       </KartuSet>
 
-      <KartuSet judul="B. Tarif / harga unit (Revenue)" desc="Isi dasar tarif. Belum dipakai hitung pendapatan sampai rumus resmi ada.">
-        <Field label="Dasar tarif">
-          <select value={tarifDasar} onChange={(e) => setTarifDasar(e.target.value)} className={inp}>
-            <option value="per-hm">Per HM</option>
-            <option value="per-hari">Per hari</option>
-            <option value="bulanan">Bulanan</option>
-            <option value="kontrak">Sesuai kontrak</option>
-          </select>
-        </Field>
-        <Field label="Nilai tarif (Rp)">
-          <input type="number" min={0} step={1000} value={tarifRp} onChange={(e) => setTarifRp(e.target.value)} placeholder="isi angka" className={inp} />
-        </Field>
-      </KartuSet>
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-3 pt-3 pb-1">
+          <div className="text-[12px] font-black text-[#1a3d62]">B. Tarif per unit (Rp / HM)</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            Tiap unit beda. Bukan tarif global. Revenue = HM unit × tarif unit itu.
+          </div>
+        </div>
+        <div className="overflow-x-auto max-h-72">
+          <table className="w-full text-[10px]">
+            <thead className="bg-slate-50 sticky top-0">
+              <tr>
+                <th className="px-2 py-2 text-left">Unit</th>
+                <th className="px-2 py-2 text-left">Jenis</th>
+                <th className="px-2 py-2 text-left">EGI</th>
+                <th className="px-2 py-2 text-right">Tarif Rp / HM</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(units || []).map((u: any) => (
+                <tr key={u.kode} className="border-t border-slate-100">
+                  <td className="px-2 py-1.5 font-black text-[#155b9c]">{u.kode}</td>
+                  <td className="px-2 py-1.5">{u.jenis}</td>
+                  <td className="px-2 py-1.5">{u.egi}</td>
+                  <td className="px-2 py-1">
+                    <input type="number" min={0} step={1000}
+                      value={tarifMap[u.kode] ?? ''}
+                      onChange={(e) => setTarifMap((p) => ({ ...p, [u.kode]: e.target.value }))}
+                      placeholder="kosong = belum"
+                      className="w-full px-2 py-1 rounded-lg border border-slate-200 text-right font-bold" />
+                  </td>
+                </tr>
+              ))}
+              {!(units || []).length && (
+                <tr><td colSpan={4} className="px-2 py-3 text-center text-slate-400">Belum ada unit di TS Opt / config bulan ini.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <KartuSet judul="C. Target PA, MA, UA" desc="Satu acuan untuk seluruh site. UA boleh kosong.">
         <Field label="Acuan PA (%)">
@@ -601,6 +635,7 @@ function PengaturanImport() {
   const [bulan, setBulan] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
   const [site, setSite] = useState('PPA-MLP')
   const [target, setTarget] = useState<any>(null)
+  const [units, setUnits] = useState<any[]>([])
   const [boleh, setBoleh] = useState(false)
   const [err, setErr] = useState('')
 
@@ -610,7 +645,12 @@ function PengaturanImport() {
       .then((r) => r.json())
       .then((j) => {
         if (j?.error) setErr(j.error)
-        else { setErr(''); setTarget(j.target); setBoleh(Boolean(j.boleh_kelola)) }
+        else {
+          setErr('')
+          setTarget(j.target)
+          setBoleh(Boolean(j.boleh_kelola))
+          setUnits(j.armada || j.per_unit || [])
+        }
       })
       .catch((e) => setErr(e?.message || 'Gagal'))
   }, [bulan, site])
@@ -633,7 +673,7 @@ function PengaturanImport() {
       </div>
       {err && <EmptyState variant="error" text={err} />}
       {boleh
-        ? <FormTarget site={site} bulan={bulan} target={target} onSaved={muat} />
+        ? <FormTarget site={site} bulan={bulan} target={target} units={units} onSaved={muat} />
         : <p className="text-[10px] text-slate-400 text-center">Hanya HR/Admin yang bisa mengubah target.</p>}
     </div>
   )

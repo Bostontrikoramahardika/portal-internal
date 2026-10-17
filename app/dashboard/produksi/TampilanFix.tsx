@@ -185,7 +185,10 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
         {[
           { l: 'HM didapat', v: `${fmt1(d.total_hm)}`, s: 'HM', f: `Target harian ${fmt1(targetHarian)}` },
-          { l: 'Revenue / Pendapatan', v: '—', s: '', f: 'Tarif belum diatur' },
+          { l: 'Revenue / Pendapatan',
+            v: d.revenue_total ? `Rp ${Number(d.revenue_total).toLocaleString('id-ID', { maximumFractionDigits: 0 })}` : '—',
+            s: '',
+            f: d.revenue_unit_isi ? `${d.revenue_unit_isi} unit punya tarif · HM × tarif unit` : 'Isi tarif per unit di Pengaturan' },
           { l: 'Jam BD', v: catatanN ? String(catatanN) : '—', s: catatanN ? 'catatan' : '', f: 'Dari kolom Catatan TS Opt' },
           { l: 'Fuel & FC', v: fuel ? fmt1(fuel) : '—', s: fuel ? 'L' : '', f: fc != null ? `FC ${fmt(fc)} L/HM` : 'Dari rate unit × HM' },
         ].map((k) => (

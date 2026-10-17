@@ -259,10 +259,30 @@ export async function GET(req: NextRequest) {
           ua: u.mtd + u.stb > 0 ? r2((u.mtd / (u.mtd + u.stb)) * 100) : null,
           fuel_lph: fuelRate,
           fuel_total: fuelRate != null ? r2(u.mtd * fuelRate) : null,
+          tarif_hm: cfg.tarif_hm != null ? Number(cfg.tarif_hm) : null,
           ket: Array.from(u.ket).join(', ') || null,
         }
       })
       .sort((a, b) => (a.jenis + a.kode).localeCompare(b.jenis + b.kode))
+
+    const adaKode = new Set(unitRows.map((u) => u.kode))
+    const armada = [
+      ...unitRows.map((u) => ({ kode: u.kode, jenis: u.jenis, egi: u.egi, tarif_hm: u.tarif_hm })),
+      ...(konfig || []).filter((k: any) => !adaKode.has(k.kode_unit)).map((k: any) => ({
+        kode: k.kode_unit, jenis: k.jenis || egiFallback(k.kode_unit).jenis,
+        egi: k.egi || egiFallback(k.kode_unit).egi,
+        tarif_hm: k.tarif_hm != null ? Number(k.tarif_hm) : null,
+      })),
+    ].sort((a, b) => (a.jenis + a.kode).localeCompare(b.jenis + b.kode))
+
+    let revenueTotal = 0
+    let revenueIsi = 0
+    for (const u of unitRows) {
+      if (u.tarif_hm != null && u.mtd) {
+        revenueTotal += u.mtd * u.tarif_hm
+        revenueIsi++
+      }
+    }
 
     const opList = Object.values(perOp).map((o) => {
       o.hari.sort((a, b) => a.tgl.localeCompare(b.tgl) || a.shift - b.shift)
@@ -358,6 +378,9 @@ export async function GET(req: NextRequest) {
       achievement_pct: Math.round(achievement * 10000) / 100,
       per_egi: perEGI,
       per_unit: unitRows,
+      armada,
+      revenue_total: r2(revenueTotal),
+      revenue_unit_isi: revenueIsi,
       operator: opList,
       top_egi,
       low_egi,
@@ -419,6 +442,36 @@ export async function POST(req: NextRequest) {
     }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+    const tarifs = Array.isArray(body?.tarifs) ? body.tarifs : []
+    let tarifPeringatan: string | null = null
+    if (tarifs.length) {
+      for (const t of tarifs) {
+        const kode = String(t?.kode_unit || '').trim()
+        if (!kode) continue
+        const val = t?.tarif_hm === '' || t?.tarif_hm == null || t?.tarif_hm === undefined
+          ? null
+          : Number(t.tarif_hm)
+        const fb = egiFallback(kode)
+        const { data: cfgAda } = await supabaseAdmin
+          .from('ts_unit_config').select('kode_unit').eq('kode_unit', kode).maybeSingle()
+        const payload: Record<string, any> = { tarif_hm: val != null && isFinite(val) ? val : null }
+        let te: any
+        if (cfgAda) {
+          ;({ error: te } = await supabaseAdmin.from('ts_unit_config').update(payload).eq('kode_unit', kode))
+        } else {
+          ;({ error: te } = await supabaseAdmin.from('ts_unit_config').insert({
+            kode_unit: kode, egi: fb.egi, jenis: fb.jenis, ...payload,
+          }))
+        }
+        if (te && /tarif_hm|column/i.test(te.message || '')) {
+          tarifPeringatan = 'Target tersimpan. Kolom tarif per unit belum ada — jalankan scripts/produksi-tarif-unit.sql di Supabase.'
+          break
+        }
+        if (te) return NextResponse.json({ error: te.message }, { status: 500 })
+      }
+    }
+
+    if (tarifPeringatan) return NextResponse.json({ ok: true, peringatan: tarifPeringatan })
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Gagal menyimpan target' }, { status: 500 })
