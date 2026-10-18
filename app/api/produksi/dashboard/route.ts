@@ -451,6 +451,21 @@ export async function GET(req: NextRequest) {
         fc: w.hm && w.fuel ? r2(w.fuel / w.hm) : null,
       }))
 
+    const petaKodeAbsensi: Record<string, { nama: string; nrp: string; jabatan: string | null }> = {}
+    {
+      const { data: empsKode, error: empErr } = await supabaseAdmin
+        .from('employees')
+        .select('nrp, nama, jabatan, kode_absensi')
+        .eq('site', site)
+      if (!empErr) {
+        for (const e of empsKode || []) {
+          const k = String(e.kode_absensi || '').trim().toUpperCase()
+          if (!k) continue
+          petaKodeAbsensi[k] = { nama: String(e.nama || ''), nrp: String(e.nrp || ''), jabatan: e.jabatan || null }
+        }
+      }
+    }
+
     const bolehKelola = session.is_super_admin ||
       (session.roles || []).some((r) => ROLE_KELOLA.includes(r))
 
@@ -539,6 +554,7 @@ export async function GET(req: NextRequest) {
       revenue_total: r2(revenueTotal),
       revenue_unit_isi: revenueIsi,
       operator: opList,
+      peta_kode_absensi: petaKodeAbsensi,
       top_egi,
       low_egi,
       avg_egi: Object.fromEntries(JENIS_ORDER.map((j) => [j, r2(avgJenis[j] || 0)])),

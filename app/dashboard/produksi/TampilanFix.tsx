@@ -560,6 +560,10 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
   const ops = useMemo(() => {
     return (d.operator || []).filter((o: any) => filter === 'Semua' || o.jenis === filter)
   }, [d.operator, filter])
+  const petaKode = d.peta_kode_absensi || {}
+  function infoKode(kode: string) {
+    return petaKode[String(kode || '').trim().toUpperCase()] || null
+  }
 
   function isiHari(o: any, day: number) {
     return (o.hari || []).filter((h: any) => Number(String(h.tgl).slice(8, 10)) === day)
@@ -913,7 +917,7 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
         </div>
         {hoverOp && (
           <div className="mx-3 mb-2 rounded-lg border border-[#c7dbef] bg-white shadow-sm px-3 py-2 text-[11px] pointer-events-none">
-            <div className="font-black text-[#183d63]">{hoverOp.op.nama} · unit {hoverOp.op.unit} · tgl {String(hoverOp.day).padStart(2, '0')}</div>
+            <div className="font-black text-[#183d63]">{(infoKode(hoverOp.op.nama)?.nama || hoverOp.op.nama)} · kode {hoverOp.op.nama} · unit {hoverOp.op.unit} · tgl {String(hoverOp.day).padStart(2, '0')}</div>
             {hoverOp.items.map((h: any, i: number) => (
               <div key={i} className="flex justify-between gap-3 text-slate-600">
                 <span>Shift {h.shift}</span>
@@ -927,7 +931,8 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
             <thead className="bg-[#0a5bd3] text-white sticky top-0 z-20">
               <tr>
                 <th className="px-1 py-1">#</th>
-                <th className="px-1 py-1 text-left min-w-[110px] sticky left-0 bg-[#0a5bd3] z-30">Nama</th>
+                <th className="px-1 py-1 text-left min-w-[140px] sticky left-0 bg-[#0a5bd3] z-30">Nama</th>
+                <th className="px-1 py-1 text-left">Kode TS</th>
                 <th className="px-1 py-1 text-left">Unit</th>
                 <th className="px-1 py-1 text-right">HM</th>
                 <th className="px-1 py-1 text-right">vs avg</th>
@@ -939,10 +944,12 @@ export default function TampilanFix({ d, bulan }: { d: any; bulan: string }) {
                 const avg = Number(d.avg_egi?.[o.jenis] || 0)
                 const delta = avg ? o.hm - avg : 0
                 const bg = i % 2 ? 'bg-slate-50' : 'bg-white'
+                const inf = infoKode(o.nama)
                 return (
                   <tr key={o.nama + o.unit + i} className={bg + ' border-b border-slate-300'}>
                     <td className="px-1 py-1 font-black border-b border-slate-300">{i + 1}</td>
-                    <td className={'px-1 py-1 font-black whitespace-nowrap sticky left-0 z-10 border-b border-slate-300 ' + bg}>{o.nama}</td>
+                    <td className={'px-1 py-1 font-black whitespace-nowrap sticky left-0 z-10 border-b border-slate-300 ' + bg}>{inf?.nama || o.nama}</td>
+                    <td className="px-1 py-1 whitespace-nowrap text-slate-500 font-bold border-b border-slate-300">{o.nama}</td>
                     <td className="px-1 py-1 whitespace-nowrap text-[#155b9c] font-black border-b border-slate-300">{o.unit}</td>
                     <td className="px-1 py-1 text-right font-black tabular-nums border-b border-slate-300">{fmt1(o.hm)}</td>
                     <td className={'px-1 py-1 text-right tabular-nums border-b border-slate-300 ' + (delta < 0 ? 'text-amber-700' : 'text-emerald-700')}>

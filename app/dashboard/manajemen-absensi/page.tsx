@@ -1,7 +1,7 @@
 'use client'
 
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 
 import StatBanner from '@/app/components/std/StatBanner'
@@ -17,6 +17,10 @@ interface Day {
   clock_out_lat: number | null; clock_out_lng: number | null
   jam_kerja_menit: number; terlambat_menit: number
   status: string | null; keterangan: string | null
+  unit?: string | null
+  hm_awal?: any
+  hm_akhir?: any
+  hm_total?: number | null
 }
 interface Row {
   nrp: string; nama: string; jabatan: string; departemen: string
@@ -30,6 +34,103 @@ interface Row {
   }
 }
 interface Group { departemen: string; rows: Row[] }
+
+function grupAbsensi(departemen: any, jabatan: any): string {
+  const d = String(departemen || '').trim()
+  if (d === 'Staff' || d === 'Plant' || d === 'Operator') return d
+  const j = String(jabatan || '').toLowerCase()
+  if (/operator/.test(j)) return 'Operator'
+  if (/mekanik|mechanic|welder|tyreman|helper plant|admin plant|plant gl/.test(j)) return 'Plant'
+  if (/pjo|hrga|she|planner|site admin|admin gl|admin ho|staff|logistic|driver lv/.test(j)) return 'Staff'
+  return d || 'Lainnya'
+}
+function intiNrp(nrp: any): string {
+  return String(nrp || '').trim().toUpperCase().replace(/^B/, '')
+}
+function kunciOrang(row: Row): string {
+  const inti = intiNrp(row.nrp)
+  if (inti) return 'NRP:' + inti
+  return 'NAMA:' + String(row.nama || '').trim().toUpperCase().replace(/\s+/g, ' ')
+}
+function skorHari(d: Day | undefined): number {
+  if (!d) return 0
+  if (d.clock_in || ['DS', 'NS', 'DW', 'NW'].includes(d.code)) return 4
+  if (['OFF', 'CR', 'CT', 'S', 'I', 'IR', 'ID', 'TR', 'LV', 'SCK', 'MCK'].includes(d.code)) return 3
+  if (d.code === 'A') return 2
+  if (d.code && d.code !== '-') return 1
+  return 0
+}
+function gabungHari(a: Day, b?: Day): Day {
+  if (!b) return a
+  const pilih = skorHari(b) > skorHari(a) ? b : a
+  const lain = pilih === b ? a : b
+  return {
+    ...pilih,
+    unit: pilih.unit || lain.unit || null,
+    hm_awal: pilih.hm_awal ?? lain.hm_awal ?? null,
+    hm_akhir: pilih.hm_akhir ?? lain.hm_akhir ?? null,
+    hm_total: pilih.hm_total ?? lain.hm_total ?? null,
+  }
+}
+function ringkasDariHari(days: Day[], utama: Row): Row['summary'] {
+  let hariHadir = 0, shiftS = 0, shiftM = 0, off = 0, cuti = 0, sakit = 0, izin = 0, alpha = 0, stb = 0
+  for (const d of days) {
+    const c = d.code
+    if (['DS', 'NS', 'DW', 'NW'].includes(c)) hariHadir++
+    if (c === 'DS' || c === 'DW') shiftS++
+    if (c === 'NS' || c === 'NW') shiftM++
+    if (c === 'OFF') off++
+    if (['CR', 'CT', 'LV', 'SCK', 'MCK'].includes(c)) cuti++
+    if (c === 'S') sakit++
+    if (c === 'I' || c === 'IR') izin++
+    if (c === 'A') alpha++
+    if (c === 'ID' || c === 'TR') stb++
+  }
+  const hariKerja = utama.summary?.hariKerja || 0
+  const persen = hariKerja > 0 ? Math.round((hariHadir / hariKerja) * 100) : 0
+  return { ...utama.summary, hariHadir, shiftS, shiftM, off, cuti, sakit, izin, alpha, stb, persen }
+}
+function gabungRow(a: Row, b: Row): Row {
+  const n = Math.max(a.days?.length || 0, b.days?.length || 0)
+  const days = Array.from({ length: n }, (_, i) => {
+    const x = a.days?.[i]
+    const y = b.days?.[i]
+    if (x && y) return gabungHari(x, y)
+    return (x || y) as Day
+  })
+  const skorA = (a.days || []).reduce((s, d) => s + skorHari(d), 0)
+  const skorB = (b.days || []).reduce((s, d) => s + skorHari(d), 0)
+  const aB = String(a.nrp || '').toUpperCase().startsWith('B')
+  const bB = String(b.nrp || '').toUpperCase().startsWith('B')
+  const utama = skorA !== skorB ? (skorA > skorB ? a : b) : (aB && !bB ? b : a)
+  return { ...utama, days, summary: ringkasDariHari(days, utama) }
+}
+function rapikanGroups(groups: Group[]): Group[] {
+  const buckets: Record<string, Row[]> = { Staff: [], Plant: [], Operator: [], Lainnya: [] }
+  const byKey = new Map<string, Row>()
+  for (const g of groups || []) {
+    for (const row of g.rows || []) {
+      const nrp = String(row.nrp || '').trim()
+      const nama = String(row.nama || '').trim()
+      if (!nama || /^#/.test(nama) || /#NAME|#REF|#N\/A/i.test(nama)) continue
+      if (!nrp || !/^[A-Za-z0-9]+$/.test(nrp)) continue
+      const k = kunciOrang(row)
+      const ada = byKey.get(k)
+      byKey.set(k, ada ? gabungRow(ada, row) : row)
+    }
+  }
+  for (const row of byKey.values()) {
+    const dept = grupAbsensi(row.departemen, row.jabatan)
+    if (!buckets[dept]) buckets[dept] = []
+    buckets[dept].push(row)
+  }
+  return (['Staff', 'Plant', 'Operator', 'Lainnya'] as const)
+    .filter((d) => buckets[d]?.length)
+    .map((d) => ({
+      departemen: d,
+      rows: buckets[d].slice().sort((a, b) => a.nama.localeCompare(b.nama, 'id')),
+    }))
+}
 
 // ─── Konstanta ──────────────────────────────────────────────
 const CELL_STYLE: Record<string, { bg: string; text: string; label: string }> = {
@@ -46,6 +147,8 @@ const CELL_STYLE: Record<string, { bg: string; text: string; label: string }> = 
   'I':   { bg: 'bg-pink-100',     text: 'text-pink-800',     label: 'Izin Potongan' },
   'IR':  { bg: 'bg-rose-100',     text: 'text-rose-800',     label: 'Izin Resmi' },
   'A':   { bg: 'bg-red-400',      text: 'text-white',        label: 'Alfa' },
+  'DW':  { bg: 'bg-sky-50',       text: 'text-sky-800',      label: 'Day tanpa TS Opt' },
+  'NW':  { bg: 'bg-violet-50',    text: 'text-violet-800',  label: 'Night tanpa TS Opt' },
   '-':   { bg: 'bg-white',        text: 'text-[#5a6a7e]',    label: 'Kosong' },
 }
 const ROSTER_OPTIONS = ['S','M','OFF','CR','CT','ID','TR','LV']
@@ -62,6 +165,12 @@ const fmtTime = (iso: string | null) => {
   })
 }
 const fmtJam = (m: number) => m ? `${Math.floor(m/60)}j ${m%60}m` : '-'
+const fmtHm = (n: any) => {
+  if (n == null || n === '') return '-'
+  const v = Number(n)
+  if (Number.isNaN(v)) return '-'
+  return v.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
 const fmtDate = (t: string) => new Date(t + 'T00:00:00').toLocaleDateString('id-ID', {
   weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
 })
@@ -166,7 +275,7 @@ export default function ManajemenAbsensiPage() {
       const json = await res.json()
       if (!json.ok) { setError(json.error || 'Gagal ambil data'); return }
       setJmlHari(json.jmlHari || 31)
-      setGroups(json.groups || [])
+      setGroups(rapikanGroups(json.groups || []))
       setCanEdit(json.permission?.canEdit || false)
     } catch { setError('Koneksi gagal') }
     finally { setLoading(false) }
@@ -388,6 +497,7 @@ export default function ManajemenAbsensiPage() {
                       </th>
                     ))}
                     <th className="px-2 py-2 text-center min-w-[38px] bg-emerald-700">%</th>
+                    <th className="px-1 py-2 text-center min-w-[44px]">HM</th>
                     <th className="px-1 py-2 text-center min-w-[26px]">S</th>
                     <th className="px-1 py-2 text-center min-w-[26px]">I</th>
                     <th className="px-1 py-2 text-center min-w-[26px]">A</th>
@@ -399,10 +509,10 @@ export default function ManajemenAbsensiPage() {
 
                 <tbody>
                   {groups.map(group => (
-                    <>
+                    <Fragment key={group.departemen}>
                       {/* Group header */}
                       <tr key={`grp-${group.departemen}`} className="bg-slate-100 border-t-2 border-slate-200">
-                        <td colSpan={jmlHari + 9} className="px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-slate-600 sticky left-0">
+                        <td colSpan={jmlHari + 11} className="px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-slate-600 sticky left-0">
                           📋 {group.departemen} ({group.rows.length} orang)
                         </td>
                       </tr>
@@ -469,6 +579,9 @@ export default function ManajemenAbsensiPage() {
                           }`}>
                             {row.summary.persen}
                           </td>
+                          <td className="px-1 py-1.5 text-center font-black text-[#003D79] tabular-nums">
+                            {fmtHm(row.days.reduce((s, d) => s + (Number(d.hm_total) || 0), 0))}
+                          </td>
                           <td className="px-1 py-1.5 text-center text-pink-700 font-bold">{row.summary.sakit || '-'}</td>
                           <td className="px-1 py-1.5 text-center text-blue-700 font-bold">{row.summary.izin || '-'}</td>
                           <td className="px-1 py-1.5 text-center text-red-700 font-bold">{row.summary.alpha || '-'}</td>
@@ -482,7 +595,7 @@ export default function ManajemenAbsensiPage() {
                           </td>
                         </tr>
                       ))}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
@@ -498,19 +611,20 @@ export default function ManajemenAbsensiPage() {
           onClick={() => setDetailCell(null)}
         >
           <div 
-            className="bg-white w-full lg:max-w-sm rounded-t-[2rem] lg:rounded-[2rem] overflow-hidden"
+            className="bg-white w-full lg:max-w-md rounded-t-[2rem] lg:rounded-[2rem] overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             {(() => {
               const { row, day } = detailCell
               const isDS = day.code === 'DS'
               const isNS = day.code === 'NS'
+              const adaClock = !!(day.clock_in || day.clock_out)
               const isHadir = isDS || isNS
-              const isTerlambat = isHadir && (day.terlambat_menit || 0) > 0
+              const isTerlambat = isHadir && adaClock && (day.terlambat_menit || 0) > 0
               const s = CELL_STYLE[day.code] || CELL_STYLE['-']
 
-              const headerBg = isTerlambat ? 'bg-yellow-500' : isHadir ? 'bg-emerald-600' : 'bg-[#003D79]'
-              const headerLabel = isTerlambat ? '⚠️ TERLAMBAT' : isHadir ? '✅ AMAN' : s.label
+              const headerBg = isTerlambat ? 'bg-yellow-500' : isHadir && adaClock ? 'bg-emerald-600' : isHadir ? 'bg-[#003D79]' : 'bg-[#003D79]'
+              const headerLabel = isTerlambat ? '⚠️ TERLAMBAT' : isHadir && adaClock ? '✅ AMAN' : isHadir ? (isNS ? 'NS · TS Opt' : 'DS · TS Opt') : s.label
 
               return (
                 <>
@@ -551,23 +665,32 @@ export default function ManajemenAbsensiPage() {
                       </div>
                     </div>
 
-                    {/* Clock In/Out */}
-                    {(day.clock_in || day.clock_out) && (
-                      <div className="bg-blue-50 rounded-xl p-4 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">🕐 Clock In</span>
-                          <span className="font-mono font-black text-emerald-700 text-sm">{fmtTime(day.clock_in)}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">🕐 Clock Out</span>
-                          <span className="font-mono font-black text-slate-700 text-sm">{fmtTime(day.clock_out)}</span>
-                        </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-blue-200">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">⏱️ Jam Kerja</span>
-                          <span className="font-mono font-black text-[#003D79] text-sm">{fmtJam(day.jam_kerja_menit)}</span>
-                        </div>
+                    <div className="bg-blue-50 rounded-xl p-4 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">C.In</span>
+                        <span className="font-mono font-black text-emerald-700 text-sm">{fmtTime(day.clock_in)}</span>
                       </div>
-                    )}
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">C.Out</span>
+                        <span className="font-mono font-black text-slate-700 text-sm">{fmtTime(day.clock_out)}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-blue-200">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Unit</span>
+                        <span className="font-black text-slate-800 text-sm">{day.unit || '-'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">HM Awal</span>
+                        <span className="font-mono font-black text-slate-800 text-sm">{day.hm_awal != null && day.hm_awal !== '' ? fmtHm(day.hm_awal) : '-'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">HM Akhir</span>
+                        <span className="font-mono font-black text-slate-800 text-sm">{day.hm_akhir != null && day.hm_akhir !== '' ? fmtHm(day.hm_akhir) : '-'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Total HM</span>
+                        <span className="font-mono font-black text-[#003D79] text-sm">{day.hm_total != null && day.hm_total !== '' ? fmtHm(day.hm_total) : '-'}</span>
+                      </div>
+                    </div>
 
                     {/* Lokasi */}
                     {day.clock_in_lat && (
@@ -629,7 +752,7 @@ export default function ManajemenAbsensiPage() {
       {detailRow && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end lg:items-center justify-center p-0 lg:p-4"
              onClick={() => setDetailRow(null)}>
-          <div className="bg-white w-full lg:max-w-3xl max-h-[90vh] rounded-t-[2rem] lg:rounded-[2rem] overflow-hidden flex flex-col"
+          <div className="bg-white w-full lg:max-w-5xl max-h-[90vh] rounded-t-[2rem] lg:rounded-[2rem] overflow-hidden flex flex-col"
                onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div className="bg-[#003D79] text-white p-5 flex items-center justify-between">
@@ -645,6 +768,14 @@ export default function ManajemenAbsensiPage() {
             </div>
 
             {/* Summary */}
+            <div className="px-4 pt-4 bg-slate-50">
+              <div className="bg-[#003D79] text-white rounded-xl px-4 py-2.5 flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Total HM</span>
+                <span className="text-2xl font-black tabular-nums">
+                  {fmtHm(detailRow.days.reduce((s, d) => s + (Number(d.hm_total) || 0), 0))}
+                </span>
+              </div>
+            </div>
             <div className="grid grid-cols-4 gap-2 p-4 bg-slate-50">
               <div className="text-center">
                 <p className="text-2xl font-black text-emerald-600">{detailRow.summary.persen}%</p>
@@ -665,8 +796,8 @@ export default function ManajemenAbsensiPage() {
             </div>
 
             {/* Table detail */}
-            <div className="flex-1 overflow-y-auto p-4">
-              <table className="w-full text-xs">
+            <div className="flex-1 overflow-auto p-4">
+              <table className="w-full text-xs min-w-[720px]">
                 <thead className="bg-slate-100 sticky top-0">
                   <tr>
                     <th className="p-2 text-left">Tgl</th>
@@ -674,6 +805,10 @@ export default function ManajemenAbsensiPage() {
                     <th className="p-2 text-center">Aktual</th>
                     <th className="p-2 text-center">C.In</th>
                     <th className="p-2 text-center">C.Out</th>
+                    <th className="p-2 text-center">Unit</th>
+                    <th className="p-2 text-center">HM Awal</th>
+                    <th className="p-2 text-center">HM Akhir</th>
+                    <th className="p-2 text-center">Total HM</th>
                     <th className="p-2 text-center">Jam</th>
                     <th className="p-2 text-center">📍</th>
                     {canEdit && <th className="p-2 text-center">⚙️</th>}
@@ -697,6 +832,10 @@ export default function ManajemenAbsensiPage() {
                         </td>
                         <td className="p-2 text-center text-emerald-700 font-mono">{fmtTime(d.clock_in)}</td>
                         <td className="p-2 text-center text-slate-700 font-mono">{fmtTime(d.clock_out)}</td>
+                        <td className="p-2 text-center font-bold text-slate-800 whitespace-nowrap">{d.unit || '-'}</td>
+                        <td className="p-2 text-center font-mono text-slate-700">{d.hm_awal != null && d.hm_awal !== '' ? fmtHm(d.hm_awal) : '-'}</td>
+                        <td className="p-2 text-center font-mono text-slate-700">{d.hm_akhir != null && d.hm_akhir !== '' ? fmtHm(d.hm_akhir) : '-'}</td>
+                        <td className="p-2 text-center font-black text-[#003D79]">{d.hm_total != null && d.hm_total !== '' ? fmtHm(d.hm_total) : '-'}</td>
                         <td className="p-2 text-center text-[#003D79] font-bold">{fmtJam(d.jam_kerja_menit)}</td>
                         <td className="p-2 text-center">
                           {d.clock_in_lat ? (

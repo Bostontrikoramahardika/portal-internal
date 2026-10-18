@@ -1349,18 +1349,13 @@ function getColumns(rows: any[], table?: string, superAdmin = false): string[] {
   // 🆕 Custom column order untuk table employees
   if (table === 'employees') {
     const preferredOrder = [
-      'nama', 'jabatan', 'departemen', 'site', 
+      'nama', 'kode_absensi', 'jabatan', 'departemen', 'site',
       'tanggal_masuk', '_masa_kerja', 'poh', 'tanggal_resign',
       '_status', 'alasan_resign',
       'no_hp', 'email', 'status_karyawan'
     ]
-    const orderedKeys = preferredOrder.filter(k => visibleKeys.includes(k))
-    const restKeys = visibleKeys.filter(k => 
-      !preferredOrder.includes(k) && 
-      !k.startsWith('_') &&
-      k !== 'resign_by' // hide resign_by dari view
-    )
-    return [...orderedKeys, ...restKeys]
+    // Tampil seperti semula + Kode TS Opt. Kolom ER (mess/bank/alamat) tetap di form, bukan di tabel.
+    return preferredOrder.filter(k => visibleKeys.includes(k))
   }
   
   const priority = PRIORITY_COLUMNS.filter((c: string) => visibleKeys.includes(c))

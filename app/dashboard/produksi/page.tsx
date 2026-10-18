@@ -40,7 +40,7 @@ function labelBulan(b: string) {
 
 export default function ProduksiPage() {
   const [bolehImport, setBolehImport] = useState(false)
-  const [tab, setTab] = useState<'laporan' | 'import'>('laporan')
+  const [tab, setTab] = useState<'laporan' | 'hmop' | 'import'>('laporan')
 
   useEffect(() => {
     fetch('/api/produksi/import', { credentials: 'include', headers: hdr() })
@@ -51,25 +51,410 @@ export default function ProduksiPage() {
 
   return (
     <StdPage width="full">
-      {bolehImport && (
-        <div className="mb-3 flex gap-2">
-          {([['laporan', '📈 Laporan + Monitoring'], ['import', '📥 Import Harian']] as const).map(([id, l]) => (
-            <button key={id} onClick={() => setTab(id)}
-              className={'flex-1 py-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wide transition-all ' +
-                (tab === id ? 'bg-[#003D79] text-white shadow' : 'bg-white text-slate-400 border border-slate-100')}>
-              {l}
-            </button>
-          ))}
-        </div>
-      )}
-      {tab === 'laporan'
-        ? <DashboardLaporan gotoImport={() => setTab('import')} bolehImport={bolehImport} />
-        : bolehImport && <ImportHarian />}
+      <div className="mb-3 flex gap-2">
+        {([
+          { id: 'laporan' as const, l: '📈 Laporan + Monitoring' },
+          { id: 'hmop' as const, l: 'HM Operator' },
+          ...(bolehImport ? [{ id: 'import' as const, l: '📥 Import Harian' }] : []),
+        ]).map((t) => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={'flex-1 py-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wide transition-all ' +
+              (tab === t.id ? 'bg-[#003D79] text-white shadow' : 'bg-white text-slate-400 border border-slate-100')}>
+            {t.l}
+          </button>
+        ))}
+      </div>
+      {tab === 'laporan' && <DashboardLaporan gotoImport={() => setTab('import')} bolehImport={bolehImport} />}
+      {tab === 'hmop' && <TabHmOperator />}
+      {tab === 'import' && bolehImport && <ImportHarian />}
     </StdPage>
   )
 }
 
-/* ─────────── komponen kecil ─────────── */
+/* ─────────── HM Operator (alokasi = SUM TS Opt, sama Excel Rekap HM kolom Aktual) ─────────── */
+
+function hariPendek(th: number, bl: number, d: number) {
+  return ['Mgg', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'][new Date(th, bl - 1, d).getDay()]
+}
+function intiNrp(nrp: any) {
+  return String(nrp || '').trim().toUpperCase().replace(/^B/, '')
+}
+function normNama(s: any) {
+  return String(s || '').trim().toUpperCase().replace(/\s+/g, ' ')
+}
+const WARNA_KODE: Record<string, string> = {
+  OFF: 'bg-slate-100 text-slate-600',
+  CR: 'bg-yellow-200 text-yellow-900',
+  CT: 'bg-orange-200 text-orange-900',
+  S: 'bg-pink-200 text-pink-900',
+  I: 'bg-pink-100 text-pink-800',
+  IR: 'bg-rose-100 text-rose-800',
+  A: 'bg-red-400 text-white',
+  DW: 'bg-sky-50 text-sky-800',
+  NW: 'bg-violet-50 text-violet-800',
+  DS: 'bg-sky-100 text-sky-800',
+  NS: 'bg-violet-100 text-violet-800',
+}
+
+function shiftMalam(items: any[]) {
+  return (items || []).some((h) => {
+    const s = String(h.shift ?? '').toUpperCase()
+    return s === '2' || s === 'NS' || s === 'M' || s.includes('MALAM')
+  })
+}
+/** Excel Rekap HM kolom O (Dibayar) lalu P (Charge). */
+function dibayarHm(site: string, jabatan: string, kodeD: string, aktual: number) {
+  const siteU = String(site || '').toUpperCase()
+  const jab = String(jabatan || '').toUpperCase()
+  const D = String(kodeD || '').toUpperCase()
+  const N = Number(aktual || 0)
+  const graderSks = siteU.includes('PPA-SKS') && jab.includes('GRADER')
+  if (siteU === 'ABS') return N
+  if (D === 'DW' || D === 'NW') return 4 + (graderSks ? 1 : 0)
+  if ((D === 'DS' || D === 'NS') && graderSks && N < 5) return 5
+  if ((D === 'DS' || D === 'NS') && N < 4) return 4
+  if (D === 'DS' || D === 'NS') return N
+  return 0
+}
+function chargeHm(aktual: number, dibayar: number) {
+  if (dibayar <= 0) return 0
+  if (!aktual) return dibayar
+  const c = dibayar - aktual
+  return c > 0.0005 ? Number(c.toFixed(2)) : 0
+}
+function urutanJabatan(j: string) {
+  const u = String(j || '').toUpperCase()
+  if (u.includes('GRADER')) return 1
+  if (u.includes('BULLDOZER') || u.includes('DOZER')) return 2
+  if (u.includes('EXCAVATOR')) return 3
+  return 9
+}
+function grupJabatan(j: string) {
+  const u = String(j || '').toUpperCase()
+  if (u.includes('GRADER')) return 'Grader'
+  if (u.includes('BULLDOZER') || u.includes('DOZER')) return 'Bulldozer'
+  if (u.includes('EXCAVATOR')) return 'Excavator'
+  return 'Lainnya'
+}
+
+function TabHmOperator() {
+  const now = new Date()
+  const [bulan, setBulan] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
+  const [site, setSite] = useState('PPA-MLP')
+  const [d, setD] = useState<any>(null)
+  const [absen, setAbsen] = useState<any[]>([])
+  const [err, setErr] = useState('')
+  const [memuat, setMemuat] = useState(false)
+  const [klip, setKlip] = useState<{ nama: string; day: number; items: any[]; kode?: string } | null>(null)
+  const [filterJab, setFilterJab] = useState('Semua')
+  const [cari, setCari] = useState('')
+
+  const muat = useCallback(async () => {
+    setMemuat(true); setErr('')
+    try {
+      const [rDash, rAbs] = await Promise.all([
+        fetch(`/api/produksi/dashboard?bulan=${bulan}&site=${encodeURIComponent(site)}`,
+          { credentials: 'include', headers: hdr() }),
+        fetch(`/api/attendance/matrix?bulan=${bulan}&site=${encodeURIComponent(site)}`,
+          { credentials: 'include', headers: hdr() }),
+      ])
+      const j = await rDash.json()
+      if (!rDash.ok) throw new Error(j?.error || 'Gagal memuat HM')
+      setD(j)
+      const a = await rAbs.json()
+      const rows: any[] = []
+      for (const g of a?.groups || []) for (const r of g.rows || []) rows.push(r)
+      setAbsen(rows)
+    } catch (e: any) { setErr(e?.message || 'Gagal memuat') }
+    setMemuat(false)
+  }, [bulan, site])
+  useEffect(() => { muat() }, [muat])
+
+  const [th, bl] = bulan.split('-').map(Number)
+  const hariBulan = new Date(th, bl, 0).getDate()
+  const days = Array.from({ length: hariBulan }, (_, i) => i + 1)
+  const petaKode = d?.peta_kode_absensi || {}
+
+  const hmByKode = (() => {
+    const map = new Map<string, { hm: number; hari: any[] }>()
+    for (const o of d?.operator || []) {
+      const kode = normNama(o.nama)
+      if (!kode || kode === 'TANPA NAMA' || kode === '-' ) continue
+      const ada = map.get(kode)
+      if (!ada) map.set(kode, { hm: Number(o.hm || 0), hari: [...(o.hari || [])] })
+      else {
+        ada.hm += Number(o.hm || 0)
+        ada.hari.push(...(o.hari || []))
+      }
+    }
+    return map
+  })()
+
+  const kodeByNrp = new Map<string, string>()
+  const kodeByNama = new Map<string, string>()
+  for (const [k, v] of Object.entries(petaKode as Record<string, any>)) {
+    if (v?.nrp) kodeByNrp.set(intiNrp(v.nrp), k)
+    if (v?.nama) kodeByNama.set(normNama(v.nama), k)
+  }
+
+  const baris = (() => {
+    const map = new Map<string, any>()
+    function taruh(row: any, sumber: 'hr' | 'ts') {
+      const kunci = intiNrp(row.nrp) || normNama(row.nama)
+      if (!kunci || kunci.startsWith('#')) return
+      const ada = map.get(kunci)
+      if (ada && sumber === 'ts') return
+      if (ada) return
+      map.set(kunci, row)
+    }
+    for (const r of absen) {
+      if (!/operator/i.test(String(r.jabatan || ''))) continue
+      taruh({
+        nrp: r.nrp, nama: r.nama, jabatan: r.jabatan || 'Operator', site: r.site || site,
+        daysAbs: r.days || [],
+      }, 'hr')
+    }
+    for (const [kode, inf] of Object.entries(petaKode as Record<string, any>)) {
+      if (!inf?.nama || !/operator/i.test(String(inf.jabatan || 'operator'))) continue
+      taruh({
+        nrp: inf.nrp, nama: inf.nama, jabatan: inf.jabatan || 'Operator', site,
+        daysAbs: [], kodeTs: kode,
+      }, 'ts')
+    }
+    const out = Array.from(map.values()).map((r) => {
+      const kode = r.kodeTs || kodeByNrp.get(intiNrp(r.nrp)) || kodeByNama.get(normNama(r.nama)) || ''
+      const pack = hmByKode.get(normNama(kode)) || hmByKode.get(normNama(r.nama))
+      const hmHari: Record<number, { hm: number; items: any[] }> = {}
+      for (const h of pack?.hari || []) {
+        const day = Number(String(h.tgl).slice(8, 10))
+        if (!hmHari[day]) hmHari[day] = { hm: 0, items: [] }
+        hmHari[day].hm += Number(h.hm || 0)
+        hmHari[day].items.push(h)
+      }
+      const kodeAbs: Record<number, string> = {}
+      for (const d0 of r.daysAbs || []) {
+        const day = Number(d0.day || String(d0.tanggal || '').slice(8, 10))
+        if (day) kodeAbs[day] = String(d0.code || '').toUpperCase()
+      }
+      let charge = 0
+      for (let day = 1; day <= hariBulan; day++) {
+        const items = hmHari[day]?.items || []
+        const hm = Number(hmHari[day]?.hm || 0)
+        const hr = String(kodeAbs[day] || '').replace('-', '')
+        let D = hr
+        if (['OFF', 'CR', 'CT', 'S', 'I', 'IR', 'A'].includes(hr)) {
+          D = hr
+        } else if (hm > 0) {
+          D = shiftMalam(items) ? 'NS' : 'DS'
+        } else if (hr === 'DW' || hr === 'NW') {
+          D = hr
+        } else if (items.length) {
+          D = shiftMalam(items) ? 'NW' : 'DW'
+        }
+        charge += chargeHm(hm, dibayarHm(r.site || site, r.jabatan, D, hm))
+      }
+      const aktual = Number(pack?.hm || 0)
+      return {
+        ...r,
+        kodeTs: kode,
+        aktual,
+        charge: Number(charge.toFixed(2)),
+        total: Number((aktual + charge).toFixed(2)),
+        hmHari,
+        kodeAbs,
+      }
+    })
+    out.sort((a, b) => urutanJabatan(a.jabatan) - urutanJabatan(b.jabatan) || String(a.nama).localeCompare(b.nama, 'id'))
+    return out
+  })()
+
+  const barisTampil = baris.filter((r) => {
+    if (filterJab !== 'Semua' && grupJabatan(r.jabatan) !== filterJab) return false
+    if (cari && !String(r.nama).toLowerCase().includes(cari.toLowerCase())) return false
+    return true
+  })
+  const totalHm = barisTampil.reduce((s, r) => s + r.aktual, 0)
+  const totalCharge = barisTampil.reduce((s, r) => s + Number(r.charge || 0), 0)
+  const fmtHm = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  async function unduhXlsx() {
+    const ExcelJS = (await import('exceljs')).default
+    const wb = new ExcelJS.Workbook()
+    const ws = wb.addWorksheet('HM Operator')
+    const isiKuning: any = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3B0' } }
+    const isiKuning2: any = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE566' } }
+    const tepi: any = { style: 'thin', color: { argb: 'FFD4A017' } }
+    ws.addRow(['No', 'Site', 'Nama Karyawan', 'Jabatan', 'Total HM', '', '',
+      ...days.map((d) => hariPendek(th, bl, d))])
+    ws.addRow(['', '', '', '', 'Aktual', 'Charge', 'Total', ...days])
+    ws.mergeCells(1, 5, 1, 7)
+    days.forEach((_, i) => { try { ws.mergeCells(1, 8 + i, 1, 8 + i) } catch {} })
+    barisTampil.forEach((r, i) => {
+      const sel = days.map((day) => {
+        const hm = Number(r.hmHari[day]?.hm || 0)
+        if (hm > 0) return Number(hm.toFixed(2))
+        const kode = String(r.kodeAbs[day] || '').replace('-', '')
+        return kode && kode !== '-' ? kode : ''
+      })
+      ws.addRow([
+        i + 1, r.site, r.nama, r.jabatan,
+        r.aktual || null, r.charge || null, r.total || null,
+        ...sel,
+      ])
+    })
+    ;[1, 2].forEach((n) => {
+      const row = ws.getRow(n)
+      row.font = { bold: true, size: 9 }
+      row.alignment = { horizontal: 'center', vertical: 'middle' }
+      row.eachCell((c) => {
+        c.fill = n === 1 ? isiKuning : isiKuning2
+        c.border = { top: tepi, left: tepi, bottom: tepi, right: tepi }
+      })
+    })
+    ws.getColumn(5).numFmt = '0.00'
+    ws.getColumn(6).numFmt = '0.00'
+    ws.getColumn(7).numFmt = '0.00'
+    ws.getColumn(3).width = 22
+    ws.getColumn(4).width = 20
+    ws.views = [{ state: 'frozen', xSplit: 4, ySplit: 2 }]
+    const buf = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `HM_Operator_${site}_${bulan}.xlsx`
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="bg-white rounded-xl border border-slate-200 p-2 grid grid-cols-2 gap-2">
+        <div>
+          <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Bulan</label>
+          <input type="month" value={bulan} onChange={(e) => setBulan(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
+        </div>
+        <div>
+          <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Site</label>
+          <input value={site} onChange={(e) => setSite(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold" />
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1.5 items-center">
+        {['Semua', 'Grader', 'Bulldozer', 'Excavator'].map((j) => (
+          <button key={j} onClick={() => setFilterJab(j)}
+            className={'px-2.5 py-1 rounded-lg text-[10px] font-black uppercase ' +
+              (filterJab === j ? 'bg-[#003D79] text-white' : 'bg-white border border-slate-200 text-slate-500')}>
+            {j}
+          </button>
+        ))}
+        <input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Cari nama…"
+          className="ml-auto px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold w-44" />
+        <button type="button" onClick={() => unduhXlsx()}
+          className="px-3 py-1.5 rounded-lg bg-emerald-700 text-white text-[10px] font-black uppercase">
+          Unduh Excel
+        </button>
+      </div>
+      {err && <EmptyState variant="error" text={err} />}
+      {memuat && <EmptyState variant="loading" text="Memuat HM operator…" />}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-[#003D79] text-white rounded-xl px-3 py-2">
+          <div className="text-[9px] font-black uppercase tracking-widest text-blue-200">Aktual</div>
+          <div className="text-xl font-black tabular-nums">{fmtHm(totalHm)}</div>
+        </div>
+        <div className="bg-amber-500 text-white rounded-xl px-3 py-2">
+          <div className="text-[9px] font-black uppercase tracking-widest text-amber-100">Charge</div>
+          <div className="text-xl font-black tabular-nums">{fmtHm(totalCharge)}</div>
+        </div>
+        <div className="bg-emerald-700 text-white rounded-xl px-3 py-2">
+          <div className="text-[9px] font-black uppercase tracking-widest text-emerald-100">Total</div>
+          <div className="text-xl font-black tabular-nums">{fmtHm(totalHm + totalCharge)}</div>
+        </div>
+      </div>
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="overflow-x-auto max-h-[75vh]">
+          <table className="text-[10px] border-collapse min-w-max">
+            <thead className="sticky top-0 z-20">
+              <tr className="bg-[#fff3b0] text-[#5a3e00]">
+                <th rowSpan={2} className="border border-amber-300 px-2 py-1">No</th>
+                <th rowSpan={2} className="border border-amber-300 px-2 py-1">Site</th>
+                <th rowSpan={2} className="border border-amber-300 px-2 py-1 text-left min-w-[140px] sticky left-0 bg-[#fff3b0] z-30">Nama Karyawan</th>
+                <th rowSpan={2} className="border border-amber-300 px-2 py-1 text-left min-w-[110px]">Jabatan</th>
+                <th colSpan={3} className="border border-amber-300 px-2 py-1">Total HM</th>
+                {days.map((day) => (
+                  <th key={'h'+day} className="border border-amber-300 px-1 py-0.5 min-w-[36px]">{hariPendek(th, bl, day)}</th>
+                ))}
+              </tr>
+              <tr className="bg-[#ffe566] text-[#5a3e00]">
+                <th className="border border-amber-300 px-1 py-0.5">Aktual</th>
+                <th className="border border-amber-300 px-1 py-0.5">Charge</th>
+                <th className="border border-amber-300 px-1 py-0.5">Total</th>
+                {days.map((day) => (
+                  <th key={'n'+day} className="border border-amber-300 px-1 py-0.5">{day}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {barisTampil.map((r, i) => (
+                <tr key={intiNrp(r.nrp) || r.nama} className={i % 2 ? 'bg-amber-50/40' : 'bg-white'}>
+                  <td className="border border-slate-200 px-1 py-0.5 text-center">{i + 1}</td>
+                  <td className="border border-slate-200 px-1 py-0.5 whitespace-nowrap">{r.site}</td>
+                  <td className={'border border-slate-200 px-2 py-0.5 font-bold whitespace-nowrap sticky left-0 z-10 ' + (i % 2 ? 'bg-amber-50' : 'bg-white')}>{r.nama}</td>
+                  <td className="border border-slate-200 px-1 py-0.5 whitespace-nowrap">{r.jabatan}</td>
+                  <td className="border border-slate-200 px-1 py-0.5 text-right tabular-nums font-black">{r.aktual ? fmtHm(r.aktual) : '-'}</td>
+                  <td className="border border-slate-200 px-1 py-0.5 text-right tabular-nums font-black text-amber-800">{r.charge ? fmtHm(r.charge) : '-'}</td>
+                  <td className="border border-slate-200 px-1 py-0.5 text-right tabular-nums font-black">{r.total ? fmtHm(r.total) : '-'}</td>
+                  {days.map((day) => {
+                    const pack = r.hmHari[day]
+                    const hm = Number(pack?.hm || 0)
+                    const kode = String(r.kodeAbs[day] || '').replace('-', '')
+                    if (hm > 0) {
+                      return (
+                        <td key={day}
+                          onClick={() => setKlip({ nama: r.nama, day, items: pack.items, kode: r.kodeTs })}
+                          className="border border-slate-200 px-0.5 py-0.5 text-center tabular-nums font-bold cursor-pointer text-[#0b2a5b]">
+                          {fmtHm(hm)}
+                        </td>
+                      )
+                    }
+                    if (kode && kode !== '-') {
+                      return (
+                        <td key={day} className={'border border-slate-200 px-0.5 py-0.5 text-center font-black text-[9px] ' + (WARNA_KODE[kode] || '')}>
+                          {kode}
+                        </td>
+                      )
+                    }
+                    return <td key={day} className="border border-slate-200 px-0.5 py-0.5"></td>
+                  })}
+                </tr>
+              ))}
+              {barisTampil.length === 0 && !memuat && (
+                <tr><td colSpan={7 + days.length} className="px-2 py-3 text-center text-slate-300">Belum ada operator</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {klip && (
+          <div className="border-t border-slate-200 p-2 bg-slate-50">
+            <div className="text-[10px] font-black text-[#0b2a5b] mb-1">
+              {klip.nama} · tgl {String(klip.day).padStart(2, '0')} {labelBulan(bulan)}
+            </div>
+            {klip.items.map((h: any, i: number) => (
+              <div key={i} className="flex justify-between text-[10px] font-mono">
+                <span>Shift {h.shift} · {h.unit || h.kode_unit || ''}</span>
+                <span>HM awal {fmt1(h.awal)} → akhir {fmt1(h.akhir)} · total {fmt1(h.hm)}</span>
+              </div>
+            ))}
+            <button onClick={() => setKlip(null)} className="mt-1 text-[9px] font-black uppercase text-slate-400">Tutup</button>
+          </div>
+        )}
+        <p className="px-2 py-1 text-[9px] text-slate-400">
+          Angka = HM Aktual TS Opt. OFF/CR/S/I/A/DW/NW dari absensi HR. Charge: DS/NS di bawah 4 jam → dibayar 4 (Grader PPA-SKS 5). DW/NW dibayar 4. Charge = dibayar − aktual. Tidak di dashboard unit.
+        </p>
+      </div>
+    </div>
+  )
+}
 
 function BarisExcel({ label, nilai, sorot }: { label: string; nilai: string; sorot?: boolean }) {
   return (

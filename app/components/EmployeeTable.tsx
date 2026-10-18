@@ -42,6 +42,7 @@ function formatColumnName(col: string) {
     _site: 'Site',
     _departemen: 'Dept',
     nrp: 'NRP',
+    kode_absensi: 'Kode TS Opt',
     clock_in: 'Masuk',
     clock_out: 'Pulang',
     status_atasan: 'Atasan',

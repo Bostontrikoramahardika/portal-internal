@@ -12,16 +12,69 @@ const SITE_EDIT     = ['hr_site','pjo_site','super_admin']
 const LEADER_EDIT   = ['gl_produksi','gl_plant']
 
 // ═══════════════════════════════════════════════════
+function tglKey(d: any): string {
+  if (!d) return ''
+  if (typeof d === 'string') return d.split('T')[0].split('+')[0].trim()
+  if (d instanceof Date) return d.toISOString().split('T')[0]
+  return String(d).split('T')[0]
+}
+function normNama(s: any): string {
+  return String(s || '').trim().toUpperCase()
+}
+function isJabatanOperator(jabatan: any): boolean {
+  return /operator/i.test(String(jabatan || ''))
+}
+function grupAbsensi(departemen: any, jabatan: any): string {
+  const d = String(departemen || '').trim()
+  if (d === 'Staff' || d === 'Plant' || d === 'Operator') return d
+  const j = String(jabatan || '').toLowerCase()
+  if (/operator/.test(j)) return 'Operator'
+  if (/mekanik|mechanic|welder|tyreman|helper plant|admin plant|plant gl/.test(j)) return 'Plant'
+  if (/pjo|hrga|she|planner|site admin|admin gl|admin ho|staff|logistic|driver lv/.test(j)) return 'Staff'
+  return d || 'Lainnya'
+}
+function karyawanSampah(emp: any): boolean {
+  const nama = String(emp?.nama || '').trim()
+  const nrp = String(emp?.nrp || '').trim()
+  if (!nama || /^#/.test(nama) || /#NAME|#REF|#N\/A/i.test(nama)) return true
+  if (!nrp || !/^[A-Za-z0-9]+$/.test(nrp)) return true
+  return false
+}
+
+function kodeDariShiftTs(shift: any): 'DS' | 'NS' {
+  const s = String(shift ?? '').trim().toUpperCase()
+  if (s === '2' || s === 'NS' || s === 'M' || s.includes('MALAM') || s.includes('NIGHT')) return 'NS'
+  return 'DS'
+}
+
 function konversiCell(
   rosterShift: string | null,
   att: any,
   isFuture: boolean = false,
-  isAfterResign: boolean = false
+  isAfterResign: boolean = false,
+  tsOptKode: 'DS' | 'NS' | null = null,
+  isOperator: boolean = false
 ): { code: string, type: 'roster'|'actual'|'empty'|'future'|'resigned' } {
   const roster = (rosterShift || '').toUpperCase().trim()
 
   if (isAfterResign) {
     return { code: '', type: 'resigned' }
+  }
+
+  if (att) {
+    const status = (att.status || '').toUpperCase()
+    if (status === 'SAKIT' || status === 'S')  return { code: 'S',  type: 'actual' }
+    if (status === 'IZIN'  || status === 'I')  return { code: 'I',  type: 'actual' }
+    if (status === 'IZIN_RESMI' || status === 'IR') return { code: 'IR', type: 'actual' }
+    if (status === 'CUTI'  || status === 'CT') return { code: 'CT', type: 'actual' }
+    if (status === 'CR')                        return { code: 'CR', type: 'actual' }
+    if (status === 'ID' || status === 'INDUKSI')   return { code: 'ID', type: 'actual' }
+    if (status === 'TR' || status === 'TRAINING')  return { code: 'TR', type: 'actual' }
+  }
+
+  // Ada di TS Opt = masuk dan kerja → DS/NS (tidak wajib C.in)
+  if (tsOptKode) {
+    return { code: tsOptKode, type: isFuture ? 'future' : 'actual' }
   }
 
   if (isFuture) {
@@ -35,32 +88,16 @@ function konversiCell(
     return { code: roster, type: 'roster' }
   }
 
-  if (att) {
-    const status = (att.status || '').toUpperCase()
-    const shift  = (att.shift || '').toUpperCase()
-
-    if (status === 'SAKIT' || status === 'S')  return { code: 'S',  type: 'actual' }
-    if (status === 'IZIN'  || status === 'I')  return { code: 'I',  type: 'actual' }
-    if (status === 'IZIN_RESMI' || status === 'IR') return { code: 'IR', type: 'actual' }
-    if (status === 'ALFA'  || status === 'A')  return { code: 'A',  type: 'actual' }
-    if (status === 'CUTI'  || status === 'CT') return { code: 'CT', type: 'actual' }
-    if (status === 'CR')                        return { code: 'CR', type: 'actual' }
-    if (status === 'ID' || status === 'INDUKSI')   return { code: 'ID', type: 'actual' }
-    if (status === 'TR' || status === 'TRAINING')  return { code: 'TR', type: 'actual' }
-
-    if (att.clock_in) {
-      if (shift === 'MALAM' || shift === 'NS' || shift === 'M') return { code: 'NS', type: 'actual' }
-      return { code: 'DS', type: 'actual' }
-    }
-
-    if (roster === 'S' || roster === 'M') {
-      return { code: 'A', type: 'actual' }
-    }
+  if (att?.clock_in) {
+    const shift = (att.shift || '').toUpperCase()
+    const malam = shift === 'MALAM' || shift === 'NS' || shift === 'M'
+    if (isOperator) return { code: malam ? 'NW' : 'DW', type: 'actual' }
+    return { code: malam ? 'NS' : 'DS', type: 'actual' }
   }
 
-  if (roster === 'S' || roster === 'M') {
-    return { code: 'A', type: 'actual' }
-  }
+  const statusA = (att?.status || '').toUpperCase()
+  if (statusA === 'ALFA' || statusA === 'A') return { code: 'A', type: 'actual' }
+  if (roster === 'S' || roster === 'M') return { code: 'A', type: 'actual' }
 
   return { code: '-', type: 'empty' }
 }
@@ -113,7 +150,7 @@ export async function GET(req: NextRequest) {
   // ── STEP 1: Ambil karyawan berdasarkan role ──
   let empQuery = supabaseAdmin
     .from('employees')
-    .select('nrp, nama, jabatan, departemen, site, status_karyawan, tanggal_resign')
+    .select('nrp, nama, jabatan, departemen, site, status_karyawan, tanggal_resign, kode_absensi')
 
   if (isSuperAdmin) {
     // Super Admin → lihat semua
@@ -206,7 +243,8 @@ export async function GET(req: NextRequest) {
   const { data: employees, error: empErr } = await empQuery
   if (empErr) return NextResponse.json({ error: empErr.message }, { status: 500 })
 
-  const nrpList = (employees || []).map((e: any) => e.nrp)
+  const employeesOk = (employees || []).filter((e: any) => !karyawanSampah(e))
+  const nrpList = employeesOk.map((e: any) => e.nrp)
   if (nrpList.length === 0) {
     return NextResponse.json({
       ok: true, jmlHari, groups: [], summary: {},
@@ -272,6 +310,103 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: err.message || 'Gagal fetch data' }, { status: 500 })
   }
 
+  const tsOptKodeMap = new Map<string, 'DS' | 'NS'>()
+  const tsOptBarisMap = new Map<string, any[]>()
+  const setTs = (key: string, kode: 'DS' | 'NS', baris?: any) => {
+    if (!key) return
+    const old = tsOptKodeMap.get(key)
+    tsOptKodeMap.set(key, old === 'NS' || kode === 'NS' ? 'NS' : kode)
+    if (baris) {
+      if (!tsOptBarisMap.has(key)) tsOptBarisMap.set(key, [])
+      tsOptBarisMap.get(key)!.push(baris)
+    }
+  }
+  try {
+    const PAGE_SIZE = 1000
+    let from = 0
+    while (true) {
+      const { data, error } = await supabaseAdmin
+        .from('ts_opt')
+        .select('tanggal, nama_operator, nrp, shift, kode_unit, hm_awal, hm_akhir, hm_total')
+        .gte('tanggal', startDate)
+        .lte('tanggal', endDate)
+        .range(from, from + PAGE_SIZE - 1)
+      if (error || !data || data.length === 0) break
+      for (const r of data as any[]) {
+        const t = tglKey(r.tanggal)
+        if (!t) continue
+        const kode = kodeDariShiftTs(r.shift)
+        const baris = {
+          kode_unit: r.kode_unit || null,
+          hm_awal: r.hm_awal ?? null,
+          hm_akhir: r.hm_akhir ?? null,
+          hm_total: r.hm_total ?? null,
+          shift: r.shift || null,
+        }
+        const n = normNama(r.nama_operator)
+        if (n) setTs(`${t}|${n}`, kode, baris)
+        const nr = String(r.nrp || '').trim()
+        if (nr) {
+          setTs(`${t}|NRP:${nr}`, kode, baris)
+          setTs(`${t}|NRP:${nr.replace(/^B/i, '')}`, kode, baris)
+        }
+      }
+      if (data.length < PAGE_SIZE) break
+      from += PAGE_SIZE
+    }
+  } catch {
+    // ts_opt belum ada
+  }
+
+  const aliasByInti = new Map<string, Set<string>>()
+  for (const e of employeesOk) {
+    const inti = String(e.nrp || '').trim().replace(/^B/i, '').toUpperCase()
+    if (!inti) continue
+    if (!aliasByInti.has(inti)) aliasByInti.set(inti, new Set())
+    const s = aliasByInti.get(inti)!
+    if (e.kode_absensi) s.add(normNama(e.kode_absensi))
+    if (e.nama) s.add(normNama(e.nama))
+    s.add(String(e.nrp).trim().toUpperCase())
+    s.add(inti)
+  }
+  function aliasEmp(emp: any): Set<string> {
+    const inti = String(emp.nrp || '').trim().replace(/^B/i, '').toUpperCase()
+    return aliasByInti.get(inti) || new Set<string>([normNama(emp.nama), normNama(emp.kode_absensi)].filter(Boolean) as string[])
+  }
+  function cariTsOpt(tgl: string, emp: any): 'DS' | 'NS' | null {
+    for (const a of aliasEmp(emp)) {
+      if (!a) continue
+      const v = tsOptKodeMap.get(`${tgl}|${a}`) || tsOptKodeMap.get(`${tgl}|NRP:${a}`)
+      if (v) return v
+    }
+    return null
+  }
+  function ringkasTsOpt(tgl: string, emp: any): { unit: string | null; hm_awal: any; hm_akhir: any; hm_total: number | null } {
+    const seen = new Set<string>()
+    const list: any[] = []
+    for (const a of aliasEmp(emp)) {
+      if (!a) continue
+      const arr = tsOptBarisMap.get(`${tgl}|${a}`) || tsOptBarisMap.get(`${tgl}|NRP:${a}`) || []
+      for (const r of arr) {
+        const id = String(r.kode_unit || '') + '|' + String(r.shift || '') + '|' + String(r.hm_awal ?? '') + '|' + String(r.hm_akhir ?? '')
+        if (seen.has(id)) continue
+        seen.add(id)
+        list.push(r)
+      }
+    }
+    if (!list.length) return { unit: null, hm_awal: null, hm_akhir: null, hm_total: null }
+    const units = Array.from(new Set(list.map((x) => x.kode_unit).filter(Boolean)))
+    const awals = list.map((x) => x.hm_awal).filter((v) => v != null && v !== '')
+    const akhirs = list.map((x) => x.hm_akhir).filter((v) => v != null && v !== '')
+    const totals = list.map((x) => Number(x.hm_total)).filter((n) => !isNaN(n))
+    return {
+      unit: units.length ? units.join(', ') : null,
+      hm_awal: awals.length === 1 ? awals[0] : (awals.length ? awals.join(' / ') : null),
+      hm_akhir: akhirs.length === 1 ? akhirs[0] : (akhirs.length ? akhirs.join(' / ') : null),
+      hm_total: totals.length ? Number(totals.reduce((a, b) => a + b, 0).toFixed(2)) : null,
+    }
+  }
+
   
 
   const rosterMap: Record<string, string> = {}
@@ -280,7 +415,7 @@ export async function GET(req: NextRequest) {
   })
 
   // ---------- LEMBUR disetujui pada bulan ini ----------
-  const nrpSemua = employees.map((e: any) => e.nrp)
+  const nrpSemua = employeesOk.map((e: any) => e.nrp)
   const lemburMap: Record<string, any[]> = {}
   if (nrpSemua.length) {
     const awalBln = tahun + '-' + String(bln).padStart(2,'0') + '-01'
@@ -325,7 +460,7 @@ export async function GET(req: NextRequest) {
     attMap[`${a.nrp}_${a.tanggal}`] = a
   })
 
-  const rows = (employees || []).map((emp: any) => {
+  const rows = employeesOk.map((emp: any) => {
     const days: any[] = []
     let hariKerja = 0, hariHadir = 0, shiftS = 0, shiftM = 0
     let off = 0, cuti = 0, sakit = 0, izin = 0, alpha = 0, stb = 0
@@ -340,7 +475,10 @@ export async function GET(req: NextRequest) {
       const isFuture = tgl > todaySite
       const isAfterResign = !!(resignDate && tgl > resignDate)
 
-      const cell = konversiCell(roster, att, isFuture, isAfterResign)
+      const isOperator = isJabatanOperator(emp.jabatan)
+      const tsOptKode = cariTsOpt(tgl, emp)
+      const tsHm = ringkasTsOpt(tgl, emp)
+      const cell = konversiCell(roster, att, isFuture, isAfterResign, tsOptKode, isOperator)
 
       days.push({
         tanggal: tgl,
@@ -348,6 +486,10 @@ export async function GET(req: NextRequest) {
         code: cell.code,
         type: cell.type,
         roster,
+        unit: tsHm.unit,
+        hm_awal: tsHm.hm_awal,
+        hm_akhir: tsHm.hm_akhir,
+        hm_total: tsHm.hm_total,
         isFuture,
         isAfterResign,
         clock_in: att?.clock_in || null,
@@ -367,9 +509,9 @@ export async function GET(req: NextRequest) {
       if (isFuture || isAfterResign) continue
 
       if (['S','M'].includes(roster || '')) hariKerja++
-      if (['DS','NS'].includes(cell.code)) hariHadir++
-      if (cell.code === 'DS') shiftS++
-      if (cell.code === 'NS') shiftM++
+      if (['DS','NS','DW','NW'].includes(cell.code)) hariHadir++
+      if (cell.code === 'DS' || cell.code === 'DW') shiftS++
+      if (cell.code === 'NS' || cell.code === 'NW') shiftM++
       if (cell.code === 'OFF') off++
       if (['CR','CT','LV','SCK','MCK'].includes(cell.code)) cuti++
       if (cell.code === 'S') sakit++
@@ -387,7 +529,7 @@ export async function GET(req: NextRequest) {
       nama: emp.nama,
       lembur: lemburList,
       jabatan: emp.jabatan || '-',
-      departemen: emp.departemen || 'Lainnya',
+      departemen: grupAbsensi(emp.departemen, emp.jabatan),
       site: emp.site,
       status_karyawan: emp.status_karyawan,
       tanggal_resign: emp.tanggal_resign,
@@ -410,10 +552,57 @@ export async function GET(req: NextRequest) {
     }
   })
 
+  function intiNrp(nrp: any): string {
+    return String(nrp || '').trim().toUpperCase().replace(/^B/, '')
+  }
+  function kunciOrang(r: any): string {
+    const inti = intiNrp(r.nrp)
+    if (inti) return 'NRP:' + inti
+    return 'NAMA:' + String(r.nama || '').trim().toUpperCase().replace(/\s+/g, ' ')
+  }
+  function skorHari(d: any): number {
+    if (!d) return 0
+    if (d.clock_in || ['DS', 'NS', 'DW', 'NW'].includes(d.code)) return 4
+    if (['OFF', 'CR', 'CT', 'S', 'I', 'IR', 'ID', 'TR', 'LV', 'SCK', 'MCK'].includes(d.code)) return 3
+    if (d.code === 'A') return 2
+    if (d.code && d.code !== '-') return 1
+    return 0
+  }
+  const byKey = new Map<string, any>()
+  for (const r of rows) {
+    const k = kunciOrang(r)
+    const ada = byKey.get(k)
+    if (!ada) { byKey.set(k, r); continue }
+    const n = Math.max(ada.days?.length || 0, r.days?.length || 0)
+    const days = Array.from({ length: n }, (_, i) => {
+      const x = ada.days?.[i]
+      const y = r.days?.[i]
+      if (x && y) {
+        const pilih = skorHari(y) > skorHari(x) ? y : x
+        const lain = pilih === y ? x : y
+        return {
+          ...pilih,
+          unit: pilih.unit || lain.unit || null,
+          hm_awal: pilih.hm_awal ?? lain.hm_awal ?? null,
+          hm_akhir: pilih.hm_akhir ?? lain.hm_akhir ?? null,
+          hm_total: pilih.hm_total ?? lain.hm_total ?? null,
+        }
+      }
+      return x || y
+    })
+    const skorA = (ada.days || []).reduce((s: number, d: any) => s + skorHari(d), 0)
+    const skorB = (r.days || []).reduce((s: number, d: any) => s + skorHari(d), 0)
+    const aB = String(ada.nrp || '').toUpperCase().startsWith('B')
+    const bB = String(r.nrp || '').toUpperCase().startsWith('B')
+    const utama = skorA !== skorB ? (skorA > skorB ? ada : r) : (aB && !bB ? r : ada)
+    byKey.set(k, { ...utama, days })
+  }
+  const rowsGabung = Array.from(byKey.values())
+
   const DEPT_ORDER = ['Staff','Plant','Operator','Lainnya']
   const grouped: Record<string, any[]> = {}
-  rows.forEach(r => {
-    const dept = DEPT_ORDER.includes(r.departemen) ? r.departemen : 'Lainnya'
+  rowsGabung.forEach(r => {
+    const dept = grupAbsensi(r.departemen, r.jabatan)
     if (!grouped[dept]) grouped[dept] = []
     grouped[dept].push(r)
   })
