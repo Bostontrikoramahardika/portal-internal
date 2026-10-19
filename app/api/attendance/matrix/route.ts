@@ -62,14 +62,27 @@ function konversiCell(
   }
 
   if (att) {
-    const status = (att.status || '').toUpperCase()
-    if (status === 'SAKIT' || status === 'S')  return { code: 'S',  type: 'actual' }
-    if (status === 'IZIN'  || status === 'I')  return { code: 'I',  type: 'actual' }
-    if (status === 'IZIN_RESMI' || status === 'IR') return { code: 'IR', type: 'actual' }
-    if (status === 'CUTI'  || status === 'CT') return { code: 'CT', type: 'actual' }
-    if (status === 'CR')                        return { code: 'CR', type: 'actual' }
-    if (status === 'ID' || status === 'INDUKSI')   return { code: 'ID', type: 'actual' }
-    if (status === 'TR' || status === 'TRAINING')  return { code: 'TR', type: 'actual' }
+    const dariKet = String(att.keterangan || '').match(/\[MANUAL:(DS|NS|DW|NW|S|I|IR|A|OFF|CR|CT|ID|TR|LV)\]/i)
+    if (dariKet) {
+      return { code: dariKet[1].toUpperCase(), type: 'actual' }
+    }
+    const status = (att.status || '').toUpperCase().trim()
+    const KODE_MANUAL: Record<string, string> = {
+      DS: 'DS', NS: 'NS', DW: 'DW', NW: 'NW',
+      S: 'S', SAKIT: 'S',
+      I: 'I', IZIN: 'I',
+      IR: 'IR', IZIN_RESMI: 'IR',
+      CT: 'CT', CUTI: 'CT',
+      CR: 'CR',
+      ID: 'ID', INDUKSI: 'ID',
+      TR: 'TR', TRAINING: 'TR',
+      A: 'A', ALPHA: 'A', ALFA: 'A',
+      OFF: 'OFF', LIBUR: 'OFF',
+      LV: 'LV',
+    }
+    if (KODE_MANUAL[status]) {
+      return { code: KODE_MANUAL[status], type: 'actual' }
+    }
   }
 
   // Ada di TS Opt = masuk dan kerja → DS/NS (tidak wajib C.in)

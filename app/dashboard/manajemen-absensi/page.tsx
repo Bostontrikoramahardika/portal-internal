@@ -152,7 +152,22 @@ const CELL_STYLE: Record<string, { bg: string; text: string; label: string }> = 
   '-':   { bg: 'bg-white',        text: 'text-[#5a6a7e]',    label: 'Kosong' },
 }
 const ROSTER_OPTIONS = ['S','M','OFF','CR','CT','ID','TR','LV']
-const STATUS_OPTIONS = ['HADIR','ALPHA','IZIN','SAKIT','TIDAK CLOCK OUT','LIBUR']
+const KODE_OPTIONS = [
+  { v: '', label: 'Otomatis (TS Opt / C.in)' },
+  { v: 'DS', label: 'DS — Day Shift (ada unit)' },
+  { v: 'NS', label: 'NS — Night Shift (ada unit)' },
+  { v: 'DW', label: 'DW — Day, lupa/tidak di TS Opt' },
+  { v: 'NW', label: 'NW — Night, lupa/tidak di TS Opt' },
+  { v: 'S',  label: 'S — Sakit (dari eviden)' },
+  { v: 'I',  label: 'I — Izin (dari eviden)' },
+  { v: 'IR', label: 'IR — Izin resmi' },
+  { v: 'A',  label: 'A — Alfa' },
+  { v: 'OFF', label: 'OFF — Libur' },
+  { v: 'CR', label: 'CR — Cuti roster' },
+  { v: 'CT', label: 'CT — Cuti tahunan' },
+  { v: 'ID', label: 'ID — Induksi' },
+  { v: 'TR', label: 'TR — Training' },
+]
 
 const getMonthNow = () => {
   const n = new Date()
@@ -730,7 +745,7 @@ export default function ManajemenAbsensiPage() {
                           }}
                           className="flex-1 bg-[#003d79] text-white py-2.5 rounded-xl text-xs font-black hover:bg-[#002a57] text-white"
                         >
-                          ✏️ Edit
+                          ✏️ Ubah absensi
                         </button>
                       )}
                       <button
@@ -900,26 +915,39 @@ export default function ManajemenAbsensiPage() {
 // ═══════════════════════════════════════════════════════════
 function EditCellModal({ row, day, onClose, onSaved }: any) {
   const [rosterShift, setRosterShift] = useState(day.roster || '')
-  const [status,      setStatus]      = useState(day.status || '')
-  const [clockIn,     setClockIn]     = useState(day.clock_in ? day.clock_in.slice(11, 16) : '')
-  const [clockOut,    setClockOut]    = useState(day.clock_out ? day.clock_out.slice(11, 16) : '')
-  const [keterangan,  setKeterangan]  = useState('')
+  const [kode,        setKode]        = useState(day.code && day.code !== '-' ? day.code : '')
+  const [clockIn,     setClockIn]     = useState(day.clock_in ? String(day.clock_in).slice(11, 16) : '')
+  const [clockOut,    setClockOut]    = useState(day.clock_out ? String(day.clock_out).slice(11, 16) : '')
+  const [keterangan,  setKeterangan]  = useState(String(day.keterangan || '').replace(/\[MANUAL:[A-Z]+\]\s*/gi, '').trim())
   const [saving,      setSaving]      = useState(false)
   const [error,       setError]       = useState('')
+  const [eviden,      setEviden]      = useState<any[]>([])
+
+  useEffect(() => {
+    const token = localStorage.getItem('btm_session_token_v1') || ''
+    fetch(`/api/attendance/matrix/edit?nrp=${encodeURIComponent(row.nrp)}&tanggal=${encodeURIComponent(day.tanggal)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    }).then(r => r.json()).then(d => { if (d.ok) setEviden(d.eviden || []) }).catch(() => {})
+  }, [row.nrp, day.tanggal])
 
   const handleSave = async () => {
     setSaving(true); setError('')
     try {
       const token = localStorage.getItem('btm_session_token_v1') || ''
+      const ketAsli = String(keterangan || '').replace(/\[MANUAL:[A-Z]+\]\s*/gi, '').trim()
       const payload: any = {
         nrp: row.nrp,
         tanggal: day.tanggal,
         roster_shift: rosterShift || null,
-        keterangan,
+        status: kode || null,
+        keterangan: kode ? `[MANUAL:${kode}] ${ketAsli}`.trim() : ketAsli,
       }
-      if (status)   payload.status = status
+      if (kode === 'NS' || kode === 'NW') payload.shift = 'MALAM'
+      else if (kode === 'DS' || kode === 'DW') payload.shift = 'SIANG'
       if (clockIn)  payload.clock_in  = `${day.tanggal}T${clockIn}:00+08:00`
+      else payload.clock_in = null
       if (clockOut) payload.clock_out = `${day.tanggal}T${clockOut}:00+08:00`
+      else payload.clock_out = null
 
       const res = await fetch('/api/attendance/matrix/edit', {
         method: 'POST',
@@ -966,13 +994,33 @@ function EditCellModal({ row, day, onClose, onSaved }: any) {
             </select>
           </div>
 
+          {eviden.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-amber-800">Eviden karyawan</p>
+              {eviden.map((ev: any) => (
+                <div key={ev.id} className="text-xs text-amber-900">
+                  <span className="font-black">{ev.kategori || '-'}</span>
+                  {' · '}{ev.status_atasan || '-'}
+                  {ev.keterangan ? ` · ${ev.keterangan}` : ''}
+                  {ev.foto_url ? (
+                    <>
+                      {' · '}
+                      <a href={ev.foto_url} target="_blank" rel="noreferrer" className="underline font-bold">Lihat bukti</a>
+                    </>
+                  ) : null}
+                </div>
+              ))}
+              <p className="text-[10px] text-amber-700">Izin/sakit mengacu eviden ini. Tetap bisa diubah di bawah.</p>
+            </div>
+          )}
+
           <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Status</label>
-            <select value={status} onChange={e => setStatus(e.target.value)}
+            <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">Kode absensi</label>
+            <select value={kode} onChange={e => setKode(e.target.value)}
               className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50">
-              <option value="">-- Kosong --</option>
-              {STATUS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              {KODE_OPTIONS.map(o => <option key={o.v || 'auto'} value={o.v}>{o.label}</option>)}
             </select>
+            <p className="text-[10px] text-slate-500 mt-1">Lupa absen tapi masuk: pilih DS/NS (ada unit) atau DW/NW.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
