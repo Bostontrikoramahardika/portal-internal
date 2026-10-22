@@ -1397,7 +1397,4 @@ function getColumns(rows: any[], table?: string, superAdmin = false): string[] {
   const other = visibleKeys.filter((k: string) => !PRIORITY_COLUMNS.includes(k) && !SECONDARY_COLUMNS.includes(k) && !k.startsWith('_'))
   const secondary = SECONDARY_COLUMNS.filter((c: string) => visibleKeys.includes(c))
   return [...priority, ...other, ...secondary]
-}CONDARY_COLUMNS.includes(k) && !k.startsWith('_'))
-  const secondary = SECONDARY_COLUMNS.filter((c: string) => visibleKeys.includes(c))
-  return [...priority, ...other, ...secondary]
 }
