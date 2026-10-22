@@ -67,6 +67,7 @@ export function tujuanMenu(m: MenuItem) {
 function menuTab(menus: MenuItem[], tab: string) {
   return (menus || [])
     .filter((m) => m && m.menu_key && !m.parent_menu_key)
+    .filter((m) => m.menu_key !== 'kelola_karyawan')
     .filter((m) => {
       const t = String(m.nav_tab || '').trim().toLowerCase();
       if (t === 'hidden') return false;

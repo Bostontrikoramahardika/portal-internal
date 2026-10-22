@@ -182,6 +182,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ;(menus || []).forEach((m) => {
       if (!m || !m.menu_key) return
       if (m.parent_menu_key) return
+      if (m.menu_key === 'kelola_karyawan') return
       if (String(m.nav_tab || '').toLowerCase() === 'hidden') return
       const grup = String(m.menu_group || 'Lainnya')
       const k = grup.trim().toLowerCase()
@@ -463,7 +464,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
 
           <div className="px-3 pt-2 pb-24 lg:px-8 lg:pt-6 lg:pb-10 max-w-lg md:max-w-3xl lg:max-w-none w-full mx-auto">
-            <Suspense fallback={null}><MenuTabs menus={menus} /></Suspense>
+            {pathname !== '/dashboard/hr-dashboard' && (
+              <Suspense fallback={null}><MenuTabs menus={menus} /></Suspense>
+            )}
             {children}
           </div>
           <AppFooter />

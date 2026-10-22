@@ -1213,8 +1213,8 @@ const menuInfo = isSuperAdmin
           'google_refresh_token', 'google_access_token',
           'password', 'password_hash', 'session_token',
         ]
-    const aman = (enriched || []).map((row) => {
-      const o = {}
+    const aman = (enriched || []).map((row: any) => {
+      const o: Record<string, any> = {}
       for (const key of Object.keys(row || {})) {
         if (!KOLOM_SENSITIF.includes(key)) o[key] = row[key]
       }
@@ -1329,6 +1329,19 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
       } else {
         result._status = '✅ Aktif'
       }
+
+      const tglLahir = r.tanggal_lahir
+      if (tglLahir) {
+        const birth = new Date(tglLahir)
+        if (!isNaN(birth.getTime())) {
+          const nowDt = tglResign ? new Date(tglResign) : new Date()
+          let age = nowDt.getFullYear() - birth.getFullYear()
+          const m = nowDt.getMonth() - birth.getMonth()
+          if (m < 0 || (m === 0 && nowDt.getDate() < birth.getDate())) age--
+          if (age >= 0 && age < 120) result._usia = `${age} Tahun`
+        }
+      }
+      if (!result._usia) result._usia = r.usia || null
     }
     
     result._nama_atasan = atasanEmp?.nama || (atasanNrp ? String(atasanNrp) : 'Belum diset')
@@ -1346,20 +1359,45 @@ function getColumns(rows: any[], table?: string, superAdmin = false): string[] {
     (k: string) => !HIDDEN_COLUMNS.includes(k) || (superAdmin && BOLEH_SUPER_ADMIN.includes(k))
   )
   
-  // 🆕 Custom column order untuk table employees
+  // Database & ATR: NIK Site = NRP. Resign ikut. Kolom lain tidak dihilangkan.
   if (table === 'employees') {
-    const preferredOrder = [
-      'nama', 'kode_absensi', 'jabatan', 'departemen', 'site',
-      'tanggal_masuk', '_masa_kerja', 'poh', 'tanggal_resign',
-      '_status', 'alasan_resign',
-      'no_hp', 'email', 'status_karyawan'
+    const hideEmp = [
+      'created_at', 'updated_at', 'id', 'password', 'password_hash',
+      'password_last_changed', 'is_super_admin',
+      'google_refresh_token', 'google_access_token', 'session_token',
+      'atasan_nrp', 'pjo_nrp', 'employee_nrp', 'uploaded_by', 'nrp_login', 'resign_by',
     ]
-    // Tampil seperti semula + Kode TS Opt. Kolom ER (mess/bank/alamat) tetap di form, bukan di tabel.
-    return preferredOrder.filter(k => visibleKeys.includes(k))
+    const keys = Object.keys(rows[0]).filter(
+      (k: string) => !hideEmp.includes(k) || (superAdmin && k === 'password')
+    )
+    const preferredOrder = [
+      'tanggal_resign', 'alasan_resign',
+      'golongan', 'site', 'nama', 'jabatan',
+      'tanggal_masuk', '_masa_kerja', 'penerimaan', 'poh',
+      'nrp',
+      'mess', 'bank', 'no_rekening', 'nama_rekening',
+      'bpjs_tk', 'bpjs_kes',
+      'no_hp', 'no_ktp',
+      'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', '_usia',
+      'status_pernikahan', 'agama',
+      'alamat', 'rt', 'rw', 'kelurahan', 'kecamatan', 'kota', 'provinsi', 'kode_pos',
+      'no_kk', 'nama_ibu', 'gol_darah', 'npwp', 'pendidikan', 'sertifikasi',
+      'kode_absensi',
+      '_status', 'status_karyawan', 'email',
+    ]
+    const skip = new Set([
+      'tanggal_keluar', 'alasan_keluar', 'departemen', 'tgl_masuk', 'usia',
+    ])
+    const ordered = preferredOrder.filter(k => keys.includes(k))
+    const rest = keys.filter(k => !ordered.includes(k) && !skip.has(k) && k !== '_nama_atasan' && k !== '_nama_pjo')
+    return [...ordered, ...rest]
   }
   
   const priority = PRIORITY_COLUMNS.filter((c: string) => visibleKeys.includes(c))
   const other = visibleKeys.filter((k: string) => !PRIORITY_COLUMNS.includes(k) && !SECONDARY_COLUMNS.includes(k) && !k.startsWith('_'))
+  const secondary = SECONDARY_COLUMNS.filter((c: string) => visibleKeys.includes(c))
+  return [...priority, ...other, ...secondary]
+}CONDARY_COLUMNS.includes(k) && !k.startsWith('_'))
   const secondary = SECONDARY_COLUMNS.filter((c: string) => visibleKeys.includes(c))
   return [...priority, ...other, ...secondary]
 }

@@ -22,6 +22,7 @@
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { StdPage, StatBanner, TopTabs, EmptyState, type TopTabItem } from '@/app/components/std'
+import MppDashboard from './MppDashboard'
 
 // ⚡ lazy-load: tabel besar baru diunduh saat benar-benar ditampilkan
 const EmployeeTable = dynamic(() => import('@/app/components/EmployeeTable'), {
@@ -71,6 +72,7 @@ export default function HRDashboardPage() {
   }, [])
 
   const currentTab = tabs.find((t) => t.menu_key === activeTab)
+  const isMpp = /manpower|mpp/i.test(`${currentTab?.menu_key || ''} ${currentTab?.menu_label || ''}`)
 
   // tab DB → format TopTabs (emoji dari kolom menu_icon tetap dipakai)
   const tabItems: TopTabItem[] = tabs.map((t) => ({
@@ -81,13 +83,15 @@ export default function HRDashboardPage() {
 
   return (
     <StdPage width="full">
-      <StatBanner
-        eyebrow="HR Dashboard"
-        title="Manpower Planning & Analytics"
-        subtitle="Data karyawan, dokumen & analitik SDM"
-        onRefresh={loadTabs}
-        refreshing={loadingTabs}
-      />
+      {!isMpp && (
+        <StatBanner
+          eyebrow="HR Dashboard"
+          title="Manpower Planning & Analytics"
+          subtitle="Data karyawan, dokumen & analitik SDM"
+          onRefresh={loadTabs}
+          refreshing={loadingTabs}
+        />
+      )}
 
       {loadingTabs ? (
         <EmptyState variant="loading" title="Memuat Menu…" text="Mengambil daftar tab dari server" />
@@ -101,20 +105,18 @@ export default function HRDashboardPage() {
         <>
           <TopTabs scroll tabs={tabItems} value={activeTab} onChange={setActiveTab} />
 
-          {currentTab?.tab_action?.startsWith('REDIRECT:') &&
-            (() => {
-              const targetMenuKey = currentTab.tab_action!.split(':')[1] || ''
-              return <EmployeeTable key={targetMenuKey} menuKey={targetMenuKey} />
-            })()}
-
-          {currentTab?.tab_action === 'COMING_SOON' && (
+          {/manpower|mpp/i.test(`${currentTab?.menu_key || ''} ${currentTab?.menu_label || ''}`) ? (
+            <MppDashboard />
+          ) : currentTab?.tab_action?.startsWith('REDIRECT:') ? (
+            <EmployeeTable key={currentTab.tab_action.split(':')[1] || ''} menuKey={currentTab.tab_action.split(':')[1] || ''} />
+          ) : currentTab?.tab_action === 'COMING_SOON' ? (
             <EmptyState
               variant="empty"
               icon="Warn"
               title={currentTab.menu_label}
               text="Fitur ini sedang dalam pengembangan — Coming Soon"
             />
-          )}
+          ) : null}
         </>
       )}
     </StdPage>

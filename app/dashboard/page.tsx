@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import ApprovalCenterExact from './components/ApprovalCenterExact';
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -206,6 +206,7 @@ const AUTO_REDIRECT_MAP: Record<string, string> = {
   plant_admin: '/partbook/admin',
   apd_pengajuan: '/dashboard/apd-pengajuan',
   hr_dashboard: '/dashboard/hr-dashboard',
+  kelola_karyawan: '/dashboard/hr-dashboard',
   plant_dashboard: '/dashboard/plant',
   plant_inspeksi: '/dashboard/plant/inspeksi',
   plant_logistik: '/dashboard/plant/logistik',
