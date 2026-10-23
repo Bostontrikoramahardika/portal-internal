@@ -94,7 +94,7 @@ function formatColumnName(col: string) {
 // ═══════════════════════════════════════════════════════════════
 function renderCell(col: string, val: any) {
   if (val === null || val === undefined) {
-    return <span className="text-[#1a2332] italic font-bold text-[10px]">EMPTY</span>
+    return <span className="text-[#1a2332] italic font-bold text-[10px]">�</span>
   }
   if (typeof val === 'boolean') {
     return val 
@@ -848,3 +848,4 @@ function ResignModal({ row, mode, onClose, onSuccess }: any) {
     </div>
   )
 }
+
