@@ -170,10 +170,24 @@ export async function POST(request: NextRequest) {
     //    Tabel 'bpjs' terpisah tidak lagi dipakai untuk import.
     //    File HR punya header tidak di baris 1 -> pakai AOA mentah.
     if (targetTable === 'bpjs') {
-      const aoa: any[][] = XLSX.utils.sheet_to_json(sheet, {
-        header: 1, defval: null, raw: false, blankrows: false
-      })
-      return await handleBpjsImport(aoa)
+      // Cari sheet yang punya header "nama" — jangan hanya sheet pertama
+      const tried: any[] = []
+      for (const nm of workbook.SheetNames) {
+        const aoa: any[][] = XLSX.utils.sheet_to_json(workbook.Sheets[nm], {
+          header: 1, defval: null, raw: false, blankrows: false
+        })
+        if (!aoa || aoa.length === 0) continue
+        const hi = findHeaderRow(aoa)
+        if (hi === -1) { tried.push(nm); continue }
+        const header = (aoa[hi] || []).map(c => BPJS_NORM(c))
+        const cN = findNameColumn(header, aoa, hi)
+        if (cN === -1) { tried.push(nm); continue }
+        const res = await handleBpjsImport(aoa, nm)
+        return res
+      }
+      return NextResponse.json({
+        error: `Tidak menemukan sheet berisi kolom nama karyawan. Sheet yang dicek: ${workbook.SheetNames.join(', ')}`
+      }, { status: 400 })
     }
 
     // 5. Handler generic untuk tabel lain
@@ -349,45 +363,93 @@ const BPJS_CLEAN = (v: any) => {
   return t
 }
 
+function isHeaderWord(v: string): boolean {
+  if (!v) return false
+  if (v === 'NAMA' || v === 'DESC' || v === 'TOTAL' || v === 'NO BPJS' || v === 'BPJS') return true
+  if (v.includes('NAMA KARYAWAN')) return true
+  return false
+}
+
+function looksLikeName(v: string): boolean {
+  if (!v) return false
+  if (isHeaderWord(v)) return false
+  if (/\d{4,}/.test(v)) return false           // nomor, tanggal, NIK
+  return /^[A-Z][A-Z .,'\-]{2,}$/.test(v)      // minimal 3 huruf
+}
+
+function countAlphaCells(row: any[]): number {
+  return (row || []).filter(c => {
+    const v = BPJS_NORM(c)
+    return v.length >= 3 && /^[A-Z][A-Z .,'\-]*$/.test(v)
+  }).length
+}
+
 function findHeaderRow(aoa: any[][]): number {
   const cands: number[] = []
-  for (let i = 0; i < Math.min(aoa.length, 30); i++) {
-    const cells = (aoa[i] || []).map(c => BPJS_NORM(c))
-    const hasNama = cells.some(c => c.includes('NAMA KARYAWAN') || c === 'NAMA')
-    const hasBpjs = cells.some(c => c.includes('KETENAGA') || c.includes('KESEHATAN') || c.includes('BPJS'))
-    if (hasNama && hasBpjs) cands.push(i)
+  const rowAt = (i: number): any[] => (Array.isArray(aoa[i]) ? aoa[i] : [])
+  for (let i = 0; i < Math.min(aoa.length, 40); i++) {
+    const cells = rowAt(i).map(c => BPJS_NORM(c))
+    if (cells.some(c => c.includes('NAMA') || c.includes('KARYAWAN'))) cands.push(i)
   }
   if (cands.length === 0) return -1
 
-  // Pilih header yang baris SESUDAHNYA berisi nama orang (bukan header lagi).
-  const isHeaderWord = (v: string) =>
-    !v || v === 'NAMA' || v.includes('NAMA KARYAWAN') || v === 'DESC' || v === 'TOTAL'
-
-  for (const i of cands) {
-    const row = (aoa[i] || []).map(c => BPJS_NORM(c))
-    const cNama = row.findIndex(c => c.includes('NAMA KARYAWAN') || c === 'NAMA')
-    if (cNama === -1) continue
-
+  // Pilih kandidat yang: baris sesudahnya berisi nama orang, DAN
+  // punya paling banyak sel berisi kata (header asli lebih "penuh").
+  const scored = cands.map(i => {
+    const row = rowAt(i)
+    let belowOk = false
     let r = i + 1
     let guard = 0
     while (r < aoa.length && guard < 5 && !(aoa[r] || []).some(x => BPJS_CLEAN(x))) { r++; guard++ }
-    if (r >= aoa.length) continue
+    if (r < aoa.length) {
+      belowOk = (aoa[r] || []).some(x => looksLikeName(BPJS_NORM(x)))
+    }
+    return { i, belowOk, score: countAlphaCells(row) }
+  })
 
-    const below = BPJS_NORM((aoa[r] || [])[cNama])
-    if (!isHeaderWord(below)) return i
-  }
-  return cands[cands.length - 1]
+  const good = scored.filter(x => x.belowOk)
+  const pool = good.length > 0 ? good : scored
+  pool.sort((a, b) => (b.score - a.score) || (b.i - a.i))
+  return pool[0].i
 }
 
-async function handleBpjsImport(aoa: any[][]) {
+function findNameColumn(header: string[], aoa: any[][], headerIdx: number): number {
+  // 1) paling spesifik
+  let c = header.findIndex(h => h === 'NAMA KARYAWAN')
+  if (c !== -1) return c
+  c = header.findIndex(h => h.includes('NAMA') && h.includes('KARYAWAN'))
+  if (c !== -1) return c
+  // 2) kolom persis "NAMA"
+  c = header.findIndex(h => h === 'NAMA')
+  if (c !== -1) return c
+  // 3) kolom mana pun yang memuat kata NAMA
+  c = header.findIndex(h => h.includes('NAMA') && !h.includes('BPJS'))
+  if (c !== -1) return c
+  // 4) tebak dari isi: kolom dengan nama orang terbanyak
+  let best = -1
+  let bestN = 0
+  const width = Math.max(...aoa.slice(headerIdx + 1, headerIdx + 40).map(r => (r || []).length), header.length)
+  for (let ci = 0; ci < width; ci++) {
+    let n = 0
+    for (let r = headerIdx + 1; r < Math.min(aoa.length, headerIdx + 60); r++) {
+      if (looksLikeName(BPJS_NORM((aoa[r] || [])[ci]))) n++
+    }
+    if (n > bestN) { bestN = n; best = ci }
+  }
+  return bestN >= 2 ? best : -1
+}
+
+async function handleBpjsImport(aoa: any[][], sheetName = '') {
   if (!aoa || aoa.length === 0) {
     return NextResponse.json({ error: 'File kosong' }, { status: 400 })
   }
 
   const headerIdx = findHeaderRow(aoa)
   if (headerIdx === -1) {
+    const preview = aoa.slice(0, 6).map(r => (r || []).slice(0, 12).map((c: any) => String(c ?? '').trim()).filter(Boolean).join(' | ')).filter(Boolean)
     return NextResponse.json({
-      error: 'Header tidak dikenali. Pastikan ada kolom "Nama Karyawan" dan "Ketenagakerjaan"/"Kesehatan".'
+      error: `Header tidak terdeteksi di sheet "${sheetName}". 6 baris pertama: ${preview.join(' /// ')}`,
+      diagnosa: { sheet: sheetName, jumlahBaris: aoa.length, preview }
     }, { status: 400 })
   }
 
@@ -395,7 +457,7 @@ async function handleBpjsImport(aoa: any[][]) {
 
   // cari kolom utama
   const colOf = (pred: (h: string) => boolean) => header.findIndex(pred)
-  const cNama = colOf(h => h === 'NAMA KARYAWAN' || h === 'NAMA KARYAWAN ')
+  const cNama = findNameColumn(header, aoa, headerIdx)
   const cNrp = colOf(h => h === 'NRP' || h === 'NIK' || h === 'NIK SITE')
   const cSite = colOf(h => h === 'SITE')
   const cTk = colOf(h => h.includes('KETENAGA'))
@@ -403,7 +465,17 @@ async function handleBpjsImport(aoa: any[][]) {
   const cGol = colOf(h => h.includes('GOLONGAN'))
 
   if (cNama === -1) {
-    return NextResponse.json({ error: 'Kolom "Nama Karyawan" tidak ditemukan' }, { status: 400 })
+    const headerCells = (aoa[headerIdx] || []).slice(0, 40).map((c: any) => String(c ?? '').trim()).filter(Boolean)
+    return NextResponse.json({
+      error: `Kolom "Nama Karyawan" tidak ditemukan di sheet "${sheetName}". Isi header baris ${headerIdx + 1}: ${headerCells.join(' | ')}`,
+      diagnosa: {
+        sheet: sheetName,
+        headerBaris: headerIdx + 1,
+        jumlahBaris: aoa.length,
+        isiHeader: headerCells,
+        contohBarisBawah: (aoa[headerIdx + 1] || []).slice(0, 15).map((c: any) => String(c ?? '').trim())
+      }
+    }, { status: 400 })
   }
 
   // ── kolom keluarga: cari label grup (istri / anak 1..3) di baris atas header
@@ -530,6 +602,7 @@ async function handleBpjsImport(aoa: any[][]) {
     message: `✅ Import BPJS selesai. Diperbarui: ${updated} · tidak ketemu: ${notFound.length} · gagal: ${failed.length}`,
     summary: {
       tabel: 'employees (bpjs_tk, bpjs_kes, keluarga)',
+      sheet: sheetName,
       headerBaris: headerIdx + 1,
       namaUnik: acc.size,
       diupdate: updated,
