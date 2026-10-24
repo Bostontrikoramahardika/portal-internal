@@ -444,16 +444,31 @@ function findHeaderRow(aoa: any[][]): number {
 }
 
 function findNameColumn(header: string[], aoa: any[][], headerIdx: number): number {
-  // 1) paling spesifik
-  let c = header.findIndex(h => h === 'NAMA KARYAWAN')
-  if (c !== -1) return c
-  c = header.findIndex(h => h.includes('NAMA') && h.includes('KARYAWAN'))
-  if (c !== -1) return c
-  // 2) kolom persis "NAMA"
-  c = header.findIndex(h => h === 'NAMA')
-  if (c !== -1) return c
-  // 3) kolom mana pun yang memuat kata NAMA
-  c = header.findIndex(h => h.includes('NAMA') && !h.includes('BPJS'))
+  // Judul kolom sering TERPECAH ke beberapa baris: nama karyawan ada di baris
+  // atas header, sedangkan baris header hanya memuat "Tgl Masuk / Ketenagakerjaan /
+  // Kesehatan / No. BPJS / Nama (istri) / Nama (anak)". Jadi cari di gabungan baris.
+  const barisJudul: string[][] = []
+  for (let r = Math.max(0, headerIdx - 3); r <= Math.min(aoa.length - 1, headerIdx + 1); r++) {
+    barisJudul.push((aoa[r] || []).map((x: any) => BPJS_NORM(x)))
+  }
+  // kolom nomor BPJS -> penanda bahwa "NAMA" di sebelahnya adalah nama anggota keluarga
+  const isKolomNoBpjs = (h: string) => h.includes('BPJS') && !h.includes('NAMA')
+
+  // 1) paling spesifik: NAMA KARYAWAN (boleh dari baris mana pun di sekitar header)
+  for (const row of barisJudul) {
+    const i = row.findIndex(h => h.includes('NAMA KARYAWAN'))
+    if (i !== -1) return i
+  }
+  // 2) kolom persis "NAMA" di baris header, TAPI lewati nama istri/anak
+  const rowHeader = barisJudul[barisJudul.length - 2] || header
+  for (let i = 0; i < header.length; i++) {
+    if (header[i] !== 'NAMA') continue
+    const kiri = header[i - 1] || ''
+    if (isKolomNoBpjs(kiri)) continue // ini nama istri/anak, bukan nama karyawan
+    return i
+  }
+  // 3) kolom mana pun yang memuat kata NAMA (kecuali BPJS / anggota keluarga)
+  let c = header.findIndex(h => h.includes('NAMA') && !h.includes('BPJS') && !h.includes('ISTRI') && !h.includes('ANAK'))
   if (c !== -1) return c
   // 4) tebak dari isi: kolom dengan nama orang terbanyak
   let best = -1
@@ -734,6 +749,8 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
       tidakKetemu: notFound.length,
       gagal: failed.length,
       barisTanpaNama: tanpaNama.length,
+      namaKolomKe: cNama + 1,
+      namaKolomJudul: header[cNama] || '',
       kolomKeluargaDitemukan: fam.map(f => f.key),
       famDeteksi
     },
