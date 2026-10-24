@@ -509,10 +509,10 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
   }
 
   // ── KOLOM KELUARGA ─────────────────────────────────────────
-  // Cara 1 (utama): pasangan berurutan (No BPJS, Nama) SETELAH kolom Kesehatan.
-  //   Pasangan ke-1 = Istri, ke-2 = Anak1, ke-3 = Anak2, ke-4 = Anak3.
-  //   Cara ini tahan terhadap label grup yang posisinya tidak sejajar.
-  // Cara 2 (cadangan): cari label "ISTRI"/"ANAK n" di baris atas header.
+  // Prinsip: JANGAN bergantung pada judul kolom (label merged sering tidak sejajar).
+  // Kenali dari ISI: kolom di sebelah kanan kolom "Kesehatan" yang berisi
+  // deretan angka panjang (>= 8 digit) = nomor BPJS keluarga.
+  // Urutan: ke-1 Istri, ke-2 Anak1, ke-3 Anak2, ke-4 Anak3.
   type Fam = { key: string; noCol: number; namaCol: number }
   const fam: Fam[] = []
 
@@ -523,50 +523,80 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
     { no: 'bpjs_anak3', nama: '' },
   ]
 
-  const isNoBpjs = (h: string) => h.includes('NO BPJS') || h.includes('NOMOR BPJS') || h === 'BPJS' || h === 'NO.BPJS'
-  const isNama = (h: string) => h === 'NAMA' || h === 'NAMA LENGKAP'
+  const isNoBpjs = (h: string) => h.includes('NO BPJS') || h.includes('NOMOR BPJS') || h === 'BPJS'
+  const isNamaKol = (h: string) => h === 'NAMA' || h === 'NAMA LENGKAP' || h === 'NAMA ANGGOTA'
 
-  // mulai mencari setelah kolom Kesehatan
-  const startCol = (cKes >= 0 ? cKes : (cTk >= 0 ? cTk : cNama)) + 1
-  let k = 0
-  for (let c = startCol; c < header.length && k < famAssign.length; c++) {
-    if (isNoBpjs(header[c]) && isNama(header[c + 1] || '')) {
-      fam.push({ key: famAssign[k].no, noCol: c, namaCol: famAssign[k].nama ? c + 1 : -1 })
-      k++
-      c++ // lewati kolom Nama
-      continue
-    }
-    if (isNama(header[c]) && isNoBpjs(header[c + 1] || '')) {
-      fam.push({ key: famAssign[k].no, noCol: c + 1, namaCol: famAssign[k].nama ? c : -1 })
-      k++
-      c++
-    }
+  // angka murni panjang -> kandidat nomor BPJS
+  const bpjsNoOf = (v: any): string | null => {
+    const t = BPJS_CLEAN(v)
+    if (!t) return null
+    // buang spasi / strip / titik pemisah yang sering ada di sel Excel
+    const t2 = t.replace(/[\s\-\.]/g, '')
+    if (t2.replace(/[^0-9]/g, '') !== t2) return null
+    if (t2.length < 8 || t2.length > 20) return null
+    return t2
+  }
+  // teks berisi huruf -> kandidat nama anggota
+  const teksNamaOf = (v: any): string | null => {
+    const t = BPJS_CLEAN(v)
+    if (!t) return null
+    if (!/[A-Za-z]/.test(t)) return null
+    if (t.length < 2) return null
+    return t
   }
 
-  // cadangan: pakai label grup di baris atas header
-  if (fam.length === 0) {
-    const labels: { label: string; col: number }[] = []
-    for (let up = 1; up <= 6 && headerIdx - up >= 0 && labels.length === 0; up++) {
-      const row = (aoa[headerIdx - up] || []).map(x => BPJS_NORM(x))
-      row.forEach((cell, ci) => {
-        if (!cell) return
-        if (cell.includes('ISTRI') || /^ANAK\s*[1-4]$/.test(cell) || cell === 'ANAK') {
-          labels.push({ label: cell, col: ci })
-        }
-      })
+  const dataAwal = headerIdx + 1
+  const scan = aoa.slice(dataAwal, dataAwal + 600)
+  const nColScan = scan.reduce((m: number, r: any) => Math.max(m, (r || []).length), 0)
+  const mulaiCari = (cKes >= 0 ? cKes : (cTk >= 0 ? cTk : cNama)) + 1
+
+  const famDeteksi: any[] = []
+
+  // Cara 1 (UTAMA): kenali dari isi sel
+  const kandidat: { col: number; isi: number; namaCol: number }[] = []
+  for (let c = mulaiCari; c < nColScan; c++) {
+    if (c === cNrp) continue
+    let isi = 0
+    for (const row of scan) if (bpjsNoOf((row || [])[c])) isi++
+    if (isi < 1) continue
+    let namaCol = -1
+    const nxt = c + 1
+    if (nxt < nColScan) {
+      let teks = 0
+      for (const row of scan) if (teksNamaOf((row || [])[nxt])) teks++
+      if (teks >= Math.max(1, Math.floor(isi * 0.5))) namaCol = nxt
     }
-    labels.sort((a, b) => a.col - b.col)
-    labels.forEach((g, gi) => {
-      const limit = gi + 1 < labels.length ? labels[gi + 1].col : header.length
-      let noCol = -1, namaCol = -1
-      for (let c = g.col; c < limit; c++) {
-        if (noCol === -1 && isNoBpjs(header[c])) { noCol = c; continue }
-        if (noCol !== -1 && namaCol === -1 && isNama(header[c])) { namaCol = c; break }
-      }
-      const key = g.label.includes('ISTRI') ? 'bpjs_istri' : `bpjs_anak${(g.label.match(/([1-4])/) || ['', '1'])[1]}`
-      const nm = key === 'bpjs_istri' ? 'nama_istri' : (key === 'bpjs_anak1' ? 'nama_anak' : '')
-      if (noCol !== -1) fam.push({ key, noCol, namaCol: nm ? namaCol : -1 })
+    kandidat.push({ col: c, isi, namaCol })
+  }
+
+  kandidat.slice(0, famAssign.length).forEach((k2, i) => {
+    const nm = famAssign[i].nama
+    fam.push({ key: famAssign[i].no, noCol: k2.col, namaCol: nm ? k2.namaCol : -1 })
+    famDeteksi.push({
+      kolom: famAssign[i].no,
+      excelKolomKe: k2.col + 1,
+      judul: header[k2.col] || '(kosong)',
+      judulNama: k2.namaCol !== -1 ? (header[k2.namaCol] || '(kosong)') : null,
+      jumlahTerisi: k2.isi,
     })
+  })
+
+  // Cara 2 (cadangan): pasangan (No BPJS, Nama) di baris header
+  if (fam.length === 0) {
+    let k = 0
+    for (let c = mulaiCari; c < header.length && k < famAssign.length; c++) {
+      if (isNoBpjs(header[c]) && isNamaKol(header[c + 1] || '')) {
+        fam.push({ key: famAssign[k].no, noCol: c, namaCol: famAssign[k].nama ? c + 1 : -1 })
+        famDeteksi.push({ kolom: famAssign[k].no, excelKolomKe: c + 1, judul: header[c], judulNama: header[c + 1], jumlahTerisi: -1 })
+        k++; c++
+        continue
+      }
+      if (isNamaKol(header[c]) && isNoBpjs(header[c + 1] || '')) {
+        fam.push({ key: famAssign[k].no, noCol: c + 1, namaCol: famAssign[k].nama ? c : -1 })
+        famDeteksi.push({ kolom: famAssign[k].no, excelKolomKe: c + 2, judul: header[c + 1], judulNama: header[c], jumlahTerisi: -1 })
+        k++; c++
+      }
+    }
   }
 
   // ── baca baris data
@@ -595,7 +625,8 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
     if (cTk !== -1) setIf('bpjs_tk', BPJS_CLEAN(row[cTk]))
     if (cKes !== -1) setIf('bpjs_kes', BPJS_CLEAN(row[cKes]))
     for (const f of fam) {
-      setIf(f.key, BPJS_CLEAN(row[f.noCol]))
+      // nomor disimpan rapi tanpa spasi/strip bila memang angka murni
+      setIf(f.key, bpjsNoOf(row[f.noCol]) || BPJS_CLEAN(row[f.noCol]))
       if (f.namaCol !== -1 && f.key === 'bpjs_istri') setIf('nama_istri', BPJS_CLEAN(row[f.namaCol]))
       if (f.namaCol !== -1 && f.key === 'bpjs_anak1') setIf('nama_anak', BPJS_CLEAN(row[f.namaCol]))
     }
@@ -703,7 +734,8 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
       tidakKetemu: notFound.length,
       gagal: failed.length,
       barisTanpaNama: tanpaNama.length,
-      kolomKeluargaDitemukan: fam.map(f => f.key)
+      kolomKeluargaDitemukan: fam.map(f => f.key),
+      famDeteksi
     },
     tidakKetemu: notFound.slice(0, 60),
     gagal: failed.slice(0, 20),

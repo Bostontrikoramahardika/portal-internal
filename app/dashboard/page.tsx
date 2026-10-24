@@ -1899,7 +1899,7 @@ function ImportExcel({ title, table }: any) {
           <h3 className="text-xl font-black text-slate-900 mb-6">📤 Upload Berkas Excel</h3>
           {msg.text && <div className={`p-4 rounded-2xl mb-3 text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
 
-          {detail && ((detail.tidakKetemu?.length > 0) || detail.diagnosa || detail.gagal?.length > 0) && (
+          {detail && ((detail.tidakKetemu?.length > 0) || detail.diagnosa || detail.gagal?.length > 0 || detail.summary?.famDeteksi?.length > 0) && (
             <div className="mb-6 rounded-2xl border-2 border-amber-200 bg-amber-50 p-3">
               <button type="button" onClick={() => setShowDetail(v => !v)}
                 className="w-full text-left text-[11px] font-black uppercase tracking-widest text-amber-800 flex items-center justify-between">
@@ -1914,6 +1914,21 @@ function ImportExcel({ title, table }: any) {
                       {Object.entries(detail.summary).map(([k, v]: any) => (
                         <div key={k}><span className="text-slate-400">{k}:</span> {String(v)}</div>
                       ))}
+                    </div>
+                  )}
+
+                  {detail.summary?.famDeteksi?.length > 0 && (
+                    <div className="bg-white rounded-xl p-2">
+                      <div className="font-black text-emerald-700 mb-1">Kolom BPJS keluarga yang terbaca dari Excel:</div>
+                      <div className="font-mono text-[10px] leading-relaxed">
+                        {detail.summary.famDeteksi.map((f: any, i: number) => (
+                          <div key={i}>
+                            {f.kolom} ← kolom Excel ke-{f.excelKolomKe}
+                            {f.judul && f.judul !== '(kosong)' ? ` (${f.judul})` : ''}
+                            {f.jumlahTerisi > 0 ? ` · ${f.jumlahTerisi} baris terisi` : ''}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
