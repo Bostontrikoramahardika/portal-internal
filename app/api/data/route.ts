@@ -1385,11 +1385,8 @@ function getColumns(rows: any[], table?: string, superAdmin = false): string[] {
       'kode_absensi',
       '_status', 'status_karyawan', 'email',
     ]
-    const skip = new Set([
-      'tanggal_keluar', 'alasan_keluar', 'departemen', 'tgl_masuk', 'usia',
-    ])
     const ordered = preferredOrder.filter(k => keys.includes(k))
-    const rest = keys.filter(k => !ordered.includes(k) && !skip.has(k) && k !== '_nama_atasan' && k !== '_nama_pjo')
+    const rest = keys.filter(k => !ordered.includes(k) && k !== '_nama_atasan' && k !== '_nama_pjo')
     return [...ordered, ...rest]
   }
   
