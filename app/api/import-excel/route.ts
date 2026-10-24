@@ -508,44 +508,66 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
     }, { status: 400 })
   }
 
-  // ── kolom keluarga: cari label grup (istri / anak 1..3) di baris atas header
+  // ── KOLOM KELUARGA ─────────────────────────────────────────
+  // Cara 1 (utama): pasangan berurutan (No BPJS, Nama) SETELAH kolom Kesehatan.
+  //   Pasangan ke-1 = Istri, ke-2 = Anak1, ke-3 = Anak2, ke-4 = Anak3.
+  //   Cara ini tahan terhadap label grup yang posisinya tidak sejajar.
+  // Cara 2 (cadangan): cari label "ISTRI"/"ANAK n" di baris atas header.
   type Fam = { key: string; noCol: number; namaCol: number }
   const fam: Fam[] = []
-  const groupLabels: { label: string; col: number }[] = []
-  for (let up = 1; up <= 4 && headerIdx - up >= 0; up++) {
-    const row = (aoa[headerIdx - up] || []).map(c => BPJS_NORM(c))
-    row.forEach((cell, ci) => {
-      if (!cell) return
-      if (cell === 'ISTRI' || /^ANAK\s*[1-4]$/.test(cell) || cell === 'ANAK') {
-        groupLabels.push({ label: cell, col: ci })
-      }
-    })
-    if (groupLabels.length > 0) break
-  }
-  groupLabels.sort((a, b) => a.col - b.col)
 
-  const famKey = (label: string) => {
-    if (label.includes('ISTRI')) return { no: 'bpjs_istri', nama: 'nama_istri' }
-    const m = label.match(/([1-4])/)
-    const n = m ? m[1] : '1'
-    return { no: `bpjs_anak${n}`, nama: n === '1' ? 'nama_anak' : '' }
-  }
+  const famAssign = [
+    { no: 'bpjs_istri', nama: 'nama_istri' },
+    { no: 'bpjs_anak1', nama: 'nama_anak' },
+    { no: 'bpjs_anak2', nama: '' },
+    { no: 'bpjs_anak3', nama: '' },
+  ]
 
-  groupLabels.forEach((g, gi) => {
-    const end = gi + 1 < groupLabels.length ? groupLabels[gi + 1].col : header.length
-    let noCol = -1
-    let namaCol = -1
-    for (let c = g.col; c < end; c++) {
-      const h = header[c] || ''
-      if (h.includes('NO BPJS') || h === 'NO. BPJS' || h.includes('NOMOR BPJS') || h === 'BPJS') {
-        if (noCol === -1) noCol = c
-      } else if (h === 'NAMA') {
-        if (namaCol === -1) namaCol = c
-      }
+  const isNoBpjs = (h: string) => h.includes('NO BPJS') || h.includes('NOMOR BPJS') || h === 'BPJS' || h === 'NO.BPJS'
+  const isNama = (h: string) => h === 'NAMA' || h === 'NAMA LENGKAP'
+
+  // mulai mencari setelah kolom Kesehatan
+  const startCol = (cKes >= 0 ? cKes : (cTk >= 0 ? cTk : cNama)) + 1
+  let k = 0
+  for (let c = startCol; c < header.length && k < famAssign.length; c++) {
+    if (isNoBpjs(header[c]) && isNama(header[c + 1] || '')) {
+      fam.push({ key: famAssign[k].no, noCol: c, namaCol: famAssign[k].nama ? c + 1 : -1 })
+      k++
+      c++ // lewati kolom Nama
+      continue
     }
-    const k = famKey(g.label)
-    if (noCol !== -1) fam.push({ key: k.no, noCol, namaCol: k.nama ? namaCol : -1 })
-  })
+    if (isNama(header[c]) && isNoBpjs(header[c + 1] || '')) {
+      fam.push({ key: famAssign[k].no, noCol: c + 1, namaCol: famAssign[k].nama ? c : -1 })
+      k++
+      c++
+    }
+  }
+
+  // cadangan: pakai label grup di baris atas header
+  if (fam.length === 0) {
+    const labels: { label: string; col: number }[] = []
+    for (let up = 1; up <= 6 && headerIdx - up >= 0 && labels.length === 0; up++) {
+      const row = (aoa[headerIdx - up] || []).map(x => BPJS_NORM(x))
+      row.forEach((cell, ci) => {
+        if (!cell) return
+        if (cell.includes('ISTRI') || /^ANAK\s*[1-4]$/.test(cell) || cell === 'ANAK') {
+          labels.push({ label: cell, col: ci })
+        }
+      })
+    }
+    labels.sort((a, b) => a.col - b.col)
+    labels.forEach((g, gi) => {
+      const limit = gi + 1 < labels.length ? labels[gi + 1].col : header.length
+      let noCol = -1, namaCol = -1
+      for (let c = g.col; c < limit; c++) {
+        if (noCol === -1 && isNoBpjs(header[c])) { noCol = c; continue }
+        if (noCol !== -1 && namaCol === -1 && isNama(header[c])) { namaCol = c; break }
+      }
+      const key = g.label.includes('ISTRI') ? 'bpjs_istri' : `bpjs_anak${(g.label.match(/([1-4])/) || ['', '1'])[1]}`
+      const nm = key === 'bpjs_istri' ? 'nama_istri' : (key === 'bpjs_anak1' ? 'nama_anak' : '')
+      if (noCol !== -1) fam.push({ key, noCol, namaCol: nm ? namaCol : -1 })
+    })
+  }
 
   // ── baca baris data
   type Acc = Record<string, any> & { _nama: string; _nrp: string | null; _site: string | null }
@@ -649,7 +671,16 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
 
   for (const [namaKey, v] of acc) {
     const emp = cariKaryawan(v._nama, v._site, v._nrp)
-    if (!emp) { notFound.push({ nama: v._nama, site: v._site }); continue }
+    if (!emp) {
+      // 3 nama terdekat di database, untuk membantu pengecekan manual
+      const k1 = BPJS_KEY(v._nama)
+      const saran = list
+        .map((e: any) => ({ nama: e.nama, nrp: e.nrp, skor: Math.round(similarity(k1, BPJS_KEY(e.nama)) * 100) }))
+        .sort((a: any, b: any) => b.skor - a.skor)
+        .slice(0, 3)
+      notFound.push({ nama: v._nama, site: v._site, mirip: saran })
+      continue
+    }
 
     const patch: any = {}
     for (const f of FIELDS) if (v[f]) patch[f] = v[f]

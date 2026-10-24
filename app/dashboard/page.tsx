@@ -1922,7 +1922,14 @@ function ImportExcel({ title, table }: any) {
                       <div className="font-black text-rose-700 mb-1">Nama di Excel yang tidak ketemu di database:</div>
                       <div className="max-h-48 overflow-auto font-mono text-[10px] leading-relaxed">
                         {detail.tidakKetemu.map((n: any, i: number) => (
-                          <div key={i}>{i + 1}. {n.nama} <span className="text-slate-400">[{n.site || '-'}]</span></div>
+                          <div key={i} className="mb-1">
+                            {i + 1}. <span className="text-rose-700">{n.nama}</span> <span className="text-slate-400">[{n.site || '-'}]</span>
+                            {n.mirip?.length > 0 && (
+                              <div className="pl-4 text-slate-500">
+                                mirip: {n.mirip.map((m: any) => `${m.nama} (${m.skor}%)`).join(' · ')}
+                              </div>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </div>
