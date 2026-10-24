@@ -1286,6 +1286,17 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
     const pjoEmp    = pjoNrp    ? empMapNrp.get(String(pjoNrp))    : null
     
     const result: any = { ...r }
+
+    // 🔗 SATU SUMBER data keluar: tanggal_resign / alasan_resign.
+    // Di database ada dua pasang kolom (tanggal_keluar/alasan_keluar dan
+    // tanggal_resign/alasan_resign) -> isinya sama. Disatukan di sini supaya
+    // di tabel tidak muncul dua kolom "Tgl Keluar" dan dua kolom "Alasan".
+    if (table === 'employees') {
+      result.tanggal_resign = r.tanggal_resign || r.tanggal_keluar || null
+      result.alasan_resign   = r.alasan_resign || r.alasan_keluar || null
+      delete result.tanggal_keluar
+      delete result.alasan_keluar
+    }
     
     // Skip _nama_karyawan untuk employees (biar tidak duplikat)
     if (table !== 'employees') {
@@ -1297,7 +1308,7 @@ async function enrichWithNames(rows: any[], table: string): Promise<any[]> {
     // 🆕 MASA KERJA (untuk table employees)
     if (table === 'employees') {
       const tglMasuk = r.tanggal_masuk || r.tgl_masuk
-      const tglResign = r.tanggal_resign
+      const tglResign = r.tanggal_resign || r.tanggal_keluar
       
       if (tglMasuk) {
         const start = new Date(tglMasuk)
@@ -1368,6 +1379,7 @@ function getColumns(rows: any[], table?: string, superAdmin = false): string[] {
       'password_last_changed', 'is_super_admin',
       'google_refresh_token', 'google_access_token', 'session_token',
       'atasan_nrp', 'pjo_nrp', 'employee_nrp', 'uploaded_by', 'nrp_login', 'resign_by',
+      'tanggal_keluar', 'alasan_keluar',
     ]
     const keys = Object.keys(rows[0]).filter(
       (k: string) => !hideEmp.includes(k) || (superAdmin && k === 'password')
