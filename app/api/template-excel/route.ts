@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
         'nrp', 'nama_karyawan', 'jenis_sp', 'no_sp',
         'tanggal_sp', 'tanggal_expired', 'alasan', 'keterangan'
       ],
+      // 🔗 BPJS satu sumber: langsung ke kolom employees (bpjs_tk / bpjs_kes)
       bpjs: [
-        'nrp', 'nama_karyawan', 'jenis_bpjs', 'no_bpjs',
-        'tanggal_daftar', 'status_aktif', 'keterangan'
+        'nrp', 'nama_karyawan', 'bpjs_tk', 'bpjs_kes', 'keterangan'
       ],
       kpi: [
         'nrp', 'nama_karyawan', 'periode', 'nilai_kpi',
@@ -78,9 +78,22 @@ employees: [
     // 4. Kalau mode = 'existing', ambil data existing sebagai preview
     let dataRows: any[][] = []
     if (mode === 'existing') {
-      const { data } = await supabase.from(table).select('*').limit(100)
-      if (data && data.length > 0) {
-        dataRows = data.map((row: any) => columns.map(col => row[col] ?? ''))
+      // 🔗 BPJS: sumber data karyawan, bukan tabel bpjs terpisah
+      const sourceTable = table === 'bpjs' ? 'employees' : table
+      let q = supabase.from(sourceTable).select('*').limit(table === 'bpjs' ? 1000 : 100)
+      const { data } = await q
+      let rows = data || []
+      if (table === 'bpjs') {
+        rows = rows.filter((r: any) =>
+          (r.bpjs_tk && String(r.bpjs_tk).trim()) || (r.bpjs_kes && String(r.bpjs_kes).trim())
+        )
+        rows.sort((a: any, b: any) => String(a.nama || '').localeCompare(String(b.nama || '')))
+      }
+      if (rows.length > 0) {
+        dataRows = rows.map((row: any) => columns.map(col => {
+          if (col === 'nama_karyawan') return row.nama ?? row.nama_karyawan ?? ''
+          return row[col] ?? ''
+        }))
       }
     }
 

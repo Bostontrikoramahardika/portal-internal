@@ -166,6 +166,12 @@ export async function POST(request: NextRequest) {
       return await handleEmployeesImport(rawData)
     }
 
+    // 🔗 BPJS satu sumber: masuk ke kolom employees (bpjs_tk / bpjs_kes).
+    //    Tabel 'bpjs' terpisah tidak lagi dipakai untuk import.
+    if (targetTable === 'bpjs') {
+      return await handleBpjsImport(rawData)
+    }
+
     // 5. Handler generic untuk tabel lain
     const { error } = await supabaseAdmin.from(targetTable).upsert(rawData)
     if (error) {
@@ -300,6 +306,157 @@ async function handleEmployeesImport(rawData: any[]) {
       updated: updatedCount,
       invalid: invalidRows.length
     },
+    invalidRows: invalidRows.slice(0, 20)
+  })
+}
+
+
+// ═══════════════════════════════════════════════════
+// Handler import BPJS -> kolom tabel employees
+// SATU SUMBER DATA: public.employees
+//   bpjs_tk  = nomor BPJS Ketenagakerjaan
+//   bpjs_kes = nomor BPJS Kesehatan
+// Menerima 2 format:
+//   A. LEBAR : nrp | nama_karyawan | bpjs_tk | bpjs_kes
+//   B. PANJANG: nrp | nama_karyawan | jenis_bpjs | no_bpjs
+// ═══════════════════════════════════════════════════
+async function handleBpjsImport(rawData: any[]) {
+  const norm = (k: string) => String(k).toLowerCase().trim().replace(/\s+/g, '_')
+  const stripB = (v: any) => String(v ?? '').trim().replace(/^B/i, '').toUpperCase()
+  const clean = (v: any) => {
+    if (v === null || v === undefined) return null
+    const t = String(v).trim()
+    if (!t || t === '-' || t.toLowerCase() === 'null' || t.toLowerCase() === 'tidak ada') return null
+    return t
+  }
+
+  const pick = (row: any, keys: string[]) => {
+    for (const k of keys) {
+      const v = clean(row[k])
+      if (v) return v
+    }
+    return null
+  }
+
+  // ---- 1. Kumpulkan per NRP ----
+  type Acc = { nrp: string; nama: string | null; bpjs_tk: string | null; bpjs_kes: string | null }
+  const acc = new Map<string, Acc>()
+  const invalidRows: any[] = []
+
+  for (let i = 0; i < rawData.length; i++) {
+    const raw = rawData[i] || {}
+    const row: any = {}
+    Object.keys(raw).forEach(k => { row[norm(k)] = raw[k] })
+
+    const nrp = pick(row, ['nrp', 'nik', 'nik_site', 'nik_site_'])
+    const nama = pick(row, ['nama_karyawan', 'nama'])
+    if (!nrp) {
+      if (nama) invalidRows.push({ baris: i + 2, nama, alasan: 'NRP kosong' })
+      continue
+    }
+
+    let tk = pick(row, ['bpjs_tk', 'bpjs_ketenagakerjaan', 'no_bpjs_tk', 'no_bpjs_ketenagakerjaan', 'ketenagakerjaan'])
+    let kes = pick(row, ['bpjs_kes', 'bpjs_kesehatan', 'no_bpjs_kes', 'no_bpjs_kesehatan', 'kesehatan'])
+
+    // format panjang: jenis_bpjs + no_bpjs
+    if (!tk && !kes) {
+      const jenis = (pick(row, ['jenis_bpjs', 'jenis']) || '').toLowerCase()
+      const no = pick(row, ['no_bpjs', 'nomor_bpjs', 'no_kartu'])
+      if (no && jenis) {
+        if (jenis.includes('tk') || jenis.includes('ketenaga') || jenis.includes('tenaga')) tk = no
+        else if (jenis.includes('kes') || jenis.includes('sehat')) kes = no
+      }
+    }
+
+    if (!tk && !kes) {
+      invalidRows.push({ baris: i + 2, nrp, nama, alasan: 'Nomor BPJS kosong' })
+      continue
+    }
+
+    const key = stripB(nrp)
+    const prev = acc.get(key) || { nrp, nama, bpjs_tk: null, bpjs_kes: null }
+    if (!prev.bpjs_tk && tk) prev.bpjs_tk = tk
+    if (!prev.bpjs_kes && kes) prev.bpjs_kes = kes
+    if (!prev.nama && nama) prev.nama = nama
+    acc.set(key, prev)
+  }
+
+  if (acc.size === 0) {
+    return NextResponse.json({
+      error: 'Tidak ada data BPJS yang bisa diimport',
+      invalidRows: invalidRows.slice(0, 20)
+    }, { status: 400 })
+  }
+
+  // ---- 2. Ambil karyawan (satu sumber: employees) ----
+  const { data: emps, error: empErr } = await supabaseAdmin
+    .from('employees')
+    .select('nrp, nama, status_karyawan')
+
+  if (empErr) {
+    return NextResponse.json({ error: `Gagal baca karyawan: ${empErr.message}` }, { status: 500 })
+  }
+
+  const byNrp = new Map<string, any>()
+  const byStrip = new Map<string, any>()
+  const byNama = new Map<string, any>()
+
+  const isDup = (e: any) => String(e.status_karyawan || '').toLowerCase() === 'duplikat'
+  const better = (a: any, b: any) => (!a ? b : (!b ? a : (isDup(a) && !isDup(b) ? b : a)))
+
+  for (const e of (emps || [])) {
+    byNrp.set(String(e.nrp), better(byNrp.get(String(e.nrp)), e))
+    const sb = stripB(e.nrp)
+    byStrip.set(sb, better(byStrip.get(sb), e))
+    const nm = String(e.nama || '').trim().toUpperCase()
+    if (nm) byNama.set(nm, better(byNama.get(nm), e))
+  }
+
+  // ---- 3. Update employees ----
+  let updated = 0
+  const notFound: any[] = []
+  const failed: any[] = []
+
+  for (const [key, v] of acc) {
+    const emp =
+      byNrp.get(String(v.nrp)) ||
+      byNrp.get(key) ||
+      byStrip.get(key) ||
+      (v.nama ? byNama.get(String(v.nama).trim().toUpperCase()) : null)
+
+    if (!emp) {
+      notFound.push({ nrp: v.nrp, nama: v.nama })
+      continue
+    }
+
+    const patch: any = {}
+    if (v.bpjs_tk) patch.bpjs_tk = v.bpjs_tk
+    if (v.bpjs_kes) patch.bpjs_kes = v.bpjs_kes
+    if (Object.keys(patch).length === 0) continue
+
+    const { error } = await supabaseAdmin
+      .from('employees')
+      .update(patch)
+      .eq('nrp', emp.nrp)
+
+    if (error) failed.push({ nrp: emp.nrp, nama: emp.nama, error: error.message })
+    else updated++
+  }
+
+  return NextResponse.json({
+    success: true,
+    message: `✅ Import BPJS selesai. Diperbarui: ${updated}, tidak ketemu: ${notFound.length}, gagal: ${failed.length}, dilewati: ${invalidRows.length}`,
+    summary: {
+      totalParsed: rawData.length,
+      nrpUnik: acc.size,
+      updated,
+      notFound: notFound.length,
+      failed: failed.length,
+      invalid: invalidRows.length,
+      tabel: 'employees (bpjs_tk, bpjs_kes)'
+    },
+    notFound: notFound.slice(0, 20),
+    failed: failed.slice(0, 20),
     invalidRows: invalidRows.slice(0, 20)
   })
 }

@@ -969,8 +969,6 @@ const menuInfo = isSuperAdmin
 
       const { data: pkwtData } = await supabase.from('pkwt').select('*').in('nrp', [nrpStr, nrpWithZero]).order('created_at', { ascending: false }).limit(1).single()
 
-      const { data: bpjsTable } = await supabase.from('bpjs').select('*').ilike('nama_karyawan', session.nama).limit(1).single()
-
       const { data: spData } = await supabase
         .from('sp')
         .select('*')
@@ -1002,18 +1000,19 @@ const menuInfo = isSuperAdmin
         exp_simper: simperLatest?.tanggal_expired || employeeData.exp_simper || null,
         pkwt_periode: pkwtData ? `${pkwtData.mulai_kontrak} s/d ${pkwtData.akhir_kontrak}` : '-',
         punishments: spData || [],
-        bpjs_tk_no: bpjsTable?.bpjs_ketenagakerjaan || '-',
-        bpjs_tk_nama: session.nama, 
-        bpjs_kes_no: bpjsTable?.bpjs_kesehatan || '-',
-        bpjs_kes_nama: session.nama,
-        bpjs_istri_no: bpjsTable?.istri_bpjs || '-',
-        bpjs_istri_nama: bpjsTable?.istri_nama || '-',
-        bpjs_anak1_no: bpjsTable?.anak1_bpjs || '-',
-        bpjs_anak1_nama: bpjsTable?.anak1_nama || '-',
-        bpjs_anak2_no: bpjsTable?.anak2_bpjs || '-',
-        bpjs_anak2_nama: bpjsTable?.anak2_nama || '-',
-        bpjs_anak3_no: bpjsTable?.anak3_bpjs || '-',
-        bpjs_anak3_nama: bpjsTable?.anak3_nama || '-',
+        // 🔗 BPJS satu sumber: kolom di tabel employees (bukan tabel bpjs terpisah)
+        bpjs_tk_no: employeeData.bpjs_tk || '-',
+        bpjs_tk_nama: employeeData.nama || '-',
+        bpjs_kes_no: employeeData.bpjs_kes || '-',
+        bpjs_kes_nama: employeeData.nama || '-',
+        bpjs_istri_no: employeeData.bpjs_istri || '-',
+        bpjs_istri_nama: employeeData.nama_istri || '-',
+        bpjs_anak1_no: employeeData.bpjs_anak1 || '-',
+        bpjs_anak1_nama: employeeData.nama_anak || '-',
+        bpjs_anak2_no: employeeData.bpjs_anak2 || '-',
+        bpjs_anak2_nama: '-',
+        bpjs_anak3_no: employeeData.bpjs_anak3 || '-',
+        bpjs_anak3_nama: '-',
       }
 
       return NextResponse.json({ type: 'identity_view', data: finalData })
