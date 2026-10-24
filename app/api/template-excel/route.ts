@@ -47,9 +47,13 @@ export async function GET(request: NextRequest) {
         'nrp', 'nama_karyawan', 'jenis_sp', 'no_sp',
         'tanggal_sp', 'tanggal_expired', 'alasan', 'keterangan'
       ],
-      // 🔗 BPJS satu sumber: langsung ke kolom employees (bpjs_tk / bpjs_kes)
+      // 🔗 BPJS satu sumber: langsung ke kolom employees
       bpjs: [
-        'nrp', 'nama_karyawan', 'bpjs_tk', 'bpjs_kes', 'keterangan'
+        'nrp', 'nama_karyawan', 'bpjs_tk', 'bpjs_kes',
+        'bpjs_istri', 'nama_istri',
+        'bpjs_anak1', 'nama_anak',
+        'bpjs_anak2', 'bpjs_anak3',
+        'keterangan'
       ],
       kpi: [
         'nrp', 'nama_karyawan', 'periode', 'nilai_kpi',
@@ -77,16 +81,20 @@ employees: [
 
     // 4. Kalau mode = 'existing', ambil data existing sebagai preview
     let dataRows: any[][] = []
-    if (mode === 'existing') {
+    const isExport = mode === 'existing' || mode === 'export'
+    if (isExport) {
       // 🔗 BPJS: sumber data karyawan, bukan tabel bpjs terpisah
       const sourceTable = table === 'bpjs' ? 'employees' : table
       let q = supabase.from(sourceTable).select('*').limit(table === 'bpjs' ? 1000 : 100)
       const { data } = await q
       let rows = data || []
       if (table === 'bpjs') {
-        rows = rows.filter((r: any) =>
-          (r.bpjs_tk && String(r.bpjs_tk).trim()) || (r.bpjs_kes && String(r.bpjs_kes).trim())
-        )
+        const anyBpjs = (r: any) =>
+          ['bpjs_tk','bpjs_kes','bpjs_istri','bpjs_anak1','bpjs_anak2','bpjs_anak3']
+            .some(k => r[k] && String(r[k]).trim())
+        rows = rows.filter(anyBpjs)
+        // buang baris duplikat/sudah keluar
+        rows = rows.filter((r: any) => String(r.status_karyawan || '').toLowerCase() !== 'duplikat')
         rows.sort((a: any, b: any) => String(a.nama || '').localeCompare(String(b.nama || '')))
       }
       if (rows.length > 0) {
@@ -103,8 +111,8 @@ employees: [
     // Sheet 1: Data
     const wsData: any[][] = [columns, ...dataRows]
 
-    // Kalau kosong, tambah 1 baris contoh
-    if (dataRows.length === 0) {
+    // Baris contoh HANYA untuk template kosong (bukan master data)
+    if (dataRows.length === 0 && !isExport) {
       const exampleRow: any[] = columns.map(col => {
         if (col === 'nrp') return '0530999'
         if (col === 'nama' || col === 'nama_karyawan') return 'Nama Contoh'

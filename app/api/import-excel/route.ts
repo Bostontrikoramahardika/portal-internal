@@ -166,10 +166,14 @@ export async function POST(request: NextRequest) {
       return await handleEmployeesImport(rawData)
     }
 
-    // 🔗 BPJS satu sumber: masuk ke kolom employees (bpjs_tk / bpjs_kes).
+    // 🔗 BPJS satu sumber: masuk ke kolom employees (bpjs_tk / bpjs_kes + keluarga).
     //    Tabel 'bpjs' terpisah tidak lagi dipakai untuk import.
+    //    File HR punya header tidak di baris 1 -> pakai AOA mentah.
     if (targetTable === 'bpjs') {
-      return await handleBpjsImport(rawData)
+      const aoa: any[][] = XLSX.utils.sheet_to_json(sheet, {
+        header: 1, defval: null, raw: false, blankrows: false
+      })
+      return await handleBpjsImport(aoa)
     }
 
     // 5. Handler generic untuk tabel lain
@@ -310,153 +314,231 @@ async function handleEmployeesImport(rawData: any[]) {
   })
 }
 
+// ═══════════════════════════════════════════════════════
+// IMPORT BPJS -> kolom tabel employees (SATU SUMBER)
+// ---------------------------------------------------------------
+// Menerima file apa adanya dari HR (contoh: "BPJS Update oktober
+// 2026.xlsx") yang header-nya TIDAK di baris 1.
+//
+// Pencocokan baris: NAMA (utama), NRP kalau ada.
+// Kolom yang diisi di employees:
+//   bpjs_tk, bpjs_kes,
+//   bpjs_istri, nama_istri,
+//   bpjs_anak1, nama_anak,
+//   bpjs_anak2, bpjs_anak3
+// ═══════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════
-// Handler import BPJS -> kolom tabel employees
-// SATU SUMBER DATA: public.employees
-//   bpjs_tk  = nomor BPJS Ketenagakerjaan
-//   bpjs_kes = nomor BPJS Kesehatan
-// Menerima 2 format:
-//   A. LEBAR : nrp | nama_karyawan | bpjs_tk | bpjs_kes
-//   B. PANJANG: nrp | nama_karyawan | jenis_bpjs | no_bpjs
-// ═══════════════════════════════════════════════════
-async function handleBpjsImport(rawData: any[]) {
-  const norm = (k: string) => String(k).toLowerCase().trim().replace(/\s+/g, '_')
-  const stripB = (v: any) => String(v ?? '').trim().replace(/^B/i, '').toUpperCase()
-  const clean = (v: any) => {
-    if (v === null || v === undefined) return null
-    const t = String(v).trim()
-    if (!t || t === '-' || t.toLowerCase() === 'null' || t.toLowerCase() === 'tidak ada') return null
-    return t
+const BPJS_NORM = (v: any) =>
+  String(v ?? '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+const BPJS_CLEAN = (v: any) => {
+  if (v === null || v === undefined) return null
+  let t = String(v).trim()
+  if (!t) return null
+  // buang format scientific / desimal aneh dari Excel
+  if (/^\d+(\.0+)?$/.test(t)) t = t.replace(/\.0+$/, '')
+  if (/e\+/i.test(t)) {
+    const n = Number(t)
+    if (Number.isFinite(n)) t = n.toFixed(0)
+  }
+  if (['-', 'NULL', 'TIDAK ADA', 'N/A', 'NA'].includes(t.toUpperCase())) return null
+  return t
+}
+
+function findHeaderRow(aoa: any[][]): number {
+  const cands: number[] = []
+  for (let i = 0; i < Math.min(aoa.length, 30); i++) {
+    const cells = (aoa[i] || []).map(c => BPJS_NORM(c))
+    const hasNama = cells.some(c => c.includes('NAMA KARYAWAN') || c === 'NAMA')
+    const hasBpjs = cells.some(c => c.includes('KETENAGA') || c.includes('KESEHATAN') || c.includes('BPJS'))
+    if (hasNama && hasBpjs) cands.push(i)
+  }
+  if (cands.length === 0) return -1
+
+  // Pilih header yang baris SESUDAHNYA berisi nama orang (bukan header lagi).
+  const isHeaderWord = (v: string) =>
+    !v || v === 'NAMA' || v.includes('NAMA KARYAWAN') || v === 'DESC' || v === 'TOTAL'
+
+  for (const i of cands) {
+    const row = (aoa[i] || []).map(c => BPJS_NORM(c))
+    const cNama = row.findIndex(c => c.includes('NAMA KARYAWAN') || c === 'NAMA')
+    if (cNama === -1) continue
+
+    let r = i + 1
+    let guard = 0
+    while (r < aoa.length && guard < 5 && !(aoa[r] || []).some(x => BPJS_CLEAN(x))) { r++; guard++ }
+    if (r >= aoa.length) continue
+
+    const below = BPJS_NORM((aoa[r] || [])[cNama])
+    if (!isHeaderWord(below)) return i
+  }
+  return cands[cands.length - 1]
+}
+
+async function handleBpjsImport(aoa: any[][]) {
+  if (!aoa || aoa.length === 0) {
+    return NextResponse.json({ error: 'File kosong' }, { status: 400 })
   }
 
-  const pick = (row: any, keys: string[]) => {
-    for (const k of keys) {
-      const v = clean(row[k])
-      if (v) return v
-    }
-    return null
-  }
-
-  // ---- 1. Kumpulkan per NRP ----
-  type Acc = { nrp: string; nama: string | null; bpjs_tk: string | null; bpjs_kes: string | null }
-  const acc = new Map<string, Acc>()
-  const invalidRows: any[] = []
-
-  for (let i = 0; i < rawData.length; i++) {
-    const raw = rawData[i] || {}
-    const row: any = {}
-    Object.keys(raw).forEach(k => { row[norm(k)] = raw[k] })
-
-    const nrp = pick(row, ['nrp', 'nik', 'nik_site', 'nik_site_'])
-    const nama = pick(row, ['nama_karyawan', 'nama'])
-    if (!nrp) {
-      if (nama) invalidRows.push({ baris: i + 2, nama, alasan: 'NRP kosong' })
-      continue
-    }
-
-    let tk = pick(row, ['bpjs_tk', 'bpjs_ketenagakerjaan', 'no_bpjs_tk', 'no_bpjs_ketenagakerjaan', 'ketenagakerjaan'])
-    let kes = pick(row, ['bpjs_kes', 'bpjs_kesehatan', 'no_bpjs_kes', 'no_bpjs_kesehatan', 'kesehatan'])
-
-    // format panjang: jenis_bpjs + no_bpjs
-    if (!tk && !kes) {
-      const jenis = (pick(row, ['jenis_bpjs', 'jenis']) || '').toLowerCase()
-      const no = pick(row, ['no_bpjs', 'nomor_bpjs', 'no_kartu'])
-      if (no && jenis) {
-        if (jenis.includes('tk') || jenis.includes('ketenaga') || jenis.includes('tenaga')) tk = no
-        else if (jenis.includes('kes') || jenis.includes('sehat')) kes = no
-      }
-    }
-
-    if (!tk && !kes) {
-      invalidRows.push({ baris: i + 2, nrp, nama, alasan: 'Nomor BPJS kosong' })
-      continue
-    }
-
-    const key = stripB(nrp)
-    const prev = acc.get(key) || { nrp, nama, bpjs_tk: null, bpjs_kes: null }
-    if (!prev.bpjs_tk && tk) prev.bpjs_tk = tk
-    if (!prev.bpjs_kes && kes) prev.bpjs_kes = kes
-    if (!prev.nama && nama) prev.nama = nama
-    acc.set(key, prev)
-  }
-
-  if (acc.size === 0) {
+  const headerIdx = findHeaderRow(aoa)
+  if (headerIdx === -1) {
     return NextResponse.json({
-      error: 'Tidak ada data BPJS yang bisa diimport',
-      invalidRows: invalidRows.slice(0, 20)
+      error: 'Header tidak dikenali. Pastikan ada kolom "Nama Karyawan" dan "Ketenagakerjaan"/"Kesehatan".'
     }, { status: 400 })
   }
 
-  // ---- 2. Ambil karyawan (satu sumber: employees) ----
+  const header = (aoa[headerIdx] || []).map(c => BPJS_NORM(c))
+
+  // cari kolom utama
+  const colOf = (pred: (h: string) => boolean) => header.findIndex(pred)
+  const cNama = colOf(h => h === 'NAMA KARYAWAN' || h === 'NAMA KARYAWAN ')
+  const cNrp = colOf(h => h === 'NRP' || h === 'NIK' || h === 'NIK SITE')
+  const cSite = colOf(h => h === 'SITE')
+  const cTk = colOf(h => h.includes('KETENAGA'))
+  const cKes = colOf(h => h.includes('KESEHATAN') && !h.includes('KELUARGA'))
+  const cGol = colOf(h => h.includes('GOLONGAN'))
+
+  if (cNama === -1) {
+    return NextResponse.json({ error: 'Kolom "Nama Karyawan" tidak ditemukan' }, { status: 400 })
+  }
+
+  // ── kolom keluarga: cari label grup (istri / anak 1..3) di baris atas header
+  type Fam = { key: string; noCol: number; namaCol: number }
+  const fam: Fam[] = []
+  const groupLabels: { label: string; col: number }[] = []
+  for (let up = 1; up <= 4 && headerIdx - up >= 0; up++) {
+    const row = (aoa[headerIdx - up] || []).map(c => BPJS_NORM(c))
+    row.forEach((cell, ci) => {
+      if (!cell) return
+      if (cell === 'ISTRI' || /^ANAK\s*[1-4]$/.test(cell) || cell === 'ANAK') {
+        groupLabels.push({ label: cell, col: ci })
+      }
+    })
+    if (groupLabels.length > 0) break
+  }
+  groupLabels.sort((a, b) => a.col - b.col)
+
+  const famKey = (label: string) => {
+    if (label.includes('ISTRI')) return { no: 'bpjs_istri', nama: 'nama_istri' }
+    const m = label.match(/([1-4])/)
+    const n = m ? m[1] : '1'
+    return { no: `bpjs_anak${n}`, nama: n === '1' ? 'nama_anak' : '' }
+  }
+
+  groupLabels.forEach((g, gi) => {
+    const end = gi + 1 < groupLabels.length ? groupLabels[gi + 1].col : header.length
+    let noCol = -1
+    let namaCol = -1
+    for (let c = g.col; c < end; c++) {
+      const h = header[c] || ''
+      if (h.includes('NO BPJS') || h === 'NO. BPJS' || h.includes('NOMOR BPJS') || h === 'BPJS') {
+        if (noCol === -1) noCol = c
+      } else if (h === 'NAMA') {
+        if (namaCol === -1) namaCol = c
+      }
+    }
+    const k = famKey(g.label)
+    if (noCol !== -1) fam.push({ key: k.no, noCol, namaCol: k.nama ? namaCol : -1 })
+  })
+
+  // ── baca baris data
+  type Acc = Record<string, any> & { _nama: string; _nrp: string | null; _site: string | null }
+  const acc = new Map<string, Acc>()
+  const tanpaNama: number[] = []
+
+  for (let r = headerIdx + 1; r < aoa.length; r++) {
+    const row = aoa[r] || []
+    const nama = BPJS_CLEAN(row[cNama])
+    if (!nama) { tanpaNama.push(r + 1); continue }
+    const namaKey = BPJS_NORM(nama)
+    if (!namaKey) continue
+    if (['NAMA', 'DESC', 'TOTAL'].includes(namaKey)) continue
+
+    const nrpRaw = cNrp !== -1 ? BPJS_CLEAN(row[cNrp]) : null
+    const site = cSite !== -1 ? BPJS_CLEAN(row[cSite]) : null
+
+    const cur: Acc = acc.get(namaKey) || { _nama: nama, _nrp: nrpRaw, _site: site } as Acc
+    if (!cur._nrp && nrpRaw) cur._nrp = nrpRaw
+    if (!cur._site && site) cur._site = site
+
+    const setIf = (k: string, v: any) => { if (v && !cur[k]) cur[k] = v }
+
+    if (cTk !== -1) setIf('bpjs_tk', BPJS_CLEAN(row[cTk]))
+    if (cKes !== -1) setIf('bpjs_kes', BPJS_CLEAN(row[cKes]))
+    for (const f of fam) {
+      setIf(f.key, BPJS_CLEAN(row[f.noCol]))
+      if (f.namaCol !== -1 && f.key === 'bpjs_istri') setIf('nama_istri', BPJS_CLEAN(row[f.namaCol]))
+      if (f.namaCol !== -1 && f.key === 'bpjs_anak1') setIf('nama_anak', BPJS_CLEAN(row[f.namaCol]))
+    }
+
+    acc.set(namaKey, cur)
+  }
+
+  if (acc.size === 0) {
+    return NextResponse.json({ error: 'Tidak ada baris berisi Nama Karyawan' }, { status: 400 })
+  }
+
+  // ── ambil karyawan (SATU SUMBER: employees)
   const { data: emps, error: empErr } = await supabaseAdmin
     .from('employees')
-    .select('nrp, nama, status_karyawan')
+    .select('nrp, nama, site, status_karyawan')
 
   if (empErr) {
     return NextResponse.json({ error: `Gagal baca karyawan: ${empErr.message}` }, { status: 500 })
   }
 
-  const byNrp = new Map<string, any>()
-  const byStrip = new Map<string, any>()
-  const byNama = new Map<string, any>()
-
   const isDup = (e: any) => String(e.status_karyawan || '').toLowerCase() === 'duplikat'
   const better = (a: any, b: any) => (!a ? b : (!b ? a : (isDup(a) && !isDup(b) ? b : a)))
 
+  const byNama = new Map<string, any>()
+  const byNrp = new Map<string, any>()
   for (const e of (emps || [])) {
-    byNrp.set(String(e.nrp), better(byNrp.get(String(e.nrp)), e))
-    const sb = stripB(e.nrp)
-    byStrip.set(sb, better(byStrip.get(sb), e))
-    const nm = String(e.nama || '').trim().toUpperCase()
-    if (nm) byNama.set(nm, better(byNama.get(nm), e))
+    const nk = BPJS_NORM(e.nama)
+    if (nk) byNama.set(nk, better(byNama.get(nk), e))
+    const nk2 = String(e.nrp || '').trim().toUpperCase().replace(/^B/, '')
+    if (nk2) byNrp.set(nk2, better(byNrp.get(nk2), e))
   }
 
-  // ---- 3. Update employees ----
+  // ── update
   let updated = 0
   const notFound: any[] = []
   const failed: any[] = []
+  const FIELDS = ['bpjs_tk','bpjs_kes','bpjs_istri','nama_istri','bpjs_anak1','nama_anak','bpjs_anak2','bpjs_anak3']
 
-  for (const [key, v] of acc) {
-    const emp =
-      byNrp.get(String(v.nrp)) ||
-      byNrp.get(key) ||
-      byStrip.get(key) ||
-      (v.nama ? byNama.get(String(v.nama).trim().toUpperCase()) : null)
-
-    if (!emp) {
-      notFound.push({ nrp: v.nrp, nama: v.nama })
-      continue
+  for (const [namaKey, v] of acc) {
+    let emp = byNama.get(namaKey) || null
+    if (!emp && v._nrp) {
+      emp = byNrp.get(String(v._nrp).trim().toUpperCase().replace(/^B/, '')) || null
     }
+    if (!emp) { notFound.push({ nama: v._nama, nrp: v._nrp, site: v._site }); continue }
 
     const patch: any = {}
-    if (v.bpjs_tk) patch.bpjs_tk = v.bpjs_tk
-    if (v.bpjs_kes) patch.bpjs_kes = v.bpjs_kes
+    for (const f of FIELDS) if (v[f]) patch[f] = v[f]
     if (Object.keys(patch).length === 0) continue
 
-    const { error } = await supabaseAdmin
-      .from('employees')
-      .update(patch)
-      .eq('nrp', emp.nrp)
-
+    const { error } = await supabaseAdmin.from('employees').update(patch).eq('nrp', emp.nrp)
     if (error) failed.push({ nrp: emp.nrp, nama: emp.nama, error: error.message })
     else updated++
   }
 
   return NextResponse.json({
     success: true,
-    message: `✅ Import BPJS selesai. Diperbarui: ${updated}, tidak ketemu: ${notFound.length}, gagal: ${failed.length}, dilewati: ${invalidRows.length}`,
+    message: `✅ Import BPJS selesai. Diperbarui: ${updated} · tidak ketemu: ${notFound.length} · gagal: ${failed.length}`,
     summary: {
-      totalParsed: rawData.length,
-      nrpUnik: acc.size,
-      updated,
-      notFound: notFound.length,
-      failed: failed.length,
-      invalid: invalidRows.length,
-      tabel: 'employees (bpjs_tk, bpjs_kes)'
+      tabel: 'employees (bpjs_tk, bpjs_kes, keluarga)',
+      headerBaris: headerIdx + 1,
+      namaUnik: acc.size,
+      diupdate: updated,
+      tidakKetemu: notFound.length,
+      gagal: failed.length,
+      barisTanpaNama: tanpaNama.length,
+      kolomKeluargaDitemukan: fam.map(f => f.key)
     },
-    notFound: notFound.slice(0, 20),
-    failed: failed.slice(0, 20),
-    invalidRows: invalidRows.slice(0, 20)
+    tidakKetemu: notFound.slice(0, 40),
+    gagal: failed.slice(0, 20)
   })
 }
