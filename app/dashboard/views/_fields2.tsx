@@ -65,7 +65,7 @@ export function formatColumnName(col: string) {
 }
 
 export function renderCell(col: string, val: any) {
-  if (val === null || val === undefined) return <span className="text-slate-200 italic font-bold text-[10px]">EMPTY</span>
+  if (val === null || val === undefined) return <span className="text-slate-200 italic font-bold text-[10px]">—</span>
   if (typeof val === 'boolean') return val ? <span className="text-emerald-500 font-black">YES</span> : <span className="text-slate-300 font-black">NO</span>
   if (col.includes('status')) return <StatusBadge value={String(val)} />
   if (col === 'persen') return <span className="font-black text-slate-900">{val}%</span>
