@@ -30,6 +30,22 @@ import {
 import StatBanner from '@/app/components/std/StatBanner'
 export default function PlantDashboardPage() {
   const [activeTab, setActiveTab] = useState<'KRU_WORKSHOP' | 'KELOLA_UNIT' | 'FORMAT_INSPEKSI' | 'ADMIN_PARTBOOK'>('KRU_WORKSHOP');
+
+  // 🔒 Kartu "Form Inspeksi P2H" hanya muncul untuk pemegang izin plant_p2h_inspeksi.
+  const [bolehP2H, setBolehP2H] = useState<boolean>(false);
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = localStorage.getItem('btm_session_token_v1');
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const res = await fetch('/api/auth/me', { credentials: 'include', headers });
+        const data = res.ok ? await res.json() : null;
+        setBolehP2H(Boolean(data?.is_super_admin) ||
+          (Array.isArray(data?.permissions) && data.permissions.includes('plant_p2h_inspeksi')));
+      } catch { setBolehP2H(false); }
+    })();
+  }, []);
   const [siteFilter, setSiteFilter] = useState<string>('PPA-MLP');
   
   // === STATE DATA KRU & WORKSHOP ===
@@ -325,10 +341,12 @@ export default function PlantDashboardPage() {
             
             {/* Shortcuts Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <Link href="/dashboard/plant/inspeksi" className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 transition-all flex items-center gap-2 font-bold text-slate-700">
-                <ClipboardList className="w-5 h-5 text-blue-600" />
-                <span>Form Inspeksi P2H</span>
-              </Link>
+              {bolehP2H && (
+                <Link href="/dashboard/plant/inspeksi" className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 transition-all flex items-center gap-2 font-bold text-slate-700">
+                  <ClipboardList className="w-5 h-5 text-blue-600" />
+                  <span>Form Inspeksi P2H</span>
+                </Link>
+              )}
               <Link href="/dashboard/plant/logistik" className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-blue-400 transition-all flex items-center gap-2 font-bold text-slate-700">
                 <Package className="w-5 h-5 text-emerald-600" />
                 <span>Logistik & Part</span>

@@ -2,6 +2,7 @@
 
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Wrench, AlertTriangle, Trash2, Send, Plus } from 'lucide-react';
 
 import StatBanner from '@/app/components/std/StatBanner'
@@ -44,6 +45,33 @@ interface BacklogPRItem {
 }
 
 export default function FormInspeksiPage() {
+  const router = useRouter();
+
+  // 🔒 Halaman P2H hanya untuk pemegang izin plant_p2h_inspeksi.
+  //    Kalau tidak berhak: halaman TIDAK ditampilkan dan dialihkan diam-diam
+  //    ke dashboard (tanpa pesan "akses ditolak", agar tidak menimbulkan isu).
+  const [aksesOk, setAksesOk] = useState<boolean | null>(null);
+  useEffect(() => {
+    let batal = false;
+    (async () => {
+      try {
+        const token = localStorage.getItem('btm_session_token_v1');
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const res = await fetch('/api/auth/me', { credentials: 'include', headers });
+        const data = res.ok ? await res.json() : null;
+        const boleh = Boolean(data?.is_super_admin) ||
+          (Array.isArray(data?.permissions) && data.permissions.includes('plant_p2h_inspeksi'));
+        if (batal) return;
+        if (boleh) setAksesOk(true);
+        else { setAksesOk(false); router.replace('/dashboard'); }
+      } catch {
+        if (!batal) { setAksesOk(false); router.replace('/dashboard'); }
+      }
+    })();
+    return () => { batal = true; };
+  }, [router]);
+
   const [userInfo, setUserInfo] = useState<{ name: string; nrp: string; site: string }>({
     name: 'Inspector Plant',
     nrp: '-',
@@ -370,6 +398,8 @@ export default function FormInspeksiPage() {
     groups.set(item.section, group);
     return groups;
   }, new Map<string, { item: ChecklistItem; index: number }[]>()));
+
+  if (aksesOk !== true) return null;
 
   return (
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">

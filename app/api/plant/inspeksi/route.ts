@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import { requireAuth } from "@/app/lib/auth";
+import { hasPermission } from "@/app/lib/permissions";
 import { resolveAllowedSites, resolvePrimarySiteValue } from "@/app/lib/site-scope";
 
 // ════════════════════════════════════════════════════════════════
@@ -51,6 +52,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: auth.message }, { status: auth.status });
     }
     const session: any = auth.session;
+
+    // 🔒 Hanya pemegang izin plant_p2h_inspeksi (team plant / penyelia plant).
+    //    Super admin selalu lolos (lihat app/lib/permissions.ts).
+    if (!hasPermission(session, "plant_p2h_inspeksi")) {
+      return NextResponse.json({ success: false, error: "Tidak tersedia" }, { status: 403 });
+    }
 
     const body = await request.json();
 
