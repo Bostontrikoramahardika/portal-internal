@@ -349,6 +349,36 @@ const BPJS_NORM = (v: any) =>
     .replace(/\s+/g, ' ')
     .trim()
 
+// kunci pencocokan: tanpa spasi & tanda baca
+const BPJS_KEY = (v: any) =>
+  String(v ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+
+// dua kata pertama (untuk nama yang punya gelar / nama panjang)
+const BPJS_KEY2 = (v: any) => {
+  const t = String(v ?? '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
+  return t.split(' ').slice(0, 2).join('')
+}
+
+// kemiripan 0..1
+function similarity(a: string, b: string): number {
+  if (!a || !b) return 0
+  if (a === b) return 1
+  const m = a.length, n = b.length
+  if (Math.abs(m - n) > Math.max(m, n) * 0.4) return 0
+  const prev = new Array(n + 1)
+  const cur = new Array(n + 1)
+  for (let j = 0; j <= n; j++) prev[j] = j
+  for (let i = 1; i <= m; i++) {
+    cur[0] = i
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
+    }
+    for (let j = 0; j <= n; j++) prev[j] = cur[j]
+  }
+  return 1 - prev[n] / Math.max(m, n)
+}
+
 const BPJS_CLEAN = (v: any) => {
   if (v === null || v === undefined) return null
   let t = String(v).trim()
@@ -526,9 +556,10 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
     const row = aoa[r] || []
     const nama = BPJS_CLEAN(row[cNama])
     if (!nama) { tanpaNama.push(r + 1); continue }
-    const namaKey = BPJS_NORM(nama)
+    const namaKey = BPJS_KEY(nama)
     if (!namaKey) continue
-    if (['NAMA', 'DESC', 'TOTAL'].includes(namaKey)) continue
+    if (['NAMA', 'DESC', 'TOTAL', 'NAMADESC'].includes(namaKey)) continue
+    if (namaKey.length < 3) continue
 
     const nrpRaw = cNrp !== -1 ? BPJS_CLEAN(row[cNrp]) : null
     const site = cSite !== -1 ? BPJS_CLEAN(row[cSite]) : null
@@ -566,13 +597,48 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
   const isDup = (e: any) => String(e.status_karyawan || '').toLowerCase() === 'duplikat'
   const better = (a: any, b: any) => (!a ? b : (!b ? a : (isDup(a) && !isDup(b) ? b : a)))
 
-  const byNama = new Map<string, any>()
+  const byKey = new Map<string, any>()     // tanpa spasi & tanda baca
+  const byKey2 = new Map<string, any>()    // dua kata pertama
   const byNrp = new Map<string, any>()
+  const list: any[] = []
+
   for (const e of (emps || [])) {
-    const nk = BPJS_NORM(e.nama)
-    if (nk) byNama.set(nk, better(byNama.get(nk), e))
+    const k1 = BPJS_KEY(e.nama)
+    const k2 = BPJS_KEY2(e.nama)
+    if (k1) { byKey.set(k1, better(byKey.get(k1), e)); list.push(e) }
+    if (k2) byKey2.set(k2, better(byKey2.get(k2), e))
     const nk2 = String(e.nrp || '').trim().toUpperCase().replace(/^B/, '')
     if (nk2) byNrp.set(nk2, better(byNrp.get(nk2), e))
+  }
+
+  const sameSiteOf = (e: any, site: string | null) =>
+    !!(site && e.site && BPJS_KEY(e.site) === BPJS_KEY(site))
+
+  function cariKaryawan(namaRaw: string, site: string | null, nrp: string | null): any {
+    // 1. NRP langsung (kalau ada di file)
+    if (nrp) {
+      const byN = byNrp.get(String(nrp).trim().toUpperCase().replace(/^B/, ''))
+      if (byN) return byN
+    }
+    const k1 = BPJS_KEY(namaRaw)
+    // 2. nama sama persis (tanpa spasi & tanda baca)
+    const exact = byKey.get(k1)
+    if (exact) return exact
+    // 3. dua kata pertama
+    const k2 = BPJS_KEY2(namaRaw)
+    const hit2 = k2 ? byKey2.get(k2) : null
+    if (hit2 && sameSiteOf(hit2, site)) return hit2
+    // 4. kemiripan tinggi, utamakan site sama
+    let best: any = null, bestScore = 0, bestSame = false
+    for (const e of list) {
+      const sc = similarity(k1, BPJS_KEY(e.nama))
+      if (sc < 0.88) continue
+      const same = sameSiteOf(e, site)
+      const isBetter = (same && !bestSame && sc >= 0.88) ||
+                       (same === bestSame && sc > bestScore)
+      if (isBetter) { best = e; bestScore = sc; bestSame = same }
+    }
+    return best
   }
 
   // ── update
@@ -582,11 +648,8 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
   const FIELDS = ['bpjs_tk','bpjs_kes','bpjs_istri','nama_istri','bpjs_anak1','nama_anak','bpjs_anak2','bpjs_anak3']
 
   for (const [namaKey, v] of acc) {
-    let emp = byNama.get(namaKey) || null
-    if (!emp && v._nrp) {
-      emp = byNrp.get(String(v._nrp).trim().toUpperCase().replace(/^B/, '')) || null
-    }
-    if (!emp) { notFound.push({ nama: v._nama, nrp: v._nrp, site: v._site }); continue }
+    const emp = cariKaryawan(v._nama, v._site, v._nrp)
+    if (!emp) { notFound.push({ nama: v._nama, site: v._site }); continue }
 
     const patch: any = {}
     for (const f of FIELDS) if (v[f]) patch[f] = v[f]
@@ -611,7 +674,8 @@ async function handleBpjsImport(aoa: any[][], sheetName = '') {
       barisTanpaNama: tanpaNama.length,
       kolomKeluargaDitemukan: fam.map(f => f.key)
     },
-    tidakKetemu: notFound.slice(0, 40),
-    gagal: failed.slice(0, 20)
+    tidakKetemu: notFound.slice(0, 60),
+    gagal: failed.slice(0, 20),
+    contohNamaDatabase: list.slice(0, 15).map((e: any) => e.nama)
   })
 }

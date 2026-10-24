@@ -1863,16 +1863,19 @@ function ImportExcel({ title, table }: any) {
   const [file, setFile] = useState<File | null>(null)
   const [msg, setMsg] = useState({ type: '', text: '' })
   const [loading, setLoading] = useState(false)
+  const [detail, setDetail] = useState<any>(null)
+  const [showDetail, setShowDetail] = useState(false)
 
   async function handleImport(e: React.FormEvent) {
     e.preventDefault()
     if (!file) return
-    setLoading(true); setMsg({ type: '', text: '' })
+    setLoading(true); setMsg({ type: '', text: '' }); setDetail(null); setShowDetail(false)
     const fd = new FormData()
     fd.append('file', file); fd.append('table', table)
     try {
       const res = await fetch('/api/import-excel', { method: 'POST', body: fd })
       const data = await res.json()
+      setDetail(data)
       if (!res.ok) setMsg({ type: 'err', text: `❌ ${data.error || 'Import Gagal'}` })
       else setMsg({ type: 'ok', text: ` ${data.message}` })
     } catch { setMsg({ type: 'err', text: '❌ Kesalahan Koneksi Server' }) }
@@ -1894,7 +1897,63 @@ function ImportExcel({ title, table }: any) {
         </div>
         <div className="bg-white rounded-[2.5rem] border-4 border-slate-50 p-8 shadow-xl">
           <h3 className="text-xl font-black text-slate-900 mb-6">📤 Upload Berkas Excel</h3>
-          {msg.text && <div className={`p-4 rounded-2xl mb-6 text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
+          {msg.text && <div className={`p-4 rounded-2xl mb-3 text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
+
+          {detail && ((detail.tidakKetemu?.length > 0) || detail.diagnosa || detail.gagal?.length > 0) && (
+            <div className="mb-6 rounded-2xl border-2 border-amber-200 bg-amber-50 p-3">
+              <button type="button" onClick={() => setShowDetail(v => !v)}
+                className="w-full text-left text-[11px] font-black uppercase tracking-widest text-amber-800 flex items-center justify-between">
+                <span>🔍 Lihat detail ({detail.tidakKetemu?.length || 0} nama tidak cocok)</span>
+                <span>{showDetail ? '▲' : '▼'}</span>
+              </button>
+
+              {showDetail && (
+                <div className="mt-3 space-y-3 text-[11px] text-slate-700">
+                  {detail.summary && (
+                    <div className="bg-white rounded-xl p-2 font-mono text-[10px] leading-relaxed">
+                      {Object.entries(detail.summary).map(([k, v]: any) => (
+                        <div key={k}><span className="text-slate-400">{k}:</span> {String(v)}</div>
+                      ))}
+                    </div>
+                  )}
+
+                  {detail.tidakKetemu?.length > 0 && (
+                    <div className="bg-white rounded-xl p-2">
+                      <div className="font-black text-rose-700 mb-1">Nama di Excel yang tidak ketemu di database:</div>
+                      <div className="max-h-48 overflow-auto font-mono text-[10px] leading-relaxed">
+                        {detail.tidakKetemu.map((n: any, i: number) => (
+                          <div key={i}>{i + 1}. {n.nama} <span className="text-slate-400">[{n.site || '-'}]</span></div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {detail.contohNamaDatabase?.length > 0 && (
+                    <div className="bg-white rounded-xl p-2">
+                      <div className="font-black text-emerald-700 mb-1">Contoh nama yang ADA di database:</div>
+                      <div className="max-h-32 overflow-auto font-mono text-[10px] leading-relaxed">
+                        {detail.contohNamaDatabase.map((n: string, i: number) => <div key={i}>{n}</div>)}
+                      </div>
+                    </div>
+                  )}
+
+                  {detail.diagnosa && (
+                    <div className="bg-white rounded-xl p-2 font-mono text-[10px] leading-relaxed">
+                      <div className="font-black text-slate-700 mb-1">Diagnosa:</div>
+                      {JSON.stringify(detail.diagnosa, null, 1)}
+                    </div>
+                  )}
+
+                  {detail.gagal?.length > 0 && (
+                    <div className="bg-white rounded-xl p-2">
+                      <div className="font-black text-rose-700 mb-1">Gagal disimpan:</div>
+                      {detail.gagal.map((g: any, i: number) => <div key={i}>{g.nrp} — {g.error}</div>)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <form onSubmit={handleImport} className="space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
             <div className="p-6 border-4 border-dashed border-slate-100 rounded-[2rem] text-center hover:border-blue-200 transition-all bg-slate-50/30">
                 <input type="file" accept=".xlsx,.xls" onChange={e => setFile(e.target.files?.[0] || null)} className="w-full text-xs cursor-pointer font-bold" />
