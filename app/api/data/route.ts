@@ -1109,6 +1109,9 @@ const menuInfo = isSuperAdmin
 
     let query = supabase.from(target_table).select('*')
 
+    // Sembunyikan baris duplikat NRP (sudah digabung ke baris asli). null tetap tampil.
+    if (target_table === 'employees') { query = query.or('status_karyawan.neq.Duplikat,status_karyawan.is.null') }
+
     if (access_mode === 'SELF') {
       if (NAME_BASED_TABLES.includes(target_table)) query = query.ilike('nama_karyawan', session.nama)
       else query = query.eq('nrp', session.nrp)
