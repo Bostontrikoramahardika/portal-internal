@@ -91,19 +91,19 @@ export const ATURAN_JABATAN: AturanJabatan[] = [
 
   // ── Level 6 — Produksi (operator) ─────────────────────────────
   {
-    baku: 'Operator Excavator', departemen: 'Produksi', role: null, kelompok: 'produksi',
+    baku: 'Operator Excavator', departemen: null, role: null, kelompok: 'produksi',
     alias: [/^operator\s*excavator$/i, /^excavator$/i, /^operator\s*(pc|exca)\s*\d*$/i, /^operator\s*pc$/i],
   },
   {
-    baku: 'Operator Bulldozer', departemen: 'Produksi', role: null, kelompok: 'produksi',
+    baku: 'Operator Bulldozer', departemen: null, role: null, kelompok: 'produksi',
     alias: [/^operator\s*bulldozer$/i, /^bulldozer$/i, /^operator\s*dozer$/i, /^dozer$/i],
   },
   {
-    baku: 'Operator Grader', departemen: 'Produksi', role: null, kelompok: 'produksi',
+    baku: 'Operator Grader', departemen: null, role: null, kelompok: 'produksi',
     alias: [/^operator\s*grader$/i, /^grader$/i, /^motor\s*grader$/i],
   },
   {
-    baku: 'Operator', departemen: 'Produksi', role: null, kelompok: 'produksi',
+    baku: 'Operator', departemen: null, role: null, kelompok: 'produksi',
     alias: [/^operator$/i, /^operator\s*lainnya$/i, /^operator\b.*$/i],
   },
 
@@ -118,7 +118,10 @@ export const ATURAN_JABATAN: AturanJabatan[] = [
   },
   {
     baku: 'Staff Bus Dev', departemen: 'Business Development', role: 'business_dev', kelompok: 'ho',
-    alias: [/^staff\s*bus\s*dev$/i, /^bus\s*dev$/i, /^business\s*development$/i],
+    // CATATAN: tulisan "Business Development" (tanpa kata Staff) SENGAJA tidak
+    // dipetakan, karena jabatan itu juga dipakai Direktur Operasional.
+    // Hanya "Staff Bus Dev" / "Bus Dev" yang dianggap staf.
+    alias: [/^staff\s*bus\s*dev$/i, /^bus\s*dev$/i],
   },
 
   // ── Administrasi & pendukung (departemen sengaja tidak diisi) ──
