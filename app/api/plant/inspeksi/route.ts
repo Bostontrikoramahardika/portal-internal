@@ -15,6 +15,13 @@ export async function GET(request: NextRequest) {
     }
     const session: any = auth.session;
 
+    // 🔒 Riwayat inspeksi hanya untuk pemegang izin plant_p2h_inspeksi.
+    //    Bagi yang tidak berhak: kembalikan daftar kosong (netral),
+    //    bukan pesan "akses ditolak" agar tidak menimbulkan isu.
+    if (!hasPermission(session, "plant_p2h_inspeksi")) {
+      return NextResponse.json({ success: true, data: [] });
+    }
+
     const { searchParams } = new URL(request.url);
     const requestedSite = searchParams.get("site");
     const { sites, restricted } = await resolveAllowedSites(session, requestedSite);

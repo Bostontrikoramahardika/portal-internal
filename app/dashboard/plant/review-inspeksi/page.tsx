@@ -8,6 +8,7 @@
 // ════════════════════════════════════════════════════════════════
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface ChkItem { section?: string; item?: string; status?: string; keterangan?: string }
 interface InspRow {
@@ -62,6 +63,32 @@ function fmtTgl(iso?: string): string {
 }
 
 export default function ReviewInspeksiPage() {
+  const router = useRouter();
+
+  // 🔒 Halaman ini hanya untuk pemegang izin plant_p2h_inspeksi.
+  //    Tidak berhak -> tidak ditampilkan, dialihkan diam-diam ke Dashboard.
+  const [aksesOk, setAksesOk] = useState<boolean | null>(null);
+  useEffect(() => {
+    let batal = false;
+    (async () => {
+      try {
+        const token = localStorage.getItem('btm_session_token_v1');
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const res = await fetch('/api/auth/me', { credentials: 'include', headers });
+        const data = res.ok ? await res.json() : null;
+        const boleh = Boolean(data?.is_super_admin) ||
+          (Array.isArray(data?.permissions) && data.permissions.includes('plant_p2h_inspeksi'));
+        if (batal) return;
+        if (boleh) setAksesOk(true);
+        else { setAksesOk(false); router.replace('/dashboard'); }
+      } catch {
+        if (!batal) { setAksesOk(false); router.replace('/dashboard'); }
+      }
+    })();
+    return () => { batal = true; };
+  }, [router]);
+
   const [rows, setRows] = useState<InspRow[]>([]);
   const [closings, setClosings] = useState<Closing[]>([]);
   const [prs, setPrs] = useState<PrRow[]>([]);
@@ -258,6 +285,8 @@ export default function ReviewInspeksiPage() {
     const y = 150 - ((t.skor - 50) / 50) * 120;
     return `${x},${Math.max(14, Math.min(150, y))}`;
   }).join(' ');
+
+  if (aksesOk !== true) return null;
 
   return (
     <div className="space-y-3">
