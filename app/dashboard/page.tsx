@@ -1899,6 +1899,87 @@ function ImportExcel({ title, table }: any) {
           <h3 className="text-xl font-black text-slate-900 mb-6">📤 Upload Berkas Excel</h3>
           {msg.text && <div className={`p-4 rounded-2xl mb-3 text-sm font-bold ${msg.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{msg.text}</div>}
 
+          {/* Hasil rinci import karyawan: baris ditolak, peringatan site, sel kosong yang tidak menimpa */}
+          {detail && (detail.jabatanDisesuaikan?.length > 0 || detail.roleDitambahkan?.length > 0) && (
+            <div className="mb-4 space-y-2">
+              {detail.jabatanDisesuaikan?.length > 0 && (
+                <div className="rounded-xl bg-sky-50 border border-sky-200 p-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-sky-800 mb-1">
+                    🏷️ Jabatan dibetulkan otomatis ({detail.jabatanDisesuaikan.length} baris)
+                  </p>
+                  <ul className="text-[11px] text-sky-900 space-y-0.5 leading-snug">
+                    {detail.jabatanDisesuaikan.slice(0, 15).map((r: any, i: number) => (
+                      <li key={`jab-${i}`}>
+                        • NRP {r.nrp} — jabatan <b>{r.jabatan_jadi}</b>
+                        {r.jabatan_dari && r.jabatan_dari !== r.jabatan_jadi ? <> (dari &quot;{r.jabatan_dari}&quot;)</> : null}
+                        {r.departemen_jadi ? <> · departemen <b>{r.departemen_jadi}</b>{r.departemen_dari && r.departemen_dari !== r.departemen_jadi ? <> (dari &quot;{r.departemen_dari}&quot;)</> : null}</> : null}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {detail.roleDitambahkan?.length > 0 && (
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800 mb-1">
+                    🔑 Role ditambahkan ({detail.roleDitambahkan.length} orang)
+                  </p>
+                  <ul className="text-[11px] text-emerald-900 space-y-0.5 leading-snug">
+                    {detail.roleDitambahkan.slice(0, 15).map((r: any, i: number) => (
+                      <li key={`role-${i}`}>
+                        • NRP {r.nrp} → role <b>{r.role}</b>
+                        {r.scope_site ? <> (site {r.scope_site})</> : null}
+                        {r.izin ? <> · {r.izin} izin disalin</> : null}
+                        {r.catatan ? <> · {r.catatan}</> : null}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {detail && (detail.invalidRows?.length > 0 || detail.warningRows?.length > 0 || detail.contohTidakDitimpa?.length > 0) && (
+            <div className="mb-4 space-y-2">
+              {detail.invalidRows?.length > 0 && (
+                <div className="rounded-xl bg-red-50 border border-red-200 p-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-700 mb-1">
+                    ⛔ Tidak diimpor ({detail.invalidRows.length} baris)
+                  </p>
+                  <ul className="text-[11px] text-red-800 space-y-0.5 leading-snug">
+                    {detail.invalidRows.slice(0, 20).map((r: any, i: number) => (
+                      <li key={`inv-${i}`}>• Baris {r.baris || '-'} · NRP {r.nrp || '-'} — {r.alasan || r.error || 'tidak valid'}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {detail.warningRows?.length > 0 && (
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-800 mb-1">
+                    ⚠️ Perlu diperiksa ({detail.warningRows.length} baris) — tetap diimpor
+                  </p>
+                  <ul className="text-[11px] text-amber-900 space-y-0.5 leading-snug">
+                    {detail.warningRows.slice(0, 20).map((r: any, i: number) => (
+                      <li key={`warn-${i}`}>• Baris {r.baris || '-'} · NRP {r.nrp || '-'} — {r.peringatan || r.alasan}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {detail.contohTidakDitimpa?.length > 0 && (
+                <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-1">
+                    🔒 Data lama tetap utuh ({detail.contohTidakDitimpa.length} sel)
+                  </p>
+                  <ul className="text-[11px] text-slate-700 space-y-0.5 leading-snug">
+                    {detail.contohTidakDitimpa.slice(0, 10).map((r: any, i: number) => (
+                      <li key={`simpan-${i}`}>• NRP {r.nrp} · <span className="font-mono">{r.kolom}</span> lama = <b>{String(r.nilai_lama)}</b></li>
+                    ))}
+                  </ul>
+                  <p className="text-[10px] text-slate-500 mt-1">Sel Excel kosong dianggap "tidak ada kabar", bukan "kosongkan".</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {detail && ((detail.tidakKetemu?.length > 0) || detail.diagnosa || detail.gagal?.length > 0 || detail.summary?.famDeteksi?.length > 0) && (
             <div className="mb-6 rounded-2xl border-2 border-amber-200 bg-amber-50 p-3">
               <button type="button" onClick={() => setShowDetail(v => !v)}

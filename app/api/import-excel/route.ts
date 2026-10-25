@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
 import * as XLSX from 'xlsx'
+import { periksaJabatan, ROLE_PERLU_SCOPE_SITE } from '@/app/lib/jabatan-role'
 
 // Role yang boleh import karyawan
 const ALLOWED_ROLES = ['super_admin', 'hr_ho', 'hr_site']
@@ -213,10 +214,35 @@ export async function POST(request: NextRequest) {
 async function handleEmployeesImport(rawData: any[]) {
   const REQUIRED = ['nrp', 'nama']
 
-  const normalizeKey = (k: string) => k.toLowerCase().trim().replace(/\s+/g, '_')
+  const normalizeKey = (k: string) => String(k).toLowerCase().trim().replace(/\s+/g, '_')
 
   const validRows: any[] = []
   const invalidRows: any[] = []
+  const warningRows: any[] = []
+
+  // ── Hasil aturan jabatan (dilaporkan ke pengguna) ──
+  const penyesuaianJabatan: any[] = []      // jabatan/departemen yang dibetulkan
+  const calonRole = new Map<string, string>()  // nrp -> role struktural yang seharusnya
+  const sitePerNrp = new Map<string, string>() // nrp -> nama site (untuk scope_site)
+  const statusPerNrp = new Map<string, string>() // nrp -> status karyawan
+
+  // ── Daftar site resmi (mencegah site berubah karena salah ketik) ──
+  let daftarSite: string[] = []
+  const kodeSiteMap = new Map<string, string>()   // NAMA_SITE (uppercase) -> kode_site
+  try {
+    const { data: siteRows } = await supabaseAdmin.from('sites').select('nama_site, kode_site')
+    daftarSite = (siteRows || []).map((r: any) => String(r.nama_site || '').trim()).filter(Boolean)
+    ;(siteRows || []).forEach((r: any) => {
+      const nm = String(r.nama_site || '').trim().toUpperCase()
+      if (nm && r.kode_site) kodeSiteMap.set(nm, String(r.kode_site).trim())
+    })
+  } catch {}
+  if (daftarSite.length === 0) {
+    const { data: empSite } = await supabaseAdmin.from('employees').select('site')
+    daftarSite = Array.from(new Set((empSite || []).map((r: any) => String(r.site || '').trim()).filter(Boolean)))
+  }
+  const siteMap = new Map<string, string>()          // uppercase -> bentuk resmi
+  daftarSite.forEach(sn => siteMap.set(sn.toUpperCase(), sn))
 
   for (let i = 0; i < rawData.length; i++) {
     const row = rawData[i]
@@ -233,8 +259,7 @@ async function handleEmployeesImport(rawData: any[]) {
     // Convert semua field date
     DATE_FIELDS_EMPLOYEES.forEach(dateField => {
       if (normalized[dateField] !== undefined && normalized[dateField] !== null) {
-        const parsed = parseDate(normalized[dateField])
-        normalized[dateField] = parsed // bisa null kalau invalid
+        normalized[dateField] = parseDate(normalized[dateField])
       }
     })
 
@@ -252,7 +277,71 @@ async function handleEmployeesImport(rawData: any[]) {
 
     normalized.nrp = String(normalized.nrp).trim()
 
+    // ── NRP: jaga angka 0 di depan (Excel sering mengubahnya jadi angka) ──
+    if (/^\d+$/.test(normalized.nrp) && normalized.nrp.length < 7) {
+      const padded = normalized.nrp.padStart(7, '0')
+      const { data: cek } = await supabaseAdmin
+        .from('employees').select('nrp').eq('nrp', padded).limit(1)
+      if (cek && cek.length > 0) normalized.nrp = padded
+    }
+
+    // ── SITE: samakan dengan daftar resmi, jangan biarkan berubah ──
+    if (normalized.site) {
+      const asli = String(normalized.site).trim()
+      const resmi = siteMap.get(asli.toUpperCase())
+      if (resmi) {
+        normalized.site = resmi
+      } else {
+        normalized.site = asli
+        warningRows.push({
+          baris: i + 2, nrp: normalized.nrp, nama: normalized.nama,
+          peringatan: `Site "${asli}" tidak ada di daftar site resmi (${daftarSite.join(', ')}). Mohon diperiksa.`
+        })
+      }
+    } else {
+      delete normalized.site   // kosong -> jangan sentuh site yang sudah ada
+    }
+
+    // ── JABATAN: samakan ke bentuk baku, tentukan departemen & role ──
+    // Aturan baku ada di app/lib/jabatan-role.ts
+    if (normalized.jabatan) {
+      const cek = periksaJabatan(normalized.jabatan, normalized.departemen)
+      if (cek.dikenali) {
+        const jabatanAsli = String(normalized.jabatan).trim()
+        const deptAsli = normalized.departemen ? String(normalized.departemen).trim() : null
+
+        normalized.jabatan = cek.jabatan
+        // Departemen baku hanya dipakai kalau aturannya yakin.
+        // Kalau Excel sudah mengisi sesuatu yang berbeda, tetap dibetulkan
+        // tetapi dilaporkan supaya terlihat.
+        if (cek.departemen) normalized.departemen = cek.departemen
+
+        if (cek.jabatanBerubah || cek.departemenBerubah) {
+          penyesuaianJabatan.push({
+            baris: i + 2,
+            nrp: normalized.nrp,
+            nama: normalized.nama,
+            jabatan_dari: jabatanAsli,
+            jabatan_jadi: cek.jabatan,
+            departemen_dari: deptAsli,
+            departemen_jadi: cek.departemen,
+            role: cek.role,
+          })
+        }
+        if (cek.role) calonRole.set(String(normalized.nrp), cek.role)
+      } else {
+        warningRows.push({
+          baris: i + 2, nrp: normalized.nrp, nama: normalized.nama,
+          peringatan: `Jabatan "${String(normalized.jabatan).trim()}" belum ada di aturan baku. Jabatan dibiarkan apa adanya dan role tidak diubah.`
+        })
+      }
+    }
+
     if (!normalized.status_karyawan) normalized.status_karyawan = 'Aktif'
+
+    // catat site untuk penentuan scope_site role
+    if (normalized.site) sitePerNrp.set(String(normalized.nrp), String(normalized.site))
+    statusPerNrp.set(String(normalized.nrp), String(normalized.status_karyawan || 'Aktif'))
 
     validRows.push(normalized)
   }
@@ -260,23 +349,53 @@ async function handleEmployeesImport(rawData: any[]) {
   if (validRows.length === 0) {
     return NextResponse.json({
       error: 'Tidak ada data valid untuk di-import',
-      invalidRows
+      invalidRows: invalidRows.slice(0, 30)
     }, { status: 400 })
   }
-
-  console.log(`--- [IMPORT-EMPLOYEES] Valid: ${validRows.length}, Invalid: ${invalidRows.length} ---`)
-  console.log('--- [IMPORT-EMPLOYEES] Sample row:', JSON.stringify(validRows[0], null, 2))
 
   const nrpList = validRows.map(r => r.nrp)
   const { data: existingEmps } = await supabaseAdmin
     .from('employees')
-    .select('nrp')
+    .select('*')
     .in('nrp', nrpList)
 
-  const existingNrps = new Set((existingEmps || []).map((e: any) => e.nrp))
+  const existingMap = new Map<string, any>((existingEmps || []).map((e: any) => [String(e.nrp), e]))
 
-  const newRows = validRows.filter(r => !existingNrps.has(r.nrp))
-  const updateRows = validRows.filter(r => existingNrps.has(r.nrp))
+  const newRows: any[] = []
+  const updateRows: any[] = []
+  const dikosongkan: any[] = []   // sel kosong yang TIDAK menimpa data lama
+
+  for (const r of validRows) {
+    const lama = existingMap.get(r.nrp)
+    if (lama && !sitePerNrp.has(String(r.nrp)) && lama.site) {
+      sitePerNrp.set(String(r.nrp), String(lama.site))
+    }
+    if (!lama) {
+      if (!r.site) {
+        invalidRows.push({
+          baris: '-', nrp: r.nrp, nama: r.nama,
+          alasan: 'Karyawan baru wajib punya kolom site. Baris tidak diimpor.'
+        })
+        continue
+      }
+      newRows.push(r)
+      continue
+    }
+    // karyawan lama: hanya timpa kolom yang BERISI.
+    // Sel kosong tidak boleh menghapus data yang sudah ada.
+    const patch: any = { nrp: r.nrp }
+    Object.keys(r).forEach(k => {
+      if (k === 'nrp') return
+      const v = r[k]
+      if (v === null || v === undefined || v === '') {
+        const lamaAda = lama[k] !== null && lama[k] !== undefined && String(lama[k]).trim() !== ''
+        if (lamaAda) dikosongkan.push({ nrp: r.nrp, kolom: k, nilai_lama: lama[k] })
+        return
+      }
+      patch[k] = v
+    })
+    updateRows.push(patch)
+  }
 
   let insertedCount = 0
   let updatedCount = 0
@@ -292,7 +411,7 @@ async function handleEmployeesImport(rawData: any[]) {
         error: `Gagal insert karyawan baru: ${insertErr.message}`,
         detail: insertErr,
         sampleRow: newRows[0],
-        invalidRows
+        invalidRows: invalidRows.slice(0, 20)
       }, { status: 500 })
     }
     insertedCount = count || newRows.length
@@ -309,22 +428,110 @@ async function handleEmployeesImport(rawData: any[]) {
         error: `Gagal update karyawan existing: ${updateErr.message}`,
         detail: updateErr,
         insertedCount,
-        invalidRows
+        invalidRows: invalidRows.slice(0, 20)
       }, { status: 500 })
     }
     updatedCount = updateRows.length
   }
 
+  // Role hanya diberikan kepada karyawan yang benar-benar tersimpan
+  // dan statusnya masih aktif. Baris yang ditolak tidak diberi role.
+  {
+    const nrpTersimpan = new Set<string>([
+      ...newRows.map((r: any) => String(r.nrp)),
+      ...updateRows.map((r: any) => String(r.nrp)),
+    ])
+    for (const nrp of Array.from(calonRole.keys())) {
+      if (!nrpTersimpan.has(nrp)) { calonRole.delete(nrp); continue }
+      const st = (statusPerNrp.get(nrp) || 'Aktif').toLowerCase()
+      if (/resign|nonaktif|non-aktif|keluar|berhenti|terminat|phk/.test(st)) calonRole.delete(nrp)
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 6. PENETAPAN ROLE DARI JABATAN
+  //    Hanya MENAMBAH role yang belum ada. Tidak pernah menghapus.
+  //    Izin role disalin dari role_template_permissions + izin dasar karyawan.
+  // ═══════════════════════════════════════════════════════════
+  const roleDitambahkan: any[] = []
+  const roleGagal: any[] = []
+
+  if (calonRole.size > 0) {
+    let izinDasar: string[] = []
+    try {
+      const { data: tp } = await supabaseAdmin
+        .from('role_template_permissions').select('perm_key').eq('role_key', 'karyawan')
+      izinDasar = (tp || []).map((x: any) => String(x.perm_key)).filter(Boolean)
+    } catch {}
+
+    for (const [nrp, role] of calonRole.entries()) {
+      try {
+        const { data: ada } = await supabaseAdmin
+          .from('roles').select('nrp, role, active').eq('nrp', nrp).eq('role', role).limit(1)
+
+        if (ada && ada.length > 0) {
+          if (ada[0].active === false) {
+            await supabaseAdmin.from('roles').update({ active: true }).eq('nrp', nrp).eq('role', role)
+            roleDitambahkan.push({ nrp, role, catatan: 'role lama diaktifkan kembali' })
+          }
+          continue   // sudah punya role ini
+        }
+
+        const siteNama = sitePerNrp.get(nrp) || ''
+        const scope = kodeSiteMap.get(siteNama.toUpperCase()) || null
+
+        const barisRole: any = { nrp, role, active: true }
+        if (scope && ROLE_PERLU_SCOPE_SITE.has(role)) barisRole.scope_site = scope
+
+        const { error: errRole } = await supabaseAdmin.from('roles').insert(barisRole)
+        if (errRole) {
+          roleGagal.push({ nrp, role, error: errRole.message })
+          continue
+        }
+
+        // salin izin dari template role + izin dasar
+        const { data: tpRole } = await supabaseAdmin
+          .from('role_template_permissions').select('perm_key').eq('role_key', role)
+        const izin = Array.from(new Set([
+          ...((tpRole || []).map((x: any) => String(x.perm_key))),
+          ...izinDasar,
+        ])).filter(Boolean)
+        if (izin.length > 0) {
+          await supabaseAdmin
+            .from('user_permissions')
+            .upsert(izin.map((perm_key) => ({ nrp, perm_key })), { onConflict: 'nrp,perm_key', ignoreDuplicates: true })
+        }
+
+        roleDitambahkan.push({ nrp, role, scope_site: barisRole.scope_site || null, izin: izin.length })
+      } catch (e: any) {
+        roleGagal.push({ nrp, role, error: e?.message || 'gagal' })
+      }
+    }
+  }
+
+  const pesanRole = roleDitambahkan.length > 0 ? `, Role ditambah: ${roleDitambahkan.length}` : ''
+
   return NextResponse.json({
     success: true,
-    message: `✅ Import selesai. Baru: ${insertedCount}, Update: ${updatedCount}, Invalid: ${invalidRows.length}`,
+    message: `✅ Import karyawan selesai. Baru: ${insertedCount}, Update: ${updatedCount}, Tidak valid: ${invalidRows.length}${pesanRole}`,
     summary: {
       totalParsed: rawData.length,
       inserted: insertedCount,
       updated: updatedCount,
-      invalid: invalidRows.length
+      invalid: invalidRows.length,
+      peringatan: warningRows.length,
+      kolomTidakDitimpaKarenaKosong: dikosongkan.length,
+      jabatanDisesuaikan: penyesuaianJabatan.length,
+      roleDitambahkan: roleDitambahkan.length,
+      roleGagal: roleGagal.length,
+      daftarSite
     },
-    invalidRows: invalidRows.slice(0, 20)
+    invalidRows: invalidRows.slice(0, 20),
+    warningRows: warningRows.slice(0, 20),
+    contohTidakDitimpa: dikosongkan.slice(0, 10),
+    jabatanDisesuaikan: penyesuaianJabatan.slice(0, 30),
+    roleDitambahkan: roleDitambahkan.slice(0, 30),
+    roleGagal: roleGagal.slice(0, 20)
   })
 }
 

@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
 // HELPER TAMPILAN - disalin OTOMATIS dari page.tsx (tahap 2)
 // Isinya identik dengan aslinya. page.tsx tetap memakai salinannya sendiri.
 

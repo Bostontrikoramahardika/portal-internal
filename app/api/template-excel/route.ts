@@ -59,17 +59,45 @@ export async function GET(request: NextRequest) {
         'nrp', 'nama_karyawan', 'periode', 'nilai_kpi',
         'grade', 'catatan_atasan', 'keterangan'
       ],
+      // Susunan kolom KARYAWAN = sama dengan kolom tabel employees.
+      // 12 kolom pertama tetap (kompatibel dengan file lama), sisanya tambahan.
+      // Nama kolom di sini HARUS sama dengan nama kolom database,
+      // karena import mencocokkan judul kolom Excel -> kolom tabel.
       karyawan: [
-  'nrp', 'nama', 'jabatan', 'departemen', 'site',
-  'tanggal_masuk', 'tempat_lahir', 'tanggal_lahir',
-  'no_hp', 'email', 'alamat', 'status_pernikahan'
-],
-// 🆕 Alias untuk kompatibilitas
-employees: [
-  'nrp', 'nama', 'jabatan', 'departemen', 'site',
-  'tanggal_masuk', 'tempat_lahir', 'tanggal_lahir',
-  'no_hp', 'email', 'alamat', 'status_pernikahan'
-],
+        'nrp', 'nama', 'jabatan', 'departemen', 'site',
+        'tanggal_masuk', 'tempat_lahir', 'tanggal_lahir',
+        'no_hp', 'email', 'alamat', 'status_pernikahan',
+        'golongan', 'penerimaan', 'poh', 'mess',
+        'bank', 'nama_rekening', 'no_rekening',
+        'no_ktp', 'no_kk', 'nama_ibu', 'gol_darah', 'agama',
+        'jenis_kelamin', 'pendidikan', 'sertifikasi', 'npwp',
+        'rt', 'rw', 'kelurahan', 'kecamatan', 'kota', 'provinsi', 'kode_pos',
+        'bpjs_tk', 'bpjs_kes',
+        'bpjs_istri', 'nama_istri',
+        'bpjs_anak1', 'nama_anak', 'bpjs_anak2', 'bpjs_anak3',
+        'kode_absensi',
+        'no_simpol', 'exp_simpol', 'exp_simper', 'exp_mcu',
+        'eligible_tiket_pesawat',
+        'status_karyawan', 'tanggal_resign', 'alasan_resign'
+      ],
+      // Alias untuk kompatibilitas
+      employees: [
+        'nrp', 'nama', 'jabatan', 'departemen', 'site',
+        'tanggal_masuk', 'tempat_lahir', 'tanggal_lahir',
+        'no_hp', 'email', 'alamat', 'status_pernikahan',
+        'golongan', 'penerimaan', 'poh', 'mess',
+        'bank', 'nama_rekening', 'no_rekening',
+        'no_ktp', 'no_kk', 'nama_ibu', 'gol_darah', 'agama',
+        'jenis_kelamin', 'pendidikan', 'sertifikasi', 'npwp',
+        'rt', 'rw', 'kelurahan', 'kecamatan', 'kota', 'provinsi', 'kode_pos',
+        'bpjs_tk', 'bpjs_kes',
+        'bpjs_istri', 'nama_istri',
+        'bpjs_anak1', 'nama_anak', 'bpjs_anak2', 'bpjs_anak3',
+        'kode_absensi',
+        'no_simpol', 'exp_simpol', 'exp_simper', 'exp_mcu',
+        'eligible_tiket_pesawat',
+        'status_karyawan', 'tanggal_resign', 'alasan_resign'
+      ],
     }
 
     const columns = TEMPLATE_COLUMNS[table]
