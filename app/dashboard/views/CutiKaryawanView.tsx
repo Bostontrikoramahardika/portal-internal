@@ -1,57 +1,40 @@
 'use client'
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CUTI KARYAWAN (v1.0)
-// Satu halaman untuk: nama, jabatan, NRP, tgl mulai/akhir cuti, total hari,
-// keterangan, hak cuti tahunan, hak tiket + tujuan, status approval, aksi.
-// Menggabungkan data:
-//   - /api/monitoring-cuti   → leave_requests + leave_tickets
-//   - /api/kelola-hak-cuti   → saldo cuti tahunan + hak tiket pesawat
+// CUTI KARYAWAN (v1.1)
+// Satu halaman untuk SEMUA data cuti karyawan:
+//   nama, jabatan, NRP, tgl mulai, tgl akhir, total hari, keterangan,
+//   hak cuti tahunan, hak tiket + tujuan, status approval, aksi kelola.
+//
+// Sumber data (digabung per NRP):
+//   /api/monitoring-roster-cr → jadwal CR/CT bulan ini + status pengajuan
+//                               (termasuk yang BELUM AJUKAN)
+//   /api/monitoring-cuti      → leave_requests + leave_tickets
+//   /api/kelola-hak-cuti      → saldo cuti tahunan + hak tiket pesawat
+//
 // Desain mengikuti halaman Dashboard Cuti (biru #003D79, latar #f4f7fa).
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/app/lib/AuthContext'
 
-type CutiRow = {
-  id: string
+type Baris = {
+  key: string
   nrp: string
   nama: string
   jabatan: string
-  departemen: string
   site: string
   tanggal_mulai: string
   tanggal_selesai: string
   jumlah_hari: number
-  jenis_cuti: string
+  jenis: string
   alasan: string
+  status: string            // BELUM_AJUKAN | MENUNGGU | DISETUJUI | DITOLAK
   status_atasan: string
   status_pjo: string
-  status_final: string
   butuh_tiket: boolean
-}
-
-type TiketRow = {
-  id: string
-  leave_request_id: string
-  nrp: string
-  trip_type: string
-  tanggal: string
-  tujuan: string
-  status: string
-  catatan?: string
-}
-
-type HakRow = {
-  nrp: string
-  nama: string
-  jabatan: string
-  site: string
-  hak_awal: number
-  terpakai: number
-  penyesuaian: number
-  sisa: number
-  eligible_tiket_pesawat: boolean
+  leave_request_id: string | null
+  dari_roster: boolean
 }
 
 const NAMA_BULAN = [
@@ -60,11 +43,11 @@ const NAMA_BULAN = [
 ]
 
 const STATUS_TIKET: any = {
-  MENUNGGU_PEMESANAN: { label: 'Menunggu Pesanan', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-  SUDAH_DIPESAN: { label: 'Sudah Dipesan', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
-  E_TICKET_TERKIRIM: { label: 'E-Ticket Terkirim', cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  SELESAI: { label: 'Selesai', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  DIBATALKAN: { label: 'Dibatalkan', cls: 'bg-rose-50 text-rose-700 border-rose-200' },
+  MENUNGGU_PEMESANAN: 'Menunggu Pesanan',
+  SUDAH_DIPESAN: 'Sudah Dipesan',
+  E_TICKET_TERKIRIM: 'E-Ticket Terkirim',
+  SELESAI: 'Selesai',
+  DIBATALKAN: 'Dibatalkan',
 }
 
 export default function CutiKaryawanView() {
@@ -77,16 +60,18 @@ export default function CutiKaryawanView() {
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
 
-  const [cuti, setCuti] = useState<CutiRow[]>([])
-  const [tiket, setTiket] = useState<TiketRow[]>([])
-  const [hak, setHak] = useState<HakRow[]>([])
+  const [roster, setRoster] = useState<any[]>([])
+  const [cuti, setCuti] = useState<any[]>([])
+  const [tiket, setTiket] = useState<any[]>([])
+  const [hak, setHak] = useState<any[]>([])
   const [sites, setSites] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [detail, setDetail] = useState<CutiRow | null>(null)
+  const [detail, setDetail] = useState<Baris | null>(null)
 
-  const roleList: string[] = ((user?.roles as string[]) || [(user as any)?.role || '']).map((r) => String(r).toLowerCase())
+  const roleList: string[] = ((user?.roles as string[]) || [(user as any)?.role || ''])
+    .map((r) => String(r).toLowerCase())
   const isHOScope = isSuperAdmin || roleList.some((r) =>
     ['hr_ho', 'hrga', 'hrga_pusat', 'admin', 'director_ops', 'manager_ops', 'business_dev', 'spv_she_ho'].includes(r)
   )
@@ -96,29 +81,38 @@ export default function CutiKaryawanView() {
     if (!isHOScope && userSite) setSite(userSite)
   }, [isHOScope, userSite])
 
-  useEffect(() => { loadAll() /* eslint-disable-next-line react-hooks/exhaustive-deps */ },
-    [bulan, tahun, site])
+  useEffect(() => {
+    loadAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bulan, tahun, site])
 
   async function loadAll() {
     setLoading(true)
     setError('')
     try {
-      const p = new URLSearchParams({ bulan, tahun, ...(site && { site }) })
-      const [r1, r2] = await Promise.all([
-        fetch(`/api/monitoring-cuti?${p.toString()}`),
-        fetch(`/api/kelola-hak-cuti?${new URLSearchParams({ tahun, ...(site && { site }) }).toString()}`),
-      ])
-      const j1 = await r1.json()
-      const j2 = await r2.json()
+      const periode = `${tahun}-${bulan}`
 
-      if (r1.ok) {
-        setCuti(j1.cuti || [])
-        setTiket(j1.tiket || [])
-        if (j1.sites?.length) setSites(j1.sites)
-      } else {
-        setError(j1.error || 'Gagal memuat data cuti')
+      const [rRoster, rCuti, rHak] = await Promise.all([
+        fetch(`/api/monitoring-roster-cr?${qs({ periode, site })}`),
+        fetch(`/api/monitoring-cuti?${qs({ bulan, tahun, site })}`),
+        fetch(`/api/kelola-hak-cuti?${qs({ tahun, site })}`),
+      ])
+
+      const jRoster = await rRoster.json()
+      const jCuti = await rCuti.json()
+      const jHak = await rHak.json()
+
+      setRoster(jRoster?.data || [])
+      if (jCuti?.sites?.length) setSites(jCuti.sites)
+      else if (jRoster?.sites?.length) setSites(jRoster.sites)
+
+      setCuti(jCuti?.cuti || [])
+      setTiket(jCuti?.tiket || [])
+      setHak(jHak?.rows || [])
+
+      if (!rRoster.ok && !rCuti.ok) {
+        setError(jCuti?.error || jRoster?.error || 'Gagal memuat data')
       }
-      if (r2.ok) setHak(j2.rows || [])
     } catch (e: any) {
       setError(e?.message || 'Gagal memuat data')
     } finally {
@@ -127,38 +121,95 @@ export default function CutiKaryawanView() {
   }
 
   const hakMap = useMemo(() => {
-    const m = new Map<string, HakRow>()
-    hak.forEach((h) => m.set(String(h.nrp), h))
+    const m = new Map<string, any>()
+    hak.forEach((h: any) => m.set(String(h.nrp), h))
     return m
   }, [hak])
 
-  const tiketMap = useMemo(() => {
-    const m = new Map<string, TiketRow[]>()
-    tiket.forEach((t) => {
+  const tiketPerPengajuan = useMemo(() => {
+    const m = new Map<string, any[]>()
+    tiket.forEach((t: any) => {
       const k = String(t.leave_request_id)
       m.set(k, [...(m.get(k) || []), t])
     })
     return m
   }, [tiket])
 
+  // Semua baris = roster bulan ini + pengajuan cuti yang tidak punya jadwal CR
+  const semuaBaris = useMemo<Baris[]>(() => {
+    const cutiPerNrp = new Map<string, any>()
+    cuti.forEach((c: any) => {
+      const k = String(c.nrp)
+      if (!cutiPerNrp.has(k)) cutiPerNrp.set(k, c)
+    })
+
+    const hasil: Baris[] = []
+    const sudah = new Set<string>()
+
+    roster.forEach((r: any) => {
+      const c = cutiPerNrp.get(String(r.nrp))
+      sudah.add(String(r.nrp))
+      hasil.push({
+        key: String(r.nrp),
+        nrp: String(r.nrp),
+        nama: r.nama,
+        jabatan: r.jabatan || '-',
+        site: r.site || '-',
+        tanggal_mulai: c?.tanggal_mulai || r.tanggal_cuti_mulai || r.tanggal_cr_pertama || '',
+        tanggal_selesai: c?.tanggal_selesai || r.tanggal_cuti_selesai || r.tanggal_cr_terakhir || '',
+        jumlah_hari: c?.jumlah_hari ?? r.total_hari_cr ?? 0,
+        jenis: c?.jenis_cuti || r.jenis_roster || 'CR',
+        alasan: c?.alasan || '',
+        status: c ? (c.status_final || 'PENDING') : 'BELUM_AJUKAN',
+        status_atasan: c?.status_atasan || '',
+        status_pjo: c?.status_pjo || '',
+        butuh_tiket: !!c?.butuh_tiket,
+        leave_request_id: c?.id || r.leave_request_id || null,
+        dari_roster: true,
+      })
+    })
+
+    cuti.forEach((c: any) => {
+      if (sudah.has(String(c.nrp))) return
+      hasil.push({
+        key: String(c.id),
+        nrp: String(c.nrp),
+        nama: c.nama,
+        jabatan: c.jabatan || '-',
+        site: c.site || '-',
+        tanggal_mulai: c.tanggal_mulai || '',
+        tanggal_selesai: c.tanggal_selesai || '',
+        jumlah_hari: c.jumlah_hari ?? 0,
+        jenis: c.jenis_cuti || '-',
+        alasan: c.alasan || '',
+        status: c.status_final || 'PENDING',
+        status_atasan: c.status_atasan || '',
+        status_pjo: c.status_pjo || '',
+        butuh_tiket: !!c.butuh_tiket,
+        leave_request_id: c.id,
+        dari_roster: false,
+      })
+    })
+
+    return hasil
+  }, [roster, cuti])
+
   const rows = useMemo(() => {
     const q = search.toLowerCase().trim()
-    return cuti.filter((c) => {
-      if (q && !(c.nama || '').toLowerCase().includes(q) && !String(c.nrp).includes(q)) return false
-      if (statusFilter) {
-        const st = c.status_final || 'PENDING'
-        if (statusFilter !== st) return false
-      }
+    return semuaBaris.filter((b: Baris) => {
+      if (q && !b.nama.toLowerCase().includes(q) && !b.nrp.includes(q)) return false
+      if (statusFilter && b.status !== statusFilter) return false
       return true
     })
-  }, [cuti, search, statusFilter])
+  }, [semuaBaris, search, statusFilter])
 
   const stats = useMemo(() => ({
     total: rows.length,
-    menunggu: rows.filter((r) => !r.status_final || r.status_final === 'PENDING').length,
-    disetujui: rows.filter((r) => r.status_final === 'DISETUJUI').length,
-    ditolak: rows.filter((r) => r.status_final === 'DITOLAK').length,
-    tiket: rows.filter((r) => r.butuh_tiket).length,
+    belum: rows.filter((r: Baris) => r.status === 'BELUM_AJUKAN').length,
+    menunggu: rows.filter((r: Baris) => r.status === 'PENDING' || r.status === 'MENUNGGU').length,
+    disetujui: rows.filter((r: Baris) => r.status === 'DISETUJUI').length,
+    ditolak: rows.filter((r: Baris) => r.status === 'DITOLAK').length,
+    tiket: rows.filter((r: Baris) => r.butuh_tiket).length,
   }), [rows])
 
   return (
@@ -172,7 +223,8 @@ export default function CutiKaryawanView() {
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">HR • Admin</p>
             <h1 className="text-xl lg:text-2xl font-black tracking-tight text-white">Cuti Karyawan</h1>
             <p className="text-blue-200/80 text-xs font-medium">
-              Data cuti • hak cuti tahunan • tiket pesawat • status approval
+              Jadwal cuti • hak cuti tahunan • tiket pesawat • status approval
+              <span className="ml-2 px-1.5 py-0.5 rounded bg-white/15 text-[9px] font-black tracking-wider">v1.1</span>
             </p>
           </div>
         </div>
@@ -203,6 +255,7 @@ export default function CutiKaryawanView() {
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
               className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold">
               <option value="">📋 Semua Status</option>
+              <option value="BELUM_AJUKAN">⚠️ Belum Ajukan</option>
               <option value="PENDING">⏳ Menunggu</option>
               <option value="DISETUJUI">✅ Disetujui</option>
               <option value="DITOLAK">❌ Ditolak</option>
@@ -215,11 +268,11 @@ export default function CutiKaryawanView() {
 
         {/* ── STAT ─────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
-          <StatCard color="blue" label="Total Cuti" value={stats.total} sub="pengajuan bulan ini" icon="📋" />
-          <StatCard color="amber" label="Menunggu" value={stats.menunggu} sub="belum final" icon="⏳" />
+          <StatCard color="blue" label="Total Karyawan" value={stats.total} sub="punya jadwal cuti" icon="👥" />
+          <StatCard color="amber" label="Belum Ajukan" value={stats.belum} sub="perlu ditagih" icon="⚠️" />
+          <StatCard color="sky" label="Menunggu" value={stats.menunggu} sub="belum final" icon="⏳" />
           <StatCard color="green" label="Disetujui" value={stats.disetujui} sub="sudah final" icon="✅" />
-          <StatCard color="red" label="Ditolak" value={stats.ditolak} sub="tidak disetujui" icon="❌" />
-          <StatCard color="indigo" label="Butuh Tiket" value={stats.tiket} sub="perlu pesawat" icon="✈️" />
+          <StatCard color="red" label="Ditolak / Tiket" value={stats.ditolak} sub={`${stats.tiket} butuh tiket`} icon="❌" />
         </div>
 
         {error && (
@@ -232,7 +285,7 @@ export default function CutiKaryawanView() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-3 py-2 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
             <p className="text-[11px] text-slate-600">
-              Menampilkan <strong>{rows.length}</strong> dari <strong>{cuti.length}</strong> karyawan
+              Menampilkan <strong>{rows.length}</strong> dari <strong>{semuaBaris.length}</strong> karyawan
             </p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
               {NAMA_BULAN[Number(bulan) - 1]} {tahun}
@@ -269,11 +322,10 @@ export default function CutiKaryawanView() {
                   </thead>
                   <tbody>
                     {rows.map((r) => {
-                      const h = hakMap.get(String(r.nrp))
-                      const tk = tiketMap.get(String(r.id)) || []
-                      const st = r.status_final || 'PENDING'
+                      const h = hakMap.get(r.nrp)
+                      const tk = r.leave_request_id ? (tiketPerPengajuan.get(String(r.leave_request_id)) || []) : []
                       return (
-                        <tr key={r.id} className="border-b border-slate-50 hover:bg-blue-50/40">
+                        <tr key={r.key} className="border-b border-slate-50 hover:bg-blue-50/40">
                           <td className="px-3 py-2">
                             <div className="font-bold text-slate-800">{r.nama}</div>
                             <div className="text-[10px] text-slate-500">{r.nrp} • {r.jabatan}</div>
@@ -284,7 +336,7 @@ export default function CutiKaryawanView() {
                           <td className="px-3 py-2 text-center font-black text-[#003D79]">{r.jumlah_hari}</td>
                           <td className="px-3 py-2">
                             <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold">
-                              {r.jenis_cuti}
+                              {r.jenis}
                             </span>
                             <div className="text-[10px] text-slate-500 mt-0.5 max-w-[180px] truncate">
                               {r.alasan || '—'}
@@ -317,7 +369,7 @@ export default function CutiKaryawanView() {
                             )}
                           </td>
                           <td className="px-3 py-2 text-center">
-                            <StatusChip s={st} />
+                            <StatusChip s={r.status} />
                             <div className="text-[9px] text-slate-400 mt-0.5">
                               Atasan {short(r.status_atasan)} • PJO {short(r.status_pjo)}
                             </div>
@@ -338,17 +390,17 @@ export default function CutiKaryawanView() {
               {/* HP */}
               <div className="lg:hidden divide-y divide-slate-100">
                 {rows.map((r) => {
-                  const h = hakMap.get(String(r.nrp))
-                  const tk = tiketMap.get(String(r.id)) || []
+                  const h = hakMap.get(r.nrp)
+                  const tk = r.leave_request_id ? (tiketPerPengajuan.get(String(r.leave_request_id)) || []) : []
                   return (
-                    <div key={r.id} className="p-3">
+                    <div key={r.key} className="p-3">
                       <div className="flex justify-between items-start gap-2 mb-2">
                         <div className="min-w-0">
                           <div className="font-bold text-sm truncate">{r.nama}</div>
                           <div className="text-[10px] text-slate-500">{r.nrp} • {r.jabatan}</div>
                           <div className="text-[10px] text-slate-500">🏢 {r.site}</div>
                         </div>
-                        <StatusChip s={r.status_final || 'PENDING'} />
+                        <StatusChip s={r.status} />
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-[11px] mb-2">
                         <div>
@@ -365,7 +417,7 @@ export default function CutiKaryawanView() {
                         </div>
                         <div>
                           <div className="text-slate-500 font-semibold">📝 Keterangan</div>
-                          <div className="font-bold">{r.jenis_cuti}{r.alasan ? ` • ${r.alasan}` : ''}</div>
+                          <div className="font-bold">{r.jenis}{r.alasan ? ` • ${r.alasan}` : ''}</div>
                         </div>
                       </div>
                       <button onClick={() => setDetail(r)}
@@ -384,8 +436,8 @@ export default function CutiKaryawanView() {
       {detail && (
         <KelolaModal
           row={detail}
-          hak={hakMap.get(String(detail.nrp))}
-          tiketList={tiketMap.get(String(detail.id)) || []}
+          hak={hakMap.get(detail.nrp)}
+          tiketList={detail.leave_request_id ? (tiketPerPengajuan.get(String(detail.leave_request_id)) || []) : []}
           tahun={tahun}
           onClose={() => setDetail(null)}
           onSaved={loadAll}
@@ -403,7 +455,7 @@ function KelolaModal({ row, hak, tiketList, tahun, onClose, onSaved }: any) {
   const [terpakai, setTerpakai] = useState<number>(hak?.terpakai ?? 0)
   const [penyesuaian, setPenyesuaian] = useState<number>(hak?.penyesuaian ?? 0)
   const [eligible, setEligible] = useState<boolean>(!!hak?.eligible_tiket_pesawat)
-  const [statusTiket, setStatusTiket] = useState<string>(tiketList[0]?.status || '')
+  const [statusTiket, setStatusTiket] = useState<string>(tiketList[0]?.status || 'MENUNGGU_PEMESANAN')
   const [catatan, setCatatan] = useState<string>(tiketList[0]?.catatan || '')
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
@@ -445,7 +497,7 @@ function KelolaModal({ row, hak, tiketList, tahun, onClose, onSaved }: any) {
   }
 
   async function simpanStatusTiket() {
-    if (!tiketList[0]) return
+    if (!tiketList.length) return
     setSaving(true); setMsg('')
     try {
       const res = await fetch('/api/monitoring-cuti', {
@@ -500,12 +552,12 @@ function KelolaModal({ row, hak, tiketList, tahun, onClose, onSaved }: any) {
           {/* KETERANGAN */}
           <div className="rounded-2xl bg-slate-50 border border-slate-100 p-3">
             <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1">Keterangan cuti</p>
-            <p className="text-xs font-bold text-slate-700">{row.jenis_cuti}</p>
+            <p className="text-xs font-bold text-slate-700">{row.jenis}</p>
             <p className="text-[11px] text-slate-500">{row.alasan || '—'}</p>
             <div className="flex gap-1.5 mt-2 flex-wrap">
-              <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px] font-bold">Atasan: {row.status_atasan || 'PENDING'}</span>
-              <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px] font-bold">PJO: {row.status_pjo || 'PENDING'}</span>
-              <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px] font-bold">Final: {row.status_final || 'PENDING'}</span>
+              <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px] font-bold">Atasan: {row.status_atasan || '—'}</span>
+              <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px] font-bold">PJO: {row.status_pjo || '—'}</span>
+              <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px] font-bold">Final: {row.status || '—'}</span>
             </div>
           </div>
 
@@ -514,7 +566,7 @@ function KelolaModal({ row, hak, tiketList, tahun, onClose, onSaved }: any) {
             <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2">🎫 Cuti tahunan</p>
             {!hak ? (
               <p className="text-[11px] text-slate-400 font-semibold">
-                Data saldo belum ada untuk NRP ini.
+                Data saldo belum ada untuk NRP ini. (Biasanya muncul setelah tahun berjalan dibuka di menu Saldo &amp; Tiket.)
               </p>
             ) : (
               <>
@@ -562,18 +614,16 @@ function KelolaModal({ row, hak, tiketList, tahun, onClose, onSaved }: any) {
               </p>
             ) : (
               <div className="space-y-2">
-                {tiketList.map((t: TiketRow) => (
+                {tiketList.map((t: any) => (
                   <div key={t.id} className="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2">
-                    <p className="text-[11px] font-bold text-slate-700">
-                      {t.trip_type} • {t.tujuan}
-                    </p>
+                    <p className="text-[11px] font-bold text-slate-700">{t.trip_type} • {t.tujuan}</p>
                     <p className="text-[10px] text-slate-500">📅 {fmtTgl(t.tanggal)}</p>
                   </div>
                 ))}
                 <select value={statusTiket} onChange={(e) => setStatusTiket(e.target.value)}
                   className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs font-semibold">
                   {Object.entries(STATUS_TIKET).map(([k, v]: any) => (
-                    <option key={k} value={k}>{v.label}</option>
+                    <option key={k} value={k}>{v}</option>
                   ))}
                 </select>
                 <input value={catatan} onChange={(e) => setCatatan(e.target.value)}
@@ -586,6 +636,12 @@ function KelolaModal({ row, hak, tiketList, tahun, onClose, onSaved }: any) {
               </div>
             )}
           </div>
+
+          {!row.leave_request_id && (
+            <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-2.5 font-semibold">
+              ⚠️ Karyawan ini belum mengajukan cuti untuk jadwal CR di atas.
+            </p>
+          )}
         </div>
 
         <div className="p-4 border-t border-slate-100">
@@ -598,8 +654,6 @@ function KelolaModal({ row, hak, tiketList, tahun, onClose, onSaved }: any) {
   )
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// KOMPONEN KECIL
 // ═══════════════════════════════════════════════════════════════════════════
 function Field({ label, value, onChange }: any) {
   return (
@@ -615,6 +669,7 @@ function StatCard({ color, label, value, sub, icon }: any) {
   const map: any = {
     blue: 'bg-blue-50 border-blue-100 text-blue-700',
     amber: 'bg-amber-50 border-amber-100 text-amber-700',
+    sky: 'bg-sky-50 border-sky-100 text-sky-700',
     green: 'bg-emerald-50 border-emerald-100 text-emerald-700',
     red: 'bg-rose-50 border-rose-100 text-rose-700',
     indigo: 'bg-indigo-50 border-indigo-100 text-indigo-700',
@@ -635,8 +690,13 @@ function StatusChip({ s }: { s: string }) {
   const cls =
     s === 'DISETUJUI' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
     : s === 'DITOLAK' ? 'bg-rose-50 text-rose-700 border-rose-200'
+    : s === 'BELUM_AJUKAN' ? 'bg-slate-100 text-slate-500 border-slate-200'
     : 'bg-amber-50 text-amber-700 border-amber-200'
-  const label = s === 'DISETUJUI' ? '✅ Disetujui' : s === 'DITOLAK' ? '❌ Ditolak' : '⏳ Menunggu'
+  const label =
+    s === 'DISETUJUI' ? '✅ Disetujui'
+    : s === 'DITOLAK' ? '❌ Ditolak'
+    : s === 'BELUM_AJUKAN' ? '⚠️ Belum Ajukan'
+    : '⏳ Menunggu'
   return <span className={`inline-block px-1.5 py-0.5 rounded-full border text-[10px] font-bold whitespace-nowrap ${cls}`}>{label}</span>
 }
 
@@ -660,4 +720,12 @@ function fmtTgl(iso: string) {
   try {
     return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: '2-digit' })
   } catch { return iso }
+}
+
+function qs(obj: Record<string, any>) {
+  const p = new URLSearchParams()
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && String(v) !== '') p.set(k, String(v))
+  })
+  return p.toString()
 }
