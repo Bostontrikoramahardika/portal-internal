@@ -328,26 +328,8 @@ function Kalender() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
-        <h3 className="text-[13px] font-black text-[#0b2a5b]">Persentase cuti per departemen bulan ini</h3>
-        <div className="mt-2 space-y-1.5">
-          {KAT.map((k) => {
-            const d = MAP_DEPT[bln + '|' + k]
-            const pct = d ? d.pct : 0
-            const tone = pct >= 50 ? 'bg-red-500' : pct >= 30 ? 'bg-amber-400' : 'bg-[#00c37a]'
-            return (
-              <div key={k} className="flex items-center gap-2">
-                <span className="w-24 shrink-0 truncate text-[10px] font-bold text-slate-600">{k}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded bg-slate-100">
-                  <div className={`h-full rounded ${tone}`} style={{ width: `${Math.min(pct, 100)}%` }} />
-                </div>
-                <span className="w-16 shrink-0 text-right text-[10px] font-black text-[#0b2a5b]">
-                  {f1(pct)}% <span className="font-bold text-slate-400">{d ? d.n : 0}/{DEPT_HC[k]}</span>
-                </span>
-              </div>
-            )
-          })}
-        </div>
+      <div className="rounded-xl bg-slate-50 p-2.5 text-[10px] text-slate-500">
+        Persentase cuti per departemen ada di tab <b className="text-[#0b2a5b]">PER DEPARTEMEN</b> — sengaja tidak diulang di sini.
       </div>
     </>
   )

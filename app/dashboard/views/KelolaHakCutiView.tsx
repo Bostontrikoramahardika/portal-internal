@@ -1,10 +1,13 @@
 'use client'
 
-// KelolaHakCutiView dipisah dari app/dashboard/page.tsx (v1.8)
-// Kode disalin UTUH. Logika & tampilan TIDAK diubah.
-// Dimuat lewat next/dynamic hanya saat menunya dibuka.
+// ═══════════════════════════════════════════════════════════════════════════
+// KelolaHakCutiView — TAB "SALDO & TIKET"
+// v2.0 — tampilan disamakan dengan halaman Cuti Karyawan / Dashboard Cuti:
+//        latar #f4f7fa, header biru #003D79, kartu rounded-2xl, tabel rapi.
+// Logika (API /api/kelola-hak-cuti) TIDAK diubah.
+// ═══════════════════════════════════════════════════════════════════════════
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function KelolaHakCutiView() {
   const [data, setData] = useState<any>(null)
@@ -19,6 +22,7 @@ export default function KelolaHakCutiView() {
 
   useEffect(() => {
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterSite, tahun])
 
   async function loadData() {
@@ -45,17 +49,12 @@ export default function KelolaHakCutiView() {
       alert('❌ Anda hanya bisa lihat (view only)')
       return
     }
-
     setSaving(nrp)
     try {
       const res = await fetch('/api/kelola-hak-cuti', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'toggle_eligible',
-          nrp,
-          payload: { eligible: !current }
-        })
+        body: JSON.stringify({ action: 'toggle_eligible', nrp, payload: { eligible: !current } })
       })
       const json = await res.json()
       if (res.ok) {
@@ -79,11 +78,7 @@ export default function KelolaHakCutiView() {
       return
     }
     setEditingBalance(row)
-    setBalanceForm({
-      hak_awal: row.hak_awal,
-      terpakai: row.terpakai,
-      penyesuaian: row.penyesuaian
-    })
+    setBalanceForm({ hak_awal: row.hak_awal, terpakai: row.terpakai, penyesuaian: row.penyesuaian })
     setMsg(null)
   }
 
@@ -107,7 +102,7 @@ export default function KelolaHakCutiView() {
       })
       const json = await res.json()
       if (res.ok) {
-        alert(' ' + json.message)
+        alert('✅ ' + json.message)
         setEditingBalance(null)
         loadData()
       } else {
@@ -124,243 +119,345 @@ export default function KelolaHakCutiView() {
     return (r.nama || '').toLowerCase().includes(q) || (r.nrp || '').toLowerCase().includes(q)
   })
 
-  if (loading) return (
-    <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">
-      Memuat data...
-    </div>
-  )
+  const stat = {
+    total: filteredRows.length,
+    tiket: filteredRows.filter((r: any) => r.eligible_tiket_pesawat).length,
+    habis: filteredRows.filter((r: any) => Number(r.sisa) <= 0).length,
+    menipis: filteredRows.filter((r: any) => Number(r.sisa) > 0 && Number(r.sisa) < 5).length,
+  }
+
   return (
-    <div className="animate-in fade-in duration-500 pb-32 space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-3 lg:space-y-6">
-      {/* HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 to-[#003D79] text-white p-3 lg:p-6 rounded-2xl lg:rounded-[2.5rem] shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="text-3xl">🎫</div>
-            <div>
-              <p className="text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
-                {data?.is_view_only ? 'HR HO Read-Only' : 'HR Site'}
-              </p>
-              <h1 className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black tracking-tight">Hak Tiket & Saldo Cuti</h1>
-            </div>
-          </div>
-          <p className="text-blue-200/70 text-xs font-medium">
-            Kelola hak tiket pesawat & saldo cuti tahunan karyawan
-          </p>
-        </div>
-      </div>
+    <div className="bg-[#f4f7fa] pb-24 text-slate-800">
 
-      {/* FILTER */}
-      <div className="bg-white p-4 rounded-[2rem] border-2 border-slate-50 shadow-sm grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <input
-          type="text"
-          placeholder="🔍 Cari nama / NRP..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-sm focus:border-[#003D79] focus:bg-white transition-all"
-        />
-        <select
-          value={filterSite}
-          onChange={e => setFilterSite(e.target.value)}
-          className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-sm focus:border-[#003D79]"
-        >
-          <option value="">Semua Site</option>
-          {(data?.sites || []).map((s: string) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <select
-          value={tahun}
-          onChange={e => setTahun(Number(e.target.value))}
-          className="p-2.5 lg:p-3 bg-slate-50 border-2 border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-sm focus:border-[#003D79]"
-        >
-          {[0, -1, -2].map(o => {
-            const y = new Date().getFullYear() + o
-            return <option key={y} value={y}>Tahun {y}</option>
-          })}
-        </select>
-      </div>
-
-      {/* TABLE */}
-      <div className="bg-white rounded-[2.5rem] border-2 border-slate-50 shadow-lg overflow-hidden">
-        <div className="p-5 bg-slate-50/50 border-b-2 border-slate-100 flex items-center justify-between">
+      {/* ── HEADER ─────────────────────────────────────────────────────── */}
+      <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-5 lg:px-6 lg:pt-8 lg:pb-7 rounded-b-3xl shadow-lg">
+        <div className="flex items-center gap-3">
+          <span className="text-4xl">🎫</span>
           <div>
-            <h2 className="font-black text-slate-900 text-base tracking-tight">Daftar Karyawan</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              {filteredRows.length} karyawan • Tahun {tahun}
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">
+              {data?.is_view_only ? 'HR HO • Read Only' : 'HR Site'}
+            </p>
+            <h1 className="text-xl lg:text-2xl font-black tracking-tight text-white">Saldo & Tiket</h1>
+            <p className="text-blue-200/80 text-xs font-medium">
+              Saldo cuti tahunan & hak tiket pesawat karyawan
             </p>
           </div>
         </div>
+      </div>
 
-        <div className="divide-y divide-slate-50 max-h-[600px] overflow-y-auto">
-          {filteredRows.length === 0 ? (
-            <div className="p-16 text-center text-slate-300 font-bold italic">Karyawan tidak ditemukan</div>
+      <div className="px-4 py-4 lg:px-6 lg:py-6 space-y-3">
+
+        {/* ── FILTER ───────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <input
+              type="text"
+              placeholder="🔍 Cari nama / NRP..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold outline-none focus:border-[#003D79]"
+            />
+            <select
+              value={filterSite}
+              onChange={e => setFilterSite(e.target.value)}
+              className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold"
+            >
+              <option value="">🏢 Semua Site</option>
+              {(data?.sites || []).map((s: string) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <select
+              value={tahun}
+              onChange={e => setTahun(Number(e.target.value))}
+              className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold"
+            >
+              {[0, -1, -2].map(o => {
+                const y = new Date().getFullYear() + o
+                return <option key={y} value={y}>📅 Tahun {y}</option>
+              })}
+            </select>
+          </div>
+        </div>
+
+        {/* ── STAT ─────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <StatCard color="blue" label="Total Karyawan" value={stat.total} sub={`tahun ${tahun}`} icon="👥" />
+          <StatCard color="indigo" label="Hak Tiket Aktif" value={stat.tiket} sub="berhak tiket" icon="✈️" />
+          <StatCard color="amber" label="Sisa Menipis" value={stat.menipis} sub="kurang dari 5 hari" icon="⚠️" />
+          <StatCard color="red" label="Saldo Habis" value={stat.habis} sub="sisa 0 hari" icon="⛔" />
+        </div>
+
+        {msg && (
+          <div className={`rounded-2xl p-3 text-xs font-bold border ${
+            msg.type === 'ok'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              : 'bg-red-50 border-red-200 text-red-700'
+          }`}>
+            {msg.text}
+          </div>
+        )}
+
+        {/* ── TABEL ────────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="px-3 py-2 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+            <p className="text-[11px] text-slate-600">
+              Menampilkan <strong>{filteredRows.length}</strong> karyawan
+            </p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tahun {tahun}</p>
+          </div>
+
+          {loading ? (
+            <div className="py-16 text-center text-xs font-black uppercase tracking-widest text-slate-400 animate-pulse">
+              Memuat data...
+            </div>
+          ) : filteredRows.length === 0 ? (
+            <div className="py-16 text-center text-slate-400">
+              <div className="text-3xl mb-2">📭</div>
+              <p className="text-sm font-semibold">Karyawan tidak ditemukan</p>
+            </div>
           ) : (
-            filteredRows.map((row: any) => (
-              <div key={row.nrp} className="p-4 hover:bg-slate-50/50 transition-colors">
-                <div className="flex items-start gap-3">
-                  <div className="w-11 h-11 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-slate-500">
-                    {(row.nama || '?')[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black text-sm text-slate-900 truncate">{row.nama}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
-                      {row.nrp} • {row.jabatan} • {row.site}
-                    </p>
+            <>
+              {/* Desktop */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                      <Th>Karyawan</Th>
+                      <Th>Site</Th>
+                      <Th center>Hak Awal</Th>
+                      <Th center>Terpakai</Th>
+                      <Th center>Penyesuaian</Th>
+                      <Th center>Sisa Cuti</Th>
+                      <Th center>Hak Tiket</Th>
+                      <Th center>Aksi</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRows.map((row: any) => (
+                      <tr key={row.nrp} className="border-b border-slate-50 hover:bg-blue-50/40">
+                        <td className="px-3 py-2">
+                          <div className="font-bold text-slate-800">{row.nama}</div>
+                          <div className="text-[10px] text-slate-500">{row.nrp} • {row.jabatan}</div>
+                        </td>
+                        <td className="px-3 py-2 text-slate-600">{row.site}</td>
+                        <td className="px-3 py-2 text-center font-bold text-slate-700">{row.hak_awal}</td>
+                        <td className="px-3 py-2 text-center font-bold text-slate-700">{row.terpakai}</td>
+                        <td className="px-3 py-2 text-center font-bold text-slate-500">
+                          {Number(row.penyesuaian) > 0 ? `+${row.penyesuaian}` : row.penyesuaian}
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          <span className={`inline-block px-1.5 py-0.5 rounded-full border text-[10px] font-bold ${
+                            row.sisa <= 0 ? 'bg-rose-50 text-rose-700 border-rose-200'
+                            : row.sisa < 5 ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          }`}>
+                            {row.sisa} hari
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          <button
+                            onClick={() => toggleEligible(row.nrp, row.eligible_tiket_pesawat)}
+                            disabled={saving === row.nrp || !data?.can_edit}
+                            className={`px-2 py-1 rounded-lg border text-[10px] font-bold ${
+                              row.eligible_tiket_pesawat
+                                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                                : 'bg-slate-50 border-slate-200 text-slate-400'
+                            } ${!data?.can_edit ? 'cursor-not-allowed opacity-60' : ''}`}
+                          >
+                            {row.eligible_tiket_pesawat ? '✈️ AKTIF' : 'NONAKTIF'}
+                          </button>
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          <button
+                            onClick={() => openEditBalance(row)}
+                            disabled={!data?.can_edit}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${
+                              data?.can_edit
+                                ? 'bg-[#003D79] text-white hover:bg-[#002c58]'
+                                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                            }`}
+                          >
+                            ✏️ Saldo
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-3">
-                      {/* Toggle Tiket */}
+              {/* HP */}
+              <div className="lg:hidden divide-y divide-slate-100">
+                {filteredRows.map((row: any) => (
+                  <div key={row.nrp} className="p-3">
+                    <div className="flex justify-between items-start gap-2 mb-2">
+                      <div className="min-w-0">
+                        <div className="font-bold text-sm truncate">{row.nama}</div>
+                        <div className="text-[10px] text-slate-500">{row.nrp} • {row.jabatan}</div>
+                        <div className="text-[10px] text-slate-500">🏢 {row.site}</div>
+                      </div>
+                      <span className={`px-1.5 py-0.5 rounded-full border text-[10px] font-bold whitespace-nowrap ${
+                        row.sisa <= 0 ? 'bg-rose-50 text-rose-700 border-rose-200'
+                        : row.sisa < 5 ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      }`}>
+                        sisa {row.sisa} hari
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-[11px] mb-2">
+                      <div>
+                        <div className="text-slate-500 font-semibold">Hak awal</div>
+                        <div className="font-bold">{row.hak_awal} hari</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500 font-semibold">Terpakai</div>
+                        <div className="font-bold">{row.terpakai} hari</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500 font-semibold">Penyesuaian</div>
+                        <div className="font-bold">{row.penyesuaian}</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
                       <button
                         onClick={() => toggleEligible(row.nrp, row.eligible_tiket_pesawat)}
                         disabled={saving === row.nrp || !data?.can_edit}
-                        className={`p-3 rounded-2xl border-2 text-left transition-all active:scale-95 ${
+                        className={`flex-1 py-2 rounded-xl border text-[10px] font-black uppercase tracking-wider ${
                           row.eligible_tiket_pesawat
                             ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                            : 'bg-slate-50 border-slate-100 text-slate-400'
-                        } ${!data?.can_edit ? 'cursor-not-allowed opacity-70' : ''}`}
+                            : 'bg-slate-50 border-slate-200 text-slate-400'
+                        }`}
                       >
-                        <p className="text-[9px] font-black uppercase tracking-widest">✈️ Hak Tiket</p>
-                        <p className="text-sm font-black mt-1">
-                          {row.eligible_tiket_pesawat ? 'AKTIF' : 'NONAKTIF'}
-                        </p>
+                        {row.eligible_tiket_pesawat ? '✈️ Tiket Aktif' : 'Tiket Nonaktif'}
                       </button>
-
-                      {/* Sisa */}
-                      <div className={`p-3 rounded-2xl border-2 ${
-                        row.sisa <= 0 ? 'bg-rose-50 border-rose-200' :
-                        row.sisa < 5 ? 'bg-amber-50 border-amber-200' :
-                        'bg-emerald-50 border-emerald-200'
-                      }`}>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Sisa Cuti</p>
-                        <p className={`text-sm font-black mt-1 ${
-                          row.sisa <= 0 ? 'text-rose-700' :
-                          row.sisa < 5 ? 'text-amber-700' :
-                          'text-emerald-700'
-                        }`}>
-                          {row.sisa} hari
-                        </p>
-                      </div>
-
-                      {/* Terpakai */}
-                      <div className="p-3 rounded-2xl border-2 bg-slate-50 border-slate-100">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Terpakai</p>
-                        <p className="text-sm font-black mt-1 text-slate-700">{row.terpakai} hari</p>
-                      </div>
-
-                      {/* Tombol Edit */}
                       <button
                         onClick={() => openEditBalance(row)}
                         disabled={!data?.can_edit}
-                        className={`p-3 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
-                          data?.can_edit
-                            ? 'bg-[#003D79] text-white border-[#003D79] hover:bg-blue-700'
-                            : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                        className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider ${
+                          data?.can_edit ? 'bg-[#003D79] text-white' : 'bg-slate-100 text-slate-400'
                         }`}
                       >
-                        ✏️ EDIT<br />SALDO
+                        ✏️ Edit Saldo
                       </button>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))
+            </>
           )}
         </div>
       </div>
 
-      {/* MODAL EDIT SALDO */}
+      {/* ── MODAL EDIT SALDO ───────────────────────────────────────────── */}
       {editingBalance && (
         <>
-          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100]" onClick={() => setEditingBalance(null)} />
-          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 lg:inset-x-auto lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-md bg-white rounded-[2.5rem] shadow-2xl z-[101] overflow-hidden">
-            <div className="p-6 bg-gradient-to-br from-slate-900 to-[#003D79] text-white">
-              <div className="flex items-center gap-2 lg:gap-4">
-                <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl">
-                  
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100]" onClick={() => setEditingBalance(null)} />
+          <div className="fixed inset-x-3 top-1/2 -translate-y-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-md bg-white rounded-3xl shadow-2xl z-[101] overflow-hidden max-h-[90vh] overflow-y-auto">
+
+            <div className="p-5 bg-gradient-to-br from-[#003D79] to-[#0056b3] text-white">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-emerald-300 text-[10px] font-black uppercase tracking-[0.25em]">
+                    Edit Saldo Cuti {tahun}
+                  </p>
+                  <h2 className="font-black text-lg truncate">{editingBalance.nama}</h2>
+                  <p className="text-blue-200/80 text-[11px]">
+                    {editingBalance.nrp} • {editingBalance.jabatan}
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-emerald-200 text-[10px] font-bold uppercase tracking-widest">Edit Saldo Cuti {tahun}</p>
-                  <h2 className="font-black text-lg tracking-tight truncate">{editingBalance.nama}</h2>
-                </div>
-                <button onClick={() => setEditingBalance(null)} className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-lg font-bold">✕</button>
+                <button onClick={() => setEditingBalance(null)}
+                  className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 font-bold">✕</button>
               </div>
             </div>
 
             {msg && (
-              <div className={`px-6 py-3 border-b-2 ${msg.type === 'ok' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'}`}>
-                <p className="text-[11px] font-black uppercase tracking-widest">{msg.text}</p>
+              <div className={`px-5 py-2.5 border-b text-[11px] font-bold ${
+                msg.type === 'ok'
+                  ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                  : 'bg-rose-50 border-rose-100 text-rose-800'
+              }`}>
+                {msg.text}
               </div>
             )}
 
-            <div className="p-6 space-y-4">
+            <div className="p-5 space-y-4">
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+                <label className="block text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1">
                   Hak Awal (default 12)
                 </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={balanceForm.hak_awal}
+                <input type="number" min={0} value={balanceForm.hak_awal}
                   onChange={e => setBalanceForm({ ...balanceForm, hak_awal: Number(e.target.value) })}
-                  className="w-full p-4 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-[#003D79] focus:bg-white outline-none"
-                />
+                  className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs font-bold outline-none focus:border-[#003D79]" />
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
+                <label className="block text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1">
                   Terpakai (otomatis dari cuti disetujui)
                 </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={balanceForm.terpakai}
+                <input type="number" min={0} value={balanceForm.terpakai}
                   onChange={e => setBalanceForm({ ...balanceForm, terpakai: Number(e.target.value) })}
-                  className="w-full p-4 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-[#003D79] focus:bg-white outline-none"
-                />
+                  className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs font-bold outline-none focus:border-[#003D79]" />
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">
-                  Penyesuaian (bisa negatif atau positif)
+                <label className="block text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                  Penyesuaian (boleh minus / plus)
                 </label>
-                <input
-                  type="number"
-                  value={balanceForm.penyesuaian}
+                <input type="number" value={balanceForm.penyesuaian}
                   onChange={e => setBalanceForm({ ...balanceForm, penyesuaian: Number(e.target.value) })}
-                  className="w-full p-4 border-2 border-slate-100 rounded-2xl bg-slate-50 text-sm font-bold focus:border-[#003D79] focus:bg-white outline-none"
-                />
-                <p className="text-[10px] font-bold text-slate-400 mt-2">
-                  💡 Contoh: bonus cuti +2, atau potong cuti -1
-                </p>
+                  className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs font-bold outline-none focus:border-[#003D79]" />
+                <p className="text-[10px] text-slate-400 mt-1">💡 Contoh: bonus cuti +2, atau potong cuti -1</p>
               </div>
 
-              <div className="bg-blue-50 border-2 border-blue-100 p-4 rounded-2xl">
-                <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Preview Sisa</p>
-                <p className="text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-base lg:text-2xl font-black text-blue-700">
+              <div className="rounded-xl bg-blue-50 border border-blue-100 px-3 py-2 flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase text-blue-500">Preview sisa</span>
+                <span className="text-lg font-black text-blue-700">
                   {Math.max(0, balanceForm.hak_awal + balanceForm.penyesuaian - balanceForm.terpakai)} hari
-                </p>
-                <p className="text-[10px] font-bold text-blue-400 mt-1">
-                  = {balanceForm.hak_awal} + ({balanceForm.penyesuaian}) - {balanceForm.terpakai}
-                </p>
+                </span>
               </div>
             </div>
 
-            <div className="p-4 bg-white border-t-2 border-slate-100 flex gap-3">
-              <button
-                onClick={() => setEditingBalance(null)}
-                className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200"
-              >
+            <div className="p-4 border-t border-slate-100 flex gap-2">
+              <button onClick={() => setEditingBalance(null)}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-[11px] font-black uppercase tracking-wider">
                 Batal
               </button>
-              <button
-                onClick={saveBalance}
-                disabled={saving === editingBalance.nrp}
-                className="flex-[2] py-4 bg-[#003D79] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all"
-              >
-                {saving === editingBalance.nrp ? '⏳ MENYIMPAN...' : '💾 SIMPAN'}
+              <button onClick={saveBalance} disabled={saving === editingBalance.nrp}
+                className="flex-[2] py-3 bg-[#003D79] text-white rounded-xl text-[11px] font-black uppercase tracking-wider disabled:opacity-50">
+                {saving === editingBalance.nrp ? '⏳ Menyimpan...' : '💾 Simpan'}
               </button>
             </div>
           </div>
         </>
-        )}
+      )}
     </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+function StatCard({ color, label, value, sub, icon }: any) {
+  const map: any = {
+    blue: 'bg-blue-50 border-blue-100 text-blue-700',
+    amber: 'bg-amber-50 border-amber-100 text-amber-700',
+    green: 'bg-emerald-50 border-emerald-100 text-emerald-700',
+    red: 'bg-rose-50 border-rose-100 text-rose-700',
+    indigo: 'bg-indigo-50 border-indigo-100 text-indigo-700',
+  }
+  return (
+    <div className={`rounded-2xl border p-2.5 ${map[color] || map.blue}`}>
+      <div className="flex items-start justify-between">
+        <p className="text-[8px] font-black uppercase tracking-wider opacity-80">{label}</p>
+        <span className="text-xs">{icon}</span>
+      </div>
+      <p className="text-xl font-black leading-tight">{value}</p>
+      <p className="text-[8px] font-bold uppercase opacity-60">{sub}</p>
+    </div>
+  )
+}
+
+function Th({ children, center }: { children: React.ReactNode; center?: boolean }) {
+  return (
+    <th className={`px-3 py-2 font-black text-slate-600 uppercase tracking-wide ${center ? 'text-center' : 'text-left'}`}>
+      {children}
+    </th>
   )
 }
