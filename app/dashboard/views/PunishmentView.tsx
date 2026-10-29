@@ -43,11 +43,21 @@ export default function PunishmentView() {
     }
   }
 
-  const poinList: Poin[] = data?.poin_setting || []
+  const POIN_BAWAAN: Poin[] = [
+    { jenis: 'CNC', label: 'Coaching & Counselling', poin: 2 } as any,
+    { jenis: 'SK',  label: 'Surat Komitmen',         poin: 3 } as any,
+    { jenis: 'SP1', label: 'Surat Peringatan 1',     poin: 5 } as any,
+    { jenis: 'SP2', label: 'Surat Peringatan 2',     poin: 10 } as any,
+    { jenis: 'SP3', label: 'Surat Peringatan 3',     poin: 15 } as any,
+  ]
+  const poinList: Poin[] = (data?.poin_setting && data.poin_setting.length)
+    ? data.poin_setting
+    : POIN_BAWAAN
   const bawahan: Bawahan[] = data?.bawahan || []
   const rows: any[] = data?.rows || []
   const stats = data?.stats || {}
   const peran = data?.saya?.peran || {}
+  const peringatan: string[] = data?.peringatan || []
 
   return (
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
@@ -80,6 +90,17 @@ export default function PunishmentView() {
       <div className="px-4 py-4 lg:px-6 lg:py-6 space-y-3">
 
         {msg && <div className="bg-slate-100 border border-slate-200 rounded-2xl p-3 text-xs font-bold">{msg}</div>}
+
+        {/* PESAN TEKNIS: tampil kalau ada bagian data yang gagal dimuat */}
+        {peringatan.length > 0 && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-3 text-[11px] font-bold">
+            <p className="mb-1">⚠️ Sebagian data gagal dimuat dari database:</p>
+            <ul className="list-disc pl-4 space-y-0.5 font-mono text-[10px] font-normal">
+              {peringatan.map((w, i) => <li key={i}>{w}</li>)}
+            </ul>
+            <p className="mt-1 font-normal">Kirim tulisan di atas ke admin untuk diperbaiki.</p>
+          </div>
+        )}
 
         {tab === 'daftar' ? (
           <>

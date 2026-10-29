@@ -55,10 +55,13 @@ export async function GET(request: NextRequest) {
     const hanyaArsip = searchParams.get('arsip') === '1'
 
     // ── pengaturan poin ──
-    const { data: poinRows } = await supabase
+    const peringatan: string[] = []
+
+    const { data: poinRows, error: poinErr } = await supabase
       .from('punishment_poin')
       .select('jenis, label, poin, urutan, aktif')
       .order('urutan', { ascending: true })
+    if (poinErr) peringatan.push('punishment_poin: ' + poinErr.message)
 
     // ── daftar karyawan untuk pilihan di form ──
     //  • super admin / HR HO     → semua karyawan aktif (semua site)
@@ -69,11 +72,12 @@ export async function GET(request: NextRequest) {
     const isHOScope0 = isSuper || hasAny(roles, HO_SCOPE_ROLES)
 
     // a. bawahan langsung (atasan_nrp / pjo_nrp = saya)
-    const { data: bawahanLangsung } = await supabase
+    const { data: bawahanLangsung, error: bawahErr } = await supabase
       .from('employees')
       .select('nrp, nama, jabatan, departemen, site, atasan_nrp, pjo_nrp')
       .or(`atasan_nrp.eq.${myNrp},pjo_nrp.eq.${myNrp}`)
       .order('nama', { ascending: true })
+    if (bawahErr) peringatan.push('bawahan: ' + bawahErr.message)
 
     // b. karyawan aktif dalam jangkauan (site sendiri, atau semua untuk HO/super admin)
     let qKaryawan = supabase
@@ -84,7 +88,8 @@ export async function GET(request: NextRequest) {
       .order('nama', { ascending: true })
       .limit(2000)
     if (!isHOScope0 && mySite) qKaryawan = qKaryawan.eq('site', mySite)
-    const { data: karyawanScope } = await qKaryawan
+    const { data: karyawanScope, error: empErr } = await qKaryawan
+    if (empErr) peringatan.push('employees: ' + empErr.message)
 
     // gabungkan: bawahan langsung ditaruh paling depan, lalu karyawan jangkauan
     const petaOrang = new Map<string, any>()
@@ -137,7 +142,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: rows, error } = await q
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) peringatan.push('punishments: ' + error.message)
 
     const list = rows || []
     const stats = {
@@ -154,6 +159,7 @@ export async function GET(request: NextRequest) {
       stats,
       poin_setting: poinRows || [],
       bawahan: bawahan || [],
+      peringatan,
       saya: {
         nrp: myNrp,
         nama: (session as any).nama || '',
