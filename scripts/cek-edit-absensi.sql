@@ -23,6 +23,12 @@ select indexname, indexdef
 from pg_indexes
 where schemaname = 'public' and tablename = 'attendance';
 
+-- ③b Daftar nilai yang DIIZINKAN untuk kolom status (penyebab error check constraint)
+select conname, pg_get_constraintdef(oid) as aturan
+from pg_constraint
+where conrelid = 'public.attendance'::regclass
+  and contype = 'c';
+
 -- ④ Uji tulis langsung (baris ke-2 yang mengubah data Alfan)
 --    Jalankan SETELAH membaca hasil ①–③.
 -- update public.attendance

@@ -150,22 +150,89 @@ export async function POST(req: NextRequest) {
     if (keterangan !== undefined) payload.keterangan = keterangan || null
     if (jam_kerja_menit > 0) payload.jam_kerja_menit = jam_kerja_menit
 
+    /**
+     * Kode matriks (DS/NS/DW/NW) BUKAN nilai yang sah untuk kolom status
+     * (ada check constraint attendance_status_check). Untuk kode shift,
+     * status diisi nilai kehadiran yang sah, dan kode aslinya tetap
+     * disimpan di keterangan sebagai [MANUAL:DS] — itulah yang dibaca matriks.
+     */
+    function siapkanNilai(data: any) {
+      const nilai = { ...data }
+      const kodeManual = String(nilai.keterangan || '').match(/\[MANUAL:([A-Z]+)\]/i)?.[1]?.toUpperCase() || ''
+      const PETA_STATUS: Record<string, string[]> = {
+        DS: ['HADIR', 'MASUK', 'H', 'HADIR_KERJA'],
+        DW: ['HADIR', 'MASUK', 'H', 'HADIR_KERJA'],
+        NS: ['HADIR', 'MASUK', 'H', 'HADIR_KERJA'],
+        NW: ['HADIR', 'MASUK', 'H', 'HADIR_KERJA'],
+        A: ['ALFA', 'A', 'TIDAK_HADIR'],
+        ALFA: ['ALFA', 'A', 'TIDAK_HADIR'],
+        I: ['IZIN', 'I'],
+        IR: ['IZIN', 'IZIN_RESMI', 'I'],
+        S: ['SAKIT', 'S'],
+        CT: ['CUTI', 'CT'],
+        CR: ['CUTI', 'CR'],
+        LV: ['CUTI', 'LV'],
+        OFF: ['OFF', 'LIBUR'],
+      }
+      const daftar = PETA_STATUS[kodeManual]
+      if (daftar && daftar.length) {
+        nilai.__kandidatStatus = daftar
+        nilai.status = daftar[0]
+      }
+      // shift yang sah untuk kode shift
+      if (kodeManual === 'NS' || kodeManual === 'NW') {
+        nilai.__kandidatShift = ['MALAM', '2', 'NS', 'NIGHT']
+      } else if (kodeManual === 'DS' || kodeManual === 'DW') {
+        nilai.__kandidatShift = ['SIANG', '1', 'DS', 'DAY']
+      }
+      return nilai
+    }
+
     // buang kolom yang tidak dikenal database, satu per satu, sampai berhasil
-    async function tulis(tugas: 'update' | 'insert', data: any): Promise<string | null> {
-      let coba = { ...data }
-      for (let i = 0; i < 8; i++) {
+    async function tulis(tugas: 'update' | 'insert', dataAsli: any): Promise<string | null> {
+      const awal: any = siapkanNilai(dataAsli)
+      const kandidatStatus: string[] = awal.__kandidatStatus || []
+      const kandidatShift: string[] = awal.__kandidatShift || []
+      const coba: any = { ...awal }
+      delete coba.__kandidatStatus
+      delete coba.__kandidatShift
+      let idxStatus = 0
+      let idxShift = 0
+      for (let i = 0; i < 14; i++) {
         const q = tugas === 'update'
           ? supabaseAdmin.from('attendance').update(coba).eq('nrp', nrp).eq('tanggal', tanggal).select('id')
           : supabaseAdmin.from('attendance').insert(coba).select('id')
         const { data: hasil, error } = await q
         if (!error) return null
-        // kolom tidak ada → buang lalu ulangi
+
+        // ① kolom tidak ada → buang lalu ulangi
         const m = error.message.match(/column "?([a-z_]+)"? .*does not exist/i)
           || error.message.match(/Could not find the '([a-z_]+)' column/i)
-        if (m && m[1] && coba[m[1]] !== undefined) {
-          delete coba[m[1]]
+        if (m && m[1] && (coba as any)[m[1]] !== undefined) {
+          delete (coba as any)[m[1]]
           continue
         }
+
+        // ② status tidak lolos check constraint → coba nilai lain
+        if (/attendance_status_check/i.test(error.message) || (/status/i.test(error.message) && /check constraint/i.test(error.message))) {
+          const kandidat = kandidatStatus.length ? kandidatStatus : ['HADIR', 'MASUK', 'ALFA']
+          idxStatus++
+          if (idxStatus < kandidat.length + 1) {
+            coba.status = idxStatus < kandidat.length ? kandidat[idxStatus] : null
+            continue
+          }
+        }
+
+        // ③ shift tidak lolos check constraint → coba nilai lain
+        if (/check constraint/i.test(error.message) && /shift/i.test(error.message)) {
+          const kandidatS = kandidatShift.length ? kandidatShift : ['SIANG', 'MALAM']
+          idxShift++
+          if (idxShift < kandidatS.length + 1) {
+            coba.shift = idxShift < kandidatS.length ? kandidatS[idxShift] : null
+            continue
+          }
+        }
+
         return error.message
       }
       return 'Gagal menulis data attendance'
