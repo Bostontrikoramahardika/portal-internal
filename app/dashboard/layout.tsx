@@ -27,6 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // ✨ STATE & FETCH DATA USER REAL (CACHE + API)
   // ═══════════════════════════════════════════════
   const [userData, setUserData] = useState<any>(null)
+  const [rolesSaya, setRolesSaya] = useState<string[]>([])
 
   useEffect(() => {
     try {
@@ -47,8 +48,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (res.ok) {
           const data = await res.json()
           if (data?.user) {
-            setUserData(data.user)
+            setUserData({ ...data.user, is_super_admin: data.is_super_admin ?? data.user.is_super_admin })
           }
+          if (Array.isArray(data?.roles)) setRolesSaya(data.roles)
         }
       } catch (err) {
         console.error('Failed to load user in header:', err)
@@ -177,9 +179,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     return t
   }
+  // ─────────────────────────────────────────────────────────
+  // JARING PENGAMAN MENU SHE / PUNISHMENT
+  // Kalau baris menu di tabel `menus` belum ada (mis. SQL belum jalan),
+  // menu tetap ditampilkan untuk role yang berhak.
+  // Hapus blok ini kalau data menu di database sudah lengkap.
+  // ─────────────────────────────────────────────────────────
+  const menusLengkap = (() => {
+    const ROLE_BOLEH = [
+      'super_admin', 'admin', 'admin_plant', 'admin_site',
+      'gl_produksi', 'gl_plant', 'atasan',
+      'she_site', 'spv_she_ho',
+      'hr_site', 'hrga_site', 'hr_ho', 'hrga', 'hrga_pusat', 'hrga_oprek',
+      'pjo_site', 'pjo', 'manager_ops', 'director_ops',
+    ]
+    const boleh =
+      userData?.is_super_admin === true ||
+      rolesSaya.some((r) => ROLE_BOLEH.includes(String(r).toLowerCase()))
+    if (!boleh) return menus
+
+    const TAMBAHAN = [
+      { menu_key: 'inspeksi',   menu_label: 'Inspeksi',   menu_icon: '🦺', menu_group: 'SHE', sort_order: 300, href: '/dashboard?menu=inspeksi' },
+      { menu_key: 'observasi',  menu_label: 'Observasi',  menu_icon: '👁️', menu_group: 'SHE', sort_order: 301, href: '/dashboard?menu=observasi' },
+      { menu_key: 'punishment', menu_label: 'Punishment', menu_icon: '⚠️', menu_group: 'HR',  sort_order: 302, href: '/dashboard?menu=punishment' },
+    ]
+    const ada = new Set((menus || []).map((m: any) => m?.menu_key))
+    const kurang = TAMBAHAN.filter((m) => !ada.has(m.menu_key))
+    if (!kurang.length) return menus
+    return [...(menus || []), ...kurang]
+  })()
+
   const grupSidebar = (() => {
     const peta = new Map()
-    ;(menus || []).forEach((m) => {
+    ;(menusLengkap || []).forEach((m) => {
       if (!m || !m.menu_key) return
       if (m.parent_menu_key) return
       if (m.menu_key === 'kelola_karyawan') return
