@@ -212,6 +212,8 @@ export default function ManajemenAbsensiPage() {
 
   // Modal
   const [detailRow, setDetailRow] = useState<Row | null>(null)
+  const [hasilImport, setHasilImport] = useState<any>(null)
+  const [importing, setImporting] = useState(false)
   const [editCell,  setEditCell]  = useState<{ row: Row, day: Day } | null>(null)
   const [resignRow, setResignRow] = useState<Row | null>(null)
   // ⭐ CHAT 26: Popup detail cell (klik quick view)
@@ -279,6 +281,34 @@ export default function ManajemenAbsensiPage() {
   }, [])
 
   // Fetch matrix
+  async function importExcel(file: File, terapkan: boolean) {
+    setImporting(true)
+    try {
+      const token = localStorage.getItem('btm_session_token_v1') || ''
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('terapkan', terapkan ? '1' : '0')
+      fd.append('bulan', bulan)
+
+      const res = await fetch('/api/attendance/matrix/import', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: fd,
+      })
+      const j = await res.json()
+      if (!j.ok) {
+        setHasilImport({ mode: 'error', gagal: [j.error || 'Gagal memproses file'], jumlah_perubahan: 0 })
+        return
+      }
+      setHasilImport({ ...j, __file: file })
+      if (j.mode === 'terapkan') fetchMatrix()
+    } catch {
+      setHasilImport({ mode: 'error', gagal: ['Koneksi gagal saat mengunggah file'], jumlah_perubahan: 0 })
+    } finally {
+      setImporting(false)
+    }
+  }
+
   const fetchMatrix = useCallback(async () => {
     setLoading(true)
     setError('')
@@ -448,7 +478,114 @@ export default function ManajemenAbsensiPage() {
               </>
             )}
           </button>
+
+          {canEdit && (
+            <label className="col-span-2 cursor-pointer bg-amber-500 text-white rounded-[1.5rem] shadow-xl py-3 px-4 flex items-center justify-center gap-2 active:scale-95 transition-all">
+              <span className="text-xl">📥</span>
+              <div className="text-left">
+                <p className="text-xs font-black leading-tight">
+                  {importing ? 'Memproses…' : 'Import Koreksi Excel'}
+                </p>
+                <p className="text-[9px] opacity-90">
+                  {importing ? 'Mohon tunggu, jangan tutup halaman' : 'Unggah balik file Excel Matrix yang sudah diedit'}
+                </p>
+              </div>
+              <input type="file" accept=".xlsx,.xls" className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) importExcel(f, false)
+                  e.currentTarget.value = ''
+                }} />
+            </label>
+          )}
         </div>
+
+        {/* HASIL IMPORT */}
+        {hasilImport && (
+          <div className="bg-white rounded-[1.5rem] shadow-xl p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#5a6a7e]">
+                Hasil Import {hasilImport.mode === 'pratinjau' ? '— Pratinjau' : '— Diterapkan'}
+              </p>
+              <button onClick={() => setHasilImport(null)} className="text-slate-400 font-bold text-xs">✕</button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="bg-slate-50 rounded-lg py-1.5">
+                <p className="text-lg font-black text-[#003D79]">{hasilImport.jumlah_perubahan ?? 0}</p>
+                <p className="text-[9px] font-bold text-slate-500 uppercase">Sel berubah</p>
+              </div>
+              <div className="bg-emerald-50 rounded-lg py-1.5">
+                <p className="text-lg font-black text-emerald-700">{hasilImport.terubah ?? '-'}</p>
+                <p className="text-[9px] font-bold text-slate-500 uppercase">Diubah</p>
+              </div>
+              <div className="bg-sky-50 rounded-lg py-1.5">
+                <p className="text-lg font-black text-sky-700">{hasilImport.tertambah ?? '-'}</p>
+                <p className="text-[9px] font-bold text-slate-500 uppercase">Ditambah</p>
+              </div>
+            </div>
+
+            {hasilImport.ringkasan && Object.keys(hasilImport.ringkasan).length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {Object.entries(hasilImport.ringkasan).map(([k, v]) => (
+                  <span key={k} className="text-[10px] font-black bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded">
+                    {k} : {String(v)}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {Array.isArray(hasilImport.gagal) && hasilImport.gagal.length > 0 && (
+              <div className="bg-rose-50 border border-rose-200 rounded-lg p-2 text-[10px] text-rose-800 font-mono">
+                {hasilImport.gagal.map((g: string, i: number) => <div key={i}>❌ {g}</div>)}
+              </div>
+            )}
+
+            {Number(hasilImport.jumlah_dilewati) > 0 && (
+              <p className="text-[10px] text-slate-500 font-bold">
+                {hasilImport.jumlah_dilewati} sel dilewati (NRP tidak dikenal / kode kosong)
+              </p>
+            )}
+
+            {hasilImport.mode === 'pratinjau' && (
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setHasilImport(null)}
+                  className="flex-1 py-2 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-black uppercase">Batal</button>
+                <button onClick={() => importExcel(hasilImport.__file, true)}
+                  className="flex-1 py-2 rounded-xl bg-emerald-600 text-white text-[11px] font-black uppercase">
+                  ✅ Terapkan ke Database
+                </button>
+              </div>
+            )}
+
+            {Array.isArray(hasilImport.contoh) && hasilImport.contoh.length > 0 && (
+              <div className="max-h-48 overflow-auto border border-slate-100 rounded-lg">
+                <table className="w-full text-[10px]">
+                  <thead className="bg-slate-50 sticky top-0">
+                    <tr>
+                      <th className="p-1 text-left">Nama</th>
+                      <th className="p-1">Tgl</th>
+                      <th className="p-1">Dari</th>
+                      <th className="p-1">Jadi</th>
+                      <th className="p-1">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hasilImport.contoh.map((c: any, i: number) => (
+                      <tr key={i} className="border-t border-slate-100">
+                        <td className="p-1 font-bold">{c.nama}</td>
+                        <td className="p-1 text-center">{String(c.tanggal).slice(8, 10)}</td>
+                        <td className="p-1 text-center text-rose-600 font-bold">{c.dari}</td>
+                        <td className="p-1 text-center text-emerald-700 font-black">{c.ke}</td>
+                        <td className="p-1 text-center text-[9px] uppercase">{c.aksi}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── LEGENDA ── */}
         <div className="bg-white rounded-[1.5rem] shadow-xl p-4">
