@@ -1,7 +1,7 @@
 {
  "inspeksi": [
   {
-   "kode": "AMM-IPT-F-SHE-036A",
+   "kode": "PPA-MLP-F-SHE-036A",
    "nama": "Inspeksi Umum",
    "items": [],
    "kolom": [
@@ -23,7 +23,7 @@
    "jumlah_baris": 22
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AA",
+   "kode": "PPA-MLP-F-SHE-036AA",
    "nama": "Inspeksi Alarm Emergency",
    "items": [],
    "kolom": [
@@ -34,7 +34,7 @@
    "jumlah_baris": 15
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AAA",
+   "kode": "PPA-MLP-F-SHE-036AAA",
    "nama": "Inspeksi Land Clearing",
    "items": [
     "Apakah JSA telah didiskusikan dan dikomunikasikan dengan karyawan yang akan bekerja dan dibuktikan dengan daftar hadir yang ditandatangani oleh semua karyawan?",
@@ -68,7 +68,7 @@
    "jumlah_baris": 18
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AAB",
+   "kode": "PPA-MLP-F-SHE-036AAB",
    "nama": "Inspeksi Hydrant",
    "items": [],
    "kolom": [
@@ -84,7 +84,7 @@
    "jumlah_baris": 5
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AAC",
+   "kode": "PPA-MLP-F-SHE-036AAC",
    "nama": "Pengawasan Inspeksi Loading Soil",
    "items": [
     "Area loading aman dan stabil untuk operasi alat berat",
@@ -109,7 +109,7 @@
    "jumlah_baris": 12
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AAD",
+   "kode": "PPA-MLP-F-SHE-036AAD",
    "nama": "Inspeksi Disposal Highrisk",
    "items": [
     "Kajian Teknis | Tersedia Kajian Teknis yang sudah di tanda tangani oleh KTT",
@@ -144,7 +144,7 @@
    "jumlah_baris": 22
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AAE",
+   "kode": "PPA-MLP-F-SHE-036AAE",
    "nama": "-Form Sidak Pkh",
    "items": [],
    "kolom": [
@@ -155,7 +155,7 @@
    "jumlah_baris": 14
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AB",
+   "kode": "PPA-MLP-F-SHE-036AB",
    "nama": "Inspeksi Eye Wash",
    "items": [],
    "kolom": [
@@ -165,7 +165,7 @@
    "jumlah_baris": 0
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AC",
+   "kode": "PPA-MLP-F-SHE-036AC",
    "nama": "Inspeksi Gerinda",
    "items": [
     "Apakah Gerinda telah di Tag ?",
@@ -183,7 +183,7 @@
    "jumlah_baris": 7
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AD",
+   "kode": "PPA-MLP-F-SHE-036AD",
    "nama": "Inspeksi Welding Machine",
    "items": [
     "Apakah telah terpasang Tagging ?",
@@ -206,7 +206,7 @@
    "jumlah_baris": 12
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AE",
+   "kode": "PPA-MLP-F-SHE-036AE",
    "nama": "Inspeksi Extention Cable",
    "items": [
     "Apakah telah terpasang Tagging",
@@ -223,7 +223,7 @@
    "jumlah_baris": 6
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AF",
+   "kode": "PPA-MLP-F-SHE-036AF",
    "nama": "Inspeksi Catering",
    "items": [
     "INFRASTRUKSTUR"
@@ -237,7 +237,7 @@
    "jumlah_baris": 1
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AG",
+   "kode": "PPA-MLP-F-SHE-036AG",
    "nama": "Inspeksi  Tps Limbah B3 Area",
    "items": [
     "Apakah pengemasan LB3 dilakukan sesuai dengan bentuk LB3?",
@@ -281,7 +281,7 @@
    "jumlah_baris": 29
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AH",
+   "kode": "PPA-MLP-F-SHE-036AH",
    "nama": "Inspeksi Haul Road",
    "items": [
     "Pengendalian Debu | Penyiraman terjadwal dan jumlah water truck cukup",
@@ -317,7 +317,7 @@
    "jumlah_baris": 23
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AI",
+   "kode": "PPA-MLP-F-SHE-036AI",
    "nama": "Inspeksi Fire Supression System",
    "items": [
     "Panel",
@@ -335,7 +335,7 @@
    "jumlah_baris": 3
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AJ",
+   "kode": "PPA-MLP-F-SHE-036AJ",
    "nama": "Inspeksi Generator",
    "items": [
     "Call Sign on 4 Sides of Equipment",
@@ -373,7 +373,7 @@
    "jumlah_baris": 25
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AK",
+   "kode": "PPA-MLP-F-SHE-036AK",
    "nama": "Penilaian 5R",
    "items": [
     "Lantai | Lantai dalam Keadaan Bersih"
@@ -389,7 +389,7 @@
    "jumlah_baris": 1
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AL",
+   "kode": "PPA-MLP-F-SHE-036AL",
    "nama": "Inspeksi Bejana Tekan",
    "items": [
     "Drum Bejana Tekan tidak terdapat kebocoran",
@@ -413,7 +413,7 @@
    "jumlah_baris": 13
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AM",
+   "kode": "PPA-MLP-F-SHE-036AM",
    "nama": "Inspeksi Over Head Crane",
    "items": [
     "Safety Latch",
@@ -428,7 +428,7 @@
    "jumlah_baris": 4
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AN",
+   "kode": "PPA-MLP-F-SHE-036AN",
    "nama": "Inspeksi Sarana Dan Prasarana Ert",
    "items": [],
    "kolom": [
@@ -440,7 +440,7 @@
    "jumlah_baris": 30
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AP",
+   "kode": "PPA-MLP-F-SHE-036AP",
    "nama": "Inspeksi Unit Fuel Truck",
    "items": [
     "ROTARY",
@@ -474,7 +474,7 @@
    "jumlah_baris": 23
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AQ",
+   "kode": "PPA-MLP-F-SHE-036AQ",
    "nama": "Inspeksi Unit Water Truck",
    "items": [
     "ROTARY",
@@ -509,7 +509,7 @@
    "jumlah_baris": 24
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AR",
+   "kode": "PPA-MLP-F-SHE-036AR",
    "nama": "Inspeksi Unit Alat Angkat",
    "items": [
     "ROTARY",
@@ -544,7 +544,7 @@
    "jumlah_baris": 24
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AS",
+   "kode": "PPA-MLP-F-SHE-036AS",
    "nama": "Inspeksi Unit Drilling",
    "items": [
     "ROTARY",
@@ -580,7 +580,7 @@
    "jumlah_baris": 25
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AT",
+   "kode": "PPA-MLP-F-SHE-036AT",
    "nama": "Inspeksi Unit Excavator",
    "items": [
     "ROTARY",
@@ -613,7 +613,7 @@
    "jumlah_baris": 20
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AU",
+   "kode": "PPA-MLP-F-SHE-036AU",
    "nama": "Inspeksi Unit Buldozer",
    "items": [
     "UNDER CARRIAGE | M",
@@ -642,7 +642,7 @@
    "jumlah_baris": 16
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AV",
+   "kode": "PPA-MLP-F-SHE-036AV",
    "nama": "Inspeksi Unit Dump Truck",
    "items": [
     "ROTARY",
@@ -674,7 +674,7 @@
    "jumlah_baris": 21
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AW",
+   "kode": "PPA-MLP-F-SHE-036AW",
    "nama": "Inspeksi Unit Light Vehicle",
    "items": [
     "BODY WARNA KENDARAAN",
@@ -707,7 +707,7 @@
    "jumlah_baris": 20
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AX",
+   "kode": "PPA-MLP-F-SHE-036AX",
    "nama": "Inspeksi Unit Bus",
    "items": [
     "BODY WARNA KENDARAAN",
@@ -738,7 +738,7 @@
    "jumlah_baris": 20
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AY",
+   "kode": "PPA-MLP-F-SHE-036AY",
    "nama": "Inspeksi Safety Device & Kelayakan Unit",
    "items": [
     "S  = Lakukan Perbaikan dalam 12 Jam",
@@ -754,7 +754,7 @@
    "jumlah_baris": 20
   },
   {
-   "kode": "AMM-IPT-F-SHE-036AZ",
+   "kode": "PPA-MLP-F-SHE-036AZ",
    "nama": "Inspeksi Tower Telekomunikasi",
    "items": [
     "PONDASI RANGKA TOWER KUAT, TIDAK ADA CACAT",
@@ -777,7 +777,7 @@
    "jumlah_baris": 10
   },
   {
-   "kode": "AMM-IPT-F-SHE-036B",
+   "kode": "PPA-MLP-F-SHE-036B",
    "nama": "Inspeksi Front Loading",
    "items": [
     "Pengendalian Debu | Penyiraman terjadwal dan jumlah water truck cukup",
@@ -815,7 +815,7 @@
    "jumlah_baris": 25
   },
   {
-   "kode": "AMM-IPT-F-SHE-036C",
+   "kode": "PPA-MLP-F-SHE-036C",
    "nama": "Inspeksi Jalan Tambang",
    "items": [
     "Pengendalian Debu | Penyiraman terjadwal dan jumlah water truck cukup",
@@ -848,7 +848,7 @@
    "jumlah_baris": 20
   },
   {
-   "kode": "AMM-IPT-F-SHE-036D",
+   "kode": "PPA-MLP-F-SHE-036D",
    "nama": "Inspeksi Disposal",
    "items": [
     "Pengendalian Debu | Penyiraman terjadwal dan jumlah water truck cukup",
@@ -882,7 +882,7 @@
    "jumlah_baris": 21
   },
   {
-   "kode": "AMM-IPT-F-SHE-036E",
+   "kode": "PPA-MLP-F-SHE-036E",
    "nama": "Inspeksi Office Area",
    "items": [
     "Struktur bangunan | Tidak ada keretakan/kerusakan pada dinding, jendela dan atap bangunan tidak bocor",
@@ -916,7 +916,7 @@
    "jumlah_baris": 21
   },
   {
-   "kode": "AMM-IPT-F-SHE-036F",
+   "kode": "PPA-MLP-F-SHE-036F",
    "nama": "Inspeksi Fuel Storage",
    "items": [
     "Tempat penimbunan bahan bakar cair | Telah memiliki ijin yang masih berlaku  dan terpasang di area fuel storage",
@@ -952,7 +952,7 @@
    "jumlah_baris": 23
   },
   {
-   "kode": "AMM-IPT-F-SHE-036G",
+   "kode": "PPA-MLP-F-SHE-036G",
    "nama": "Inspeksi Workshop Area",
    "items": [
     "Jalan dan area parkir | Area parkir cukup dan Kondisi Baik (Parkir Mundur)",
@@ -990,7 +990,7 @@
    "jumlah_baris": 25
   },
   {
-   "kode": "AMM-IPT-F-SHE-036H",
+   "kode": "PPA-MLP-F-SHE-036H",
    "nama": "Inspeksi Mess Area",
    "items": [
     "INFRASTRUKTUR"
@@ -1004,7 +1004,7 @@
    "jumlah_baris": 1
   },
   {
-   "kode": "AMM-IPT-F-SHE-036I",
+   "kode": "PPA-MLP-F-SHE-036I",
    "nama": "Inspeksi Warehouse",
    "items": [
     "Struktur bangunan | Tidak ada keretakan/kerusakan pada dinding, jendela dan atap bangunan tidak bocor",
@@ -1019,7 +1019,7 @@
    "jumlah_baris": 2
   },
   {
-   "kode": "AMM-IPT-F-SHE-036J",
+   "kode": "PPA-MLP-F-SHE-036J",
    "nama": "Inspeksi Hand Tool - Perkakas Tangan",
    "items": [],
    "kolom": [
@@ -1032,7 +1032,7 @@
    "jumlah_baris": 17
   },
   {
-   "kode": "AMM-IPT-F-SHE-036K",
+   "kode": "PPA-MLP-F-SHE-036K",
    "nama": "Perlatan Listrik Portabel",
    "items": [],
    "kolom": [
@@ -1045,7 +1045,7 @@
    "jumlah_baris": 17
   },
   {
-   "kode": "AMM-IPT-F-SHE-036L",
+   "kode": "PPA-MLP-F-SHE-036L",
    "nama": "Inspeksi Pelindung Mesin",
    "items": [],
    "kolom": [
@@ -1060,7 +1060,7 @@
    "jumlah_baris": 17
   },
   {
-   "kode": "AMM-IPT-F-SHE-036M",
+   "kode": "PPA-MLP-F-SHE-036M",
    "nama": "Inspeksi Speed Gun",
    "items": [],
    "kolom": [
@@ -1073,7 +1073,7 @@
    "jumlah_baris": 25
   },
   {
-   "kode": "AMM-IPT-F-SHE-036N",
+   "kode": "PPA-MLP-F-SHE-036N",
    "nama": "Inspeksi Drilling Area",
    "items": [
     "Unit kerja layak operasi tambang",
@@ -1099,7 +1099,7 @@
    "jumlah_baris": 11
   },
   {
-   "kode": "AMM-IPT-F-SHE-036O",
+   "kode": "PPA-MLP-F-SHE-036O",
    "nama": "Inspeksi Mine Permit Dan Simper",
    "items": [],
    "kolom": [
@@ -1109,7 +1109,7 @@
    "jumlah_baris": 20
   },
   {
-   "kode": "AMM-IPT-F-SHE-036P",
+   "kode": "PPA-MLP-F-SHE-036P",
    "nama": "Checklist Pemeriksaan Tps Lb3",
    "items": [
     "2.0 | 3.0 | 4.0 | 5.0 | 6.0 | 7.0 | 8.0 | 9.0 | 10.0 | 11.0 | 12.0 | 13.0 | 14.0 | 15.0 | 16.0 | 17.0 | 18.0 | 19.0 | 20.0 | 21.0 | 22.0 | 23.0 | 24.0 | 25.0 | 26.0 | 27.0 | 28.0 | 29.0 | 30.0 | 31.0"
@@ -1123,7 +1123,7 @@
    "jumlah_baris": 1
   },
   {
-   "kode": "AMM-IPT-F-SHE-036Q",
+   "kode": "PPA-MLP-F-SHE-036Q",
    "nama": "Inspeksi Instalasi Penyalur Petir",
    "items": [
     "Bak Kontrol",
@@ -1139,7 +1139,7 @@
    "jumlah_baris": 5
   },
   {
-   "kode": "AMM-IPT-F-SHE-036R",
+   "kode": "PPA-MLP-F-SHE-036R",
    "nama": "Inspeksi Instalasi Tangki Timbun",
    "items": [
     "Sambungan pipa tidak terdapat tetesan / kebocoran",
@@ -1164,7 +1164,7 @@
    "jumlah_baris": 10
   },
   {
-   "kode": "AMM-IPT-F-SHE-036S",
+   "kode": "PPA-MLP-F-SHE-036S",
    "nama": "Inspeksi Setling Pond",
    "items": [
     "Apakah kondisi parit/saluran dibuat untuk mengarahkan air limbah ke kolam pengelolaan (settling pond) ?",
@@ -1207,7 +1207,7 @@
    "jumlah_baris": 28
   },
   {
-   "kode": "AMM-IPT-F-SHE-036T",
+   "kode": "PPA-MLP-F-SHE-036T",
    "nama": "Inspeksi Stand Jack",
    "items": [],
    "kolom": [
@@ -1224,7 +1224,7 @@
    "jumlah_baris": 20
   },
   {
-   "kode": "AMM-IPT-F-SHE-036U",
+   "kode": "PPA-MLP-F-SHE-036U",
    "nama": "Emergency Shower",
    "items": [],
    "kolom": [
@@ -1235,7 +1235,7 @@
    "jumlah_baris": 5
   },
   {
-   "kode": "AMM-IPT-F-SHE-036V",
+   "kode": "PPA-MLP-F-SHE-036V",
    "nama": "Inspeksi Ipal",
    "items": [
     "Apakah Atap IPAL dalam kondisi baik?",
@@ -1270,7 +1270,7 @@
    "jumlah_baris": 20
   },
   {
-   "kode": "AMM-IPT-F-SHE-036Y",
+   "kode": "PPA-MLP-F-SHE-036Y",
    "nama": "Inspeksi Area Sump",
    "items": [
     "Apakah kondisi Highwall / Low wall tidak ada potensi longsoran? | H",
@@ -1292,7 +1292,7 @@
    "jumlah_baris": 8
   },
   {
-   "kode": "AMM-IPT-F-SHE-036Z",
+   "kode": "PPA-MLP-F-SHE-036Z",
    "nama": "Inspeksi Instalasi Air",
    "items": [
     "Kondisi tempat penampungan air | Tidak terdapat rembesan atau bocor pada tempat penampungan"
@@ -1306,7 +1306,7 @@
    "jumlah_baris": 1
   },
   {
-   "kode": "AMM-IPT-F-SHE-F",
+   "kode": "PPA-MLP-F-SHE-F",
    "nama": "Orm Penataan Lahan Reklamasi",
    "items": [
     "Terdapat Pengawas yang mencakup aktivitas penataan lahan",
@@ -1333,7 +1333,7 @@
  ],
  "observasi": [
   {
-   "kode": "AMM-IPT-F-SHE-47A",
+   "kode": "PPA-MLP-F-SHE-47A",
    "nama": "Mengoperasikan Dump Truck",
    "mode": "orang",
    "items": [
@@ -1357,7 +1357,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47B",
+   "kode": "PPA-MLP-F-SHE-47B",
    "nama": "Mengoperasikan Lv",
    "mode": "orang",
    "items": [
@@ -1379,7 +1379,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47C",
+   "kode": "PPA-MLP-F-SHE-47C",
    "nama": "Mengoperasikan Bulldozer",
    "mode": "orang",
    "items": [
@@ -1402,7 +1402,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47D",
+   "kode": "PPA-MLP-F-SHE-47D",
    "nama": "Mengoperasikan Excavator",
    "mode": "orang",
    "items": [
@@ -1427,7 +1427,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47E",
+   "kode": "PPA-MLP-F-SHE-47E",
    "nama": "Mengoperasikan Fuel Truck",
    "mode": "orang",
    "items": [
@@ -1453,7 +1453,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47F",
+   "kode": "PPA-MLP-F-SHE-47F",
    "nama": "Mengoperasikan Motor Grader",
    "mode": "orang",
    "items": [
@@ -1478,7 +1478,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47G",
+   "kode": "PPA-MLP-F-SHE-47G",
    "nama": "Mengoperasikan Water Truck",
    "mode": "orang",
    "items": [
@@ -1502,7 +1502,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47H",
+   "kode": "PPA-MLP-F-SHE-47H",
    "nama": "Mengoperasikan Pekerjaan Survey",
    "mode": "orang",
    "items": [
@@ -1527,7 +1527,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47I",
+   "kode": "PPA-MLP-F-SHE-47I",
    "nama": "Mengoperasikan Haul Truck",
    "mode": "orang",
    "items": [
@@ -1552,7 +1552,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47J",
+   "kode": "PPA-MLP-F-SHE-47J",
    "nama": "Mengoperasikan Repair Tyre",
    "mode": "orang",
    "items": [
@@ -1576,7 +1576,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47K",
+   "kode": "PPA-MLP-F-SHE-47K",
    "nama": "Mengoperasikan Perkakas Dan Peralatan Bertenaga",
    "mode": "orang",
    "items": [
@@ -1596,7 +1596,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47L",
+   "kode": "PPA-MLP-F-SHE-47L",
    "nama": "Membongkar Pasang Komponen Unit",
    "mode": "orang",
    "items": [
@@ -1617,7 +1617,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47M",
+   "kode": "PPA-MLP-F-SHE-47M",
    "nama": "Mengoperasikan Compactor",
    "mode": "orang",
    "items": [
@@ -1642,7 +1642,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47N",
+   "kode": "PPA-MLP-F-SHE-47N",
    "nama": "Mengoperasikan Drilling",
    "mode": "orang",
    "items": [
@@ -1667,7 +1667,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47O",
+   "kode": "PPA-MLP-F-SHE-47O",
    "nama": "Mengoperasikan Komputer",
    "mode": "orang",
    "items": [
@@ -1690,7 +1690,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47P",
+   "kode": "PPA-MLP-F-SHE-47P",
    "nama": "Mengisi Bahan Bakar",
    "mode": "orang",
    "items": [
@@ -1714,7 +1714,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47Q",
+   "kode": "PPA-MLP-F-SHE-47Q",
    "nama": "Perbaikan Dan Perawatan Dozer",
    "mode": "orang",
    "items": [
@@ -1741,7 +1741,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47R",
+   "kode": "PPA-MLP-F-SHE-47R",
    "nama": "Greasing",
    "mode": "orang",
    "items": [
@@ -1767,7 +1767,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47S",
+   "kode": "PPA-MLP-F-SHE-47S",
    "nama": "Melepas Dan Memasang Tyre",
    "mode": "orang",
    "items": [
@@ -1793,7 +1793,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47T",
+   "kode": "PPA-MLP-F-SHE-47T",
    "nama": "Mengganti Teeth Bucket",
    "mode": "orang",
    "items": [
@@ -1819,7 +1819,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47U",
+   "kode": "PPA-MLP-F-SHE-47U",
    "nama": "Perbaikan Dan Perawatan Excavator",
    "mode": "orang",
    "items": [
@@ -1846,7 +1846,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47V",
+   "kode": "PPA-MLP-F-SHE-47V",
    "nama": "Perbaikan Dan Perawatan Dump Truck",
    "mode": "orang",
    "items": [
@@ -1873,7 +1873,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47W",
+   "kode": "PPA-MLP-F-SHE-47W",
    "nama": "Perbaikan Dan Perawatan Motor Grader",
    "mode": "orang",
    "items": [
@@ -1900,7 +1900,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47X",
+   "kode": "PPA-MLP-F-SHE-47X",
    "nama": "Pemindahan Dan Pemasangan Tower Lamp",
    "mode": "orang",
    "items": [
@@ -1920,7 +1920,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47Y",
+   "kode": "PPA-MLP-F-SHE-47Y",
    "nama": "Memotong Rumput",
    "mode": "orang",
    "items": [
@@ -1944,7 +1944,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47Z",
+   "kode": "PPA-MLP-F-SHE-47Z",
    "nama": "Menyemprot Rumput",
    "mode": "orang",
    "items": [
@@ -1968,7 +1968,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AA",
+   "kode": "PPA-MLP-F-SHE-47AA",
    "nama": "Formulir Observasi Perakitan Rambu Rambu",
    "mode": "orang",
    "items": [
@@ -1989,7 +1989,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AB",
+   "kode": "PPA-MLP-F-SHE-47AB",
    "nama": "Formulir Observasi Pemasangan Rambu Keselamatan",
    "mode": "orang",
    "items": [
@@ -2012,7 +2012,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AC",
+   "kode": "PPA-MLP-F-SHE-47AC",
    "nama": "Formulir Observasi  Mengoperasikan Hydraulic Press",
    "mode": "orang",
    "items": [
@@ -2034,7 +2034,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AD",
+   "kode": "PPA-MLP-F-SHE-47AD",
    "nama": "Aktivitas Pengapuran Dan Penawasan",
    "mode": "orang",
    "items": [
@@ -2057,7 +2057,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AE",
+   "kode": "PPA-MLP-F-SHE-47AE",
    "nama": "Pengecekan Wmp Atau Sp",
    "mode": "orang",
    "items": [
@@ -2078,7 +2078,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AF",
+   "kode": "PPA-MLP-F-SHE-47AF",
    "nama": "Pengurasan Ipal",
    "mode": "orang",
    "items": [
@@ -2101,7 +2101,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AG",
+   "kode": "PPA-MLP-F-SHE-47AG",
    "nama": "Formulir Observasi  Mengoperasikan Chainsaw",
    "mode": "orang",
    "items": [
@@ -2123,7 +2123,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AH",
+   "kode": "PPA-MLP-F-SHE-47AH",
    "nama": "Aktivitas Highrisk",
    "mode": "orang",
    "items": [
@@ -2147,7 +2147,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AI",
+   "kode": "PPA-MLP-F-SHE-47AI",
    "nama": "Service Unit",
    "mode": "orang",
    "items": [
@@ -2174,7 +2174,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AJ",
+   "kode": "PPA-MLP-F-SHE-47AJ",
    "nama": "Aktivitas Traffic Man",
    "mode": "orang",
    "items": [
@@ -2196,7 +2196,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AK",
+   "kode": "PPA-MLP-F-SHE-47AK",
    "nama": "Aktivitas Di Front Laoding",
    "mode": "orang",
    "items": [
@@ -2223,7 +2223,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AM",
+   "kode": "PPA-MLP-F-SHE-47AM",
    "nama": "Formulir Observasi Packing Makanan",
    "mode": "orang",
    "items": [
@@ -2245,7 +2245,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AN",
+   "kode": "PPA-MLP-F-SHE-47AN",
    "nama": "Formulir Observasi Penggunaan Mesin Las",
    "mode": "orang",
    "items": [
@@ -2267,7 +2267,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AO",
+   "kode": "PPA-MLP-F-SHE-47AO",
    "nama": "Formulir Observasi Penggunaan Gerinda",
    "mode": "orang",
    "items": [
@@ -2289,7 +2289,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AP",
+   "kode": "PPA-MLP-F-SHE-47AP",
    "nama": "Formulir Observasi Aktivitas Tukang",
    "mode": "orang",
    "items": [
@@ -2311,7 +2311,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AQ",
+   "kode": "PPA-MLP-F-SHE-47AQ",
    "nama": "Formulir Observasi Penggunaan Tools & Equipment",
    "mode": "orang",
    "items": [
@@ -2333,7 +2333,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AR",
+   "kode": "PPA-MLP-F-SHE-47AR",
    "nama": "Formulir Observasi Manual Handling",
    "mode": "orang",
    "items": [
@@ -2355,7 +2355,7 @@
    ]
   },
   {
-   "kode": "AMM-IPT-F-SHE-47AS",
+   "kode": "PPA-MLP-F-SHE-47AS",
    "nama": "Formulir Observasi Menggunakan Komputer Atau Laptop",
    "mode": "orang",
    "items": [
