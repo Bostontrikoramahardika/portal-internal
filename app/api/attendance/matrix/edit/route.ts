@@ -65,11 +65,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'NRP dan tanggal wajib' }, { status: 400 })
   }
 
-  if (!isSuperAdmin && ['hr_site', 'pjo_site'].includes(role)) {
-    const { data: emp } = await supabaseAdmin
-      .from('employees').select('site').eq('nrp', nrp).single()
-    if (!emp || emp.site !== session.site) {
-      return NextResponse.json({ error: 'Karyawan bukan site Anda' }, { status: 403 })
+  const siteSaya = String(session?.scope_site || session?.site || '').trim()
+
+  if (!isSuperAdmin && ['hr_site', 'pjo_site', 'admin_site'].includes(role)) {
+    const { data: emp, error: eEmp } = await supabaseAdmin
+      .from('employees').select('site').eq('nrp', nrp).maybeSingle()
+    if (eEmp) {
+      return NextResponse.json({ error: 'Gagal baca karyawan: ' + eEmp.message }, { status: 500 })
+    }
+    if (!emp) {
+      return NextResponse.json({ error: 'Karyawan tidak ditemukan: ' + nrp }, { status: 404 })
+    }
+    // kalau akun HR tidak punya site, jangan blokir
+    if (siteSaya && emp.site && String(emp.site) !== siteSaya) {
+      return NextResponse.json(
+        { error: `Karyawan ini di site ${emp.site}, akun Anda di ${siteSaya}` },
+        { status: 403 }
+      )
     }
   }
 
@@ -93,17 +105,19 @@ export async function POST(req: NextRequest) {
       .eq('nrp', nrp).eq('tanggal', tanggal).limit(1)
 
     if (existing && existing.length > 0) {
-      await supabaseAdmin
+      const { error: eR } = await supabaseAdmin
         .from('rosters')
         .update({ shift_code: roster_shift })
         .eq('nrp', nrp).eq('tanggal', tanggal)
+      if (eR) return NextResponse.json({ error: 'Gagal simpan roster: ' + eR.message }, { status: 500 })
     } else if (roster_shift) {
       const periode = new Date(tanggal).toLocaleDateString('id-ID', {
         month: 'long', year: 'numeric'
       }).toUpperCase()
-      await supabaseAdmin.from('rosters').insert({
+      const { error: eR } = await supabaseAdmin.from('rosters').insert({
         nrp, tanggal, shift_code: roster_shift, periode
       })
+      if (eR) return NextResponse.json({ error: 'Gagal simpan roster: ' + eR.message }, { status: 500 })
     }
     updated.roster = roster_shift
   }
@@ -136,18 +150,65 @@ export async function POST(req: NextRequest) {
     if (keterangan !== undefined) payload.keterangan = keterangan || null
     if (jam_kerja_menit > 0) payload.jam_kerja_menit = jam_kerja_menit
 
-    if (existing && existing.length > 0) {
-      await supabaseAdmin.from('attendance').update(payload)
-        .eq('nrp', nrp).eq('tanggal', tanggal)
-    } else {
-      await supabaseAdmin.from('attendance').insert(payload)
+    // buang kolom yang tidak dikenal database, satu per satu, sampai berhasil
+    async function tulis(tugas: 'update' | 'insert', data: any): Promise<string | null> {
+      let coba = { ...data }
+      for (let i = 0; i < 8; i++) {
+        const q = tugas === 'update'
+          ? supabaseAdmin.from('attendance').update(coba).eq('nrp', nrp).eq('tanggal', tanggal).select('id')
+          : supabaseAdmin.from('attendance').insert(coba).select('id')
+        const { data: hasil, error } = await q
+        if (!error) return null
+        // kolom tidak ada → buang lalu ulangi
+        const m = error.message.match(/column "?([a-z_]+)"? .*does not exist/i)
+          || error.message.match(/Could not find the '([a-z_]+)' column/i)
+        if (m && m[1] && coba[m[1]] !== undefined) {
+          delete coba[m[1]]
+          continue
+        }
+        return error.message
+      }
+      return 'Gagal menulis data attendance'
     }
-    updated.attendance = payload
+
+    const sudahAda = !!(existing && existing.length > 0)
+    let errTulis = sudahAda ? await tulis('update', payload) : await tulis('insert', payload)
+
+    // sudah ada tapi 0 baris ter-update → coba insert
+    if (!errTulis && sudahAda) {
+      const { data: cek } = await supabaseAdmin
+        .from('attendance').select('id').eq('nrp', nrp).eq('tanggal', tanggal).limit(1)
+      if (!cek || cek.length === 0) errTulis = await tulis('insert', payload)
+    }
+
+    if (errTulis) {
+      return NextResponse.json({ error: 'Gagal simpan absensi: ' + errTulis }, { status: 500 })
+    }
+
+    // ── VERIFIKASI: baca ulang, pastikan benar-benar tersimpan ──
+    const { data: sesudah } = await supabaseAdmin
+      .from('attendance')
+      .select('status, keterangan, shift, clock_in, clock_out')
+      .eq('nrp', nrp).eq('tanggal', tanggal).maybeSingle()
+
+    if (!sesudah) {
+      return NextResponse.json(
+        { error: 'Data tidak tersimpan (baris absensi tidak ditemukan setelah disimpan)' },
+        { status: 500 }
+      )
+    }
+
+    updated.attendance = sesudah
+    updated.terverifikasi = {
+      status: sesudah.status || null,
+      keterangan: sesudah.keterangan || null,
+      shift: sesudah.shift || null,
+    }
   }
 
   return NextResponse.json({
     ok: true,
-    message: 'Berhasil diupdate',
+    message: 'Tersimpan' + (updated.terverifikasi ? ' & terverifikasi' : ''),
     updated,
     logged_by: session.nrp
   })

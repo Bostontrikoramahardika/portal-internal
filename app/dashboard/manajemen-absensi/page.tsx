@@ -959,6 +959,16 @@ function EditCellModal({ row, day, onClose, onSaved }: any) {
       })
       const json = await res.json()
       if (!json.ok) { setError(json.error || 'Gagal simpan'); return }
+
+      // verifikasi: kode yang tersimpan harus sama dengan yang dipilih
+      const ket = String(json?.updated?.terverifikasi?.keterangan || json?.updated?.attendance?.keterangan || '')
+      const sts = String(json?.updated?.terverifikasi?.status || json?.updated?.attendance?.status || '')
+      const kodeTersimpan = (ket.match(/\[MANUAL:([A-Z]+)\]/i)?.[1] || sts || '').toUpperCase()
+
+      if (kode && kodeTersimpan && kodeTersimpan !== kode.toUpperCase()) {
+        setError(`Tersimpan sebagai "${kodeTersimpan}", bukan "${kode}". Coba simpan ulang.`)
+        return
+      }
       onSaved()
     } catch { setError('Koneksi gagal') }
     finally { setSaving(false) }
