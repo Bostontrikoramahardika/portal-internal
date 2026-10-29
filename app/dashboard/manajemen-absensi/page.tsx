@@ -518,6 +518,7 @@ export default function ManajemenAbsensiPage() {
                     <th className="px-1 py-2 text-center min-w-[26px]">A</th>
                     <th className="px-1 py-2 text-center min-w-[32px]">Off</th>
                     <th className="px-1 py-2 text-center min-w-[36px]">Cuti</th>
+                    <th className="px-1 py-2 text-center min-w-[52px] bg-amber-600" title="Total jam lembur yang sudah disetujui">Lembur</th>
                     <th className="px-1 py-2 text-center min-w-[44px]">Aksi</th>
                   </tr>
                 </thead>
@@ -527,7 +528,7 @@ export default function ManajemenAbsensiPage() {
                     <Fragment key={group.departemen}>
                       {/* Group header */}
                       <tr key={`grp-${group.departemen}`} className="bg-slate-100 border-t-2 border-slate-200">
-                        <td colSpan={jmlHari + 11} className="px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-slate-600 sticky left-0">
+                        <td colSpan={jmlHari + 12} className="px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-slate-600 sticky left-0">
                           📋 {group.departemen} ({group.rows.length} orang)
                         </td>
                       </tr>
@@ -602,6 +603,28 @@ export default function ManajemenAbsensiPage() {
                           <td className="px-1 py-1.5 text-center text-red-700 font-bold">{row.summary.alpha || '-'}</td>
                           <td className="px-1 py-1.5 text-center text-slate-600 font-bold">{row.summary.off || '-'}</td>
                           <td className="px-1 py-1.5 text-center text-orange-700 font-bold">{row.summary.cuti || '-'}</td>
+                          <td className="px-1 py-1.5 text-center tabular-nums">
+                            {(() => {
+                              const jam = Number(row.summary?.jam_lembur || 0)
+                              const tunggu = Number(row.summary?.lembur_menunggu || 0)
+                              const kali = Number(row.summary?.lembur || 0)
+                              if (!jam && !tunggu && !kali) return <span className="text-slate-300">-</span>
+                              return (
+                                <>
+                                  <div className={`font-black ${jam ? 'text-amber-700' : 'text-slate-300'}`}>
+                                    {jam ? fmtHm(jam) : '-'}
+                                  </div>
+                                  <div className="text-[8px] text-slate-400 leading-none">{kali}x</div>
+                                  {tunggu > 0 && (
+                                    <div className="text-[8px] text-amber-500 font-black leading-none"
+                                      title="Ada lembur belum disetujui">
+                                      +{tunggu}
+                                    </div>
+                                  )}
+                                </>
+                              )
+                            })()}
+                          </td>
                           <td className="px-1 py-1.5 text-center">
                             <button onClick={() => setDetailRow(row)}
                               className="text-[9px] bg-[#003D79] text-white px-2 py-1 rounded font-bold hover:bg-[#005099]">

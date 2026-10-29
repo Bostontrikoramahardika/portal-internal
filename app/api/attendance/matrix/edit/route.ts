@@ -159,20 +159,28 @@ export async function POST(req: NextRequest) {
     function siapkanNilai(data: any) {
       const nilai = { ...data }
       const kodeManual = String(nilai.keterangan || '').match(/\[MANUAL:([A-Z]+)\]/i)?.[1]?.toUpperCase() || ''
+      // Nilai yang SAH (constraint attendance_status_check):
+      // HADIR · TERLAMBAT · SETENGAH_HARI · ALPHA · CUTI · SAKIT · IZIN · LIBUR
+      // Nilai yang SAH untuk shift (attendance_shift_check): SIANG · MALAM
       const PETA_STATUS: Record<string, string[]> = {
-        DS: ['HADIR', 'MASUK', 'H', 'HADIR_KERJA'],
-        DW: ['HADIR', 'MASUK', 'H', 'HADIR_KERJA'],
-        NS: ['HADIR', 'MASUK', 'H', 'HADIR_KERJA'],
-        NW: ['HADIR', 'MASUK', 'H', 'HADIR_KERJA'],
-        A: ['ALFA', 'A', 'TIDAK_HADIR'],
-        ALFA: ['ALFA', 'A', 'TIDAK_HADIR'],
-        I: ['IZIN', 'I'],
-        IR: ['IZIN', 'IZIN_RESMI', 'I'],
-        S: ['SAKIT', 'S'],
-        CT: ['CUTI', 'CT'],
-        CR: ['CUTI', 'CR'],
-        LV: ['CUTI', 'LV'],
-        OFF: ['OFF', 'LIBUR'],
+        DS: ['HADIR'],
+        DW: ['HADIR'],
+        NS: ['HADIR'],
+        NW: ['HADIR'],
+        A: ['ALPHA'],
+        ALFA: ['ALPHA'],
+        I: ['IZIN'],
+        IR: ['IZIN'],
+        S: ['SAKIT'],
+        SAKIT: ['SAKIT'],
+        CT: ['CUTI'],
+        CR: ['CUTI'],
+        LV: ['CUTI'],
+        CUTI: ['CUTI'],
+        OFF: ['LIBUR'],
+        LIBUR: ['LIBUR'],
+        TR: ['IZIN'],
+        ID: ['IZIN'],
       }
       const daftar = PETA_STATUS[kodeManual]
       if (daftar && daftar.length) {
@@ -181,9 +189,9 @@ export async function POST(req: NextRequest) {
       }
       // shift yang sah untuk kode shift
       if (kodeManual === 'NS' || kodeManual === 'NW') {
-        nilai.__kandidatShift = ['MALAM', '2', 'NS', 'NIGHT']
+        nilai.__kandidatShift = ['MALAM']
       } else if (kodeManual === 'DS' || kodeManual === 'DW') {
-        nilai.__kandidatShift = ['SIANG', '1', 'DS', 'DAY']
+        nilai.__kandidatShift = ['SIANG']
       }
       return nilai
     }
