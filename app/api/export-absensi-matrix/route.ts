@@ -1,12 +1,8 @@
 // app/api/export-absensi-matrix/route.ts
-// EXPORT REKAP ABSENSI — MATRIX (Excel berwarna)
+// EXPORT REKAP ABSENSI — MATRIX (Excel berwarna, full 1 bulan)
 //
-// Versi ini menyamakan logika penentuan kode dengan tampilan Matriks di aplikasi:
-//   [MANUAL:xx] → cuti/izin approved → eviden → status attendance → TS Opt → roster
-// Sebelumnya kode hanya diambil dari clock_in, sehingga semua yang absen lewat
-// TS Opt / koreksi manual tampil sebagai A.
-//
-// Penulisan file memakai ExcelJS supaya warna sel benar-benar muncul di Excel.
+// Logika kode sel DISAMAKAN dengan tampilan Matriks di aplikasi:
+//   [MANUAL:xx] → cuti/izin approved → eviden → status attendance → TS Opt → roster → A
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
@@ -25,29 +21,9 @@ function canExport(session: any): boolean {
   )
 }
 
-// ── warna & label per kode (disamakan dengan CELL_STYLE di aplikasi) ──
-const KODE: Record<string, { label: string; bg: string; fg: string }> = {
-  DS:  { label: 'Day Shift',            bg: 'FFE0F2FE', fg: 'FF075985' },
-  NS:  { label: 'Night Shift',          bg: 'FFEDE9FE', fg: 'FF5B21B6' },
-  OFF: { label: 'Off/Libur',            bg: 'FFF1F5F9', fg: 'FF475569' },
-  CR:  { label: 'Cuti Roster',          bg: 'FFFEF9C3', fg: 'FF854D0E' },
-  CT:  { label: 'Cuti Tahunan',         bg: 'FFFED7AA', fg: 'FF7C2D12' },
-  SCK: { label: 'Shift Cuti Kompensasi', bg: 'FFA7F3D0', fg: 'FF065F46' },
-  MCK: { label: 'Malam Cuti Kompensasi', bg: 'FF6EE7B7', fg: 'FF064E3B' },
-  TR:  { label: 'Training',             bg: 'FFBFDBFE', fg: 'FF1E3A8A' },
-  ID:  { label: 'Induksi',              bg: 'FFC7D2FE', fg: 'FF312E81' },
-  S:   { label: 'Sakit',                bg: 'FFFBCFE8', fg: 'FF831843' },
-  I:   { label: 'Izin Potongan',        bg: 'FFFCE7F3', fg: 'FF9D174D' },
-  IR:  { label: 'Izin Resmi',           bg: 'FFFFE4E6', fg: 'FF9F1239' },
-  A:   { label: 'Alfa',                 bg: 'FFF87171', fg: 'FFFFFFFF' },
-  DW:  { label: 'Day tanpa TS Opt',     bg: 'FFF0F9FF', fg: 'FF075985' },
-  NW:  { label: 'Night tanpa TS Opt',   bg: 'FFF5F3FF', fg: 'FF5B21B6' },
-}
-
-const NAVY = 'FF003D79'
-const NAVY2 = 'FF0B2A5B'
-
 const hariNama = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+const bulanNama = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli',
+  'Agustus', 'September', 'Oktober', 'November', 'Desember']
 
 function tglStr(y: number, m: number, d: number) {
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
@@ -72,16 +48,20 @@ export async function GET(request: NextRequest) {
     const [thS, blS] = periode.split('-')
     const tahun = Number(thS)
     const bulan = Number(blS)
-    const jmlHariBulan = new Date(tahun, bulan, 0).getDate()
-    const hariIni = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-    // ── jumlah kolom tanggal ──
-    // bulan berjalan → sampai hari ini; bulan lain → sampai akhir bulan
-    const apakahBulanIni = tahun === now.getFullYear() && bulan === now.getMonth() + 1
-    const jmlHari = apakahBulanIni ? now.getDate() : jmlHariBulan
+    // ── SELALU FULL 1 BULAN (1 s.d. 30/31) ──
+    const jmlHari = new Date(tahun, bulan, 0).getDate()
+
+    // batas hari yang datanya sudah ada:
+    // bulan berjalan → sampai hari ini, bulan lampau → full, bulan depan → 0
+    const bulanIni = new Date(now.getFullYear(), now.getMonth(), 1)
+    const bulanPeriode = new Date(tahun, bulan - 1, 1)
+    let batasIsi = jmlHari
+    if (bulanPeriode.getTime() === bulanIni.getTime()) batasIsi = now.getDate()
+    else if (bulanPeriode > bulanIni) batasIsi = 0
 
     const awal = tglStr(tahun, bulan, 1)
-    const akhirData = tglStr(tahun, bulan, jmlHariBulan)
+    const akhirData = tglStr(tahun, bulan, jmlHari)
 
     // ══════════════ 1. ROSTER ══════════════
     const { data: rosterRaw } = await supabaseAdmin
@@ -111,57 +91,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Tidak ada karyawan valid untuk filter ini' }, { status: 404 })
     }
 
-    // ══════════════ 3. ATTENDANCE ══════════════
-    let attAll: any[] = []
-    for (let i = 0; i < validNrps.length; i += 200) {
-      const { data } = await supabaseAdmin
-        .from('attendance')
-        .select('nrp, tanggal, shift, clock_in, clock_out, status, keterangan, jam_kerja_menit, clock_in_lokasi, clock_out_lokasi')
-        .in('nrp', validNrps.slice(i, i + 200))
-        .gte('tanggal', awal).lte('tanggal', akhirData)
-      attAll = attAll.concat(data || [])
-    }
-
-    // ══════════════ 4. TS OPT (sumber utama "ada unit / kerja") ══════════════
-    const tsKode = new Map<string, { kode: 'DS' | 'NS'; unit: string | null; hm: number | null }>()
-    try {
-      let tsAll: any[] = []
-      for (let i = 0; i < validNrps.length; i += 200) {
-        const potong = validNrps.slice(i, i + 200)
-        const { data } = await supabaseAdmin
-          .from('ts_opt')
-          .select('tanggal, nrp, nama_operator, shift, kode_unit, hm_total')
-          .gte('tanggal', awal).lte('tanggal', akhirData)
-          .or(potong.map((n) => `nrp.eq.${n}`).join(','))
-        if (data?.length) tsAll = tsAll.concat(data)
-      }
-      // kalau filter OR terlalu panjang / kosong, ambil sekaligus
-      if (!tsAll.length) {
-        const { data } = await supabaseAdmin
-          .from('ts_opt')
-          .select('tanggal, nrp, nama_operator, shift, kode_unit, hm_total')
-          .gte('tanggal', awal).lte('tanggal', akhirData)
-        tsAll = data || []
-      }
-      const normNama = (s: any) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
-      for (const r of tsAll) {
-        const tgl = String(r.tanggal || '').slice(0, 10)
-        if (!tgl) continue
-        const sh = String(r.shift ?? '').toUpperCase()
-        const kode: 'DS' | 'NS' =
-          sh === '2' || sh.includes('MALAM') || sh === 'NS' || sh.includes('NIGHT') ? 'NS' : 'DS'
-        const isi = { kode, unit: r.kode_unit || null, hm: r.hm_total ?? null }
-        const nr = String(r.nrp || '').trim()
-        if (nr) {
-          tsKode.set(`${tgl}|NRP:${nr}`, isi)
-          tsKode.set(`${tgl}|NRP:${nr.replace(/^B/i, '')}`, isi)
-        }
-        const nm = normNama(r.nama_operator)
-        if (nm) tsKode.set(`${tgl}|NM:${nm}`, isi)
-      }
-    } catch { /* tabel ts_opt mungkin belum ada */ }
-
-    // helper: query berkala 200 NRP (hindari batas URL Supabase)
+    // helper query berkala 200 NRP
     async function ambilBerkala(tabel: string, kolom: string, tambahan?: (q: any) => any) {
       let hasil: any[] = []
       for (let i = 0; i < validNrps.length; i += 200) {
@@ -176,7 +106,40 @@ export async function GET(request: NextRequest) {
       return hasil
     }
 
-    // ══════════════ 5. CUTI / IZIN / EVIDEN ══════════════
+    // ══════════════ 3. ATTENDANCE ══════════════
+    let attAll: any[] = []
+    for (let i = 0; i < validNrps.length; i += 200) {
+      const { data } = await supabaseAdmin
+        .from('attendance')
+        .select('nrp, tanggal, shift, clock_in, clock_out, status, keterangan, jam_kerja_menit')
+        .in('nrp', validNrps.slice(i, i + 200))
+        .gte('tanggal', awal).lte('tanggal', akhirData)
+      attAll = attAll.concat(data || [])
+    }
+
+    // ══════════════ 4. TS OPT ══════════════
+    const tsKode = new Map<string, { kode: 'DS' | 'NS'; unit: string | null }>()
+    const normNama = (s: any) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+    try {
+      const tsAll = await ambilBerkala('ts_opt', 'tanggal, nrp, nama_operator, shift, kode_unit')
+      for (const r of tsAll) {
+        const tgl = String(r.tanggal || '').slice(0, 10)
+        if (!tgl) continue
+        const sh = String(r.shift ?? '').toUpperCase()
+        const kode: 'DS' | 'NS' =
+          sh === '2' || sh.includes('MALAM') || sh === 'NS' || sh.includes('NIGHT') ? 'NS' : 'DS'
+        const isi = { kode, unit: r.kode_unit || null }
+        const nr = String(r.nrp || '').trim()
+        if (nr) {
+          tsKode.set(`${tgl}|NRP:${nr}`, isi)
+          tsKode.set(`${tgl}|NRP:${nr.replace(/^B/i, '')}`, isi)
+        }
+        const nm = normNama(r.nama_operator)
+        if (nm) tsKode.set(`${tgl}|NM:${nm}`, isi)
+      }
+    } catch { /* ts_opt belum ada / kolom beda */ }
+
+    // ══════════════ 5. CUTI / IZIN / EVIDEN / LEMBUR ══════════════
     let leaves: any[] = []
     for (let i = 0; i < validNrps.length; i += 200) {
       const { data } = await supabaseAdmin
@@ -192,7 +155,6 @@ export async function GET(request: NextRequest) {
       evidences = await ambilBerkala('attendance_evidences', 'nrp, tanggal, kategori, status_atasan')
     } catch { /* tabel eviden belum ada */ }
 
-    // ══════════════ 6. LEMBUR ══════════════
     let lemburRows: any[] = []
     try {
       lemburRows = await ambilBerkala('overtime_requests',
@@ -202,7 +164,7 @@ export async function GET(request: NextRequest) {
     const lemburJam: Record<string, number> = {}
     const lemburKali: Record<string, number> = {}
     const lemburPerHari = new Map<string, number>()
-    for (const l of lemburRows || []) {
+    for (const l of lemburRows) {
       const fin = String(l.status_final || '').toUpperCase()
       const ata = String(l.status_atasan || '').toUpperCase()
       const pjo = String(l.status_pjo || '').toUpperCase()
@@ -224,7 +186,7 @@ export async function GET(request: NextRequest) {
       lemburPerHari.set(kh, Math.round(((lemburPerHari.get(kh) || 0) + jam) * 100) / 100)
     }
 
-    // ══════════════ 7. MAP PENCARIAN ══════════════
+    // ══════════════ 6. MAP PENCARIAN ══════════════
     const rosterMap = new Map<string, string>()
     rosterRaw.forEach((r: any) => rosterMap.set(`${r.nrp}|${String(r.tanggal).slice(0, 10)}`, String(r.shift_code || '').toUpperCase()))
 
@@ -246,9 +208,7 @@ export async function GET(request: NextRequest) {
       evMap.set(`${ev.nrp}|${String(ev.tanggal).slice(0, 10)}`, ev.kategori || '')
     })
 
-    // ══════════════ 8. TENTUKAN KODE (sama dengan aplikasi) ══════════════
-    const normNama = (s: any) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
-
+    // ══════════════ 7. TENTUKAN KODE (sama dengan aplikasi) ══════════════
     function cariTs(nrp: string, nama: string, tgl: string) {
       return tsKode.get(`${tgl}|NRP:${nrp}`)
         || tsKode.get(`${tgl}|NRP:${nrp.replace(/^B/i, '')}`)
@@ -264,11 +224,9 @@ export async function GET(request: NextRequest) {
       const ev = String(evMap.get(key) || '').toUpperCase()
       const ts = cariTs(nrp, nama, tgl)
 
-      // ① koreksi manual dari HR → selalu menang
       const manual = String(att?.keterangan || '').match(/\[MANUAL:([A-Za-z]+)\]/i)
       if (manual) return manual[1].toUpperCase()
 
-      // ② cuti / izin disetujui
       if (leave) {
         if (leave.includes('TAHUN')) return 'CT'
         if (leave.includes('KOMPENSASI')) {
@@ -280,14 +238,12 @@ export async function GET(request: NextRequest) {
         return 'I'
       }
 
-      // ③ eviden (sakit / izin)
       if (ev) {
         if (ev.includes('SAKIT')) return 'S'
         if (ev.includes('BERBAYAR')) return 'IR'
         if (ev.includes('IZIN')) return 'I'
       }
 
-      // ④ status attendance yang disimpan
       const st = String(att?.status || '').toUpperCase()
       const sh = String(att?.shift || '').toUpperCase()
       if (st === 'HADIR' || st === 'TERLAMBAT' || st === 'SETENGAH_HARI') {
@@ -299,39 +255,33 @@ export async function GET(request: NextRequest) {
       if (st === 'CUTI') return 'CT'
       if (st === 'LIBUR') return 'OFF'
 
-      // ⑤ ada di TS Opt = benar-benar bekerja
       if (ts) return att?.clock_in ? ts.kode : (ts.kode === 'NS' ? 'NW' : 'DW')
 
-      // ⑥ roster yang bukan shift kerja
       if (roster === 'OFF') return 'OFF'
       if (roster === 'ID') return 'ID'
       if (roster === 'TR') return 'TR'
       if (roster === 'CR') return 'CR'
-      if (roster === 'CT') return 'CT'
-      if (roster === 'LV') return 'CT'
+      if (roster === 'CT' || roster === 'LV') return 'CT'
 
-      // ⑦ roster shift kerja tapi tidak ada bukti apa pun
       if (roster === 'S' || roster === 'M') return 'A'
 
       return ''
     }
 
-    // ══════════════ 9. SUSUN BARIS ══════════════
-    validNrps.sort((a, b) => String(empMap.get(a).nama || '').localeCompare(String(empMap.get(b).nama || '')))
+    // ══════════════ 8. SUSUN BARIS ══════════════
+    validNrps.sort((a, b) => String(empMap.get(a)?.nama || '').localeCompare(String(empMap.get(b)?.nama || '')))
 
-    const kolomRingkas = ['HDR', 'DS', 'NS', 'CT', 'CR', 'KMP', 'S', 'I', 'IR', 'A', 'OFF', '%']
-    const kolomLembur = ['LEMBUR (kali)', 'JAM LEMBUR']
-
-    type BarisMatriks = { nrp: string; nama: string; kode: string[] }
-    const barisMatriks: BarisMatriks[] = []
-    const hitung: Record<string, Record<string, number>> = {}
+    const barisMatriks: any[] = []
+    const hitung: Record<string, any> = {}
 
     for (const nrp of validNrps) {
       const emp = empMap.get(nrp)
       const kodes: string[] = []
-      const c: Record<string, number> = { HDR: 0, DS: 0, NS: 0, CT: 0, CR: 0, KMP: 0, S: 0, I: 0, IR: 0, A: 0, OFF: 0, TOTAL_KERJA: 0 }
+      const c: any = { HDR: 0, DS: 0, NS: 0, CT: 0, CR: 0, KMP: 0, S: 0, I: 0, IR: 0, A: 0, OFF: 0, TOTAL_KERJA: 0 }
       for (let d = 1; d <= jmlHari; d++) {
-        const kode = tentukanKode(nrp, emp.nama || '', tglStr(tahun, bulan, d))
+        // hari yang belum terjadi → sel dibiarkan KOSONG (bukan A)
+        if (d > batasIsi) { kodes.push(''); continue }
+        const kode = tentukanKode(nrp, emp?.nama || '', tglStr(tahun, bulan, d))
         kodes.push(kode)
         if (kode === 'DS' || kode === 'NS') { c.HDR++; c.TOTAL_KERJA++; kode === 'DS' ? c.DS++ : c.NS++ }
         else if (kode === 'DW' || kode === 'NW') { c.HDR++; c.TOTAL_KERJA++ }
@@ -345,126 +295,168 @@ export async function GET(request: NextRequest) {
         else if (kode === 'OFF') { c.OFF++ }
       }
       hitung[nrp] = c
-      barisMatriks.push({ nrp, nama: emp.nama || '', kode: kodes })
+      barisMatriks.push({
+        nrp,
+        nama: emp?.nama || '',
+        jabatan: emp?.jabatan || emp?.departemen || '-',
+        site: emp?.site || '-',
+        kode: kodes,
+      })
     }
 
-    // ══════════════ 10. TULIS EXCEL (ExcelJS → warna nyata) ══════════════
+    // ══════════════ 9. TULIS EXCEL ══════════════
+    const KODE: Record<string, { label: string; bg: string; fg: string }> = {
+      DS:  { label: 'Day Shift',             bg: 'FFE0F2FE', fg: 'FF075985' },
+      NS:  { label: 'Night Shift',           bg: 'FFEDE9FE', fg: 'FF5B21B6' },
+      OFF: { label: 'Off / Libur',           bg: 'FFF1F5F9', fg: 'FF475569' },
+      CR:  { label: 'Cuti Roster',           bg: 'FFFEF9C3', fg: 'FF854D0E' },
+      CT:  { label: 'Cuti Tahunan',          bg: 'FFFED7AA', fg: 'FF7C2D12' },
+      SCK: { label: 'Shift Cuti Kompensasi', bg: 'FFA7F3D0', fg: 'FF065F46' },
+      MCK: { label: 'Malam Cuti Kompensasi', bg: 'FF6EE7B7', fg: 'FF064E3B' },
+      TR:  { label: 'Training',              bg: 'FFBFDBFE', fg: 'FF1E3A8A' },
+      ID:  { label: 'Induksi',               bg: 'FFC7D2FE', fg: 'FF312E81' },
+      S:   { label: 'Sakit',                 bg: 'FFFBCFE8', fg: 'FF831843' },
+      I:   { label: 'Izin Potongan',         bg: 'FFFCE7F3', fg: 'FF9D174D' },
+      IR:  { label: 'Izin Resmi',            bg: 'FFFFE4E6', fg: 'FF9F1239' },
+      A:   { label: 'Alfa',                  bg: 'FFF87171', fg: 'FFFFFFFF' },
+      DW:  { label: 'Day (tanpa TS Opt)',    bg: 'FFF0F9FF', fg: 'FF075985' },
+      NW:  { label: 'Night (tanpa TS Opt)',  bg: 'FFF5F3FF', fg: 'FF5B21B6' },
+    }
+    const NAVY = 'FF003D79'
+    const NAVY2 = 'FF0B2A5B'
+    const ORANGE = 'FFB45309'
+    const garis = { style: 'thin' as const, color: { argb: 'FFCBD5E1' } }
+    const tipis = { top: garis, bottom: garis, left: garis, right: garis }
+
     const wb = new ExcelJS.Workbook()
     wb.creator = 'BTM Mobile — Portal Internal'
     wb.created = new Date()
 
-    // ---------- Sheet 1: Rekap Matrix ----------
-    const ws = wb.addWorksheet('Rekap Absensi', { views: [{ state: 'frozen', xSplit: 5, ySplit: 4 }] })
+    // ══════════ SHEET 1 : REKAP MATRIX ══════════
+    const ws = wb.addWorksheet('Rekap Absensi', { views: [{ state: 'frozen', xSplit: 5, ySplit: 5 }] })
 
-    const judul = `REKAP ABSENSI — ${new Date(tahun, bulan - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase()}`
-    const subInfo = [
-      `Site: ${siteFilter && siteFilter !== 'ALL' ? siteFilter : 'Semua Site'}`,
-      `Periode data: 01 – ${String(jmlHari).padStart(2, '0')} ${new Date(tahun, bulan - 1, 1).toLocaleDateString('id-ID', { month: 'long' })} ${tahun}` +
-        (apakahBulanIni ? ' (s.d. hari ini)' : ''),
-      `Dicetak: ${new Date().toLocaleString('id-ID')}`,
-    ].join('   •   ')
+    const KOL_NO = 1, KOL_NRP = 2, KOL_NAMA = 3, KOL_JAB = 4, KOL_SITE = 5
+    const KOL_TGL1 = 6
+    const kolomRingkas = ['HDR', 'DS', 'NS', 'CT', 'CR', 'KMP', 'S', 'I', 'IR', 'A', 'OFF', '%']
+    const kolomLembur = ['KALI', 'JAM']
+    const KOL_RINGKAS = KOL_TGL1 + jmlHari
+    const KOL_AKHIR = KOL_RINGKAS + kolomRingkas.length + kolomLembur.length - 1
 
-    ws.mergeCells(1, 1, 1, 12)
-    const cJudul = ws.getCell(1, 1)
-    cJudul.value = judul
+    const BARIS_JUDUL = 1
+    const BARIS_INFO = 2
+    const BARIS_GRUP = 3   // label "TANGGAL" / "REKAP KEHADIRAN" / "LEMBUR"
+    const BARIS_TGL = 4    // angka 1..31
+    const BARIS_HARI = 5   // nama hari
+    const BARIS_DATA = 6
+
+    // judul
+    ws.mergeCells(BARIS_JUDUL, 1, BARIS_JUDUL, Math.min(KOL_AKHIR, 12))
+    const cJudul = ws.getCell(BARIS_JUDUL, 1)
+    cJudul.value = `REKAP ABSENSI — ${bulanNama[bulan - 1].toUpperCase()} ${tahun}`
     cJudul.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } }
     cJudul.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } }
     cJudul.alignment = { vertical: 'middle' }
-    ws.getRow(1).height = 24
+    ws.getRow(BARIS_JUDUL).height = 26
 
-    ws.mergeCells(2, 1, 2, 12)
-    const cSub = ws.getCell(2, 1)
-    cSub.value = subInfo
-    cSub.font = { size: 9, color: { argb: 'FF475569' } }
-    cSub.alignment = { vertical: 'middle' }
-    ws.getRow(2).height = 16
+    ws.mergeCells(BARIS_INFO, 1, BARIS_INFO, Math.min(KOL_AKHIR, 12))
+    const cInfo = ws.getCell(BARIS_INFO, 1)
+    cInfo.value = `Site: ${siteFilter && siteFilter !== 'ALL' ? siteFilter : 'Semua Site'}   •   Periode: 01 – ${jmlHari} ${bulanNama[bulan - 1]} ${tahun}   •   Data terisi s.d. tanggal ${batasIsi || '-'}   •   Dicetak: ${new Date().toLocaleString('id-ID')}`
+    cInfo.font = { size: 9, color: { argb: 'FF475569' } }
+    cInfo.alignment = { vertical: 'middle' }
+    ws.getRow(BARIS_INFO).height = 16
 
-    // baris 3 = nama hari (Sen/Sel/...), baris 4 = tanggal 1..31
-    const barisHari = 3
-    const barisTgl = 4
-    const kolomAwalTgl = 6   // A..E = NO, NRP, NAMA, JABATAN, SITE
+    // ── grup header ──
+    const grupKolom: Array<[number, number, string, string]> = [
+      [KOL_NO, KOL_NO, 'NO', NAVY],
+      [KOL_NRP, KOL_NRP, 'NRP', NAVY],
+      [KOL_NAMA, KOL_NAMA, 'NAMA KARYAWAN', NAVY],
+      [KOL_JAB, KOL_JAB, 'JABATAN', NAVY],
+      [KOL_SITE, KOL_SITE, 'SITE', NAVY],
+      [KOL_TGL1, KOL_TGL1 + jmlHari - 1, 'TANGGAL', NAVY2],
+      [KOL_RINGKAS, KOL_RINGKAS + kolomRingkas.length - 1, 'REKAP KEHADIRAN', NAVY],
+      [KOL_RINGKAS + kolomRingkas.length, KOL_AKHIR, 'LEMBUR', ORANGE],
+    ]
+    for (const [k1, k2, label, warna] of grupKolom) {
+      if (k2 > k1) ws.mergeCells(BARIS_GRUP, k1, BARIS_GRUP, k2)
+      const sel = ws.getCell(BARIS_GRUP, k1)
+      sel.value = label
+      sel.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
+      sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: warna } }
+      sel.alignment = { horizontal: 'center', vertical: 'middle' }
+      sel.border = tipis
+    }
+    ws.getRow(BARIS_GRUP).height = 18
 
-    const headerAtas = ['NO', 'NRP', 'NAMA', 'JABATAN', 'SITE']
-    headerAtas.forEach((h, i) => {
-      const sel = ws.getCell(barisTgl, i + 1)
-      sel.value = h
-      ws.mergeCells(barisHari, i + 1, barisTgl, i + 1)
-    })
-
+    // ── kolom tanggal: angka + nama hari ──
     for (let d = 1; d <= jmlHari; d++) {
       const tgl = new Date(tahun, bulan - 1, d)
-      const kol = kolomAwalTgl + d - 1
-      const selHari = ws.getCell(barisHari, kol)
-      const selTgl = ws.getCell(barisTgl, kol)
-      selHari.value = hariNama[tgl.getDay()].slice(0, 3)
-      selTgl.value = d
+      const kol = KOL_TGL1 + d - 1
       const akhirPekan = tgl.getDay() === 0 || tgl.getDay() === 6
-      ;[selHari, selTgl].forEach((s) => {
-        s.font = { bold: true, size: 8, color: { argb: akhirPekan ? 'FFB91C1C' : 'FFFFFFFF' } }
-        s.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: akhirPekan ? 'FFFEE2E2' : NAVY2 } }
-        s.alignment = { horizontal: 'center', vertical: 'middle' }
-        s.border = { top: { style: 'thin', color: { argb: 'FFCBD5E1' } }, bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } }, left: { style: 'thin', color: { argb: 'FFCBD5E1' } }, right: { style: 'thin', color: { argb: 'FFCBD5E1' } } }
-      })
-    }
+      const lewat = d > batasIsi
 
-    // header kolom ringkas
-    const kolomRingkasAwal = kolomAwalTgl + jmlHari
+      const selTgl = ws.getCell(BARIS_TGL, kol)
+      const selHari = ws.getCell(BARIS_HARI, kol)
+      selTgl.value = d
+      selHari.value = hariNama[tgl.getDay()].slice(0, 3).toUpperCase()
+
+      selTgl.font = { bold: true, size: 9, color: { argb: akhirPekan ? 'FFB91C1C' : 'FFFFFFFF' } }
+      selTgl.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: akhirPekan ? 'FFFECACA' : NAVY2 } }
+      selTgl.alignment = { horizontal: 'center', vertical: 'middle' }
+
+      selHari.font = { size: 7, color: { argb: akhirPekan ? 'FFB91C1C' : 'FFE2E8F0' }, bold: akhirPekan }
+      selHari.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: akhirPekan ? 'FFFEE2E2' : 'FF1E3A5F' } }
+      selHari.alignment = { horizontal: 'center', vertical: 'middle' }
+
+      selTgl.border = tipis
+      selHari.border = tipis
+      if (lewat) selHari.font = { size: 7, color: { argb: 'FF94A3B8' } }
+    }
+    ws.getRow(BARIS_TGL).height = 16
+    ws.getRow(BARIS_HARI).height = 13
+
+    // header kolom ringkas & lembur
     ;[...kolomRingkas, ...kolomLembur].forEach((h, i) => {
-      const sel = ws.getCell(barisTgl, kolomRingkasAwal + i)
+      const kol = KOL_RINGKAS + i
+      ws.mergeCells(BARIS_TGL, kol, BARIS_HARI, kol)
+      const sel = ws.getCell(BARIS_TGL, kol)
       sel.value = h
-      ws.mergeCells(barisHari, kolomRingkasAwal + i, barisTgl, kolomRingkasAwal + i)
+      const warna = i >= kolomRingkas.length ? ORANGE : NAVY
       sel.font = { bold: true, size: 8, color: { argb: 'FFFFFFFF' } }
-      sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: h.startsWith('LEMBUR') || h === 'JAM LEMBUR' ? 'FFB45309' : NAVY } }
+      sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: warna } }
       sel.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
-      sel.border = { top: { style: 'thin', color: { argb: 'FFCBD5E1' } }, bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } }, left: { style: 'thin', color: { argb: 'FFCBD5E1' } }, right: { style: 'thin', color: { argb: 'FFCBD5E1' } } }
+      sel.border = tipis
     })
 
-    for (let i = 0; i < headerAtas.length; i++) {
-      const sel = ws.getCell(barisTgl, i + 1)
-      sel.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
-      sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } }
-      sel.alignment = { horizontal: i >= 2 ? 'left' : 'center', vertical: 'middle' }
-      sel.border = { top: { style: 'thin', color: { argb: 'FFCBD5E1' } }, bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } }, left: { style: 'thin', color: { argb: 'FFCBD5E1' } }, right: { style: 'thin', color: { argb: 'FFCBD5E1' } } }
-    }
-    ws.getRow(barisHari).height = 14
-    ws.getRow(barisTgl).height = 22
-
-    const tipis = {
-      top: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
-      bottom: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
-      left: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
-      right: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
-    }
-
-    let r = barisTgl + 1
+    // ── baris data ──
+    let r = BARIS_DATA
     barisMatriks.forEach((b, idx) => {
-      const emp = empMap.get(b.nrp)
       const c = hitung[b.nrp]
       const row = ws.getRow(r)
 
-      row.getCell(1).value = idx + 1
-      row.getCell(2).value = b.nrp
-      row.getCell(3).value = b.nama
-      row.getCell(4).value = emp?.jabatan || '-'
-      row.getCell(5).value = emp?.site || '-'
+      row.getCell(KOL_NO).value = idx + 1
+      row.getCell(KOL_NRP).value = b.nrp
+      row.getCell(KOL_NAMA).value = b.nama
+      row.getCell(KOL_JAB).value = b.jabatan
+      row.getCell(KOL_SITE).value = b.site
 
-      for (let i = 1; i <= 5; i++) {
-        const sel = row.getCell(i)
-        sel.font = { size: 9, bold: i === 3 }
-        sel.alignment = { horizontal: i === 1 ? 'center' : 'left', vertical: 'middle' }
+      for (const kol of [KOL_NO, KOL_NRP, KOL_NAMA, KOL_JAB, KOL_SITE]) {
+        const sel = row.getCell(kol)
+        sel.font = { size: 9, bold: kol === KOL_NAMA }
+        sel.alignment = { horizontal: kol <= KOL_NRP ? 'center' : 'left', vertical: 'middle' }
         sel.border = tipis
       }
 
       for (let d = 0; d < jmlHari; d++) {
         const kode = b.kode[d] || ''
-        const sel = row.getCell(kolomAwalTgl + d)
-        sel.value = kode || null
+        const sel = row.getCell(KOL_TGL1 + d)
         const info = KODE[kode]
+        sel.value = kode || null
         sel.alignment = { horizontal: 'center', vertical: 'middle' }
         sel.border = tipis
-        sel.font = { size: 9, bold: true, color: { argb: info?.fg || 'FF0F172A' } }
-        if (info) sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: info.bg } }
-        else {
+        sel.font = { size: 9, bold: !!info, color: { argb: info?.fg || 'FF0F172A' } }
+        if (info) {
+          sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: info.bg } }
+        } else {
           const tgl = new Date(tahun, bulan - 1, d + 1)
           if (tgl.getDay() === 0 || tgl.getDay() === 6) {
             sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }
@@ -473,97 +465,98 @@ export async function GET(request: NextRequest) {
       }
 
       const persen = c.TOTAL_KERJA > 0 ? Math.round((c.HDR / c.TOTAL_KERJA) * 1000) / 10 : 0
-      const nilaiRingkas = [c.HDR, c.DS, c.NS, c.CT, c.CR, c.KMP, c.S, c.I, c.IR, c.A, c.OFF, persen,
-                            lemburKali[b.nrp] || 0, lemburJam[b.nrp] || 0]
-      nilaiRingkas.forEach((v, i) => {
-        const sel = row.getCell(kolomRingkasAwal + i)
+      const nilai = [c.HDR, c.DS, c.NS, c.CT, c.CR, c.KMP, c.S, c.I, c.IR, c.A, c.OFF, persen,
+                     lemburKali[b.nrp] || 0, lemburJam[b.nrp] || 0]
+      const namaKol = [...kolomRingkas, ...kolomLembur]
+      nilai.forEach((v, i) => {
+        const sel = row.getCell(KOL_RINGKAS + i)
         sel.value = v
         sel.alignment = { horizontal: 'center', vertical: 'middle' }
         sel.border = tipis
         sel.font = { size: 9, bold: true }
-        const namaKol = [...kolomRingkas, ...kolomLembur][i]
-        if (namaKol === '%') {
+        const nk = namaKol[i]
+        if (nk === '%') {
           sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: persen >= 90 ? 'FFD1FAE5' : persen >= 70 ? 'FFFEF3C7' : 'FFFEE2E2' } }
-        } else if (namaKol === 'A' && c.A > 0) {
-          sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }
+        } else if (nk === 'A' && c.A > 0) {
+          sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFECACA' } }
           sel.font = { size: 9, bold: true, color: { argb: 'FF991B1B' } }
-        } else if (namaKol === 'LEMBUR (kali)' || namaKol === 'JAM LEMBUR') {
-          if (Number(v) > 0) sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } }
+        } else if (i >= kolomRingkas.length) {
+          sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: Number(v) > 0 ? 'FFFEF3C7' : 'FFF8FAFC' } }
         } else {
           sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }
         }
       })
 
-      if (idx % 2 === 1) {
-        for (let i = 1; i <= 5; i++) {
-          row.getCell(i).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCFDFE' } }
-        }
-      }
-
       r++
     })
 
-    // baris total
-    ws.getRow(r).height = 18
-    ws.mergeCells(r, 1, r, 5)
-    const cTotal = ws.getCell(r, 1)
-    cTotal.value = `TOTAL ${barisMatriks.length} KARYAWAN`
-    cTotal.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
-    cTotal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY2 } }
-    cTotal.alignment = { horizontal: 'center', vertical: 'middle' }
+    // ── baris total ──
+    const barisTotal = r
+    ws.getRow(barisTotal).height = 18
+    ws.mergeCells(barisTotal, KOL_NO, barisTotal, KOL_SITE)
+    const cTot = ws.getCell(barisTotal, KOL_NO)
+    cTot.value = `TOTAL ${barisMatriks.length} KARYAWAN`
+    cTot.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
+    cTot.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY2 } }
+    cTot.alignment = { horizontal: 'center', vertical: 'middle' }
+    cTot.border = tipis
 
     for (let d = 0; d < jmlHari; d++) {
-      const sel = ws.getCell(r, kolomAwalTgl + d)
+      const sel = ws.getCell(barisTotal, KOL_TGL1 + d)
       const jml = barisMatriks.filter((b) => (b.kode[d] || '') === 'A').length
       sel.value = jml > 0 ? jml : null
       sel.font = { size: 8, bold: true, color: { argb: 'FF991B1B' } }
-      sel.alignment = { horizontal: 'center' }
+      sel.alignment = { horizontal: 'center', vertical: 'middle' }
       sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF2F2' } }
       sel.border = tipis
     }
-    const totalRingkas = ['HDR', 'DS', 'NS', 'CT', 'CR', 'KMP', 'S', 'I', 'IR', 'A', 'OFF'].map((k) =>
-      barisMatriks.reduce((a, b) => a + (hitung[b.nrp] as any)[k], 0))
-    totalRingkas.forEach((v, i) => {
-      const sel = ws.getCell(r, kolomRingkasAwal + i)
+    const urutRingkas = ['HDR', 'DS', 'NS', 'CT', 'CR', 'KMP', 'S', 'I', 'IR', 'A', 'OFF']
+    urutRingkas.forEach((k, i) => {
+      const v = barisMatriks.reduce((a, b) => a + (hitung[b.nrp][k] || 0), 0)
+      const sel = ws.getCell(barisTotal, KOL_RINGKAS + i)
       sel.value = v
       sel.font = { size: 9, bold: true, color: { argb: 'FFFFFFFF' } }
       sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY2 } }
-      sel.alignment = { horizontal: 'center' }
+      sel.alignment = { horizontal: 'center', vertical: 'middle' }
       sel.border = tipis
     })
-    const jamTotal = Object.values(lemburJam).reduce((a, b) => a + b, 0)
-    const selKali = ws.getCell(r, kolomRingkasAwal + kolomRingkas.length)
-    selKali.value = Object.values(lemburKali).reduce((a, b) => a + b, 0)
-    const selJam = ws.getCell(r, kolomRingkasAwal + kolomRingkas.length + 1)
-    selJam.value = Math.round(jamTotal * 100) / 100
-    ;[selKali, selJam].forEach((s) => {
+    const selPersenTot = ws.getCell(barisTotal, KOL_RINGKAS + kolomRingkas.length - 1)
+    selPersenTot.value = ''
+    selPersenTot.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY2 } }
+    selPersenTot.border = tipis
+
+    const selKaliTot = ws.getCell(barisTotal, KOL_RINGKAS + kolomRingkas.length)
+    selKaliTot.value = Object.values(lemburKali).reduce((a, b) => a + b, 0)
+    const selJamTot = ws.getCell(barisTotal, KOL_RINGKAS + kolomRingkas.length + 1)
+    selJamTot.value = Math.round(Object.values(lemburJam).reduce((a, b) => a + b, 0) * 100) / 100
+    ;[selKaliTot, selJamTot].forEach((s) => {
       s.font = { size: 9, bold: true, color: { argb: 'FFFFFFFF' } }
-      s.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB45309' } }
-      s.alignment = { horizontal: 'center' }
+      s.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ORANGE } }
+      s.alignment = { horizontal: 'center', vertical: 'middle' }
       s.border = tipis
     })
 
     // lebar kolom
-    ws.getColumn(1).width = 5
-    ws.getColumn(2).width = 11
-    ws.getColumn(3).width = 26
-    ws.getColumn(4).width = 18
-    ws.getColumn(5).width = 9
-    for (let d = 0; d < jmlHari; d++) ws.getColumn(kolomAwalTgl + d).width = 4.2
-    for (let i = 0; i < kolomRingkas.length; i++) ws.getColumn(kolomRingkasAwal + i).width = 5.5
-    ws.getColumn(kolomRingkasAwal + kolomRingkas.length).width = 8
-    ws.getColumn(kolomRingkasAwal + kolomRingkas.length + 1).width = 9
+    ws.getColumn(KOL_NO).width = 5
+    ws.getColumn(KOL_NRP).width = 12
+    ws.getColumn(KOL_NAMA).width = 28
+    ws.getColumn(KOL_JAB).width = 20
+    ws.getColumn(KOL_SITE).width = 10
+    for (let d = 0; d < jmlHari; d++) ws.getColumn(KOL_TGL1 + d).width = 4.3
+    for (let i = 0; i < kolomRingkas.length; i++) ws.getColumn(KOL_RINGKAS + i).width = 5.5
+    ws.getColumn(KOL_RINGKAS + kolomRingkas.length).width = 9
+    ws.getColumn(KOL_RINGKAS + kolomRingkas.length + 1).width = 10
 
-    ws.autoFilter = { from: { row: barisTgl, column: 1 }, to: { row: barisTgl, column: kolomRingkasAwal + kolomRingkas.length + 1 } }
+    ws.autoFilter = { from: { row: BARIS_TGL, column: KOL_NO }, to: { row: BARIS_TGL, column: KOL_AKHIR } }
 
-    // ---------- Sheet 2: Legenda ----------
+    // ══════════ SHEET 2 : LEGENDA ══════════
     const wl = wb.addWorksheet('Legenda')
     wl.getColumn(1).width = 8
-    wl.getColumn(2).width = 30
+    wl.getColumn(2).width = 32
+    wl.mergeCells(1, 1, 1, 2)
     wl.getCell(1, 1).value = 'LEGENDA KODE ABSENSI'
     wl.getCell(1, 1).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } }
     wl.getCell(1, 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } }
-    wl.mergeCells(1, 1, 1, 2)
     let rl = 3
     Object.entries(KODE).forEach(([kode, info]) => {
       const a = wl.getCell(rl, 1)
@@ -582,32 +575,33 @@ export async function GET(request: NextRequest) {
     const catatan = [
       'Catatan:',
       '• Kode diambil dari data yang sama dengan tampilan Matriks di aplikasi.',
-      '• Koreksi manual HR (DS/NS/A/…) ditampilkan sesuai koreksi tersebut.',
-      '• Sel kosong = tidak ada roster, absensi, maupun TS Opt pada hari itu.',
-      '• Kolom tanggal pada bulan berjalan hanya sampai hari ini.',
+      '• Koreksi manual HR (DS / NS / A / …) ditampilkan sesuai koreksi tersebut.',
+      '• Kolom tanggal selalu penuh 1 bulan (01 s.d. akhir bulan).',
+      '• Sel kosong = belum ada data (hari belum terjadi) atau tidak ada roster/absensi/TS Opt.',
     ]
     catatan.forEach((t) => {
+      wl.mergeCells(rl, 1, rl, 2)
       const sel = wl.getCell(rl, 1)
       sel.value = t
       sel.font = { size: 9, bold: t === 'Catatan:', color: { argb: 'FF475569' } }
-      wl.mergeCells(rl, 1, rl, 2)
       rl++
     })
 
-    // ---------- Sheet 3: Detail per hari ----------
+    // ══════════ SHEET 3 : DETAIL ══════════
     const wd = wb.addWorksheet('Detail Absensi', { views: [{ state: 'frozen', ySplit: 1 }] })
-    const headerDetail = ['NO', 'NRP', 'NAMA', 'JABATAN', 'SITE', 'TANGGAL', 'HARI', 'KODE', 'JAM MASUK', 'JAM KELUAR', 'STATUS', 'KETERANGAN', 'LEMBUR (jam)']
+    const headerDetail = ['NO', 'NRP', 'NAMA', 'JABATAN', 'SITE', 'TANGGAL', 'HARI', 'KODE',
+      'JAM MASUK', 'JAM KELUAR', 'STATUS DB', 'KETERANGAN', 'LEMBUR (jam)']
     wd.addRow(headerDetail)
     wd.getRow(1).eachCell((sel) => {
       sel.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
       sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } }
-      sel.alignment = { horizontal: 'center', vertical: 'middle' }
+      sel.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
       sel.border = tipis
     })
+    wd.getRow(1).height = 22
 
     let noDetail = 1
     for (const b of barisMatriks) {
-      const emp = empMap.get(b.nrp)
       for (let d = 0; d < jmlHari; d++) {
         const kode = b.kode[d] || ''
         if (!kode) continue
@@ -615,27 +609,27 @@ export async function GET(request: NextRequest) {
         const att = attMap.get(`${b.nrp}|${tanggal}`)
         const info = KODE[kode]
         const row = wd.addRow([
-          noDetail++, b.nrp, b.nama, emp?.jabatan || '-', emp?.site || '-',
+          noDetail++, b.nrp, b.nama, b.jabatan, b.site,
           tanggal, hariNama[new Date(tahun, bulan - 1, d + 1).getDay()], kode,
           att?.clock_in ? new Date(att.clock_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '',
           att?.clock_out ? new Date(att.clock_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '',
-          att?.status || '', att?.keterangan || '',
+          att?.status || '', String(att?.keterangan || '').replace(/\[MANUAL:[A-Za-z]+\]\s*/gi, '').trim(),
           lemburPerHari.get(`${b.nrp}|${tanggal}`) || '',
         ])
         const selKode = row.getCell(8)
         selKode.font = { bold: true, size: 9, color: { argb: info?.fg || 'FF0F172A' } }
         if (info) selKode.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: info.bg } }
-        row.eachCell((sel: any) => {
+        row.eachCell((sel) => {
           sel.border = tipis
-          if (sel !== selKode) sel.font = { size: 9 }
           sel.alignment = { vertical: 'middle' }
+          if (sel !== selKode) sel.font = { size: 9 }
         })
       }
     }
-    ;[5, 11, 26, 18, 9, 12, 9, 7, 10, 10, 12, 30, 12].forEach((w, i) => (wd.getColumn(i + 1).width = w))
+    ;[5, 12, 28, 20, 10, 12, 10, 7, 11, 11, 13, 30, 12].forEach((w, i) => (wd.getColumn(i + 1).width = w))
     wd.autoFilter = { from: 'A1', to: 'M1' }
 
-    // ---------- keluaran ----------
+    // ══════════ keluaran ══════════
     const buffer = await wb.xlsx.writeBuffer()
     const bytes = new Uint8Array(buffer as ArrayBuffer)
     const namaFile = `Rekap_Matrix_${tahun}-${String(bulan).padStart(2, '0')}${siteFilter && siteFilter !== 'ALL' ? '_' + siteFilter : ''}.xlsx`
