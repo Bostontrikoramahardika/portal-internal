@@ -38,6 +38,8 @@ const _LoadingMenu = () => (
 const ResetPasswordAdminView = dynamic(() => import('./views/ResetPasswordAdminView'), { ssr: false, loading: _LoadingMenu })
 const KelolaHakCutiView = dynamic(() => import('./views/KelolaHakCutiView'), { ssr: false, loading: _LoadingMenu })
 const CutiKaryawanView = dynamic(() => import('./views/CutiKaryawanView'), { ssr: false, loading: _LoadingMenu })
+const PunishmentView = dynamic(() => import('./views/PunishmentView'), { ssr: false, loading: _LoadingMenu })
+const SheFormView = dynamic(() => import('./views/SheFormView'), { ssr: false, loading: _LoadingMenu })
 const RoleManagerView = dynamic(() => import('./views/RoleManagerView'), { ssr: false, loading: _LoadingMenu })
 const SystemAuditView = dynamic(() => import('./views/SystemAuditView'), { ssr: false, loading: _LoadingMenu })
 const PermissionManagerView = dynamic(() => import('./views/PermissionManagerView'), { ssr: false, loading: _LoadingMenu })
@@ -302,6 +304,9 @@ useEffect(() => {
   if (menuKey === 'approval_center') return <ApprovalCenterView />
   if (menuKey === 'role_manager') return <RoleManagerView title="Kelola Role Karyawan" />
   if (menuKey === 'kelola_cuti' || menuKey === 'cuti_karyawan') return <CutiKaryawanView />
+  if (menuKey === 'punishment') return <PunishmentView />
+  if (menuKey === 'inspeksi') return <SheFormView jenis="INSPEKSI" />
+  if (menuKey === 'observasi') return <SheFormView jenis="OBSERVASI" />
   if (menuKey === 'kelola_hak_cuti') return <KelolaHakCutiView />
   if (menuKey === 'monitoring_cuti_tiket') return <MonitoringCutiTiketView />
   if (menuKey === 'monitoring_roster_cr') return <MonitoringRosterCRView />

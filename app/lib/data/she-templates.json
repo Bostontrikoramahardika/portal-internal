@@ -1,0 +1,2380 @@
+{
+ "inspeksi": [
+  {
+   "kode": "AMM-IPT-F-SHE-036A",
+   "nama": "Inspeksi Umum",
+   "items": [],
+   "kolom": [
+    "Helm",
+    "Sepatu Safety",
+    "Rompi Reflektor",
+    "Kacamata",
+    "Sarung Tangan",
+    "Padlock",
+    "Danger Tag",
+    "Ganjal",
+    "Rambu/ Penanda",
+    "P2H",
+    "Sertifikasi/ Uji Laik",
+    "Kondisi Baik",
+    "Sticker Commisioning"
+   ],
+   "mode": "person",
+   "jumlah_baris": 22
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AA",
+   "nama": "Inspeksi Alarm Emergency",
+   "items": [],
+   "kolom": [
+    "KONDISI FISIK",
+    "KONDISI SUARA"
+   ],
+   "mode": "item",
+   "jumlah_baris": 15
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AAA",
+   "nama": "Inspeksi Land Clearing",
+   "items": [
+    "Apakah JSA telah didiskusikan dan dikomunikasikan dengan karyawan yang akan bekerja dan dibuktikan dengan daftar hadir yang ditandatangani oleh semua karyawan?",
+    "Apakah semua pekerja yang terlibat terlatih dan mengerti prosedur kerja yang aman?",
+    "Apakah terdapat pengawas yang mengawasi pekerjaan ini? Tuliskan jarak pengawasan pada kegiatan land clearing",
+    "Apakah peralatan komunikasi tersedia untuk semua pengawas dan pekerja? Tuliskan Channel Radio yang digunakan",
+    "Apakah area Land Clearing sudah dibuat batas yang jelas oleh tim Pit Control",
+    "Apakah jalan akses menuju area yang akan di Land Clearing sudah dibuat? Akses ini wajib untuk keperluan Emergency dan sarana.",
+    "Apakah pohon kering sudah di lakukan identifikasi dan diberikan penanda ?",
+    "Pada kegiatan Land Clearing di bukit, Dozer harus selalu melakukannya secara “down slope dozing”. Artinya, Dozer melakukan pendorongan selalu kearah bawah",
+    "Apakah Posisi Dudukan Unit Exca/ Dozer dalam keadaan rata?",
+    "Apakah Dudukan Unit Exca/ Dozer bersih dari Vegetasi/ Batang Pohon yang sudah di rebahkan",
+    "Apakah Unit Exca/Dozer dalam keadaan layak di operasikan",
+    "Apakah tanaman hasil pembersihan lahan\nditempatkan pada tempat khusus yang\ntersendiri?",
+    "Apakah saluran penyaliran dan/atau pengelolaan air\ntambang tersedia dalam area land Clearing?",
+    "Apakah Teknik Down Sloping menggunakan dozer dilakukan dengan tepat yaitu dozing hingga ke akar pohon?",
+    "Apakah Area manuver Unit Exca/Dozer bersih dari material clearing?",
+    "Apakah unit yang digunakan telah memenuhi standar khusus spesifikasi Clearing?",
+    "Apakah terdapat area parkir untuk unit LV?",
+    "Apakah sudah dilakukan identifikasi jenis pohon untuk antisipasi area Land Of Fire?"
+   ],
+   "kolom": [
+    "07.00-09.00",
+    "09.00-11.00",
+    "11.00-12.00",
+    "13.00-15.00",
+    "15.00-17.00",
+    "17.00-18.00"
+   ],
+   "mode": "item",
+   "jumlah_baris": 18
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AAB",
+   "nama": "Inspeksi Hydrant",
+   "items": [],
+   "kolom": [
+    "Box",
+    "Hose",
+    "Nozzle",
+    "Tangki",
+    "Handle",
+    "Tag",
+    "Pompa"
+   ],
+   "mode": "item",
+   "jumlah_baris": 5
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AAC",
+   "nama": "Pengawasan Inspeksi Loading Soil",
+   "items": [
+    "Area loading aman dan stabil untuk operasi alat berat",
+    "Area sekitar lokasi loading telah bersih dari hambatan (batu besar, sampah, dll)",
+    "Terdapat rambu-rambu keselamatan di area loading soil",
+    "Top soil bebas dari kontaminan (bahan kimia, limbah, atau material berbahaya)",
+    "Material top soil tidak tercampur dengan material lain (overburden, batuan, dll)",
+    "Tidak ada spillage (tumpahan) selama proses pengangkutan soil dari front loading ke bank soil",
+    "Tidak ada pencemaran udara akibat debu selama proses loading soil",
+    "Tersedia sarana pengendalian debu (Water Truck)",
+    "Tidak ada material soil yang tertinggal area loading point",
+    "Terdapat lokasi dumping soil yang memadai",
+    "Tersedia unit support (Dozer & PC)  dalam aktivitas loading soil",
+    "Tersedia unit hauler sesuai dengan jarak dumping"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 12
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AAD",
+   "nama": "Inspeksi Disposal Highrisk",
+   "items": [
+    "Kajian Teknis | Tersedia Kajian Teknis yang sudah di tanda tangani oleh KTT",
+    "Pos Pengawas | Terdapat Pos Pengawasan khusus pada area disposal highrisk",
+    "Dumping Limiter | Terdapat Dumping Limiter 1 pasang (2 pcs) dan 1 pcs cadangan",
+    "Senter | Terdapat Senter pada aktivitas dumping pada malam hari",
+    "Tower Lamp | Tersedia Tower Lamp pada aktivitas dumping pada malam hari",
+    "Wire Rope Sling & Shackle | Tersedia dengan SWL sesuai kebutuhan",
+    "Sarung Tangan | Tersedia APD berupa Sarung Tangan pada area disposal",
+    "Rambu Wajib Pelampung | Tersedia Rambu Wajib Pelampung di area disposal",
+    "Ring Buoy | Tersedia lengkap dengan tali min. 30 meter",
+    "Rompi pelampung | Terdapat alam Pos Pemantauan Khusus dan Operator Dozer",
+    "JSA | Tersedia JSA sesuai dengan aktivitas disposal dan telah disosialisasikan kepada seluruh pekerja di area tersebut",
+    "Pengawas Dedicated | Terdapat pengawas khusus di area disposal highrisk",
+    "Rambu Disposal Highrisk | Terpasang rambu area berbahaya disposal High Risk",
+    "Operator | Operator baru tidak diijinkan bekerja dalam aktivitas Dumping High Risk",
+    "Safety berm sesuai standard | Tersedia safetyberm sesuai dengan standar dan rekomendasi kajian teknis",
+    "Saluran drainage | Memadai, lancar dan tidak ada genangan",
+    "Lebar dumping point | 2 x lebar unit + turning radius manuver unit terbesar",
+    "Kemiringan permukaan area Dumping | Kemiringan permukaan area Dumping Point maksimum 2% dan/atau sesuai hasil Kajian Teknis mengarah ke arah crest",
+    "Ketersediaan unit bulldozer | Jarak maximum dozing unit bulldozer terhadap crest atau crack /\nretakan adalah 2 meter dan/atau sesuai dengan Kajian Teknis yang dibuat.",
+    "Pencahayaan | Pencahayaan Minimun 50 Lux",
+    "Izin Kerja Khusus | Tersedia Izin Kerja Khusus yang masih berlaku",
+    "Area Parkir LV | Jarak area parkir adalah min. 100 meter dari lokasi aktifitas Dumping Point. Terdapat rambu parkir & rambu pengaman di area Parking Bay."
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 22
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AAE",
+   "nama": "-Form Sidak Pkh",
+   "items": [],
+   "kolom": [
+    "Area Kerja",
+    "Tanggal PKH"
+   ],
+   "mode": "person",
+   "jumlah_baris": 14
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AB",
+   "nama": "Inspeksi Eye Wash",
+   "items": [],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 0
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AC",
+   "nama": "Inspeksi Gerinda",
+   "items": [
+    "Apakah Gerinda telah di Tag ?",
+    "Apakah Kabel dalam kondisi baik ?",
+    "Apakah switch/saklar dalam kondisi baik ?",
+    "Apakah plug baik ? ( tidak retak/belah )",
+    "Apakah pengaman gerinda sudah terpasang ?",
+    "Terpasang dan kuat ikatannya ?",
+    "Apakah body gerinda dalam keadaan baik ?"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 7
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AD",
+   "nama": "Inspeksi Welding Machine",
+   "items": [
+    "Apakah telah terpasang Tagging ?",
+    "Apakah Kabel stang grounding dalam kondisi baik ? (tidak terkelupas atau lecet)",
+    "Apakah Kabel stang las dalam kondisi baik ? (tidak terkelupas atau lecet)",
+    "Apakah Oli Mesin pada level cukup ? (Bila kurang, ditambah)",
+    "Apakah air aki pada level cukup",
+    "Apakah Air Radiator pada level cukup ?",
+    "Apakah Stang Grounding dalam  kondisi baik",
+    "Apakah Stang Las dalam  kondisi baik",
+    "Apakah ada sistem grounding dan dalam  kondisi baik",
+    "Apakah semua sambungan telah  terpasang kuat pada plugnya",
+    "Apakah pelindung mesin terpasang baik?",
+    "Apakah ada kebocoran oli mesin?"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 12
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AE",
+   "nama": "Inspeksi Extention Cable",
+   "items": [
+    "Apakah telah terpasang Tagging",
+    "Apakah Kabel dalam kondisi baik",
+    "Apakah Kabel yang dipakai sesuai standar yang diperkenankan",
+    "Apakah semua sambungan telah terpasang kuat pada plugnya",
+    "Apakah plug yang terpasang dalam kondisi baik  (Tidak rusak atau pecah)",
+    "Apakah pelindung terpasang baik"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 6
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AF",
+   "nama": "Inspeksi Catering",
+   "items": [
+    "INFRASTRUKSTUR"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 1
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AG",
+   "nama": "Inspeksi  Tps Limbah B3 Area",
+   "items": [
+    "Apakah pengemasan LB3 dilakukan sesuai dengan bentuk LB3?",
+    "Apakah pengemasan LB3 dilakukan sesuai dengan karakteristik LB3?",
+    "Apakah pengemasan LB3 dilengkapi dengan simbol label LB3?",
+    "Apakah penempatan LB3 disesuaikan dengan jenis dan karakteristik LB3?",
+    "Apakah kondisi kemasan LB3 bebas karat?",
+    "Apakah kondisi kemasan LB3 tidak bocor?",
+    "Apakah kondisi kemasan LB3 tidak meluber?",
+    "Apakah bagian luar bangunan diberi papan nama?",
+    "Apakah bagian luar diberi simbol LB3 sesuai dengan karakteristik LB3 yang disimpan?",
+    "Apakah LB3 terlindung dari hujan dan sinar matahari?",
+    "Apakah bangunan mempunyai sistem ventilasi?",
+    "Apakah bangunan memiliki saluran dan bak penampung tumpahan (jika menyimpan LB3 cair)?",
+    "Apakah penyimpanan menggunakan sistem blok / sel",
+    "Apakah masing-masing blok/sel dipisahkan gang/tanggul?",
+    "Apakah kemasan/limbah LB3 diberi alas / pallet?",
+    "Apakah tumpukan LB3 maksimal 3 lapis?",
+    "Apakah LB3 disimpan sesuai dengan masa penyimpanan dalam izin? (jika baru mengajukan izin, tidak perlu diisi)",
+    "Apakah stiker peringatan tertempel  di bagian depan luar bangunan?",
+    "Adakah logbook/catatan untuk mencatat keluar masuk limbah LB3?",
+    "Apakah jumlah dan jenis LB3 sesuai dengan yang tercatat di logbook/catatan?",
+    "Apakah melakukan pengelolaan lanjutan terhadap LB3 yang disimpan? (diserahkan ke pihak ketiga/dimanfaatkan internal)",
+    "Tersediakah  alat tanggap darurat yang mudah dijangkau?",
+    "Bagaimana kondisi APAR yang ada di TPS LB3?",
+    "Tersediakah  fasilitas P3K yang mudah dijangkau?",
+    "Apakah memiliki SOP penyimpanan?",
+    "Apakah memiliki SOP tanggap darurat?",
+    "Tersediakah  pagar, pintu darurat dan rute evakuasi? (sesuai dengan SOP penyimpanan dan tanggap darurat)",
+    "Apakah kebersihan / housekeeping terkelola dengan baik?",
+    "Tersediakah sarung tangan karet dan absorber?"
+   ],
+   "kolom": [
+    "ITEM YANG DIPERIKSA",
+    "YA",
+    "TIDAK",
+    "N/A",
+    "TEMUAN"
+   ],
+   "mode": "item",
+   "jumlah_baris": 29
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AH",
+   "nama": "Inspeksi Haul Road",
+   "items": [
+    "Pengendalian Debu | Penyiraman terjadwal dan jumlah water truck cukup",
+    "Kondisi slope/ bench | Ketinggian dan kemiringan standard bebas batuan lepas",
+    "Luas area manuver di front loading dan disposal | Cukup Luas dan rata",
+    "Rambu-rambu lalu-lintas | ada sesuai kebutuhan dan memadai, Muster Point, mata kucing",
+    "Kendaraan sarana dan kendaraan tinggi kurang dari 4 meter dilengkapi buggy whip | Standar ketinggian 4 meter dari tanah",
+    "Bundwall sesuai standard | 2/3 D tyre terbesar = 180 cm",
+    "Saluran drainage | memadai, lancar dan tidak ada genangan",
+    "Grade Jalan | Max  8 %  untuk unit Rigid, dan 12 % untuk unit articulated",
+    "Superelevasi | Max 5 %",
+    "Kecepatan Kendaraan | Max 40 Km /jam",
+    "Lebar Jalan | 3 ½ x Lebar unit terbesar",
+    "Sistem Komunikasi digunakan | Radio Komunikasi antar alat",
+    "Sistem Peringatan di gunakan | Klakson, rotary, buggy whip, lampu kerja dll",
+    "Perlindungan dan Pencegahan Kebakaran | 1 x APAR ukuran 6 kg untuk unit, 3 kg untuk Tower lamp",
+    "Peralatan Pertolongan Pertama di Unit | 1 kotak P3K",
+    "Ceklis P2H Kendaraan / Peralatan | P2H standard cek",
+    "Lampu Penerangan Untuk kerja Malam | Cukup dan memadai di area front dan disposal",
+    "Tempat sampah/ kebersihan | Tersedia di post, dan area kerja tidak ada sampah berserakan",
+    "Pekerja selalu memakai APD | Sesuai peraturan yang berlaku",
+    "Penggunaan seat belt | Operator/ driver menggunakan safety belt saat berkendara",
+    "Area parkir unit | Luas cukup sesuai dengan jumlah unit",
+    "SIMPER | Pastikan SIMPER operator ada sesuai unit dan masih berlaku",
+    "Kabel listrik dan saklar lampu | Standard, tidak ada kabel yang terkelupas atau terbuka (area post)"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 23
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AI",
+   "nama": "Inspeksi Fire Supression System",
+   "items": [
+    "Panel",
+    "Realy",
+    "Alarms"
+   ],
+   "kolom": [
+    "ITEM YANG DIPERIKSA",
+    "YA",
+    "TIDAK",
+    "N/A",
+    "TEMUAN"
+   ],
+   "mode": "item",
+   "jumlah_baris": 3
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AJ",
+   "nama": "Inspeksi Generator",
+   "items": [
+    "Call Sign on 4 Sides of Equipment",
+    "Condition of Body and Coloration",
+    "Electrical Symbol",
+    "Catch Point Sticker",
+    "Emission Test Attachment",
+    "Portable Fire Extinguisher (Min 6 Kg)",
+    "Lock Out and Tag Out Switch",
+    "Battery Isolation Switch",
+    "Emergency Shutdown Push Switch",
+    "Battery and Cable Connection in Good Condition",
+    "Electrical cable connection",
+    "Secondary Containment",
+    "Skidding Condition (if Equipped)",
+    "Wheel and Tow Point Condition (If Equipped)",
+    "Engine Condition",
+    "Fuel Tank Condition",
+    "Exhaust Guard",
+    "Rotating Guard",
+    "Engine and Generator Mounting",
+    "Engine Usage Meter",
+    "Muffler Cap and Connector Port for Emission Test",
+    "Generator Condition",
+    "Electrical Port and Cable Connection",
+    "Panel Control Condition",
+    "Panel Control Function"
+   ],
+   "kolom": [
+    "JENIS PEMERIKSAAN",
+    "UNIT GENERATOR YANG DIINSPEKSI",
+    "TEMUAN"
+   ],
+   "mode": "item",
+   "jumlah_baris": 25
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AK",
+   "nama": "Penilaian 5R",
+   "items": [
+    "Lantai | Lantai dalam Keadaan Bersih"
+   ],
+   "kolom": [
+    "Sangat Baik (80-100)",
+    "Baik (60-79)",
+    "Sedang (40–59)",
+    "Buruk (20-39)",
+    "Sangat Buruk (0–19)"
+   ],
+   "mode": "item",
+   "jumlah_baris": 1
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AL",
+   "nama": "Inspeksi Bejana Tekan",
+   "items": [
+    "Drum Bejana Tekan tidak terdapat kebocoran",
+    "Drum Bejana Tekan tidak terdapat perubahan bentuk",
+    "Head  Bejana Tekan tidak terdapat kebocoran",
+    "Head  Bejana  Tekan  tidak terdapat perubahan bentuk",
+    "Alat pengaman Bejana Tekan lengkap",
+    "Manometer ( jika ada )",
+    "Safety Valve ( jika ada )",
+    "Preasure Gauge",
+    "Level Gauge",
+    "Thermometer Gauge",
+    "Warna cat dari bejana tekan sesuai standar",
+    "Cara memindahkan  benar",
+    "Plate Informasi Bejana Tekan"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 13
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AM",
+   "nama": "Inspeksi Over Head Crane",
+   "items": [
+    "Safety Latch",
+    "Deformation",
+    "Wear",
+    "Cracks, Nicks, Gouges"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 4
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AN",
+   "nama": "Inspeksi Sarana Dan Prasarana Ert",
+   "items": [],
+   "kolom": [
+    "Baik",
+    "Rusak",
+    "N/A"
+   ],
+   "mode": "person",
+   "jumlah_baris": 30
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AP",
+   "nama": "Inspeksi Unit Fuel Truck",
+   "items": [
+    "ROTARY",
+    "RADIO",
+    "SEAT BELT",
+    "APAR DAN / FIRE SUPPRESSION",
+    "INSTRUMEN PANEL",
+    "KLAKSON",
+    "WIPPER",
+    "PINTU DAN KUNCI PINTU",
+    "AC",
+    "LAMPU",
+    "ALARM MUNDUR",
+    "EMERGENCY SHUTDOWN",
+    "WHEEL / TYRE",
+    "STREERING SYSTEM",
+    "BRAKE SISTEM",
+    "POWER ENGINE",
+    "ENGINE TIDAK ADA REMBESAN",
+    "PIPE AND HOSE NO LEAK",
+    "PTO SYSTEM",
+    "FOOT STEP & HANDRAIL",
+    "SPION",
+    "GUN / HOSE",
+    "P2H"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 23
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AQ",
+   "nama": "Inspeksi Unit Water Truck",
+   "items": [
+    "ROTARY",
+    "RADIO",
+    "SEAT BELT",
+    "APAR DAN / FIRE SUPPRESSION",
+    "INSTRUMEN PANEL",
+    "KLAKSON",
+    "WIPPER",
+    "PINTU DAN KUNCI PINTU",
+    "AC",
+    "LAMPU",
+    "ALARM MUNDUR",
+    "EMERGENCY SHUTDOWN",
+    "WHEEL / TYRE",
+    "STREERING SYSTEM",
+    "BRAKE SISTEM",
+    "POWER ENGINE",
+    "ENGINE TIDAK ADA REMBESAN",
+    "PTO SYSTEM",
+    "FOOT STEP & HANDRAIL",
+    "SPION",
+    "TANKI TIDAK BOCOR",
+    "AIR SYSTEM TO SPRAY TO SPRAY",
+    "HYDRAULC SYSTEM",
+    "P2H"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 24
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AR",
+   "nama": "Inspeksi Unit Alat Angkat",
+   "items": [
+    "ROTARY",
+    "RADIO",
+    "SEAT BELT",
+    "APAR DAN / FIRE SUPPRESSION",
+    "INSTRUMEN PANEL",
+    "KLAKSON",
+    "FOOT STEP & HANDRAIL",
+    "SPION",
+    "LOAD AND MONITOR CONTROL",
+    "LAMPU",
+    "ALARM MUNDUR",
+    "EMERGENCY SHUTDOWN",
+    "SWL CAPACITY IDENTIVICATION",
+    "LOAD CHART",
+    "STREERING SYSTEM",
+    "HYDRAULIC SYSTEM",
+    "WHEEL / TYRE",
+    "BRAKE SISTEM",
+    "ENGINE TIDAK ADA REMBESAN",
+    "WIRE ROPE CONDITION",
+    "OVER LOAD ALARM",
+    "HYDRAULIC CYLINDER",
+    "RIGGER AND BASE PLAT",
+    "P2H"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 24
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AS",
+   "nama": "Inspeksi Unit Drilling",
+   "items": [
+    "ROTARY",
+    "RADIO / ANTENA",
+    "SEAT BELT",
+    "APAR DAN / FIRE SUPPRESSION",
+    "INSTRUMEN PANEL",
+    "KLAKSON",
+    "WIPPER",
+    "PINTU DAN KUNCI PINTU",
+    "AC",
+    "LAMPU",
+    "ALARM TRAVEL",
+    "EMERGENCY SHUTDOWN",
+    "ATTATCHMENT",
+    "HYDRAULIC SYSTEM",
+    "UNDERCARRIAGE",
+    "POWER ENGINE",
+    "ENGINE TIDAK ADA REMBESAN",
+    "FOOT STEP & HANDRAIL",
+    "SPION",
+    "MAST",
+    "LOCK MAST",
+    "RANTAI MAST",
+    "ROOT",
+    "TRICON BIT",
+    "P2H"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 25
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AT",
+   "nama": "Inspeksi Unit Excavator",
+   "items": [
+    "ROTARY",
+    "RADIO / ANTENA",
+    "SEAT BELT",
+    "APAR DAN / FIRE SUPPRESSION",
+    "INSTRUMEN PANEL",
+    "KLAKSON",
+    "WIPPER",
+    "PINTU DAN KUNCI PINTU",
+    "AC",
+    "LAMPU",
+    "ALARM TRAVEL",
+    "EMERGENCY SHUTDOWN",
+    "ATTATCHMENT",
+    "HYDRAULIC SYSTEM",
+    "UNDERCARRIAGE",
+    "POWER ENGINE",
+    "ENGINE TIDAK ADA REMBESAN",
+    "FOOT STEP & HANDRAIL",
+    "SPION",
+    "P2H"
+   ],
+   "kolom": [
+    "JENIS PEMERIKSAAN",
+    "UNIT EXCAVATOR YANG DIINSPEKSI",
+    "TEMUAN"
+   ],
+   "mode": "item",
+   "jumlah_baris": 20
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AU",
+   "nama": "Inspeksi Unit Buldozer",
+   "items": [
+    "UNDER CARRIAGE | M",
+    "ENGINE & HYDRAULIC | S",
+    "APAR DAN / FIRE SUPPRESSION | M",
+    "KABIN & PINTU | M",
+    "LAMPU ROTARY | S",
+    "PANEL INDIKATOR | H",
+    "RADIO / ANTENA | H",
+    "WIPER | H",
+    "LAMPU KERJA | H",
+    "STEERING CONTROL | H",
+    "BUCKET / BLADE | L",
+    "BRAKE SISTEM | H",
+    "KLAKSON | H",
+    "SEAT BELT | H",
+    "ALARM MUNDUR | H",
+    "P2H | H"
+   ],
+   "kolom": [
+    "JENIS PEMERIKSAAN",
+    "UNIT YANG DIINSPEKSI",
+    "KODE BAHAYA"
+   ],
+   "mode": "item",
+   "jumlah_baris": 16
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AV",
+   "nama": "Inspeksi Unit Dump Truck",
+   "items": [
+    "ROTARY",
+    "RADIO",
+    "SEAT BELT",
+    "APAR DAN / FIRE SUPPRESSION",
+    "INSTRUMEN PANEL",
+    "KLAKSON",
+    "WIPPER",
+    "PINTU DAN KUNCI PINTU",
+    "AC",
+    "LAMPU",
+    "ALARM MUNDUR",
+    "EMERGENCY SHUTDOWN",
+    "WHEEL / TYRE",
+    "STREERING SYSTEM",
+    "BRAKE SISTEM",
+    "HYDRAULIC SYSTEM",
+    "POWER ENGINE",
+    "ENGINE TIDAK ADA REMBESAN",
+    "FOOT STEP & HANDRAIL",
+    "SPION",
+    "P2H"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 21
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AW",
+   "nama": "Inspeksi Unit Light Vehicle",
+   "items": [
+    "BODY WARNA KENDARAAN",
+    "RADIO",
+    "SEAT BELT",
+    "APAR DAN / FIRE SUPPRESSION",
+    "INSTRUMEN PANEL",
+    "KLAKSON",
+    "WIPPER",
+    "PINTU DAN KUNCI PINTU",
+    "AC",
+    "SPION",
+    "LAMPU",
+    "ROTARY",
+    "ALARM MUNDUR",
+    "STREERING SYSTEM",
+    "WHEEL / TYRE",
+    "BRAKE SISTEM",
+    "ENGINE TIDAK ADA REMBESAN",
+    "BUGGY WHIP",
+    "4 X 4 DOUBLE GARDAN",
+    "P2H"
+   ],
+   "kolom": [
+    "JENIS PEMERIKSAAN",
+    "UNIT LV YANG DIINSPEKSI",
+    "TEMUAN"
+   ],
+   "mode": "item",
+   "jumlah_baris": 20
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AX",
+   "nama": "Inspeksi Unit Bus",
+   "items": [
+    "BODY WARNA KENDARAAN",
+    "RADIO",
+    "SEAT BELT",
+    "APAR DAN / FIRE SUPPRESSION",
+    "INSTRUMEN PANEL",
+    "KLAKSON",
+    "WIPPER",
+    "PINTU DAN KUNCI PINTU",
+    "AC",
+    "SPION",
+    "LAMPU",
+    "ROTARY",
+    "ALARM MUNDUR",
+    "STREERING SYSTEM",
+    "WHEEL / TYRE",
+    "BRAKE SISTEM",
+    "ENGINE TIDAK ADA REMBESAN",
+    "BUGGY WHIP",
+    "4 X 4 DOUBLE GARDAN",
+    "P2H"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 20
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AY",
+   "nama": "Inspeksi Safety Device & Kelayakan Unit",
+   "items": [
+    "S  = Lakukan Perbaikan dalam 12 Jam",
+    "M  = Lakukan perbaikan dalam 3 Hari",
+    "L   = Dikelola dengan Prosedur Rutin"
+   ],
+   "kolom": [
+    "H",
+    "S",
+    "M"
+   ],
+   "mode": "item",
+   "jumlah_baris": 20
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036AZ",
+   "nama": "Inspeksi Tower Telekomunikasi",
+   "items": [
+    "PONDASI RANGKA TOWER KUAT, TIDAK ADA CACAT",
+    "PONDASI SLING TERTANAM DENGAN KUAT",
+    "KAWAT SLING TERTANAM DI PONDASI DENGAN KUAT",
+    "KONDISI KAWAT SLING TIDAK ADA YANG CACAT",
+    "KONDISI TANAH  TIDAK ADA RETAKAN ATAU LONGSOR",
+    "RANGKA  TOWER KOKOH, TDK MIRING, TDK CACAT",
+    "INSTALASI KABEL LISTRIK",
+    "INSTALASI KABEL PENYALUR INTERNET",
+    "UPS/ BERFUNGSI",
+    "PERALATAN ELEKTRONIK TERJAGA DARI AIR"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 10
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036B",
+   "nama": "Inspeksi Front Loading",
+   "items": [
+    "Pengendalian Debu | Penyiraman terjadwal dan jumlah water truck cukup",
+    "Kondisi slope/ bench | Ketinggian dan kemiringan standard bebas batuan lepas",
+    "Luas area manuver di front loading | Cukup Luas dan rata",
+    "Rambu-rambu lalu-lintas | ada sesuai kebutuhan dan memadai, Muster Point, mata kucing",
+    "Kendaraan sarana dan kendaraan tinggi kurang dari 4 meter dilengkapi buggy whip | Standar ketinggian 4 meter dari tanah",
+    "Bundwall sesuai standard | 3/4 Diameter roda A2B terbesar",
+    "Safety berm sesuai standard | Berada di ujung Disposal, Setinggi 50 cm (panduan operator saat mundur)",
+    "Saluran drainage | memadai, lancar dan tidak ada genangan",
+    "Grade Jalan | Max  8 %  untuk unit Rigid, dan 12 % untuk unit articulated",
+    "Superelevasi | Max 5 %",
+    "Kecepatan Kendaraan | Max 40 Km /jam",
+    "Lebar Jalan | 3 ½ x Lebar unit terbesar",
+    "Sistem Komunikasi digunakan | Radio Komunikasi antar alat",
+    "Sistem Peringatan di gunakan | Klakson, rotary, buggy whip, lampu kerja dll",
+    "Perlindungan dan Pencegahan Kebakaran | 1 x APAR ukuran 6 kg untuk unit, 3 kg untuk Tower lamp",
+    "Peralatan Pertolongan Pertama di Unit | 1 kotak P3K",
+    "Ceklis P2H Kendaraan / Peralatan | P2H standard cek",
+    "Lampu Penerangan Untuk kerja Malam | Cukup dan memadai di area front dan disposal",
+    "Tempat sampah/ kebersihan | Tersedia di post, dan area kerja tidak ada sampah berserakan",
+    "Pekerja selalu memakai APD | Sesuai peraturan yang berlaku",
+    "Penggunaan seat belt | Operator/ driver menggunakan safety belt saat berkendara",
+    "Kondisi Front | Area Datar, tidak terdapat genangan air dan Lebar Front Loading Minimal 2x Turning Radius Hauler terbesar",
+    "Area parkir unit | Kendaraan Selain A2B diparkir di dekat towelamp dan bebad dari lalu lintas hauler yang beroperasi",
+    "KIMPER & PERMIT | Pastikan KIMPER & PERMIT operator ada sesuai unit dan masih berlaku",
+    "Ketersediaan Pengawas | Tersedia 1 Pengawas maksimal mengawasi maksimal 3 front yang berdekatan dalam radius 300 meter antar front"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 25
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036C",
+   "nama": "Inspeksi Jalan Tambang",
+   "items": [
+    "Pengendalian Debu | Penyiraman terjadwal dan jumlah water truck cukup",
+    "Rambu-rambu lalu-lintas | ada sesuai kebutuhan dan memadai, rambu peringatan, mata kucing dll",
+    "Kendaraan sarana dan kendaraan tinggi kurang dari 4 meter dilengkapi buggy whip | Standar ketinggian 4 meter dari tanah",
+    "Bundwall sesuai standard | 3/4 Diameter roda A2B terbesar",
+    "Saluran drainage | memadai, lancar dan tidak ada genangan",
+    "Grade Jalan | Max  8 %  untuk unit Rigid, dan 12 % untuk unit articulated",
+    "Superelevasi | Max 5 %",
+    "Median | Tinggi median minimal 2/3 diameter roda A2B terbesar",
+    "Crossfall (Kemiringan jalan) | Pembentukan Cross fall 2-4%",
+    "Kecepatan Kendaraan | Max 40 Km /jam",
+    "Lebar Jalan | 3 ½ x Lebar unit terbesar",
+    "Sistem Komunikasi digunakan | Radio Komunikasi antar alat",
+    "Sistem Peringatan di gunakan | Klakson, rotary, buggy whip, lampu kerja dll",
+    "Perlindungan dan Pencegahan Kebakaran | 1 x APAR ukuran 6 kg untuk unit, 3 kg untuk Tower lamp",
+    "Peralatan Pertolongan Pertama di Unit | 1 kotak P3K",
+    "Ceklis P2H Kendaraan / Peralatan | P2H standard cek",
+    "Pekerja selalu memakai APD | Sesuai peraturan yang berlaku",
+    "Penggunaan seat belt | Operator/ driver menggunakan safety belt saat berkendara",
+    "Area parkir unit | Luas cukup sesuai dengan jumlah unit",
+    "KIMPER PERMIT | Pastikan SIMPER operator ada sesuai unit dan masih berlaku"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 20
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036D",
+   "nama": "Inspeksi Disposal",
+   "items": [
+    "Pengendalian Debu | Penyiraman terjadwal dan jumlah water truck cukup",
+    "Luas area manuver di disposal | Cukup Luas dan rata",
+    "Rambu-rambu lalu-lintas | ada sesuai kebutuhan dan memadai, Muster Point, mata kucing",
+    "Kendaraan sarana dan kendaraan tinggi kurang dari 4 meter dilengkapi buggy whip | Standar ketinggian 4 meter dari tanah",
+    "Safety berm sesuai standard | Berada di ujung Disposal, Setinggi 50 cm (panduan operator saat mundur)",
+    "Saluran drainage | memadai, lancar dan tidak ada genangan",
+    "Sistem Komunikasi digunakan | Radio Komunikasi antar alat",
+    "Sistem Peringatan di gunakan | Klakson, rotary, buggy whip, lampu kerja dll",
+    "Perlindungan dan Pencegahan Kebakaran | 1 x APAR ukuran 6 kg untuk unit, 3 kg untuk Tower lamp",
+    "Peralatan Pertolongan Pertama di Unit | 1 kotak P3K",
+    "Ceklis P2H Kendaraan / Peralatan | P2H standard cek",
+    "Lampu Penerangan Untuk kerja Malam | Cukup dan memadai di area front dan disposal",
+    "Tempat sampah/ kebersihan | Tersedia di post, dan area kerja tidak ada sampah berserakan",
+    "Pekerja selalu memakai APD | Sesuai peraturan yang berlaku",
+    "Penggunaan seat belt | Operator/ driver menggunakan safety belt saat berkendara",
+    "Area parkir unit | Luas cukup sesuai dengan jumlah unit",
+    "KIMPER PERMIT | Pastikan SIMPER operator ada sesuai unit dan masih berlaku",
+    "Ketersediaan Pengawas | 1 Pengawas maksimal mengawasi 1 Penimbunan (4 Fleet)",
+    "Dumping Limiter | Terseda Dumping Limiter di area disposal",
+    "APD Khusus | Tersedia Ringbouy untuk kegiatan dumping dekat air",
+    "Izin Kerja Khusus | Tersedia Izin Kerja Khusus untuk kegiatan dumping dekat air/ lumpur"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 21
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036E",
+   "nama": "Inspeksi Office Area",
+   "items": [
+    "Struktur bangunan | Tidak ada keretakan/kerusakan pada dinding, jendela dan atap bangunan tidak bocor",
+    "Panel Listrik, Kabel dan Peralatan listrik | Panel dilengkapi wiring diagram, face plate, emergency shut down, dan berwarna orange.\nKabel dalam kondisi baik (tidak terkelupas, terbakar). Dilengkapi dengan KIP (Kartu Inspeksi Peralatan)",
+    "Lantai | Lantai bersih dan tidak licin",
+    "Ventilasi udara memadai | Tidak lembab, blower/ AC dalam kondisi berfungsi dengan baik",
+    "Daerah Berjalan | Sesuai dengan kode warna dan tidak ada barang-barang menghalangi akses jalan khususnya jalur keluar/masuk",
+    "Pencahayaan | Cukup Terang dan memenuhi standar (min 120 lux)",
+    "Housekeeping | Bersih dan rapi serta penyimpanan barang sesuai tempatnya",
+    "Perabotan (meja, kursi, lemari) | Penempatan tidak mengganggu akses jalan dan jumlahnya sesuai kebutuhan",
+    "Rak sepatu dan helm | Tersedia rak sepatu dan helm bagi karyawan dan tamu dalam keadaan baik dan bersih",
+    "Kotak  P3K | Terpasang  1 X first aid kit, tersedia isinya dan telah diinspeksi rutin",
+    "Tersedia emergency alarm & sign Emergency Exit | Emergency Alarm terpasang  berfungsi dengan baik dan sign “Emergency Exit” terlihat jelas",
+    "Perlindungan & Pencegahan kebakaran | Tersedia APAR 1 X 4.5/6 Kg disetiap 25 meter",
+    "Peta Evakuasi Darurat dan tempat berkumpul darurat (Muster point) | “Peta Evakuasi Darurat” terpasang di ruangan & Rambu “Berkumpul Darurat” terpasang diluar bangunan",
+    "Air minum dan air bersih | Penempatan air minum tidak terkena sinar matahari dan air bersih  yang digunakan tidak berbau tidak berwarna dan dilakukan pengujian air bersih berkala serta selalu terjaga kebersihannya",
+    "Terdapat jadwal pemeliharaan dan checklist | Dilakukan inspeksi secara rutin dan berkala (tertulis pada form)",
+    "Toilet | Jumlah toilet sesuai dengan kebutuhan (min 1 per 15 karyawan) & dalam keadaan bersih dan dilengkapi Tersedia  cermin, sabun cuci tangan/mandi, lap pengering/ tissue, gayung, tempat sampah.",
+    "Tempat sampah | Tempat sampah tertutup dan dikosongkan teratur/ tidak overload",
+    "Pemilahan dan penempatan sampah | Pemilihan sampah berdasarkan karakteristiknya antara organik dan anorganik dan dilengkapi label",
+    "Penghijauan/ penanaman tanaman di area office | Tertata dan terpelihara di sekeliling Office",
+    "Drainase | Drainase mengalir dengan baik dan aliran tidak tersumbat",
+    "Area parkir | Tersedia area parkir unit memadai berdasarkan jumlah unit dan lokasi area parkir rata"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 21
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036F",
+   "nama": "Inspeksi Fuel Storage",
+   "items": [
+    "Tempat penimbunan bahan bakar cair | Telah memiliki ijin yang masih berlaku  dan terpasang di area fuel storage",
+    "Penerangan | Tersedia penerangan yang cukup",
+    "Rambu, simbol dan label B3 | Tersedia Tanda larangan “Dilarang Merokok” dan “Dilarang Masuk Bagi Yang Tidak Berkepentingan”, simbol dan label B3 terpasang pada tangki dan unit",
+    "Penangkal petir. | Penangkal petir pada tempat penimbunan bahan bakar cair harus diukur tahanan pembumiannya setiap enam bulan atau setelah terjadi petir yang hebat.",
+    "Sekeliling tangki | Dibuat tanggul pengaman yang terbuat dari beton atau timbunan tanah dan tingginya harus dapat menampung:\na. Untuk tempat satu tangki penimbunan = maksimum kapasitas + 20 sentimeter dan\nb. Untuk sekumpulan tangki penimbunan = ½ x jumlah seluruh kapasitas tangki + 20 sentimeter.",
+    "Pagar pengaman | Dilengkapi dengan pagar pengaman yang berjarak 5 meter dari tanggul pengaman dan pagar tersebut Dilengkapi dengan pintu yang terkunci.",
+    "Tanggul | Tanggul terbuat dari beton dan tidak ada keretakan",
+    "Tangga | Terdapat pegangan tangga & pijakan kaki dalam kondisi baik",
+    "Area parkir | Area bongkar muat / parkir memadai dalam kondisi lokasi rata",
+    "Dinding tangki penimbunan bahan bakar cair | Ditulis nomor tangki, kapasitas tangki dan jenis bahan bakar cair yang ditimbun",
+    "Pipa pengisian | Sekurang-kurangnya berjarak 10 meter dari tempat pengeluaran pada lokasi tangki penimbunan BBC",
+    "Panel listrik dan pompa ditempatkan di luar pagar pengaman. | Panel dilengkapi wiring diagram, face plate, emergency shut down, dan berwarna orange.\nKabel dalam  kondisi baik (tidak terkelupas, terbakar). Dilengkapi dengan KIP (Kartu Inspeksi Peralatan)",
+    "Jarak minimum bahan bakar cair | Jarak minimum bahan bakar cair dari pagar ke jalan umum  3 meter\nJarak minimum bahan bakar cair dari pagar ke bangunan  1,5 meter",
+    "Kotak  P3K | Terpasang  1 X first aid kit, tersedia isinya dan telah diinspeksi rutin",
+    "Perlindungan & Pencegahan kebakaran | Tersedia APAR 2 X 6 Kg disetiap 25 meter & emergency alarm terpasang dan dalam kondisi baik",
+    "Layout/ denah evakuasi dan tempat berkumpul darurat (Muster point) | Terpasang diarea kerja dan dipahami pekerja",
+    "Ada prosedur pengendalian bahan kimia & petunjuk/WI penanganan tumpahan atau kebocoran | Tersedia prosedur diarea penyimpanan atau penggunaan bahan kimia dan dipahami petugas",
+    "Ada MSDS/LIBK & absorben | Tersedia MSDS/LIBK, absorben dan  pada setiap bahan kimia",
+    "APD tersedia di area penyimpanan dan penggunaan bahan kimia | APD yang digunakan sesuai dengan jenis pekerjaan",
+    "Oil trap fuel stroge | Tidak penuh, dikuras rutin, tidak tersumbat dan aliran lancer",
+    "Daftar penerimaan dan pengeluaran | Terdapat catatan penerimaan dan pengluaran diisi lengkap dan ditandatangani pengawas",
+    "Tempat sampah | Tempat sampah tertutup dan dikosongkan teratur/ tidak overload",
+    "Pemilahan dan penempatan sampah | Pemilihan sampah berdasarkan karakteristik antara organik, anorganik dan B3 & dilengkapi label"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 23
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036G",
+   "nama": "Inspeksi Workshop Area",
+   "items": [
+    "Jalan dan area parkir | Area parkir cukup dan Kondisi Baik (Parkir Mundur)",
+    "Inspeksi P2H & Kondisi Kendaraan | P2H dibuat setiap shift oleh pengemudi sebelum operasi",
+    "Struktur Workshop | Atap, Dinding, Pintu, Jendela, Lantai, dll. Tidak rusak",
+    "Lantai Area Workshop & Drainase | Lantai bersih dari ceceran oli,air,gemuk,lumpur dan demarkasi lantai tampak jelas",
+    "Drainase Area Workshop | Saluran drainasebersih dari lumpur, sampah dan kotoran",
+    "Daerah Berjalan / Daerah Bekerja | Tidak ada barang-barang tidak perlu",
+    "Penerangan/ Ventilasi/ Sistem Ekstraksi Memadai | Terang dan tidak lembab, blower/ AC dalam kondisi baik",
+    "Kondisi Ruang Penyimpanan (tools room) | Penyimpanan tools, material dan mesin dalam keadaan tertata rapih dan tidak berserakan",
+    "Housekeeping umum, Ruangan-ruangan, Toilet | Bersih, rapi dan Didisinfeksi, tersedia sabun",
+    "Rambu-rambu Tanda & Kode Warna | Safety sign atau tanda peringatan lainnya dalam kondisi yang baik serta terpasang dan terlihat dengan jelas",
+    "Tempat Sampah | Tempat sampah dalam kondisi baik dan diberi penandaan warna sesuai dengan standar",
+    "Tangga/ ladders | Pegangan tangga  & pijakan kaki baik, tangga extension tidak ada kerusakan",
+    "Kotak listrik/ Sambungan Kabel/ Pelabelan | Instalasi listrik standar, emergency shut down, wiring diagram, face plat",
+    "Mesin - mesin beputar, menghasilkan panas tinggi, berpotensi terjadinya lentingan wajib dilengkapi pelindung (cover) | Dipasang pada bagian mesin yang berputar ( fan belt, mesin gerinda )",
+    "Prosedur LOTO ( Personal Danger Tag, Out of Servis Tag) | Perbaikan =\"Personal Danger Tag\", Unit rusak =\"Out Of Service Tag\"",
+    "Alat Pelindung Diri | APD standard sesuai Tugas digunakan",
+    "Tabir Las Dipakai | Di ke empat sisi yang terpapar, dan dalam kondisi baik",
+    "Crane/ Slings / Alat Angkat/Dongkrak | Kondisi Baik, tidak ada retak, sling tidak rusak, Hook dan safety latch baik",
+    "Penyimpanan Silinder Gas Terkompresi/bertekanan | Berdiri dan terikat, dilengkapi Flash Back arresstor, selang kondisi baik, regulator kondisi baik serta ditempatkan terpisah antara tabung yang masih memiliki isi dengan tabung yang telah kosong",
+    "Peralatan Pneumatic | Tidak ada keretakan/ kerusakan fisik, tidak ada kebocoran",
+    "Penyimpanan dan Pengendalian Bahan B3 | Material berbahaya dipisahkan dari material lain dan tersedia MSDS",
+    "Perkakas Tangan dan Peralatan (Palu, Kunci pas, obeng, dll) | Kondisi alat baik dan standard",
+    "Peralatan Listrik Portabel (Gerinda, bor, kabel roll, dll) | Kondisi baik, Sambungan kabel standard dan Telah diinspeksi (KIP)",
+    "Tempat Berkumpul Darurat (Muster Point) dan Alarm | Terpasang dan dalam kondisi baik",
+    "Kesiapan Emergency"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 25
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036H",
+   "nama": "Inspeksi Mess Area",
+   "items": [
+    "INFRASTRUKTUR"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 1
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036I",
+   "nama": "Inspeksi Warehouse",
+   "items": [
+    "Struktur bangunan | Tidak ada keretakan/kerusakan pada dinding, jendela dan atap bangunan tidak bocor",
+    "Panel Listrik, Kabel dan Peralatan listrik | Panel dilengkapi wiring diagram, face plate, emergency shut down, dan berwarna orange."
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 2
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036J",
+   "nama": "Inspeksi Hand Tool - Perkakas Tangan",
+   "items": [],
+   "kolom": [
+    "KONDISI TOOL BOX",
+    "ISI LENGKAP",
+    "KONDISI TOOL",
+    "PENYIMPANAN"
+   ],
+   "mode": "person",
+   "jumlah_baris": 17
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036K",
+   "nama": "Perlatan Listrik Portabel",
+   "items": [],
+   "kolom": [
+    "KONDISI KABEL",
+    "STOP KONTAK",
+    "KONDISI TOOL",
+    "PENYIMPANAN"
+   ],
+   "mode": "person",
+   "jumlah_baris": 17
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036L",
+   "nama": "Inspeksi Pelindung Mesin",
+   "items": [],
+   "kolom": [
+    "UKURAN RAM",
+    "MENUTUPI TITIK JEPIT",
+    "MENUTUPI SUMBER PANAS",
+    "BENTUK",
+    "KEBERSIHAN",
+    "PENYIMPANAN"
+   ],
+   "mode": "person",
+   "jumlah_baris": 17
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036M",
+   "nama": "Inspeksi Speed Gun",
+   "items": [],
+   "kolom": [
+    "MUATAN",
+    "KOSONGAN",
+    "STANDARD",
+    "AKTUAL"
+   ],
+   "mode": "item",
+   "jumlah_baris": 25
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036N",
+   "nama": "Inspeksi Drilling Area",
+   "items": [
+    "Unit kerja layak operasi tambang",
+    "Patok acuan lokasi drilling sudah terpasang",
+    "Lokasi drilling sudah di prepare/dibersihkan",
+    "Lokasi drilling sudah di kasih tanggul pembatas",
+    "Rambu peringatan terpasang dengan jelas",
+    "Apakah perlengkapan sudah di siapkan",
+    "Burden/Spacing sesuai dengan acuan",
+    "APD selalu dipakai oleh pekerja",
+    "Tempat istirahat dan air minum mencukupi",
+    "House keeping dijalankan dengan baik",
+    "Penerangan pada malam hari memadai"
+   ],
+   "kolom": [
+    "ITEM YANG DIPERIKSA",
+    "YA",
+    "TIDAK",
+    "N/A",
+    "TEMUAN"
+   ],
+   "mode": "item",
+   "jumlah_baris": 11
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036O",
+   "nama": "Inspeksi Mine Permit Dan Simper",
+   "items": [],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "person",
+   "jumlah_baris": 20
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036P",
+   "nama": "Checklist Pemeriksaan Tps Lb3",
+   "items": [
+    "2.0 | 3.0 | 4.0 | 5.0 | 6.0 | 7.0 | 8.0 | 9.0 | 10.0 | 11.0 | 12.0 | 13.0 | 14.0 | 15.0 | 16.0 | 17.0 | 18.0 | 19.0 | 20.0 | 21.0 | 22.0 | 23.0 | 24.0 | 25.0 | 26.0 | 27.0 | 28.0 | 29.0 | 30.0 | 31.0"
+   ],
+   "kolom": [
+    "URAIAN",
+    "TANGGAL",
+    "TEMUAN"
+   ],
+   "mode": "item",
+   "jumlah_baris": 1
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036Q",
+   "nama": "Inspeksi Instalasi Penyalur Petir",
+   "items": [
+    "Bak Kontrol",
+    "Terminal Grounding",
+    "Kabel Penghantar",
+    "Tiang / Triangle",
+    "Kepala Penyalur Petir"
+   ],
+   "kolom": [
+    "Kondisi"
+   ],
+   "mode": "item",
+   "jumlah_baris": 5
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036R",
+   "nama": "Inspeksi Instalasi Tangki Timbun",
+   "items": [
+    "Sambungan pipa tidak terdapat tetesan / kebocoran",
+    "Packing sambungan tidak terdapat kerusakan",
+    "Clamp hose tidak mengalami kerusakan / korosi",
+    "Kran / Valve tidak terdapat tetesan / kebocoran",
+    "Terpasang clamp pada penyangga pipa",
+    "Sambungan las dalam kondisi baik, tidak terdapat keretakan / kebocoran",
+    "Kran / Valve berfungsi dengan baik",
+    "Isyarat warna pada pipa sesusi dengan peruntukannya",
+    "Baut / mur dalam kondisi baik / kencang pada sambungan pipa",
+    "Pelumasan pada kran / valve dalam kondisi baik"
+   ],
+   "kolom": [
+    "JENIS PEMERIKSAAN",
+    "YA",
+    "TIDAK",
+    "N/A",
+    "TEMUAN"
+   ],
+   "mode": "item",
+   "jumlah_baris": 10
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036S",
+   "nama": "Inspeksi Setling Pond",
+   "items": [
+    "Apakah kondisi parit/saluran dibuat untuk mengarahkan air limbah ke kolam pengelolaan (settling pond) ?",
+    "Apakah kondisi parit/saluran senantiasa dilakukan perawatan ?",
+    "Apakah ditemukan saluran yang berpotensi untuk membuang air limbah tanpa diolah terlebih dahulu ?",
+    "Apakah setpond terdiri dari kompartemen Control, kompartemen Pengendapan, dan kompartemen penjernihan ?",
+    "Apakah saluran antar pond dibuat secara zik zak ?",
+    "Apakah dilakukan pemantauan harian untuk parameter pH ?",
+    "Apakah dilakukan pemantauan harian untuk parameter TSS ?",
+    "Apakah setpond dilengkapi dengan V Notch / pintu air pada outletnya ?",
+    "Apakah setpond sudah ada titik penaatan ?",
+    "Apakah sedpond telah dilengkapi dengan papan pantau harian  yang diisi setiap hari secara berkala ?",
+    "Apakah pintu air (Outlet) Berfungsi dengan baik ?",
+    "Apakah settling pond berfungsi efektif untuk melakukan proses pengendapan ?",
+    "Apakah settling pond dilengkapi dengan Pondok Kapur / Tawas ?",
+    "Apakah jalan masuk ke areal Settling Pond tersedia dan dalam kondisi layak pakai ?",
+    "Apakah disediakan tangga yang di lengkapi dengan handrill untuk pengambilan sample ?",
+    "Apakah kondisi antar kolam /  compartement  sudah penuh terisi lumpur / tersedimentasi ?",
+    "Apakah terdapat boxmud / kantong lumpur  dalam kondisi baik dan  tidak penuh lumpurnya ?",
+    "Apakah dipasang rambu informasi dan rambu larangan  / peringatan disekitar area setpond ?",
+    "Apakah tersedia SOP maintenance SP, JSA Maintenance SP ?",
+    "Apakah tersedia SP (Standar Parameter) Maintenance SP ?",
+    "Apakah tersedia IK dan JSA Pengapuran Settling Pond ?",
+    "Apakah tersedia IK dan JSA Penawasan Settling Pond ?",
+    "Apakah tersedia MSDS kapur dan tawas ?",
+    "Apakah tersedia kotak P3K beserta isinya  ?",
+    "Apakah ada eyewash di lokasi sedpond ?",
+    "Apakah ada tersedia APD yang layak untuk treatment air setpond ?",
+    "Apakah ada tempat sampah di lokasi sedpond dan sampahnya di buang secara berkala ?",
+    "Apakah area di sekitar pondok bersih ?"
+   ],
+   "kolom": [
+    "ITEM YANG DIPERIKSA",
+    "YA",
+    "TIDAK",
+    "N/A",
+    "TEMUAN"
+   ],
+   "mode": "item",
+   "jumlah_baris": 28
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036T",
+   "nama": "Inspeksi Stand Jack",
+   "items": [],
+   "kolom": [
+    "Kondisi Fisik",
+    "Kondisi Cat",
+    "Name Plat Sertifikasi masih ada dan berlaku",
+    "Tidak ada Keretakan",
+    "Label atau tulisan SWL masih ada",
+    "KIP terpasang dan tidak pudar",
+    "Layak",
+    "Tidak Layak"
+   ],
+   "mode": "item",
+   "jumlah_baris": 20
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036U",
+   "nama": "Emergency Shower",
+   "items": [],
+   "kolom": [
+    "YA",
+    "TIDAK"
+   ],
+   "mode": "person",
+   "jumlah_baris": 5
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036V",
+   "nama": "Inspeksi Ipal",
+   "items": [
+    "Apakah Atap IPAL dalam kondisi baik?",
+    "Apakah Bangunan IPAL dalam Kondisi Baik?",
+    "Apakah Terdapat akses antar Tangki/Kompartemen IPAL?",
+    "Apakah Saluran antar tangki/Kompartemen berfungsi dengan baik?",
+    "Apakah Jumlah Kompartemen IPAL Memadai?",
+    "Apakah Kompartemen dan bangunan IPAL dilakukan perawatan secara rutin?",
+    "Apakah Terdapat Informasi jadwal maintenance IPAL?",
+    "Apakah SOP Pemantauan terdapat di lokasi IPAL?",
+    "Apakah izin IPAL terdapat di lokasi IPAL dan masih berlaku?",
+    "Apakah terdapat rambu penamaan, larangan dan keselamatan IPAL?",
+    "Apakah Terdapat Informasi Standar Baku Mutu Lingkungan Pemantauan Air?",
+    "Apakah Terdapat Papan Informasi pencatatan hasil pemantauan?",
+    "Apakah Terdapat akses pengambilan sample dan atau pengukuran yang aman?",
+    "Apakah Pemantauan dilakukan secara Rutin Setiap Hari?",
+    "Apakah Outlet IPAL (Valve, Flowmeter dan V Notch) dalam keadaan baik?",
+    "Apakah Terdapat Tempat penyimpanan bahan adiktif pengolah air dan dalam kondisi baik?",
+    "Apakah Stock bahan Adiktif tersedia di area IPAL?",
+    "Apakah Terdapat pencatatan stock dan penggunaan bahan adiktif?",
+    "Apakah terdapat akses jalan menuju IPAL?",
+    "Apakah Housekeeping area IPAL dikelola dengan Baik?"
+   ],
+   "kolom": [
+    "ITEM YANG DIPERIKSA",
+    "YA",
+    "TIDAK",
+    "N/A",
+    "TEMUAN"
+   ],
+   "mode": "item",
+   "jumlah_baris": 20
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036Y",
+   "nama": "Inspeksi Area Sump",
+   "items": [
+    "Apakah kondisi Highwall / Low wall tidak ada potensi longsoran? | H",
+    "Apakah ada Ramp jalan yang menuju ke sump? | S",
+    "Apakah jalan ke Ponton/ rakit dalam kondisi bersih/bebas hambatan? | M",
+    "Apakah ada rambu wajib pelampung di area sump yang dipasang pada jarak minimal 5 meter dari tepi kolam | S",
+    "Apakah tersedia rambu dilarang berenang di area sump? | S",
+    "Apakah tersedia pondok pengawas di area sump? | L",
+    "Apakah di Ringboy tersedia dengan tali minimal 25m? | S",
+    "Apakah Ringboy ditempatkan pada posisi aman dan mudah di jangkau? | M"
+   ],
+   "kolom": [
+    "ITEM YANG DIPERIKSA",
+    "YES",
+    "N/A",
+    "KODE BAHAYA"
+   ],
+   "mode": "item",
+   "jumlah_baris": 8
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-036Z",
+   "nama": "Inspeksi Instalasi Air",
+   "items": [
+    "Kondisi tempat penampungan air | Tidak terdapat rembesan atau bocor pada tempat penampungan"
+   ],
+   "kolom": [
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 1
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-F",
+   "nama": "Orm Penataan Lahan Reklamasi",
+   "items": [
+    "Terdapat Pengawas yang mencakup aktivitas penataan lahan",
+    "Tidak terdapat campuran soil dan overburden",
+    "Tidak terdapat kontaminasi B3/LB3 pada Top Soil",
+    "Unit A2B & hauler pada pekerjaan soil sesuai dengan SOP dan Berita Acara Serah Terima Pekerjaan Top Soil (Kapasitas & Jenis)",
+    "Teradapat pemisah air limpasan dari luar area spreading soil",
+    "Tidak terdapat material free dump di areal spreading soil drainase air limpasan d kelola dan mengarah ke outlet terendah",
+    "Terdapat upaya pengendalian erosi pada area dengan potensi erosi tinggi",
+    "Top soil tidak dalam keadaan basah atau lembek",
+    "Kemiringan lereng sesuai dengan geometri desain kajian teknis dan lingkungan",
+    "Ketebalan spreading tanah pucuk/top soil minimal 50 cm atau sesuai dokumen lingkungan",
+    "Unit support dalam aktivitas aktivitas penataan lahan"
+   ],
+   "kolom": [
+    "ITEM YANG DIPERIKSA",
+    "YA",
+    "TIDAK",
+    "N/A"
+   ],
+   "mode": "item",
+   "jumlah_baris": 11
+  }
+ ],
+ "observasi": [
+  {
+   "kode": "AMM-IPT-F-SHE-47A",
+   "nama": "Mengoperasikan Dump Truck",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan digunakan dengan benar",
+    "Apakah P2H dilakukan dengan menggunakan ceklis standar",
+    "Apakah izin mengoperasikan alat yang sesuai dipakai dan tidak expired",
+    "Apakah sabuk pengaman dipakai selama berada dalam kabin",
+    "Apakah semua lampu operasi dan lampu rotari dinyalakan",
+    "Apakah alat dioperasikan sesuai petunjuk pengoperasian",
+    "Apakah aturan klakson dan alarm mundur dipatuhi",
+    "Apakah operator menjaga jarak dan kecepatan unit",
+    "Apakah tata cara loading dan dumping dilakukan dengan benar",
+    "Apakah operator antri dengan tertib waktu pengisian",
+    "Apakah operator koordinasi dengan alat berat lain saat dumping",
+    "Apakah parkir dilakukan di lokasi yang datar dan aman"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47B",
+   "nama": "Mengoperasikan Lv",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Sudahkah P2H dilakukan dengan baik dengan ceklis standar",
+    "Apakah unit dilengkapi dengan peralatan darurat keselamatan",
+    "Apakah Kartu Izin Mengoperasikan yang sesuai dipakai",
+    "Apakah aturan klakson, lampu dan buggy whip dipatuhi",
+    "Apakah batas kecepatan dan aturan lalu lintas dipatuhi",
+    "Apakah jarak aman antar unit (min 6 kali panjang unit) dipatuhi",
+    "Apakah teknik mengendarai dilakukan dengan aman dan benar",
+    "Apakah lokasi parkir yang dipilih sesuai dengan peruntukannya",
+    "Apakah rem parkir dan ganjal ban dipasang saat parkir"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47C",
+   "nama": "Mengoperasikan Bulldozer",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Apakah P2H dilakukan dengan menggunakan ceklis standar",
+    "Apakah izin mengoperasikan alat yang sesuai dipakai",
+    "Apakah sabuk pengaman dipakai selama berada dalam kabin",
+    "Apakah semua lampu operasi dan lampu rotari dinyalakan",
+    "Apakah alat dioperasikan sesuai petunjuk pengoperasian",
+    "Apakah aturan klakson dan alarm mundur dipatuhi",
+    "Sudahkah koordinasi dengan unit lain didekatnya dilakukannya",
+    "Apakah teknik dozing, ripping atau land clearing sudah benar",
+    "Apakah tata cara mematikan unit diiukuti dengan benar",
+    "Apakah parkir dilakukan di lokasi yang datar dan aman"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47D",
+   "nama": "Mengoperasikan Excavator",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Apakah P2H dilakukan dengan menggunakan ceklis standar",
+    "Apakah izin mengoperasikan alat yang sesuai dipakai",
+    "Apakah sabuk pengaman dipakai selama berada dalam kabin",
+    "Apakah semua lampu operasi dan lampu rotari dinyalakan",
+    "Apakah alat dioperasikan sesuai petunjuk pengoperasian",
+    "Apakah sprocket selalu berada di belakang saat travel",
+    "Sudahkah koordinasi dengan unit lain didekatnya dilakukan",
+    "Apakah kondisi landasan track dalam kondisi stabil",
+    "Apakah material dimuat dengan hati-hati dan diatur agar stabil",
+    "Apakah area pemuatan dibersihkan dan tumpukan diatur",
+    "Apakah parkir dilakukan di lokasi yang datar dan aman",
+    "Apakah tata cara mematikan unit diikuti dengan benar"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47E",
+   "nama": "Mengoperasikan Fuel Truck",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dalam keadaan baik",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik",
+    "Sudahkah P2H dilakukan pada unit dengan ceklis",
+    "Apakah operator memakai izin mengoperasikan yang berlaku",
+    "Apakah tanda larangan merokok / api terbuka terpasang jelas",
+    "Apakah isyarat klakson dan alarm mundur digunakan",
+    "Apakah operator mematuhi batas kecepatan yang berlaku",
+    "Apakah pengisian solar / pelumas sesuai tata cara yang benar",
+    "Apakah operator mengoperasikan sesuai petunjuk pengoperasian",
+    "Apakah pengisian pada unit lain dilakukan sesuai tata cara",
+    "Sudahkah unit dilengkapi dengan tempat penampungan ceceran fuel",
+    "Apakah fuelman/helper memakai APD di lapangan",
+    "Apakah unit diganjal / attachment diturunkan saat pengisian",
+    "Apakah truk diparkir di tempat yang aman dan relatif datar"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47F",
+   "nama": "Mengoperasikan Motor Grader",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Apakah P2H dilakukan dengan menggunakan ceklis standar",
+    "Apakah izin mengoperasikan alat yang sesuai dipakai",
+    "Apakah sabuk pengaman dipakai selama berada dalam kabin",
+    "Apakah semua lampu operasi dan lampu rotari dinyalakan",
+    "Apakah travelling mengikuti peraturan jalan yang berlaku",
+    "Apakah rambu dipasang 50 m diujung ujung ruas pengerjaan",
+    "Apakah tersedia pemandu dan aba-aba dipatuhi operator",
+    "Apakah attachment diatur sesuai pekerjaan dan petunjuk operasi",
+    "Apakah koordinasi dilakukan dengan compactor (jika ada)",
+    "Apakah manuver dilakukan di tempat yang aman",
+    "Apakah aturan klakson dan alarm mundur dipatuhi",
+    "Apakah parkir dilakukan sesuai tata cara parkir yang benar"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47G",
+   "nama": "Mengoperasikan Water Truck",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dalam keadaan baik",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik",
+    "Sudahkah P2H dilakukan pada unit dan pompa dengan ceklis",
+    "Apakah operator memakai izin mengoperasikan yang berlaku",
+    "Apakah pengisian tangki mengikuti tata cara yang benar dan aman",
+    "Apakah lampu operasi dan lampu putar dihidupkan saat operasi",
+    "Apakah batas kecepatan penyiraman yang berlaku dipatuhi",
+    "Apakah daerah dilarang disiram dipatuhi",
+    "Apakah unit mendahului dibantu (tutup keran) oleh operator",
+    "Apakah pemutaran dilakukan hanya di tempat yang ditentukan",
+    "Apakah parkir di tempat aman dan stabil, dipasang ganjal",
+    "Apakah unit dan pipa air keseluruhan diperiksa, pompa dimatikan"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47H",
+   "nama": "Mengoperasikan Pekerjaan Survey",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dalam keadaan baik",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik",
+    "Apakah alat dipindahkan dengan hati-hati dan perlahan",
+    "Apakah kendaraan sarana dipakai sesuai tata cara yang aman",
+    "Apakah helm, sepatu pelindung dan rompi reflektif dipakai",
+    "Apakah alat dibawa dengan aman (tidak mengganggu gerakan)",
+    "Apakah komunikasi radio dilakukan secara teratur",
+    "Apakah pengukuran dilakukan dengan teknik yang benar",
+    "Apakah alat diamankan dari mobilitas unit / alat lain",
+    "Apakah payung / penutup dipakai untuk mengurangi sinar matahari",
+    "Apakah evakuasi dilakukan dengan benar saat ada peledakan",
+    "Apakah alat dijaga agar tetap bersih dan kering",
+    "Apakah alat disimpan di kotaknya setelah dipakai"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47I",
+   "nama": "Mengoperasikan Haul Truck",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Apakah P2H dilakukan dengan menggunakan ceklis standar",
+    "Apakah Izin Mengoperasikan Alat yang sesuai dipakai",
+    "Apakah sabuk pengaman dipakai selama berada dalam kabin",
+    "Apakah semua lampu operasi dan lampu rotari dinyalakan",
+    "Apakah peraturan jalan yang berlaku dipatuhi",
+    "Apakah aturan klakson dan alarm mundur dipatuhi",
+    "Apakah batas kecepatan dipatuhi dan disesuaikan dengan situasi",
+    "Apakah vessel diatur lurus saat dumping / loading",
+    "Apakah operator mematuhi aturan antrian yang berlaku",
+    "Apakah operator memberikan isyarat saat memasuki front",
+    "Apakah rambu darurat dipasang saat berhenti darurat",
+    "Apakah parkir dilakukan sesuai tata cara yang benar"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47J",
+   "nama": "Mengoperasikan Repair Tyre",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik",
+    "Apakah kacamata pelindung dan masker debu dipakai",
+    "Apakah ban dicuci dan dibersihkan dulu sebelum diperbaiki",
+    "Apakah ban dipindah dengan alat angkut",
+    "Apakah tersedia penerangan yang cukup dalam ruangan",
+    "Apakah sirkulasi udara ruangan dipastikan baik",
+    "Apakah gerinda dipakai dengan cara yang aman dan benar",
+    "Apakah masker kimia dipakai saat menggunakan perekat",
+    "Apakah pengepresan dilakukan dengan cara yang aman dan benar",
+    "Apakah ban disimpan dengan baik dan benar",
+    "Apakah tempat dan alat kerja di bersihkan dan disimpan kembali"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47K",
+   "nama": "Mengoperasikan Perkakas Dan Peralatan Bertenaga",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik",
+    "Apakah helm dan kacamata pelindung dipakai saat bekerja",
+    "Apakah perkakas yang dipilih sesuai dengan jenis pekerjaan",
+    "Apakah kabel, colokan dan saklar dalam keadaan baik",
+    "Apakah selang udara dan sambungan katup dalam keadaan baik",
+    "Apakah percikan api dari alat dijauhkan dari benda mudah terbakar",
+    "Apakah perkakas dibersihkan / dirapikan setelah dipakai"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47L",
+   "nama": "Membongkar Pasang Komponen Unit",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik",
+    "Apakah unit diganjal dan dipasang ‘Danger Tag’",
+    "Apakah naik turun unit dilakukan dengan kontak 3 titik",
+    "Apakah komponen diperiksa terlebih dulu",
+    "Apakah sumber daya listrik diputus lebih dulu jika perlu",
+    "Apakah penggantian dilakukan sesuai rekomendasi",
+    "Apakah komponen /baut / klem di simpan di tempat yang bersih",
+    "Apakah kunci / socket yang standar dan baik dipakai"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47M",
+   "nama": "Mengoperasikan Compactor",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Apakah operator memakai izin mengoperasikan alat yang sesuai",
+    "Apakah P2H dilakukan dengan menggunakan ceklis standar",
+    "Apakah sabuk pengaman dipakai selama berada dalam kabin",
+    "Apakah masker debu, kacamata dan sumbat telinga dipakai",
+    "Apakah semua lampu operasi dan lampu putar dinyalakan",
+    "Apakah unit dioperasikan sesuai petunjuk pengoperasian",
+    "Apakah rambu dipasang 50 m di ujung-ujung ruas pengerjaan",
+    "Apakah tersedia pemandu dan aba-aba pemandu dipatuhi",
+    "Apakah koordinasi dilakukan dengan operator motor grader",
+    "Apakah manuver dilakukan di tempat yang aman",
+    "Apakah aturan klakson dan alarm mundur dipatuhi",
+    "Apakah parkir dilakukan sesuai tata cara yang benar"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47N",
+   "nama": "Mengoperasikan Drilling",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Apakah P2H dilakukan dengan menggunakan ceklist standar",
+    "Apakah Izin Mengoperasikan Alat yang sesuai dipakai",
+    "Apakah sabuk pengaman dipakai selama berada dalam kabin",
+    "Apakah semua lampu operasi dan lampu rotari dinyalakan",
+    "Apakah alat dioperasikan sesuai Petunjuk Pengoperasian",
+    "Apakah sprocket selalu berada di belakang saat travel",
+    "Apakah posisi jack naik sempurna pada saat trevel",
+    "Apakah lock mast sudah terpasang dan terlepas pada saat pengeboran",
+    "Apakah v block di posisi rapat pada saat pengeboran",
+    "Sudahkah koordinasi dengan unit lain didekatnya dilakukan",
+    "Apakah parkir dilakukan di lokasi yang datar dan aman",
+    "Apakah tata cara mematikan unit diikuti dengan benar"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47O",
+   "nama": "Mengoperasikan Komputer",
+   "mode": "orang",
+   "items": [
+    "Apakah penutup dibuka perlahan dan dilipat rapi ?",
+    "Apakah alat dan peralatan diperiksa dan dipastikan baik ?",
+    "Apakah kabel dan steker diatur tidak mengganggu aktivitas ?",
+    "Apakah computer/Laptop dihidupkan dengan tata cara yang benar ?",
+    "Apakah tinggi monitor diatur sesuai tinggi mata ?",
+    "Apakah kontras layar disesuaikan dengan kondisi ruangan ?",
+    "Apakah computer/Laptop dioperasikan sesuai tata cara yang benar ?",
+    "Apakah posisi duduk dijaga dan tulang punggung dijaga tegak ?",
+    "Apakah mata diistirahatkan secara teratur ?",
+    "Apakah alat dirapikan kembali setelah dipakai ?",
+    "Apakah computer/ Laptop ditutup kembali dengan benar ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47P",
+   "nama": "Mengisi Bahan Bakar",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan digunakan dengan baik dan benar?",
+    "Apakah alat dan perlengkapan kerja diperiksa dalam keadaan baik?",
+    "Apakah unit sudah diposisikan dengan benar?",
+    "Apakah mesin unit / kendaraan dimatikan saat pengisian bahan bakar?",
+    "Apakah area pengisian bahan bakar bebas dari api terbuka, rokok dan mengaktifkan hanphone?",
+    "Apakah selang pengisian selalu diatur rapi?",
+    "Apakah tutup dan leher tangki dibersihkan terlebih dahulu sebelum dibuka?",
+    "Apakah meter pengisian dicatat (Meter Awalnya)?",
+    "Apakah Nozzle dan leher tangki dipastikan bersentuhan?",
+    "Apakah bahan bakar diisikan tidak sampai tumpah?",
+    "Apakah tangki dijaga dari kemasukan air?",
+    "Apakah selang dan area kerja dirapikan kembalI?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47Q",
+   "nama": "Perbaikan Dan Perawatan Dozer",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan digunakan dengan baik dan benar?",
+    "Apakah alat dan perlengkapan kerja diperiksa dalam keadaan baik?",
+    "Apakah lokasi / area pekerjaan sudah disiapkan dan dibersihkan",
+    "Apakah unit sudah dibersihkan sebelum dikerjakan",
+    "Apakah LOTO difungsikan serta danger tag dipasang ?",
+    "Apakah pada saat naik dan turun unit menggunakan tiga titik tumpu ?",
+    "Apakah perawatan / perbaikan sesuai dengan prosedur ?",
+    "Apakah alat dan peralatan kerja digunakan sesuai prosedur ?",
+    "Apakah teknik membawa dan mengangkat barang manual dilakukan dengan benar ?",
+    "Sudahkah momen pengencangan sesuai rekomendasi ?",
+    "Apakah unit yang diuji oleh orang yang berwenang ?",
+    "Apakah tekanan pada sistem hidrolik sudah dibebaskan ?",
+    "Sudahkah peralatan yang digunakan sudah dibersihkan dan dikembalikan sesuai dengan tempatnya?",
+    "Sudahkah area kerja dibersihkan kembali?",
+    "Sudahkah Limbah B3 ditempatkan pada tempatnya ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47R",
+   "nama": "Greasing",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan dipakai dengan benar ?",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik ?",
+    "Apakah tata cara parkir unit diikuti dengan benar ?",
+    "Apakah kompresor sudah diperiksa dengan menggunakan checklist standar ?",
+    "Apakah LOTO difungsikan serta danger tag dipasang ?",
+    "Apakah pemandu mengarahkan unit ?",
+    "Apakah pengisian grease diawasi pengawas ?",
+    "Apakah nipple dibersihkan sebelum dipakai ?",
+    "Apakah wajah dijauhkan dari nipple saat pengisian ?",
+    "Apakah rem parkir diaktifkan saat mengisi grease ?",
+    "Apakah naik / turun unit dengan teknik kontak 3 titik ?",
+    "Apakah unit diperiksa kembali setelah pengisian selesai ?",
+    "Apakah selang dan area kerja dirapikan kembali ?",
+    "Sudahkah Limbah B3 ditempatkan pada tempatnya ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47S",
+   "nama": "Melepas Dan Memasang Tyre",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan dipakai dengan benar ?",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik ?",
+    "Apakah kacamata pelindung dipakai ?",
+    "Apakah pengemudi mematuhi arahan pemandu ?",
+    "Apakah tyre dipindah dengan alat angkut ?",
+    "Apakah jalur gerakan unit bebas dari orang ?",
+    "Apakah pengemudi naik / turun unit dengan cara 3 titik kontak ?",
+    "Apakah LOTO difungsikan serta danger tag dipasang ?",
+    "Apakah rem parkir, safety stand dan well cook terpasang ?",
+    "Apakah dongkrak sesuai standar dan kapasitas ?",
+    "Apakah ban disimpan dengan baik dan benar ?",
+    "Apakah penggantian ban dilakukan ditempat datar ?",
+    "Apakah terdapat JSA jika pekerjaan diluar base workshop ?",
+    "Sudahkah Limbah B3 ditempatkan pada tempatnya ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47T",
+   "nama": "Mengganti Teeth Bucket",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan dipakai dengan benar ?",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik ?",
+    "Apakah LOTO difungsikan serta danger tag dipasang ?",
+    "Apakah tangga bersih, bebas dari oli atau grease ?",
+    "Apakah pengemudi naik / turun unit dengan cara 3 titik kontak ?",
+    "Apakah bucket diposisikan dengan benar ?",
+    "Apakah unit dioperasikan oleh operator yang berwenang ?",
+    "Apakah teeth bucket sudah dibersihkan terlebih dahulu ?",
+    "Apakah teknik mengangkat manual dilakukan dengan benar ?",
+    "Apakah pin dipasang dengan benar dan aman ?",
+    "Apakah alat dan peralatan kerja dirapikan dan dikembalikan sesuai tempatnya ?",
+    "Apakah teeth bucket bekas dibuang sesuai tempatnya ?",
+    "Apakah terdapat JSA jika pekerjaan diluar workshop ?",
+    "Sudahkah Limbah B3 ditempatkan pada tempatnya ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47U",
+   "nama": "Perbaikan Dan Perawatan Excavator",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan dipakai dengan benar ?",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik ?",
+    "Apakah lokasi / area pekerjaan sudah disiapkan dan dibersihkan",
+    "Apakah unit sudah dibersihkan sebelum dikerjakan ?",
+    "Apakah LOTO difungsikan serta danger tag dipasang ?",
+    "Apakah naik / turun unit dengan memakai 3 titik kontak ?",
+    "Apakah perawatan / perbaikan dilakukan sesuai prosedur ?",
+    "Apakah alat dan peralatan kerja digunakan sesuai prosedur ?",
+    "Apakah teknik membawa dan mengangkat barang manual dilakukan dengan benar ?",
+    "Sudahkah momen pengencangan sesuai rekomendasi ?",
+    "Apakah unit yang diuji oleh orang yang berwenang ?",
+    "Sudahkah peralatan yang digunakan sudah dibersihkan dan dikembalikan sesuai dengan tempatnya?",
+    "Apakah terdapat JSA jika pekerjaan diluar workshop ?",
+    "Sudahkah area kerja dibersihkan kembali?",
+    "Sudahkah Limbah B3 ditempatkan pada tempatnya ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47V",
+   "nama": "Perbaikan Dan Perawatan Dump Truck",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan dipakai dengan benar ?",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik ?",
+    "Apakah lokasi / area pekerjaan sudah disiapkan dan dibersihkan ?",
+    "Apakah unit sudah dibersihkan sebelum dikerjakan ?",
+    "Apakah LOTO difungsikan serta danger tag dipasang ?",
+    "Apakah naik / turun unit dengan memakai 3 titik kontak ?",
+    "Apakah perawatan / perbaikan dilakukan sesuai prosedur ?",
+    "Apakah alat dan peralatan kerja digunakan sesuai prosedur ?",
+    "Apakah teknik membawa dan mengangkat barang manual dilakukan dengan benar ?",
+    "Sudahkah momen pengencangan sesuai rekomendasi ?",
+    "Apakah unit yang diuji oleh orang yang berwenang ?",
+    "Sudahkah peralatan yang digunakan sudah dibersihkan dan dikembalikan sesuai dengan tempatnya?",
+    "Apakah terdapat JSA jika pekerjaan diluar workshop ?",
+    "Sudahkah area kerja dibersihkan kembali?",
+    "Sudahkah Limbah B3 ditempatkan pada tempatnya ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47W",
+   "nama": "Perbaikan Dan Perawatan Motor Grader",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan dipakai dengan benar ?",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik ?",
+    "Apakah lokasi / area pekerjaan sudah disiapkan dan dibersihkan",
+    "Apakah unit sudah dibersihkan sebelum dikerjakan ?",
+    "Apakah LOTO difungsikan serta danger tag dipasang ?",
+    "Apakah naik / turun unit dengan memakai 3 titik kontak ?",
+    "Apakah perawatan / perbaikan dilakukan sesuai prosedur ?",
+    "Apakah alat dan peralatan kerja digunakan sesuai prosedur ?",
+    "Apakah teknik membawa dan mengangkat barang manual dilakukan dengan benar ?",
+    "Sudahkah momen pengencangan sesuai rekomendasi ?",
+    "Apakah unit yang diuji oleh orang yang berwenang ?",
+    "Sudahkah peralatan yang digunakan sudah dibersihkan dan dikembalikan sesuai dengan tempatnya?",
+    "Apakah terdapat JSA jika pekerjaan diluar workshop ?",
+    "Sudahkah area kerja dibersihkan kembali?",
+    "Sudahkah Limbah B3 ditempatkan pada tempatnya ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47X",
+   "nama": "Pemindahan Dan Pemasangan Tower Lamp",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan dipakai dengan benar ?",
+    "Apakah alat dan peralatan kerja diperiksa dalam keadaan baik ?",
+    "Sudahkah P2H dilakukan dengan benar dengan mengisi check list ?",
+    "Sudahkah tiang tower lamp diturunkan dengan cara yang aman ?",
+    "Apakah sling atau alat angkat yang dipakai untuk memindah / penarikan tower lamp sesuai ?",
+    "Apakah cara pemindahan tower lamp sesuai tata cara yang aman ?",
+    "Apakah tower lamp diposisikan dalam kondisi rata, stabil dan aman ?",
+    "Apakah terdapat Safety Berm pada lokasi TL ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47Y",
+   "nama": "Memotong Rumput",
+   "mode": "orang",
+   "items": [
+    "Apakah peralatan sudah diperiksa dengan baik ?",
+    "Apakah peralatan dalam kondisi layak ?",
+    "Apakah peralatan sudah diperiksa secara berkala ?",
+    "Apakah pekerja sudah menggunakan APD sesuai dengan pekerjaan ?",
+    "Apakah kondisi APD masih layak pakai ?",
+    "Apakah posisi pekerja dapat tertabrak / terjepit ?",
+    "Apakah posisi pekerja dapat menghirup / terpapar debu atau bahan kimia ?",
+    "Apakah posisi pekerja dapat terpeleset / terjatuh / tenggelam ?",
+    "Apakah posisi pekerja dapat terpukul / tertusuk ?",
+    "Apakah posisi pekerja dapat tergores / tersayat ?",
+    "Apakah cara menggunakan peralatan dilakukan dengan benar ?",
+    "Apakah peralatan dirapikan kembali setelah dipakai ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47Z",
+   "nama": "Menyemprot Rumput",
+   "mode": "orang",
+   "items": [
+    "Apakah alat semprot sudah diperiksa dengan baik ?",
+    "Apakah alat semprot dalam kondisi layak ?",
+    "Apakah alat semprot sudah diperiksa secara berkala ?",
+    "Apakah pekerja sudah menggunakan APD sesuai dengan pekerjaan ?",
+    "Apakah kondisi APD masih layak pakai ?",
+    "Apakah posisi pekerja dapat tertabrak / terjepit ?",
+    "Apakah posisi pekerja dapat menghirup / terpapar debu atau bahan kimia (racun rumput) ?",
+    "Apakah posisi pekerja dapat terpeleset / terjatuh / tenggelam ?",
+    "Apakah posisi pekerja dapat terpukul / tertusuk ?",
+    "Apakah cara mencampur cairan rumput dilakukan dengan benar ?",
+    "Apakah cara menggunakan alat semprot dilakukan dengan benar ?",
+    "Apakah alat semprot dirapikan kembali setelah dipakai ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AA",
+   "nama": "Formulir Observasi Perakitan Rambu Rambu",
+   "mode": "orang",
+   "items": [
+    "Apakah APD yang digunakan sesuai dengan pekerjaannya ?",
+    "Apakah APD yang digunakan layak digunakan?",
+    "Apakah peralatan yang digunakan layak operasi?",
+    "Apakah peralatan yang digunakan sudah di inspeksi sebelum digunakan dan diperiksa secara berkala?",
+    "Apakah cara penggunaan peralatan dilakukan dengan benar?",
+    "Apakah pekerja dapat terjepit/tergores/terpukul oleh peralatan/rambu yang dirakit?",
+    "Apakah teknik pengangkatan dengan cara teknik manual handling?",
+    "Apakah pekerja melakukan pekerjaannya sesuai dengan sikap kerja yang ergonomi?",
+    "Apakah peralatan dirapikan kembali setelah selesai digunakan?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AB",
+   "nama": "Formulir Observasi Pemasangan Rambu Keselamatan",
+   "mode": "orang",
+   "items": [
+    "Apakah APD yang digunakan sesuai dengan pekerjaannya ?",
+    "Apakah APD yang digunakan layak digunakan?",
+    "Apakah cara pengangkatan dengan teknik manual handling ?",
+    "Apakah penancapan rambu dengan lakukan dengan benar ?",
+    "Apakah melakukan komunikasi dengan pengguna jalan ?",
+    "Apakah cara naik turun tanggul dilakukan dengan cara aman ?",
+    "Apakah posisi pekerja dapat terpeleset / terjatuh / tenggelam ?",
+    "Apakah perkakas tangan yang digunakan sesuai dengan pekerjaan?",
+    "Apakah cara penggunaan perkakas tangan dilakukan dengan benar?",
+    "Apakah posisi pekerja dapat tertabrak ?",
+    "Apakah peralatan dirapikan kembali setelah dipakai ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AC",
+   "nama": "Formulir Observasi  Mengoperasikan Hydraulic Press",
+   "mode": "orang",
+   "items": [
+    "Apakah pekerja sudah menggunakan APD sesuai dengan pekerjaan ?",
+    "Apakah peralatan sudah di periksa dengan baik dan terdapat KIP ?",
+    "Apakah kabel dan steker diatur tidak mengganggu aktivitas ?",
+    "Apakah terpasang prosedur pengoprasian mesin press ?",
+    "Apakah terdapat cover dari hydraulic press ?",
+    "Apakah posisi pekerja dapat terpapar oli dari filter ?",
+    "Apakah sudah terdapat penampungan sisa oli press ?",
+    "Apakah terdapat ceceran oli ?",
+    "Apakah ada tempat penyimpanan hasil press ?",
+    "Apakah peralatan sudah dirapikan kembali ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AD",
+   "nama": "Aktivitas Pengapuran Dan Penawasan",
+   "mode": "orang",
+   "items": [
+    "Apakah pekerja sudah menggunakan APD sesuai dengan pekerjaan ?",
+    "Apakah kondisi APD masih layak pakai ?",
+    "Apakah pekerja menggunakan pelampung, kacamata safety dan sarung tangan pada saat pelepasan kapur dan tawas ?",
+    "Apakah alat dan perlengkapan kerja diperiksa dalam keadaan baik ?",
+    "Apakah posisi pekerja dapat terpeleset / terjatuh / tenggelam ?",
+    "Apakah pekerja melakukan pelepasan kapur atau tawas berdiri diposisi dengan benar ?",
+    "Apakah pekerja memastikan ketersediaan kapur dan tawas masih tersedia ?",
+    "Apakah pekerja melakukan pengangkatan kapur atau tawas secara benar ?",
+    "Apakah pekerja memastikan sisa pemakaran dari karung penawasan dan pengapuran di buang pada tempatnya ?",
+    "Apakah pekerja melakukan pengapuran dan penawasan pada saat hujan ?",
+    "Apakah setelah selesai pemakaian alat di bersihkan ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AE",
+   "nama": "Pengecekan Wmp Atau Sp",
+   "mode": "orang",
+   "items": [
+    "Apakah pekerja sudah menggunakan APD sesuai dengan pekerjaan ?",
+    "Apakah pekerja sudah menggunakan Pelampung pada saat pengambilan air?",
+    "Apakah kondisi APD masih layak pakai ?",
+    "Apakah alat pH dan TSS dan perlengkapan kerja diperiksa dalam keadaan baik ?",
+    "Apakah cara menggunakan peralatan dilakukan dengan benar ?",
+    "Apakah posisi pekerja dapat terpeleset / terjatuh / tenggelam ?",
+    "Pekerja harus memastikan air yang release sesuai dengan baku mutu yang berlaku ?",
+    "Apakah pekerja menulis hasil pengecekan di papan swapantau ?",
+    "Apakah setelah selesai pemakaian alat di bersihkan ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AF",
+   "nama": "Pengurasan Ipal",
+   "mode": "orang",
+   "items": [
+    "Apakah pekerja sudah menggunakan APD sesuai dengan pekerjaan ?",
+    "Apakah pekerja sudah menggunakan Sarung Tangan, Kacamata safety dan Masker ?",
+    "Apakah kondisi APD masih layak pakai ?",
+    "Apakah alat Alkond sudah diperiksa secara berkala ?",
+    "Apakah alat dan perlengkapan kerja diperiksa dalam keadaan baik ?",
+    "Apakah cara menggunakan peralatan dilakukan dengan benar ?",
+    "Apakah posisi pekerja dapat terpeleset / terjatuh / tenggelam ?",
+    "Pekerja harus memastikan IPAL tidak meluap ?",
+    "Pekerja memastikan hose pompa tidak dalam keadaan bocor ?",
+    "Pekerja Memastikan Melakukan pembersihan setiap kompatement ?",
+    "Apakah setelah selesai pemakaian alat di bersihkan ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AG",
+   "nama": "Formulir Observasi  Mengoperasikan Chainsaw",
+   "mode": "orang",
+   "items": [
+    "Apakah operator chainsaw sudah menggunakan APD lengkap (helm, earplug/earmuff, kacamata safety, sarung tangan anti-cut, sepatu safety, dan face shield)?",
+    "Apakah chainsaw diperiksa terlebih dahulu sebelum digunakan (bahan bakar, rantai, tension, oli pelumas, rem rantai)?",
+    "Apakah area kerja diperiksa untuk memastikan tidak ada orang lain dalam radius bahaya?",
+    "Apakah chainsaw dinyalakan di permukaan tanah yang stabil, tidak dipegang di udara?",
+    "Apakah operator menjaga posisi kaki kokoh dan seimbang saat mengoperasikan chainsaw?",
+    "Apakah operator memegang chainsaw dengan kedua tangan (grip kuat dan benar)?",
+    "Apakah chainsaw dioperasikan sesuai arah potong yang aman, tidak menyentuh bagian atas bar (kickback zone)?",
+    "Apakah pohon/benda yang dipotong sudah ditentukan arah rebahnya dan area evakuasi jelas?",
+    "Apakah operator mematikan mesin chainsaw sebelum melakukan pengisian bahan bakar atau perawatan kecil?",
+    "Apakah chainsaw disimpan dengan aman setelah digunakan (rantai dilindungi, bahan bakar dipisahkan)?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AH",
+   "nama": "Aktivitas Highrisk",
+   "mode": "orang",
+   "items": [
+    "Apakah Izin Kerja Khusus (IKK) sudah tersedia dan disetujui PJO?",
+    "Apakah JSA sudah tersedia dan disosialisasikan?",
+    "Apakah peralatan penunjang aktivitas highrisk tersedia dan telah diperiksa dalam keadaan baik?",
+    "Apakah pengawas dan pekerja sesuai dengan surat penunjukan atau yg ditunjuk dalam IKK?",
+    "Sudahkah APD yang dipersyaratkan tersedia, telah diperiksa dan digunakan dengan benar?",
+    "Apakah metode kerja yang dilakukan sesuai dengan lampiran IKK?",
+    "Apakah unit yg digunakan telah di P2H menggunakan ceklis standar?",
+    "Apakah unit dioperasikan sesuai petunjuk pengoperasian?",
+    "Apakah area kerja telah diisolasi dan diberi tanda bahaya untuk mencegah akses yang tidak sah?",
+    "Apakah peralatan komunikasi tersedia (pekerja dan pengawas)?",
+    "Apakah semua karyawan yang terlibat sudah mendapatkan pelatihan/ awareness yang sesuai dan mengerti prosedur yang telah dibuat?",
+    "Apakah rencana evakuasi keadaan daruat telah dibuat dan disosialisasikan kepada karyawan yang terlibat dalam pekerjaan?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AI",
+   "nama": "Service Unit",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan digunakan dengan baik dan benar?",
+    "Apakah JSA sudah tersedia dan disosialisasikan?",
+    "Apakah peralatan penunjang kerja tersedia dan telah diperiksa dalam keadaan baik?",
+    "Apakah unit dan area pekerjaan sudah disiapkan dan dibersihkan?",
+    "Apakah LOTO difungsikan serta danger tag dipasang ?",
+    "Apakah pada saat naik dan turun unit menggunakan tiga titik tumpu ?",
+    "Apakah metode kerja yang dilakukan sesuai dengan SOP/IK?",
+    "Apakah alat dan peralatan kerja digunakan sesuai SOP/IK ?",
+    "Apakah teknik membawa dan mengangkat barang manual dilakukan dengan benar ?",
+    "Sudahkah momen pengencangan sesuai rekomendasi ?",
+    "Apakah tekanan pada sistem hidrolik sudah dibebaskan ?",
+    "Apakah terdapat pengawas yang melekat dalam aktivitas perbaikan unit?",
+    "Apakah semua karyawan yang terlibat sudah mendapatkan pelatihan/ awareness yang sesuai dan mengerti prosedur yang telah dibuat?",
+    "Apakah rencana evakuasi keadaan daruat telah dibuat dan disosialisasikan kepada karyawan yang terlibat dalam pekerjaan?",
+    "Sudahkah Limbah B3 ditempatkan pada tempatnya ?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AJ",
+   "nama": "Aktivitas Traffic Man",
+   "mode": "orang",
+   "items": [
+    "Sudahkah APD yang dipersyaratkan diperiksa dengan benar",
+    "Sudahkah briefing pekerjaan dan pemahaman area pengaturan lalu lintas dilakukan",
+    "Apakah posisi Traffic Man berada di area aman, terlihat jelas oleh operator/pengemudi",
+    "Apakah alat bantu pengaturan lalu lintas tersedia dan digunakan dengan benar",
+    "Apakah aba-aba/isyarat diberikan dengan jelas, benar, dan mudah dipahami",
+    "Apakah Traffic Man memastikan jalur aman dari orang, kendaraan, atau hambatan sebelum unit bergerak",
+    "Apakah posisi berdiri Traffic Man terhindar dari blind spot unit",
+    "Apakah Traffic Man tetap fokus dan tidak menggunakan HP/terdistraksi saat mengatur lalu lintas",
+    "Apakah kondisi lingkungan kerja diperhatikan (debu, hujan, penerangan, kebisingan, visibilitas)",
+    "Apakah koordinasi dilakukan saat terjadi crossing unit atau kondisi lalu lintas padat"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AK",
+   "nama": "Aktivitas Di Front Laoding",
+   "mode": "orang",
+   "items": [
+    "Apakah operator Excavator dan HD/OHT menggunakan APD lengkap sesuai ketentuan area tambang?",
+    "Apakah P2H unit Excavator dan HD/OHT dilakukan menggunakan checklist standar sebelum operasi?",
+    "Apakah operator memiliki Kartu Izin Mengoperasikan Peralatan yang sesuai dan tidak expired?",
+    "Apakah sabuk pengaman dipakai selama pengoperasian unit di dalam kabin",
+    "Apakah semua lampu operasi dan lampu rotari dinyalakan?",
+    "Apakah unit dioperasikan sesuai petunjuk pengoperasian?",
+    "Apakah aturan klakson dan alarm mundur dipatuhi?",
+    "Apakah jumlah unit HD/OHT yang mengantri tidak melebihi batas maksimal yang ditentukan pada front loading?",
+    "Apakah operator menjaga jarak aman antar unit saat menunggu giliran loading?",
+    "Apakah unit yang menunggu loading tidak berada pada badan jalan aktif atau menghalangi jalur manuver unit lain?",
+    "Apakah Excavator melakukan loading tanpa bucket melewati ujung canopy HD/OHT?",
+    "Apakah material dimuat secara merata dan tidak menyebabkan overloading pada HD/OHT?",
+    "Apakah komunikasi antara operator Excavator, HD/OHT, dan pengawas dilakukan secara efektif selama proses loading?",
+    "Apakah posisi pengawas berada di lokasi aman, tidak di blind spot, dan minimal ±50 meter dari aktivitas unit?",
+    "Apakah operator HD/OHT mematuhi batas kecepatan aman saat memasuki, berada di, dan keluar dari area front loading?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AM",
+   "nama": "Formulir Observasi Packing Makanan",
+   "mode": "orang",
+   "items": [
+    "Apakah pekerja sudah menjaga kebersihan diri, mencuci tangan, dan menggunakan pakaian kerja/APD higiene yang sesuai?",
+    "Apakah meja packing, wadah, dan peralatan kontak pangan bersih serta dalam kondisi layak?",
+    "Apakah makanan yang akan dikemas diperiksa kondisi, kebersihan, dan kelayakannya?",
+    "Apakah makanan matang/siap santap terlindung dari kontak dengan bahan mentah dan sumber kontaminasi?",
+    "Apakah kemasan yang digunakan aman untuk pangan, bersih, utuh, dan sesuai jenis makanan?",
+    "Apakah pekerja menggunakan alat bantu bersih dan menghindari kontak tangan langsung dengan makanan siap santap?",
+    "Apakah proses packing dilakukan dengan cepat dan memperhatikan pengendalian suhu/waktu penyimpanan yang ditentukan?",
+    "Apakah tiap kemasan ditutup rapat dan diberi identitas/label sesuai ketentuan yang berlaku?",
+    "Apakah area packing bebas hama, sampah, bahan kimia, serta benda asing yang dapat mencemari makanan?",
+    "Apakah makanan yang sudah dikemas disimpan dan dipindahkan secara higienis sebelum distribusi?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AN",
+   "nama": "Formulir Observasi Penggunaan Mesin Las",
+   "mode": "orang",
+   "items": [
+    "Apakah operator memiliki kompetensi/otorisasi kerja dan izin kerja panas sesuai ketentuan area?",
+    "Apakah JSA/penilaian risiko dan pengarahan sebelum kerja sudah dilakukan?",
+    "Apakah helm las, pelindung mata, sarung tangan, pakaian tahan percikan, dan sepatu keselamatan digunakan sesuai bahaya?",
+    "Apakah kabel, sambungan, elektroda, penjepit massa, dan mesin las diperiksa sebelum digunakan?",
+    "Apakah area kerja bebas bahan mudah terbakar atau telah diberi perlindungan yang memadai?",
+    "Apakah APAR, fire watcher, dan pengamanan area kerja tersedia sesuai persyaratan izin kerja?",
+    "Apakah ventilasi atau pengendalian asap las memadai selama pekerjaan?",
+    "Apakah penjepit massa dipasang dengan benar dan kabel ditata untuk mencegah sengatan serta tersandung?",
+    "Apakah tabir las/barikade digunakan untuk melindungi orang lain dari radiasi dan percikan?",
+    "Apakah mesin dimatikan, sumber energi diamankan, dan area diperiksa setelah pekerjaan selesai?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AO",
+   "nama": "Formulir Observasi Penggunaan Gerinda",
+   "mode": "orang",
+   "items": [
+    "Apakah pengguna memahami cara kerja aman dan telah menilai bahaya pekerjaan gerinda?",
+    "Apakah kacamata keselamatan dan pelindung wajah, pelindung pendengaran, serta APD lain dipakai sesuai risiko?",
+    "Apakah gerinda, kabel, steker, sakelar, dan pelindung (guard) dalam kondisi baik sebelum digunakan?",
+    "Apakah ukuran, jenis, dan rating RPM batu gerinda sesuai dengan mesin serta jenis pekerjaan?",
+    "Apakah batu gerinda bebas retak/rusak dan telah terpasang serta dikencangkan dengan benar?",
+    "Apakah benda kerja dijepit atau ditopang stabil sebelum dilakukan pemotongan/penggerindaan?",
+    "Apakah posisi tubuh dan pegangan dua tangan aman serta tidak berada pada jalur putaran batu?",
+    "Apakah percikan diarahkan menjauhi pekerja, orang lain, kabel, dan bahan mudah terbakar?",
+    "Apakah kabel ditata aman dan gerinda tidak diletakkan sebelum cakram berhenti berputar?",
+    "Apakah mesin dimatikan/dicabut dari sumber listrik sebelum penggantian cakram dan setelah selesai?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AP",
+   "nama": "Formulir Observasi Aktivitas Tukang",
+   "mode": "orang",
+   "items": [
+    "Apakah pekerja memahami instruksi kerja/JSA dan batas area pekerjaan yang akan dilakukan?",
+    "Apakah APD sesuai pekerjaan (helm, sepatu, kacamata, sarung tangan, dll.) digunakan dengan benar?",
+    "Apakah area kerja diperiksa dari bahaya jatuh, tertimpa material, listrik, dan akses yang tidak aman?",
+    "Apakah perkakas tangan dan alat bantu diperiksa serta sesuai peruntukannya?",
+    "Apakah material ditumpuk stabil dan tidak menghalangi akses, jalur evakuasi, atau area kerja?",
+    "Apakah pekerjaan pada ketinggian menggunakan akses/perancah dan proteksi jatuh sesuai ketentuan?",
+    "Apakah pengukuran, pemotongan, pemakuan, atau pengeboran dilakukan dengan posisi kerja aman?",
+    "Apakah pekerjaan berisiko khusus dilengkapi izin kerja/pengamanan yang dipersyaratkan?",
+    "Apakah area di bawah/sekitar pekerjaan dipasang pengamanan agar orang lain tidak terkena material jatuh?",
+    "Apakah sisa material, paku tajam, kabel, dan perkakas dibersihkan/disimpan dengan aman setelah pekerjaan?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AQ",
+   "nama": "Formulir Observasi Penggunaan Tools & Equipment",
+   "mode": "orang",
+   "items": [
+    "Apakah jenis tools/equipment yang dipilih sesuai dengan pekerjaan dan kapasitas penggunaannya?",
+    "Apakah pekerja sudah memahami instruksi penggunaan, batasan, dan bahaya alat?",
+    "Apakah inspeksi sebelum pakai dilakukan dan kerusakan alat dicatat/dilaporkan?",
+    "Apakah guard, handle, kabel, selang, dan perangkat pengaman alat berfungsi sesuai kebutuhan?",
+    "Apakah APD yang disyaratkan digunakan sesuai bahaya saat mengoperasikan alat?",
+    "Apakah alat dipakai dengan teknik dan posisi tubuh aman, bukan dengan modifikasi yang tidak diizinkan?",
+    "Apakah sumber tenaga/tekanan/energi dan sambungan dipastikan aman sebelum alat dijalankan?",
+    "Apakah area kerja aman dari orang lain, benda lepas, dan potensi tersandung/terjepit?",
+    "Apakah alat rusak diberi penandaan dan dipisahkan agar tidak digunakan kembali?",
+    "Apakah alat dibersihkan, dimatikan/diisolasi, dan dikembalikan ke lokasi penyimpanan setelah digunakan?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AR",
+   "nama": "Formulir Observasi Manual Handling",
+   "mode": "orang",
+   "items": [
+    "Apakah pekerja menilai berat, ukuran, bentuk, stabilitas, dan titik pegangan beban sebelum mengangkat?",
+    "Apakah jalur pemindahan diperiksa dan bebas hambatan, lantai licin, atau perbedaan ketinggian?",
+    "Apakah pekerja menggunakan alat bantu atau bantuan rekan ketika beban sulit ditangani sendiri?",
+    "Apakah pekerja berdiri stabil dan mendekatkan beban ke tubuh sebelum mengangkat?",
+    "Apakah pengangkatan dilakukan dengan gerakan terkendali tanpa membungkuk atau memutar pinggang berlebihan?",
+    "Apakah pekerja menghindari membawa beban yang menghalangi pandangan atau keseimbangan?",
+    "Apakah perpindahan dan penurunan beban dilakukan secara perlahan pada lokasi yang stabil?",
+    "Apakah penggunaan troli/hand pallet mengikuti kapasitas dan cara operasi yang aman bila tersedia?",
+    "Apakah pekerja berkomunikasi dan mengoordinasikan gerakan saat mengangkat beban bersama?",
+    "Apakah pekerja menghentikan pekerjaan dan meminta bantuan bila beban/posisi menimbulkan risiko cedera?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  },
+  {
+   "kode": "AMM-IPT-F-SHE-47AS",
+   "nama": "Formulir Observasi Menggunakan Komputer Atau Laptop",
+   "mode": "orang",
+   "items": [
+    "Apakah meja, kursi, dan area kerja memungkinkan posisi duduk yang stabil serta nyaman?",
+    "Apakah layar berada pada tinggi dan jarak pandang yang nyaman tanpa menundukkan leher berlebihan?",
+    "Apakah posisi punggung tertopang dan bahu/lengan berada pada posisi rileks saat bekerja?",
+    "Apakah keyboard dan mouse mudah dijangkau dengan posisi pergelangan tangan relatif netral?",
+    "Apakah kaki tertopang dengan baik di lantai atau pada footrest jika diperlukan?",
+    "Apakah pencahayaan cukup serta pantulan/silau pada layar telah dikendalikan?",
+    "Apakah pekerja melakukan variasi posisi dan jeda singkat secara berkala dari aktivitas layar?",
+    "Apakah kabel, stopkontak, adaptor, dan perangkat listrik dalam kondisi aman serta tertata rapi?",
+    "Apakah sirkulasi udara dan suhu ruang mendukung kenyamanan kerja?",
+    "Apakah pekerja menjaga keamanan perangkat/informasi dengan mengunci layar saat meninggalkan meja?"
+   ],
+   "kolom": [
+    "YES",
+    "NO",
+    "N/A"
+   ]
+  }
+ ]
+}

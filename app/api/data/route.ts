@@ -337,6 +337,47 @@ const menuInfo = isSuperAdmin
         }
       })
 
+      // ══════════════════════════════════════════════════════════
+      // 🎯 POTONGAN PUNISHMENT (CNC / SP1 / SP2 / SP3 / Komitmen)
+      // Hanya punishment berstatus TERBIT yang memotong KPI.
+      // ══════════════════════════════════════════════════════════
+      try {
+        const nrpList = Array.from(new Set(enrichedKpi.map((k: any) => String(k.nrp))))
+        if (nrpList.length > 0) {
+          const awalBulan = `${year}-${String(month + 1).padStart(2, '0')}-01`
+          const { data: punishRows } = await supabase
+            .from('punishments')
+            .select('nrp, jenis, poin, nomor_surat, tanggal_terbit')
+            .eq('status', 'TERBIT')
+            .gte('tanggal_terbit', awalBulan)
+            .lte('tanggal_terbit', endOfMonthStr)
+            .in('nrp', nrpList)
+
+          const peta = new Map<string, { poin: number; list: any[] }>()
+          ;(punishRows || []).forEach((p: any) => {
+            const k = String(p.nrp)
+            const cur = peta.get(k) || { poin: 0, list: [] as any[] }
+            cur.poin += Number(p.poin || 0)
+            cur.list.push({ jenis: p.jenis, poin: Number(p.poin || 0), nomor: p.nomor_surat, tanggal: p.tanggal_terbit })
+            peta.set(k, cur)
+          })
+
+          enrichedKpi = enrichedKpi.map((k: any) => {
+            const p = peta.get(String(k.nrp))
+            if (!p) return { ...k, potongan_punishment: 0, punishment_list: [] }
+            return {
+              ...k,
+              nilai_sistem: Math.round(Math.max(0, Number(k.nilai_sistem) - p.poin) * 10) / 10,
+              nilai_akhir: Math.round(Math.max(0, Number(k.nilai_akhir) - p.poin) * 10) / 10,
+              potongan_punishment: p.poin,
+              punishment_list: p.list,
+            }
+          })
+        }
+      } catch (e) {
+        // tabel punishments belum dibuat → KPI jalan seperti biasa
+      }
+
       if (menuKey !== 'kpi_saya' && isSiteScoped) {
         enrichedKpi = enrichedKpi.filter((k: any) => k._site === userSite)
       }
