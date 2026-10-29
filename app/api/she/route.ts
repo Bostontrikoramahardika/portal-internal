@@ -122,7 +122,23 @@ export async function GET(request: NextRequest) {
     const userSite = String((session as any).scope_site || (session as any).site || '')
     if (!isHO && userSite) q = q.eq('site', userSite)
 
-    const { data, error } = await q
+    let { data, error } = await q
+
+    // kolom site belum ada → ulangi tanpa filter site
+    if (error && /site/i.test(error.message || '')) {
+      let q2 = supabase
+        .from('she_submissions')
+        .select('*')
+        .eq('jenis', jenis)
+        .gte('tanggal', firstDay)
+        .lte('tanggal', lastDay)
+        .order('created_at', { ascending: false })
+      if (status) q2 = q2.eq('status', status)
+      const ulang = await q2
+      data = ulang.data
+      error = ulang.error
+    }
+
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     const rows = data || []
@@ -191,29 +207,36 @@ export async function POST(request: NextRequest) {
     }
     const jumlahTemuan = items.filter((i: any) => isTemuan(i.hasil)).length
 
-    const { data: sub, error: e1 } = await supabase
-      .from('she_submissions')
-      .insert({
-        form_id,
-        jenis,
-        kode_form,
-        nama_form,
-        tanggal: tanggal || new Date().toISOString().slice(0, 10),
-        jam: jam || null,
-        site: site || (session as any).site || null,
-        lokasi: lokasi || null,
-        unit: unit || null,
-        pengawas_nrp: myNrp,
-        pengawas_nama: (session as any).nama || '',
-        diperiksa_nrp: diperiksa_nrp || null,
-        diperiksa_nama: diperiksa_nama || null,
-        departemen: departemen || null,
-        catatan: catatan || null,
-        jumlah_temuan: jumlahTemuan,
-        status: 'TERKIRIM',
-      })
-      .select()
-      .single()
+    const kepala: any = {
+      form_id,
+      jenis,
+      kode_form,
+      nama_form,
+      tanggal: tanggal || new Date().toISOString().slice(0, 10),
+      jam: jam || null,
+      site: site || (session as any).site || (session as any).scope_site || null,
+      lokasi: lokasi || null,
+      unit: unit || null,
+      pengawas_nrp: myNrp,
+      pengawas_nama: (session as any).nama || '',
+      diperiksa_nrp: diperiksa_nrp || null,
+      diperiksa_nama: diperiksa_nama || null,
+      departemen: departemen || null,
+      catatan: catatan || null,
+      jumlah_temuan: jumlahTemuan,
+      status: 'TERKIRIM',
+    }
+
+    let { data: sub, error: e1 } = await supabase
+      .from('she_submissions').insert(kepala).select().single()
+
+    // kolom site / departemen belum ada di database lama → ulangi tanpa kolom itu
+    if (e1 && /(site|departemen)/i.test(e1.message || '')) {
+      const { site: _s, departemen: _d, ...tanpa } = kepala
+      const ulang = await supabase.from('she_submissions').insert(tanpa).select().single()
+      sub = ulang.data
+      e1 = ulang.error
+    }
 
     if (e1 || !sub) return NextResponse.json({ error: e1?.message || 'Gagal menyimpan' }, { status: 500 })
 
@@ -224,9 +247,17 @@ export async function POST(request: NextRequest) {
       hasil: i.hasil || null,
       keterangan: i.keterangan || null,
       hazard: i.hazard || null,
+      foto_url: i.foto_url || null,          // ⬅ foto temuan ikut disimpan
     }))
 
-    const { error: e2 } = await supabase.from('she_items').insert(itemRows)
+    let { error: e2 } = await supabase.from('she_items').insert(itemRows)
+
+    // kolom foto_url belum ada di database lama → simpan tanpa foto
+    if (e2 && /foto_url/i.test(e2.message || '')) {
+      const tanpaFoto = itemRows.map(({ foto_url, ...sisa }: any) => sisa)
+      const ulang = await supabase.from('she_items').insert(tanpaFoto)
+      e2 = ulang.error
+    }
     if (e2) return NextResponse.json({ error: e2.message }, { status: 500 })
 
     await logAudit({
