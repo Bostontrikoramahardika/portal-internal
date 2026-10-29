@@ -92,7 +92,14 @@ export async function GET(req: NextRequest) {
   }
 }
 
-const BOLEH_EDIT = ['hr_site', 'hr_ho', 'pjo_site']
+const BOLEH_EDIT = ['hr_site', 'hr_ho', 'pjo_site', 'hrga_site', 'hrga_pusat', 'gl_produksi', 'gl_plant']
+
+/** HR boleh menyetujui lembur (menggantikan alur atasan → PJO). */
+function bolehSetujui(roles: string[], isSuper: boolean) {
+  if (isSuper) return true
+  return roles.some((r) =>
+    ['hr_site', 'hr_ho', 'hrga_site', 'hrga_pusat', 'pjo_site', 'pjo'].includes(r))
+}
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -127,10 +134,36 @@ export async function PATCH(req: NextRequest) {
     if (body.jam_selesai !== undefined) ubah.jam_selesai = body.jam_selesai || null
     if (body.total_jam !== undefined) ubah.total_jam = Number(body.total_jam) || 0
     if (body.alasan !== undefined) ubah.alasan = String(body.alasan || '').trim() || null
+    if (body.jenis_lembur !== undefined) ubah.jenis_lembur = String(body.jenis_lembur || 'BIASA')
 
-    const { error } = await supabaseAdmin.from('overtime_requests').update(ubah).eq('id', id)
+    // ── persetujuan / pembatalan oleh HR ──
+    const aksi = String(body.action || '').toLowerCase()
+    if (aksi === 'approve') {
+      if (!bolehSetujui(roles, !!session.is_super_admin)) {
+        return NextResponse.json({ error: 'Hanya HR / PJO yang boleh menyetujui lembur' }, { status: 403 })
+      }
+      ubah.status_atasan = 'APPROVED'
+      ubah.status_pjo = 'APPROVED'
+      ubah.status_final = 'APPROVED'
+    } else if (aksi === 'reset' || aksi === 'batal') {
+      if (!bolehSetujui(roles, !!session.is_super_admin)) {
+        return NextResponse.json({ error: 'Hanya HR / PJO yang boleh membatalkan' }, { status: 403 })
+      }
+      ubah.status_atasan = 'PENDING'
+      ubah.status_pjo = 'WAITING'
+      ubah.status_final = 'MENUNGGU_ATASAN'
+    }
+
+    let { error } = await supabaseAdmin.from('overtime_requests').update(ubah).eq('id', id)
+
+    // kolom jenis_lembur belum ada di database lama → ulangi tanpa kolom itu
+    if (error && /jenis_lembur/i.test(error.message || '')) {
+      delete ubah.jenis_lembur
+      const ulang = await supabaseAdmin.from('overtime_requests').update(ubah).eq('id', id)
+      error = ulang.error
+    }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, diubah: ubah })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Gagal menyimpan' }, { status: 500 })
   }

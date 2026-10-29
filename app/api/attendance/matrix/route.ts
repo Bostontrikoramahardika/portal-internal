@@ -436,7 +436,7 @@ export async function GET(req: NextRequest) {
     const akhirBln = tahun + '-' + String(bln).padStart(2,'0') + '-' + String(jmlHari).padStart(2,'0')
     const { data: lemburRows } = await supabaseAdmin
       .from('overtime_requests')
-      .select('nrp, tanggal, alasan, jam_mulai, jam_selesai, status_final, status_atasan, status_pjo, atasan_nrp, pjo_nrp')
+      .select('id, nrp, tanggal, alasan, jenis_lembur, jam_mulai, jam_selesai, total_jam, status_final, status_atasan, status_pjo, atasan_nrp, pjo_nrp')
       .in('nrp', nrpSemua).gte('tanggal', awalBln).lte('tanggal', akhirBln)
 
     const disetujui = (lemburRows || []).filter((l) =>
@@ -446,7 +446,7 @@ export async function GET(req: NextRequest) {
        String(l.status_pjo).toUpperCase() === 'APPROVED'))
 
     const approverNrp = Array.from(new Set(
-      disetujui.flatMap((l: any) => [l.pjo_nrp, l.atasan_nrp]).filter(Boolean).map(String)))
+      (lemburRows || []).flatMap((l: any) => [l.pjo_nrp, l.atasan_nrp]).filter(Boolean).map(String)))
     const namaMap: Record<string, string> = {}
     if (approverNrp.length) {
       const { data: ap } = await supabaseAdmin
@@ -471,10 +471,16 @@ export async function GET(req: NextRequest) {
       const k = String(l.nrp)
       if (!lemburMap[k]) lemburMap[k] = []
       lemburMap[k].push({
+        id: l.id,
         tanggal: l.tanggal, alasan: l.alasan || '-',
+        jenis_lembur: l.jenis_lembur || 'BIASA',
         jam_mulai: l.jam_mulai || null, jam_selesai: l.jam_selesai || null,
         jam: jamLembur(l),
         status: 'DISETUJUI',
+        atasan_nrp: l.atasan_nrp || null,
+        atasan_nama: namaMap[String(l.atasan_nrp)] || null,
+        pjo_nrp: l.pjo_nrp || null,
+        pjo_nama: namaMap[String(l.pjo_nrp)] || null,
         disetujui_oleh: namaMap[String(l.pjo_nrp)] || namaMap[String(l.atasan_nrp)] || null,
       })
     })
@@ -486,11 +492,23 @@ export async function GET(req: NextRequest) {
       if (disetujuiSet.has(kunci)) return
       const k = String(l.nrp)
       if (!lemburMenungguMap[k]) lemburMenungguMap[k] = []
+      const stAtasan = String(l.status_atasan || '').toUpperCase()
+      const stPjo = String(l.status_pjo || '').toUpperCase()
+      const tahap = stAtasan !== 'APPROVED'
+        ? 'MENUNGGU_ATASAN'
+        : (stPjo !== 'APPROVED' ? 'MENUNGGU_PJO' : 'MENUNGGU')
       lemburMenungguMap[k].push({
+        id: l.id,
         tanggal: l.tanggal, alasan: l.alasan || '-',
+        jenis_lembur: l.jenis_lembur || 'BIASA',
         jam_mulai: l.jam_mulai || null, jam_selesai: l.jam_selesai || null,
         jam: jamLembur(l),
-        status: String(l.status_final || l.status_atasan || 'MENUNGGU'),
+        status: tahap,
+        status_final: l.status_final || null,
+        atasan_nrp: l.atasan_nrp || null,
+        atasan_nama: namaMap[String(l.atasan_nrp)] || null,
+        pjo_nrp: l.pjo_nrp || null,
+        pjo_nama: namaMap[String(l.pjo_nrp)] || null,
       })
     })
     Object.keys(lemburMap).forEach((k: string) =>

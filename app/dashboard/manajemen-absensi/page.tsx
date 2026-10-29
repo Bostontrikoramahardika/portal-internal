@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import StatBanner from '@/app/components/std/StatBanner'
 import KirimRekapPanel from '@/app/dashboard/kirim-rekap/page'
 import LemburPanel from './LemburPanel'
+import LemburKaryawan from './LemburKaryawan'
 // ─── Types ─────────────────────────────────────────────────
 interface Day {
   tanggal: string; day: number; code: string; type: string
@@ -832,6 +833,9 @@ export default function ManajemenAbsensiPage() {
                 <p className="text-[9px] font-black uppercase text-slate-500">Cuti</p>
               </div>
             </div>
+
+            {/* ═══ LEMBUR: rincian + status persetujuan + ubah ═══ */}
+            <LemburKaryawan row={detailRow} canEdit={canEdit} onUbah={() => fetchMatrix()} />
 
             {/* Table detail */}
             <div className="flex-1 overflow-auto p-4">
