@@ -234,7 +234,11 @@ export default function ManajemenAbsensiPage() {
       const res = await fetch(`/api/export-absensi-matrix?${params}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
-      if (!res.ok) { alert('Export Matrix gagal'); return }
+      if (!res.ok) {
+        let pesan = 'Export Matrix gagal'
+        try { const j = await res.json(); if (j?.error) pesan = j.error } catch {}
+        alert(pesan); return
+      }
 
       const blob = await res.blob()
       const url  = URL.createObjectURL(blob)
