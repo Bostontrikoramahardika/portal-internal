@@ -64,43 +64,70 @@ export async function GET(request: NextRequest) {
     if (poinErr) peringatan.push('punishment_poin: ' + poinErr.message)
 
     // ── daftar karyawan untuk pilihan di form ──
-    //  • super admin / HR HO     → semua karyawan aktif (semua site)
-    //  • HR site / PJO / admin   → semua karyawan aktif di site-nya
-    //  • leader (GL/atasan)      → bawahan langsung + karyawan site yang sama
+    // Catatan penting: tabel `employees` TIDAK punya kolom atasan_nrp / pjo_nrp.
+    // Hubungan atasan–bawahan disimpan di tabel `approval_matrix`:
+    //   employee_nrp (bawahan) · atasan_nrp · pjo_nrp · active
     const myNrp = String((session as any).nrp || '')
-    const mySite = String((session as any).scope_site || (session as any).site || (session as any).site_code || '')
+    const mySite = String((session as any).scope_site || (session as any).site || '')
     const isHOScope0 = isSuper || hasAny(roles, HO_SCOPE_ROLES)
 
-    // a. bawahan langsung (atasan_nrp / pjo_nrp = saya)
-    const { data: bawahanLangsung, error: bawahErr } = await supabase
-      .from('employees')
-      .select('nrp, nama, jabatan, departemen, site, atasan_nrp, pjo_nrp')
+    // a. bawahan langsung menurut approval_matrix
+    const { data: matrixSaya, error: matErr } = await supabase
+      .from('approval_matrix')
+      .select('employee_nrp')
       .or(`atasan_nrp.eq.${myNrp},pjo_nrp.eq.${myNrp}`)
-      .order('nama', { ascending: true })
-    if (bawahErr) peringatan.push('bawahan: ' + bawahErr.message)
+      .eq('active', true)
+    if (matErr) peringatan.push('approval_matrix: ' + matErr.message)
 
-    // b. karyawan aktif dalam jangkauan (site sendiri, atau semua untuk HO/super admin)
-    let qKaryawan = supabase
-      .from('employees')
-      .select('nrp, nama, jabatan, departemen, site, atasan_nrp, pjo_nrp')
-      .eq('status_karyawan', 'Aktif')
-      .is('tanggal_resign', null)
-      .order('nama', { ascending: true })
-      .limit(2000)
-    if (!isHOScope0 && mySite) qKaryawan = qKaryawan.eq('site', mySite)
-    const { data: karyawanScope, error: empErr } = await qKaryawan
-    if (empErr) peringatan.push('employees: ' + empErr.message)
+    const nrpLangsung = Array.from(new Set(
+      (matrixSaya || []).map((m: any) => String(m.employee_nrp || '')).filter(Boolean)
+    ))
 
-    // gabungkan: bawahan langsung ditaruh paling depan, lalu karyawan jangkauan
+    const KOLOM_KARYAWAN = 'nrp, nama, jabatan, departemen, site'
+
+    // b. data bawahan langsung (kalau ada)
+    let bawahanLangsung: any[] = []
+    if (nrpLangsung.length) {
+      const { data, error } = await supabase
+        .from('employees')
+        .select(KOLOM_KARYAWAN)
+        .in('nrp', nrpLangsung)
+      if (error) peringatan.push('bawahan: ' + error.message)
+      bawahanLangsung = data || []
+    }
+
+    // c. karyawan aktif dalam jangkauan (site sendiri, atau semua untuk HO/super admin)
+    //    Kolom tidak selalu ada di semua database → dicoba bertahap.
+    function qKaryawan(pakaiResign: boolean) {
+      let q = supabase
+        .from('employees')
+        .select(KOLOM_KARYAWAN)
+        .eq('status_karyawan', 'Aktif')
+        .order('nama', { ascending: true })
+        .limit(2000)
+      if (pakaiResign) q = q.is('tanggal_resign', null)
+      if (!isHOScope0 && mySite) q = q.eq('site', mySite)
+      return q
+    }
+
+    let { data: karyawanScope, error: empErr } = await qKaryawan(true)
+    if (empErr) {
+      // ulangi tanpa filter tanggal_resign (kalau kolomnya tidak ada)
+      const coba = await qKaryawan(false)
+      karyawanScope = coba.data
+      if (coba.error) peringatan.push('employees: ' + coba.error.message)
+    }
+
+    // gabungkan: bawahan langsung di depan, lalu karyawan jangkauan
     const petaOrang = new Map<string, any>()
-    ;(bawahanLangsung || []).forEach((b: any) => petaOrang.set(String(b.nrp), { ...b, langsung: true }))
+    bawahanLangsung.forEach((b: any) => petaOrang.set(String(b.nrp), { ...b, langsung: true }))
     ;(karyawanScope || []).forEach((b: any) => {
       const k = String(b.nrp)
       if (!petaOrang.has(k)) petaOrang.set(k, { ...b, langsung: false })
     })
-    // buang diri sendiri dari daftar
     petaOrang.delete(myNrp)
     const bawahan = Array.from(petaOrang.values())
+    const bawahanLangsungNrp = nrpLangsung
 
     // ── daftar punishment ──
     const firstDay = `${tahun}-${bulan}-01`
@@ -130,7 +157,7 @@ export async function GET(request: NextRequest) {
       } else {
         // leader: hanya yang dia buat / bawahannya
         // untuk daftar riwayat, leader tetap dibatasi ke bawahan LANGSUNG-nya
-        const nrpBawahan = (bawahanLangsung || []).map((b: any) => String(b.nrp))
+        const nrpBawahan = bawahanLangsungNrp
         if (nrpBawahan.length > 0) {
           q = q.or(`dibuat_oleh.eq.${myNrp},nrp.in.(${nrpBawahan.join(',')})`)
         } else {
@@ -203,7 +230,7 @@ export async function POST(request: NextRequest) {
 
     const { data: emp } = await supabase
       .from('employees')
-      .select('nrp, nama, jabatan, departemen, site, atasan_nrp, pjo_nrp')
+      .select('nrp, nama, jabatan, departemen, site')
       .eq('nrp', nrp)
       .maybeSingle()
 
@@ -216,9 +243,15 @@ export async function POST(request: NextRequest) {
       const isHRPost = isSuperPost || hasAny(rolesPost, HR_ROLES)
       const isHOPost = isSuperPost || hasAny(rolesPost, HO_SCOPE_ROLES)
       const mySitePost = String((session as any).scope_site || (session as any).site || '')
-      const bawahanLangsung =
-        String((emp as any).atasan_nrp || '') === myNrp ||
-        String((emp as any).pjo_nrp || '') === myNrp
+      // bawahan langsung dicek dari approval_matrix, bukan dari tabel employees
+      const { data: relasi } = await supabase
+        .from('approval_matrix')
+        .select('employee_nrp')
+        .eq('employee_nrp', nrp)
+        .or(`atasan_nrp.eq.${myNrp},pjo_nrp.eq.${myNrp}`)
+        .eq('active', true)
+        .maybeSingle()
+      const bawahanLangsung = !!relasi
       const seSite = !!mySitePost && String((emp as any).site || '') === mySitePost
       const boleh = isHOPost ? true : (bawahanLangsung || seSite)
       if (!boleh) return NextResponse.json({ error: 'Karyawan ini di luar jangkauan Anda' }, { status: 403 })
