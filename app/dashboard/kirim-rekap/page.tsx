@@ -122,7 +122,11 @@ export default function KirimRekapPage() {
         const n = nominal[r.nrp] || { lembur: 0, piket: 0, jmlPiket: 0 }
         return {
           nrp: r.nrp, nama: r.nama, departemen: r._gol || r.departemen, jabatan: r.jabatan,
-          ringkasan: { days: r.days, summary: r.summary, lembur: r.lembur },
+          ringkasan: {
+            days: r.days, summary: r.summary,
+            lembur: r.lembur,
+            lembur_menunggu: r.lembur_menunggu || [],
+          },
           jml_lembur: jmlLemburDipakai(r),
           nominal_lembur: Number(n.lembur || 0),
           jml_piket: Number(n.jmlPiket || 0),
@@ -321,15 +325,30 @@ export default function KirimRekapPage() {
                               onChange={(e) => setNom(r.nrp, 'jmlLembur', Math.max(0, Number(e.target.value) || 0))}
                               className="w-12 px-1 py-1 rounded border border-slate-200 text-[11px] text-center font-bold" />
                             <button type="button" title="Lihat rincian lembur"
-                              onClick={() => setDetailLembur({ nama: r.nama, list: r.lembur || [] })}
-                              disabled={!Number(r.summary?.lembur)}
+                              onClick={() => setDetailLembur({
+                                nama: r.nama,
+                                list: r.lembur || [],
+                                menunggu: r.lembur_menunggu || [],
+                              })}
+                              disabled={!Number(r.summary?.lembur) && !Number(r.summary?.lembur_menunggu)}
                               className={'w-5 h-5 rounded-full text-[10px] font-black shrink-0 ' +
-                                (Number(r.summary?.lembur)
+                                (Number(r.summary?.lembur) || Number(r.summary?.lembur_menunggu)
                                   ? 'bg-[#0b2a5b] text-white hover:bg-blue-700'
                                   : 'bg-slate-100 text-slate-300')}>
                               i
                             </button>
                           </div>
+                          {Number(r.summary?.jam_lembur) > 0 && (
+                            <div className="text-[9px] text-slate-400 text-center mt-0.5">
+                              {r.summary.jam_lembur} jam
+                            </div>
+                          )}
+                          {Number(r.summary?.lembur_menunggu) > 0 && (
+                            <div className="text-[9px] text-amber-600 font-black text-center mt-0.5"
+                              title="Lembur ini belum disetujui, jadi belum dihitung">
+                              +{r.summary.lembur_menunggu} belum ACC
+                            </div>
+                          )}
                         </td>
                         <td className="px-2 py-1.5">
                           <div className="flex items-center gap-1">
@@ -392,10 +411,20 @@ export default function KirimRekapPage() {
                 className="w-7 h-7 rounded-full bg-white/15 text-white font-bold shrink-0">&#10005;</button>
             </div>
             <div className="max-h-[60vh] overflow-y-auto p-3 space-y-2">
-              {(!detailLembur.list || detailLembur.list.length === 0) && (
+              {(!detailLembur.list || detailLembur.list.length === 0) && !((detailLembur as any).menunggu || []).length && (
                 <p className="py-6 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   Tidak ada lembur
                 </p>
+              )}
+              {((detailLembur as any).menunggu || []).length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-amber-700">
+                    {((detailLembur as any).menunggu || []).length} lembur belum disetujui
+                  </p>
+                  <p className="text-[10px] text-amber-700 mt-1 leading-snug">
+                    Belum dihitung ke rekap. Setujui dulu di Approval Lembur bila memang sah.
+                  </p>
+                </div>
               )}
               {(detailLembur.list || []).map((l: any, i: number) => (
                 <div key={i} className="border border-slate-200 rounded-xl p-2.5">

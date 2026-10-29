@@ -430,6 +430,7 @@ export async function GET(req: NextRequest) {
   // ---------- LEMBUR disetujui pada bulan ini ----------
   const nrpSemua = employeesOk.map((e: any) => e.nrp)
   const lemburMap: Record<string, any[]> = {}
+  const lemburMenungguMap: Record<string, any[]> = {}
   if (nrpSemua.length) {
     const awalBln = tahun + '-' + String(bln).padStart(2,'0') + '-01'
     const akhirBln = tahun + '-' + String(bln).padStart(2,'0') + '-' + String(jmlHari).padStart(2,'0')
@@ -455,13 +456,41 @@ export async function GET(req: NextRequest) {
       })
     }
 
+    const jamLembur = (l: any) => {
+      const a = String(l.jam_mulai || '').slice(0, 5)
+      const b = String(l.jam_selesai || '').slice(0, 5)
+      if (!a || !b) return 0
+      const [h1, m1] = a.split(':').map(Number)
+      const [h2, m2] = b.split(':').map(Number)
+      let menit = (h2 * 60 + m2) - (h1 * 60 + m1)
+      if (menit < 0) menit += 1440
+      return Math.round((menit / 60) * 100) / 100
+    }
+
     disetujui.forEach((l: any) => {
       const k = String(l.nrp)
       if (!lemburMap[k]) lemburMap[k] = []
       lemburMap[k].push({
         tanggal: l.tanggal, alasan: l.alasan || '-',
         jam_mulai: l.jam_mulai || null, jam_selesai: l.jam_selesai || null,
+        jam: jamLembur(l),
+        status: 'DISETUJUI',
         disetujui_oleh: namaMap[String(l.pjo_nrp)] || namaMap[String(l.atasan_nrp)] || null,
+      })
+    })
+
+    // lembur yang BELUM disetujui — ikut ditampilkan supaya HR tahu ada yang menggantung
+    const disetujuiSet = new Set(disetujui.map((l: any) => String(l.nrp) + '|' + String(l.tanggal) + '|' + String(l.jam_mulai)))
+    ;(lemburRows || []).forEach((l: any) => {
+      const kunci = String(l.nrp) + '|' + String(l.tanggal) + '|' + String(l.jam_mulai)
+      if (disetujuiSet.has(kunci)) return
+      const k = String(l.nrp)
+      if (!lemburMenungguMap[k]) lemburMenungguMap[k] = []
+      lemburMenungguMap[k].push({
+        tanggal: l.tanggal, alasan: l.alasan || '-',
+        jam_mulai: l.jam_mulai || null, jam_selesai: l.jam_selesai || null,
+        jam: jamLembur(l),
+        status: String(l.status_final || l.status_atasan || 'MENUNGGU'),
       })
     })
     Object.keys(lemburMap).forEach((k: string) =>
@@ -536,11 +565,14 @@ export async function GET(req: NextRequest) {
     const persen = hariKerja > 0 ? Math.round((hariHadir / hariKerja) * 100) : 0
 
     const lemburList = lemburMap[String(emp.nrp)] || []
+    const lemburMenunggu = lemburMenungguMap[String(emp.nrp)] || []
+    const totalJam = (arr: any[]) => Math.round(arr.reduce((a, l) => a + Number(l.jam || 0), 0) * 100) / 100
 
     return {
       nrp: emp.nrp,
       nama: emp.nama,
       lembur: lemburList,
+      lembur_menunggu: lemburMenunggu,
       jabatan: emp.jabatan || '-',
       departemen: grupAbsensi(emp.departemen, emp.jabatan),
       site: emp.site,
@@ -560,6 +592,9 @@ export async function GET(req: NextRequest) {
         alpha,
         stb,
         lembur: lemburList.length,
+        lembur_menunggu: lemburMenunggu.length,
+        jam_lembur: totalJam(lemburList),
+        jam_lembur_menunggu: totalJam(lemburMenunggu),
         persen
       }
     }

@@ -30,6 +30,9 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status') || undefined
     const limit = Number(searchParams.get('limit') || 50)
 
+    const viewerSite =
+      String((session as any)?.scope_site || (session as any)?.site || '') || null
+
     const data = await listCorrections({
       viewerNrp,
       viewerRoles,
@@ -37,6 +40,7 @@ export async function GET(req: NextRequest) {
       view,
       status,
       limit,
+      viewerSite,
     })
 
     return NextResponse.json({ ok: true, ...data })

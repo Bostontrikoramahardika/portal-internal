@@ -506,11 +506,59 @@ function ensureNotSelf(requesterNrp: string, candidate: string | null) {
   return candidate
 }
 
+/**
+ * Cari GL (Produksi / Plant) yang BENAR-BENAR BERTUGAS pada tanggal + shift itu,
+ * dilihat dari data absensi hari tersebut.
+ */
+async function findGLBertugas(args: {
+  tanggal?: string | null
+  shift?: string | null
+  site?: string | null
+  kePlant: boolean
+}): Promise<{ nrp: string; role: string; alasan: string } | null> {
+  const roleGL = args.kePlant ? 'gl_plant' : 'gl_produksi'
+  const rows = await getActiveRoleRows(roleGL)
+  const site = normalizeText(args.site)
+  const nrps = rows
+    .filter((r) => !site || !normalizeText(r.scope_site) || normalizeText(r.scope_site) === site)
+    .map((r) => normalizeText(r.nrp))
+    .filter(Boolean)
+  if (!nrps.length) return null
+
+  const tanggal = normalizeText(args.tanggal)
+  const shift = normalizeShift(args.shift)
+  if (!tanggal) return null
+
+  let q = supabaseAdmin
+    .from('attendance')
+    .select('nrp, shift')
+    .eq('tanggal', tanggal)
+    .in('nrp', nrps)
+  if (shift) q = q.eq('shift', shift)
+  if (site) q = q.eq('site', site)
+
+  const { data } = await q
+  const cocok = (data || []).map((a: any) => normalizeText(a.nrp)).filter(Boolean)
+  if (!cocok.length) return null
+
+  return {
+    nrp: cocok[0],
+    role: roleGL,
+    alasan:
+      'GL ' + (args.kePlant ? 'Plant' : 'Produksi') +
+      ' yang bertugas pada ' + tanggal + (shift ? ' shift ' + shift : ''),
+  }
+}
+
 export async function resolveCorrectionApprover(args: {
   requesterNrp: string
   requesterRoles: string[]
   requesterSite?: string | null
   requesterIsSuperAdmin?: boolean
+  /** tanggal absensi yang dikoreksi — dipakai mencari GL yang bertugas */
+  tanggal?: string | null
+  /** shift absensi yang dikoreksi */
+  shift?: string | null
 }) {
   const requesterNrp = normalizeText(args.requesterNrp)
   const requesterRoles = uniqueStrings(args.requesterRoles.map(normalizeRole))
@@ -521,6 +569,21 @@ export async function resolveCorrectionApprover(args: {
     null
 
   const approvalMatrix = await getApprovalMatrixRow(requesterNrp)
+
+  // departemen/jabatan pemohon → menentukan GL Plant atau GL Produksi
+  let jabatan = ''
+  let departemen = ''
+  try {
+    const { data: profil } = await supabaseAdmin
+      .from('employees')
+      .select('jabatan, departemen')
+      .eq('nrp', requesterNrp)
+      .maybeSingle()
+    jabatan = String((profil as any)?.jabatan || '').toLowerCase()
+    departemen = String((profil as any)?.departemen || '').toLowerCase()
+  } catch { }
+  const kePlant =
+    departemen.includes('plant') || /mekanik|mechanic|welder|tyre|electric|helper/.test(jabatan)
 
   if (args.requesterIsSuperAdmin || requesterNrp === SUPER_ADMIN_NRP) {
     return {
@@ -618,6 +681,26 @@ export async function resolveCorrectionApprover(args: {
   }
 
   if (hasAnyRole(requesterRoles, EMPLOYEE_ROLES) || requesterRoles.length === 0) {
+    // ① GL yang bertugas pada shift & tanggal itu (sesuai aturan site)
+    const glBertugas = await findGLBertugas({
+      tanggal: args.tanggal,
+      shift: args.shift,
+      site: requesterSite,
+      kePlant,
+    })
+    if (glBertugas) {
+      const nrpGL = ensureNotSelf(requesterNrp, glBertugas.nrp)
+      if (nrpGL) {
+        return {
+          approverNrp: nrpGL,
+          approverRule: 'ATASAN' as ApproverRule,
+          requesterSite,
+          alasan: glBertugas.alasan,
+        } as any
+      }
+    }
+
+    // ② atasan langsung dari approval_matrix
     const atasan = ensureNotSelf(requesterNrp, approvalMatrix?.atasan_nrp || null)
     if (atasan) {
       return {
@@ -992,6 +1075,8 @@ export async function createCorrectionRequest(input: CreateCorrectionInput) {
     requesterRoles: input.sessionRoles,
     requesterSite: employee.site || input.sessionScopeSite || null,
     requesterIsSuperAdmin: input.sessionIsSuperAdmin,
+    tanggal: validated.tanggal,
+    shift: inferredShift,
   })
 
   const payload = {
@@ -1028,6 +1113,25 @@ export async function createCorrectionRequest(input: CreateCorrectionInput) {
     throw new Error(`Gagal membuat pengajuan koreksi: ${error.message}`)
   }
 
+  // notifikasi ke calon approver supaya pengajuan tidak menggantung diam-diam
+  try {
+    const tujuan = normalizeText(approver.approverNrp)
+    if (tujuan && tujuan !== employeeNrp) {
+      await supabaseAdmin.from('notifications').insert({
+        nrp: tujuan,
+        title: 'Pengajuan Revisi Absensi',
+        body:
+          (employee.nama || employeeNrp) + ' mengajukan koreksi absensi ' +
+          validated.tanggal + (inferredShift ? ' (shift ' + inferredShift + ')' : '') +
+          '. Mohon diperiksa.',
+        icon: 'DOC',
+        url: '/dashboard/approval-koreksi',
+        category: 'KOREKSI_ABSENSI',
+        data: { correction_id: (data as any)?.id || null },
+      })
+    }
+  } catch { }
+
   const enriched = await enrichCorrections(
     [data as CorrectionRow],
     employeeNrp,
@@ -1045,6 +1149,8 @@ export async function listCorrections(args: {
   view: 'my' | 'approval'
   status?: string | null
   limit?: number
+  /** site peninjau — dipakai HR supaya pengajuan di site-nya ikut tampil */
+  viewerSite?: string | null
 }) {
   const limit = Math.min(Math.max(Number(args.limit || 50), 1), 200)
   const normalizedStatus = normalizeText(args.status).toUpperCase()
@@ -1055,10 +1161,22 @@ export async function listCorrections(args: {
     .order('created_at', { ascending: false })
     .limit(limit)
 
+  const viewerSite = normalizeText(args.viewerSite)
+  const viewerIsHR = hasAnyRole(args.viewerRoles, HR_SITE_ROLES) || hasAnyRole(args.viewerRoles, HR_HO_ROLES)
+
   if (args.view === 'my') {
     query = query.eq('employee_nrp', args.viewerNrp)
   } else if (!args.isSuperAdmin) {
-    query = query.eq('approver_nrp', args.viewerNrp)
+    if (hasAnyRole(args.viewerRoles, HR_HO_ROLES)) {
+      // HR HO / pusat: semua pengajuan
+    } else if (viewerIsHR && viewerSite) {
+      // HR site: semua pengajuan di site-nya + yang memang ditujukan ke dia
+      query = query.or(`employee_site.eq.${viewerSite},approver_nrp.eq.${args.viewerNrp}`)
+    } else if (viewerIsHR) {
+      // HR site tanpa scope: semua pengajuan (tidak dibatasi)
+    } else {
+      query = query.eq('approver_nrp', args.viewerNrp)
+    }
   }
 
   if (['PENDING', 'APPROVED', 'REJECTED'].includes(normalizedStatus)) {
@@ -1082,7 +1200,18 @@ export async function listCorrections(args: {
   }
 
   let approvalPendingRes
-  if (args.isSuperAdmin) {
+  if (args.isSuperAdmin || hasAnyRole(args.viewerRoles, HR_HO_ROLES)) {
+    approvalPendingRes = await supabaseAdmin
+      .from('attendance_corrections')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'PENDING')
+  } else if (viewerIsHR && viewerSite) {
+    approvalPendingRes = await supabaseAdmin
+      .from('attendance_corrections')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'PENDING')
+      .or(`employee_site.eq.${viewerSite},approver_nrp.eq.${args.viewerNrp}`)
+  } else if (viewerIsHR) {
     approvalPendingRes = await supabaseAdmin
       .from('attendance_corrections')
       .select('id', { count: 'exact', head: true })
