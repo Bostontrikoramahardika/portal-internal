@@ -262,14 +262,14 @@ function FormBaru({ poinList, bawahan, onSaved }: any) {
 
       {(bawahan || []).length === 0 && (
         <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-3 text-xs font-bold">
-          ⚠️ Tidak ada bawahan langsung atas nama Anda. Hubungi HR kalau data atasan di master karyawan belum benar.
+          ⚠️ Belum ada karyawan aktif yang bisa dipilih untuk akun Anda. Pastikan data karyawan di site Anda sudah <b>Aktif</b> dan kolom atasan/pjo sudah terisi.
         </div>
       )}
 
       {/* PILIH KARYAWAN */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
-        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">1. Pilih karyawan</p>
-        <input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="🔍 Cari nama / NRP bawahan..."
+        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">1. Pilih karyawan <span className="text-slate-300">({(bawahan || []).length} orang)</span></p>
+        <input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="🔍 Cari nama / NRP karyawan..."
           className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs font-semibold mb-2 outline-none focus:border-[#003D79]" />
         <div className="max-h-52 overflow-y-auto divide-y divide-slate-50 border border-slate-100 rounded-xl">
           {list.length === 0 ? (
@@ -278,7 +278,8 @@ function FormBaru({ poinList, bawahan, onSaved }: any) {
             <button key={b.nrp} onClick={() => setNrp(String(b.nrp))}
               className={`w-full text-left px-3 py-2 hover:bg-blue-50 ${String(nrp) === String(b.nrp) ? 'bg-blue-50' : ''}`}>
               <div className="font-bold text-xs">{b.nama}</div>
-              <div className="text-[10px] text-slate-500">{b.nrp} • {b.jabatan} • {b.departemen}</div>
+              <div className="text-[10px] text-slate-500">{b.nrp} • {b.jabatan} • {b.departemen}{b.site ? ' • ' + b.site : ''}</div>
+              {(b as any).langsung && <span className="text-[9px] font-black text-emerald-600">BAWAHAN LANGSUNG</span>}
             </button>
           ))}
         </div>

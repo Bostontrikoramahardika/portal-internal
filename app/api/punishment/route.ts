@@ -60,13 +60,42 @@ export async function GET(request: NextRequest) {
       .select('jenis, label, poin, urutan, aktif')
       .order('urutan', { ascending: true })
 
-    // ── bawahan saya (untuk pilihan di form) ──
+    // ── daftar karyawan untuk pilihan di form ──
+    //  • super admin / HR HO     → semua karyawan aktif (semua site)
+    //  • HR site / PJO / admin   → semua karyawan aktif di site-nya
+    //  • leader (GL/atasan)      → bawahan langsung + karyawan site yang sama
     const myNrp = String((session as any).nrp || '')
-    const { data: bawahan } = await supabase
+    const mySite = String((session as any).scope_site || (session as any).site || (session as any).site_code || '')
+    const isHOScope0 = isSuper || hasAny(roles, HO_SCOPE_ROLES)
+
+    // a. bawahan langsung (atasan_nrp / pjo_nrp = saya)
+    const { data: bawahanLangsung } = await supabase
       .from('employees')
       .select('nrp, nama, jabatan, departemen, site, atasan_nrp, pjo_nrp')
       .or(`atasan_nrp.eq.${myNrp},pjo_nrp.eq.${myNrp}`)
       .order('nama', { ascending: true })
+
+    // b. karyawan aktif dalam jangkauan (site sendiri, atau semua untuk HO/super admin)
+    let qKaryawan = supabase
+      .from('employees')
+      .select('nrp, nama, jabatan, departemen, site, atasan_nrp, pjo_nrp')
+      .eq('status_karyawan', 'Aktif')
+      .is('tanggal_resign', null)
+      .order('nama', { ascending: true })
+      .limit(2000)
+    if (!isHOScope0 && mySite) qKaryawan = qKaryawan.eq('site', mySite)
+    const { data: karyawanScope } = await qKaryawan
+
+    // gabungkan: bawahan langsung ditaruh paling depan, lalu karyawan jangkauan
+    const petaOrang = new Map<string, any>()
+    ;(bawahanLangsung || []).forEach((b: any) => petaOrang.set(String(b.nrp), { ...b, langsung: true }))
+    ;(karyawanScope || []).forEach((b: any) => {
+      const k = String(b.nrp)
+      if (!petaOrang.has(k)) petaOrang.set(k, { ...b, langsung: false })
+    })
+    // buang diri sendiri dari daftar
+    petaOrang.delete(myNrp)
+    const bawahan = Array.from(petaOrang.values())
 
     // ── daftar punishment ──
     const firstDay = `${tahun}-${bulan}-01`
@@ -95,7 +124,8 @@ export async function GET(request: NextRequest) {
         if (!isHOScope && userSite) q = q.eq('site', userSite)
       } else {
         // leader: hanya yang dia buat / bawahannya
-        const nrpBawahan = (bawahan || []).map((b: any) => String(b.nrp))
+        // untuk daftar riwayat, leader tetap dibatasi ke bawahan LANGSUNG-nya
+        const nrpBawahan = (bawahanLangsung || []).map((b: any) => String(b.nrp))
         if (nrpBawahan.length > 0) {
           q = q.or(`dibuat_oleh.eq.${myNrp},nrp.in.(${nrpBawahan.join(',')})`)
         } else {
@@ -175,8 +205,17 @@ export async function POST(request: NextRequest) {
 
     const myNrp = String((session as any).nrp || '')
     if (!isHR && !isPJO) {
-      const bawahan = String((emp as any).atasan_nrp || '') === myNrp || String((emp as any).pjo_nrp || '') === myNrp
-      if (!bawahan) return NextResponse.json({ error: 'Karyawan ini bukan bawahan Anda' }, { status: 403 })
+      const isSuperPost = !!session.is_super_admin
+      const rolesPost = rolesOf(session)
+      const isHRPost = isSuperPost || hasAny(rolesPost, HR_ROLES)
+      const isHOPost = isSuperPost || hasAny(rolesPost, HO_SCOPE_ROLES)
+      const mySitePost = String((session as any).scope_site || (session as any).site || '')
+      const bawahanLangsung =
+        String((emp as any).atasan_nrp || '') === myNrp ||
+        String((emp as any).pjo_nrp || '') === myNrp
+      const seSite = !!mySitePost && String((emp as any).site || '') === mySitePost
+      const boleh = isHOPost ? true : (bawahanLangsung || seSite)
+      if (!boleh) return NextResponse.json({ error: 'Karyawan ini di luar jangkauan Anda' }, { status: 403 })
     }
 
     // poin dari pengaturan
