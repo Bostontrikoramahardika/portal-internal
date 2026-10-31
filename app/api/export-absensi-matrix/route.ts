@@ -97,28 +97,58 @@ export async function GET(request: NextRequest) {
       ['tanggal', 'nrp'],
     )
 
-    if (!rosterRaw || rosterRaw.length === 0) {
-      return NextResponse.json({ error: 'Tidak ada data roster untuk periode ini' }, { status: 404 })
-    }
+    // ══════════════ 2. KARYAWAN — SAMA SEPERTI APLIKASI ══════════════
+    // PENTING: daftar karyawan TIDAK boleh diambil dari tabel rosters saja.
+    // Karyawan yang belum punya baris roster di bulan ini (contoh: Sanim,
+    // Slamet Prayetno) tetap tampil di aplikasi, jadi harus ikut di Excel.
+    // Aplikasi mengambil dari tabel employees (dibatasi role/site), lalu
+    // roster/absensi/ts_opt hanya dipakai sebagai isi selnya.
+    const rolesSesi = (Array.isArray(session?.roles) ? session.roles : [])
+      .map((r: any) => String(r).toLowerCase())
 
-    // ══════════════ 2. KARYAWAN ══════════════
-    const nrpRoster = Array.from(new Set(rosterRaw.map((r: any) => String(r.nrp))))
-    const employees = await ambilSemuaPerNrp(
+    // role yang boleh melihat lintas site (sama seperti hr_ho di aplikasi)
+    const LINTAS_SITE = [
+      'super_admin', 'hr_ho', 'hrga', 'hrga_pusat', 'hrga_oprek',
+      'admin', 'manager_ops', 'director_ops',
+    ]
+    const bolehLintas = Boolean(session?.is_super_admin) || rolesSesi.some((r) => LINTAS_SITE.includes(r))
+
+    // batas site: filter dropdown menang; kalau tidak ada, pakai site user
+    const siteEfektif =
+      (siteFilter && siteFilter !== 'ALL' && siteFilter !== 'Semua Site')
+        ? siteFilter
+        : (bolehLintas ? '' : String(session?.site || ''))
+
+    const employees = await ambilSemua(
       supabaseAdmin, 'employees',
       'nrp, nama, jabatan, departemen, site, email, status_karyawan, tanggal_resign',
-      nrpRoster, undefined, ['nrp'],
+      (q) => (siteEfektif ? q.eq('site', siteEfektif) : q),
+      ['nrp'],
     )
 
     const empMap = new Map<string, any>()
     ;(employees || []).forEach((e: any) => empMap.set(String(e.nrp), e))
 
-    // buang baris sampah (nama #N/A, NRP aneh) — sama seperti aplikasi
-    let validNrps = nrpRoster.filter((n) => {
-      const e = empMap.get(n)
-      if (!e) return false
-      if (karyawanSampah({ nrp: n, nama: e.nama })) return false
-      return true
-    })
+    // Daftar karyawan = semua karyawan (sesuai site) + siapa pun yang punya
+    // data di periode ini. Dengan begitu tidak ada yang hilang, dan tidak ada
+    // nama sampah (#N/A) yang ikut.
+    const kandidat = new Set<string>()
+    for (const e of employees || []) {
+      const nrp = String(e?.nrp || '').trim()
+      if (!nrp) continue
+      if (karyawanSampah({ nrp, nama: e?.nama })) continue
+      // kalau sudah resign sebelum periode ini dimulai, tidak perlu ditampilkan
+      const resign = e?.tanggal_resign ? String(e.tanggal_resign).slice(0, 10) : null
+      if (resign && resign < awal) continue
+      kandidat.add(nrp)
+    }
+    // tambahkan pemilik data yang mungkin tidak terjaring batas site di atas
+    for (const r of rosterRaw || []) {
+      const nrp = String(r?.nrp || '').trim()
+      if (nrp && empMap.has(nrp)) kandidat.add(nrp)
+    }
+
+    let validNrps = Array.from(kandidat)
 
     // gabungkan NRP kembar (mis. 1234567 dan B1234567) → ambil satu
     {
@@ -134,11 +164,14 @@ export async function GET(request: NextRequest) {
       }
       validNrps = Array.from(new Set(perInti.values()))
     }
-    if (siteFilter && siteFilter !== 'ALL' && siteFilter !== 'Semua Site') {
-      validNrps = validNrps.filter((n) => String(empMap.get(n).site || '') === siteFilter)
+
+    // saring site sekali lagi (jaga-jaga data roster dari site lain)
+    if (siteEfektif) {
+      validNrps = validNrps.filter((n) => String(empMap.get(n)?.site || '') === siteEfektif)
     }
+
     if (!validNrps.length) {
-      return NextResponse.json({ error: 'Tidak ada karyawan valid untuk filter ini' }, { status: 404 })
+      return NextResponse.json({ error: 'Tidak ada karyawan untuk filter ini' }, { status: 404 })
     }
 
     // ══════════════ 3. ATTENDANCE (PAGINASI) ══════════════
