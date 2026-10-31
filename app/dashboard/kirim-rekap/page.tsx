@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 
 function hdr() {
   const h: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -192,8 +193,7 @@ export default function KirimRekapPage() {
 
   return (
     <div className="space-y-3 text-slate-800">
-      <StatBanner eyebrow="HR" title="Kirim Rekap Absensi"
-        subtitle="Rekonsiliasi dengan karyawan" onRefresh={muatMatrix} refreshing={muat} />
+      <HeroBanner eyebrow="HR" judul="Kirim Rekap Absensi" sub="Rekonsiliasi dengan karyawan" />
 
       <div className="flex gap-1.5 p-1 rounded-2xl bg-slate-100 border border-slate-200">
         {[['susun', 'Susun & Kirim'], ['pantau', 'Pantau Status']].map(([id, l]) => (

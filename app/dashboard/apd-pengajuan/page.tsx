@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 
 type Master = { jenis_apd: string; icon?: string; life_time_bulan?: number | null; ukuran_tersedia?: string | null; warna_tersedia?: string | null }
 type Row = any
@@ -165,8 +166,7 @@ export default function PengajuanAPDPage() {
 
   return (
     <div className="space-y-3 text-slate-800">
-      <StatBanner eyebrow="Pengajuan" title="Pengajuan APD" subtitle="Alat pelindung diri"
-        onRefresh={muatDaftar} refreshing={muat} />
+      <HeroBanner eyebrow="Pengajuan" judul="Pengajuan APD" sub="Alat pelindung diri" />
 
       <div className="flex gap-1.5 p-1 rounded-2xl bg-slate-100 border border-slate-200">
         {tabs.map((t) => (

@@ -10,6 +10,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/app/lib/AuthContext'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 type TabKey = 'qr' | 'event' | 'template' | 'perusahaan' | 'histori'
 
 // Role yang dianggap HO (bisa lihat semua site)
@@ -47,7 +48,7 @@ export default function KelolaEventPage() {
       <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center gap-3">
           <span className="text-4xl">🎫</span>
-          <StatBanner eyebrow="Admin" title="Kelola Event" subtitle="Absensi Meeting & Acara" />
+          <HeroBanner eyebrow="Admin" judul="Kelola Event" sub="Absensi Meeting & Acara" />
         </div>
         <div className="flex gap-2 mt-4 overflow-x-auto pb-1 no-scrollbar">
           {tabs.map((t) => (

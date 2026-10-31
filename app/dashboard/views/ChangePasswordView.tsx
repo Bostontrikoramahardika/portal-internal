@@ -1,4 +1,6 @@
 'use client'
+import HeroBanner from '@/app/components/ui/HeroBanner'
+
 
 // ChangePasswordView - dipisah dari app/dashboard/page.tsx (tahap 2)
 // Kode disalin UTUH. Logika & tampilan TIDAK diubah.
@@ -52,15 +54,12 @@ export default function ChangePasswordView({ title }: any) {
   return (
     <div className="max-w-md mx-auto pb-32 animate-in fade-in duration-500">
       
-      {/* Header Card */}
-      <div className="bg-gradient-to-br from-[#003D79] to-blue-800 text-white p-4 lg:p-8 rounded-2xl lg:rounded-[2.5rem] shadow-2xl mb-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/20 rounded-full -mr-16 -mt-16 blur-3xl"></div>
-        <div className="relative z-10">
-          <div className="text-4xl mb-3">🔐</div>
-          <h2 className="text-xl font-black tracking-tight mb-1">Ganti Password</h2>
-          <p className="text-blue-200 text-[10px] font-bold uppercase tracking-widest">Amankan akun Anda secara berkala</p>
-        </div>
-      </div>
+      {/* Header */}
+      <HeroBanner
+        eyebrow="Keamanan Akun"
+        judul="Ganti Password"
+        sub="Amankan akun Anda secara berkala"
+      />
 
       {/* Form Card */}
       <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-100">

@@ -14,6 +14,8 @@ import {
 } from 'lucide-react'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
+import Toolbar, { FilterBox, ToolBtn } from '@/app/components/ui/Toolbar'
 // ─── Types ──────────────────────────────────────────────────
 interface McuColumn {
   no: number
@@ -357,107 +359,57 @@ export default function MonitoringMcuPage() {
     <div className="min-h-screen pb-24 sm:pb-8  bg-[#f4f7fa]" style={{ backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
 
-        {/* ── Header ── */}
-        <div className="bg-white rounded-[2rem] shadow-xl p-5 border border-slate-100">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-[#003D79] rounded-2xl flex items-center justify-center shadow-lg">
-                <HeartPulse className="w-6 h-6 text-white" />
-              </div>
-              <StatBanner eyebrow="HR" title="Monitoring MCU" subtitle="Medical Check Up — {stats.total} karyawan" />
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={fetchData}
-                className="p-2.5 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
-                title="Refresh"
-              >
-                <RefreshCw className={`w-4 h-4 text-slate-600 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-              <button
-                onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Export
-              </button>
-              <button
-                onClick={() => router.push('/dashboard/monitoring-mcu/new')}
-                className="flex items-center gap-2 px-4 py-2.5 bg-[#003D79] text-white rounded-xl text-sm font-bold hover:bg-[#002d5a] transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Input MCU
-              </button>
-            </div>
-          </div>
-        </div>
+        {/* ══ HEADER: banner biru + tab status + filter + aksi ══ */}
+        <HeroBanner
+          eyebrow="Monitoring MCU"
+          judul="Monitoring MCU"
+          sub={`Medical Check Up — ${stats.total} karyawan · update ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}`}
+          refreshing={loading}
+          onRefresh={fetchData}
+          stats={[
+            { label: 'Total', value: stats.total, tone: 'sky' },
+            { label: 'Aman', value: stats.aman, tone: 'green' },
+            { label: 'Akan exp', value: stats.akan_expired, tone: 'amber' },
+            { label: 'Expired', value: stats.expired + stats.belum_mcu, tone: 'red' },
+          ]}
+        />
 
-        {/* ── Stats Cards ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: 'Total', value: stats.total, color: 'text-[#003D79]', bg: 'bg-blue-50', border: 'border-blue-100', onClick: () => setFilterStatus('') },
-            { label: 'Aman', value: stats.aman, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-100', onClick: () => setFilterStatus('FIT') },
-            { label: 'Akan Expired', value: stats.akan_expired, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-100', onClick: () => setFilterStatus('AKAN_EXPIRED') },
-            { label: 'Expired', value: stats.expired + stats.belum_mcu, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-100', onClick: () => setFilterStatus('EXP_DATE') },
-          ].map(s => (
-            <button
-              key={s.label}
-              onClick={s.onClick}
-              className={`${s.bg} ${s.border} border rounded-[1.5rem] p-4 text-left hover:shadow-md transition-all`}
-            >
-              <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-0.5">{s.label}</div>
-            </button>
-          ))}
-        </div>
-
-        {/* ── Filter Bar ── */}
-        <div className="bg-white rounded-[1.5rem] shadow-md p-4 border border-slate-100 space-y-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5a6a7e]" />
-            <input
-              type="text"
-              placeholder="Cari nama atau NRP..."
-              value={search}
+        <Toolbar
+          tabs={[
+            { id: '', label: 'Semua', badge: stats.total },
+            { id: 'FIT', label: 'Aman', badge: stats.aman },
+            { id: 'AKAN_EXPIRED', label: 'Akan Expired', badge: stats.akan_expired },
+            { id: 'EXP_DATE', label: 'Expired', badge: stats.expired },
+            { id: 'BELUM_MCU', label: 'Belum MCU', badge: stats.belum_mcu },
+          ]}
+          activeTab={filterStatus}
+          onTab={(id: string) => setFilterStatus(id)}
+          onReset={() => { setSearch(''); setFilterSite(''); setFilterDept(''); setFilterStatus('') }}
+          actions={<>
+            <ToolBtn tone="teal" onClick={handleExport}>⤓ Export</ToolBtn>
+            <ToolBtn tone="navy" onClick={() => router.push('/dashboard/monitoring-mcu/new')}>+ Input MCU</ToolBtn>
+          </>}
+        >
+          <FilterBox label="Cari" className="min-w-[168px]">
+            <input type="text" placeholder="nama atau NRP…" value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-[1.2rem] text-sm focus:outline-none focus:ring-2 focus:ring-[#003D79]/20 focus:border-[#003D79]"
-            />
-          </div>
-
-          {/* Filter Dropdowns */}
-          <div className="flex flex-wrap gap-2">
-            <select
-              value={filterSite}
-              onChange={e => setFilterSite(e.target.value)}
-              className="flex-1 min-w-[120px] px-3 py-2 bg-slate-50 border border-slate-200 rounded-[1.2rem] text-sm focus:outline-none focus:ring-2 focus:ring-[#003D79]/20"
-            >
+              className="w-full border-0 bg-transparent text-[10px] font-bold text-slate-700 outline-none placeholder:font-semibold placeholder:text-slate-400" />
+          </FilterBox>
+          <FilterBox label="Site">
+            <select value={filterSite} onChange={e => setFilterSite(e.target.value)}
+              className="border-0 bg-transparent text-[10px] font-bold text-slate-700 outline-none">
               <option value="">Semua Site</option>
               {sites.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-
-            <select
-              value={filterDept}
-              onChange={e => setFilterDept(e.target.value)}
-              className="flex-1 min-w-[120px] px-3 py-2 bg-slate-50 border border-slate-200 rounded-[1.2rem] text-sm focus:outline-none focus:ring-2 focus:ring-[#003D79]/20"
-            >
+          </FilterBox>
+          <FilterBox label="Dept">
+            <select value={filterDept} onChange={e => setFilterDept(e.target.value)}
+              className="border-0 bg-transparent text-[10px] font-bold text-slate-700 outline-none">
               <option value="">Semua Dept</option>
               {depts.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
-
-            <select
-              value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
-              className="flex-1 min-w-[120px] px-3 py-2 bg-slate-50 border border-slate-200 rounded-[1.2rem] text-sm focus:outline-none focus:ring-2 focus:ring-[#003D79]/20"
-            >
-              <option value="">Semua Status</option>
-              <option value="FIT">✅ Aman</option>
-              <option value="AKAN_EXPIRED">⚠️ Akan Expired</option>
-              <option value="EXP_DATE">🔴 Expired</option>
-              <option value="BELUM_MCU">⬜ Belum MCU</option>
-            </select>
-          </div>
-        </div>
+          </FilterBox>
+        </Toolbar>
 
         {/* ── Error ── */}
         {error && (

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 
 function hdr() {
   const h: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -75,8 +76,7 @@ function Isi() {
 
   return (
     <div className="space-y-3 text-slate-800">
-      <StatBanner eyebrow="Profil Saya" title="Rekap Absensi"
-        subtitle="Pencocokan data kehadiran" onRefresh={muatDaftar} refreshing={muat} />
+      <HeroBanner eyebrow="Profil Saya" judul="Rekap Absensi" sub="Pencocokan data kehadiran" />
 
       {daftar.length === 0 && (
         <p className="py-10 text-center text-xs font-bold uppercase tracking-wider text-slate-400">

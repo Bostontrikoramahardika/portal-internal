@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 type CorrectionType = 'LUPA_CLOCK_IN' | 'LUPA_CLOCK_OUT' | 'KOREKSI_JAM'
 type Status = 'PENDING' | 'APPROVED' | 'REJECTED'
 
@@ -261,7 +262,7 @@ export default function KoreksiAbsensiPage() {
           >
             ←
           </Link>
-          <StatBanner eyebrow="Pengajuan" title="Revisi Waktu Absensi" />
+          <HeroBanner eyebrow="Pengajuan" judul="Revisi Waktu Absensi" />
         </div>
 
         {/* TAB */}
@@ -287,6 +288,15 @@ export default function KoreksiAbsensiPage() {
             📋 Riwayat ({items.length})
           </button>
         </div>
+      </div>
+
+      {/* HEADER */}
+      <div className="px-5 pt-3">
+        <HeroBanner
+          eyebrow="Pengajuan"
+          judul="Revisi Waktu Absensi"
+          sub="Ajukan koreksi jam masuk/pulang · disetujui GL yang bertugas pada shift tersebut"
+        />
       </div>
 
       <div className="px-5">

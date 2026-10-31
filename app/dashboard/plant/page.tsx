@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 export default function PlantDashboardPage() {
   const [activeTab, setActiveTab] = useState<'KRU_WORKSHOP' | 'KELOLA_UNIT' | 'FORMAT_INSPEKSI' | 'ADMIN_PARTBOOK'>('KRU_WORKSHOP');
 
@@ -280,7 +281,7 @@ export default function PlantDashboardPage() {
 
   return (
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
-      <StatBanner eyebrow="Plant" title="Kru & Workshop Plant" subtitle="Monitoring kru dan workshop" />
+      <HeroBanner eyebrow="Plant" judul="Kru & Workshop Plant" sub="Monitoring kru dan workshop" />
       
 
       <div className="max-w-5xl mx-auto space-y-3">

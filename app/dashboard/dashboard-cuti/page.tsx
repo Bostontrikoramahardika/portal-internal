@@ -11,6 +11,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useAuth } from '@/app/lib/AuthContext'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 type TabKey = 'roster' | 'pengajuan' | 'tiket'
 
 type RosterItem = {
@@ -221,7 +222,7 @@ export default function DashboardCutiPage() {
       <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-4 lg:px-6 lg:pt-8 lg:pb-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center gap-3">
           <span className="text-4xl">🌴</span>
-          <StatBanner eyebrow="HR" title="Dashboard Cuti" subtitle="Roster • Pengajuan • Tiket Pesawat" />
+          <HeroBanner eyebrow="HR" judul="Dashboard Cuti" sub="Roster • Pengajuan • Tiket Pesawat" />
         </div>
 
         {/* TAB PILL */}

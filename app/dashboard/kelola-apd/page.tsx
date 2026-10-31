@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 // ════════════════════════════════════════════
 // TYPES
 // ════════════════════════════════════════════
@@ -177,7 +178,9 @@ export default function KelolaApdPage() {
       
 
       {/* ── Header ── */}
-      <StatBanner eyebrow="SHE" title="Kelola APD" subtitle="Manajemen Alat Pelindung Diri" />
+      <div className="px-4 pt-3">
+        <HeroBanner eyebrow="SHE" judul="Kelola APD" sub="Manajemen Alat Pelindung Diri" />
+      </div>
 
       {/* ── Tab Content ── */}
       <div className="px-4 py-4">

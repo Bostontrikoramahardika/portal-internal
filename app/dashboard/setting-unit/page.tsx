@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 interface Unit {
   id: string
   kode_unit: string
@@ -289,7 +290,7 @@ export default function SettingUnitPage() {
           className="mb-3 flex items-center gap-1.5 text-white/60 hover:text-white text-sm relative z-10">
           ← Kembali
         </button>
-        <StatBanner eyebrow="Leader" title="Setting Unit" subtitle="GL Produksi Tools" />
+        <HeroBanner eyebrow="Leader" judul="Setting Unit" sub="GL Produksi Tools" />
       </div>
 
       <div className="px-4 space-y-4 relative z-10">

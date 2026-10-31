@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 type CorrectionType = 'LUPA_CLOCK_IN' | 'LUPA_CLOCK_OUT' | 'KOREKSI_JAM'
 
 function getAuthHeaders(): Record<string, string> {
@@ -110,7 +111,7 @@ export default function HrOverrideAbsensiPage() {
           >
             ←
           </Link>
-          <StatBanner eyebrow="HR" title="Override Absensi" />
+          <HeroBanner eyebrow="HR" judul="Override Absensi" />
         </div>
 
         <div className="bg-white/10 backdrop-blur rounded-2xl p-4">

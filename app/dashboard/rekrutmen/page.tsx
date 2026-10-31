@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 interface Position {
   id: number;
   judul_posisi: string;
@@ -176,7 +177,7 @@ export default function HRRekrutmenPage() {
 
   return (
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
-      <StatBanner eyebrow="HR" title="Rekrutmen & Pelamar" subtitle="Lowongan dan kandidat" />
+      <HeroBanner eyebrow="HR" judul="Rekrutmen & Pelamar" sub="Lowongan dan kandidat" />
       
 
       {/* Header */}

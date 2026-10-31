@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 interface LowStockItem {
   id: string | number;
   kode_barang?: string;
@@ -373,7 +374,7 @@ export default function LogistikDashboardPage() {
 
   return (
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
-      <StatBanner eyebrow="Plant & Logistik" title="Logistik Master" subtitle="Gudang dan pengadaan" />
+      <HeroBanner eyebrow="Plant & Logistik" judul="Logistik Master" sub="Gudang dan pengadaan" />
       
 
       {/* Header */}

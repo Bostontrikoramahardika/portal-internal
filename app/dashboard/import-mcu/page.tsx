@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { Download, Upload, CheckCircle, AlertCircle, FileSpreadsheet, ArrowLeft } from 'lucide-react'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 export default function ImportMcuPage() {
   const [sites, setSites] = useState<string[]>([])
   const [selectedSite, setSelectedSite] = useState('')
@@ -111,20 +112,7 @@ export default function ImportMcuPage() {
       
 
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] p-6 md:p-8 rounded-[2rem] shadow-2xl text-white">
-        <button
-          onClick={() => history.back()}
-          className="mb-4 flex items-center gap-2 text-white/70 hover:text-white text-xs font-black uppercase tracking-widest transition"
-        >
-          <ArrowLeft size={14} /> Kembali
-        </button>
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center">
-            <FileSpreadsheet size={28} />
-          </div>
-          <StatBanner eyebrow="Import Data" title="Import MCU Massal" subtitle="Upload data MCU banyak karyawan via Excel" />
-        </div>
-      </div>
+      <HeroBanner eyebrow="Import Data" judul="Import MCU Massal" sub="Upload data MCU banyak karyawan via Excel" />
 
       {/* Step 1: Download Template */}
       <div className="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-100">

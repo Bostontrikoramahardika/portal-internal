@@ -1,5 +1,7 @@
 'use client'
 
+import HeroBanner from '@/app/components/ui/HeroBanner'
+
 // ═══════════════════════════════════════════════════════════════
 // HR DASHBOARD v4.2 — migrasi ke STD UI KIT (v1.8)
 //
@@ -84,13 +86,7 @@ export default function HRDashboardPage() {
   return (
     <StdPage width="full">
       {!isMpp && (
-        <StatBanner
-          eyebrow="HR Dashboard"
-          title="Manpower Planning & Analytics"
-          subtitle="Data karyawan, dokumen & analitik SDM"
-          onRefresh={loadTabs}
-          refreshing={loadingTabs}
-        />
+        <HeroBanner eyebrow="HR Dashboard" judul="Manpower Planning & Analytics" sub="Data karyawan, dokumen & analitik SDM" />
       )}
 
       {loadingTabs ? (

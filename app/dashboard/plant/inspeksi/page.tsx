@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Wrench, AlertTriangle, Trash2, Send, Plus } from 'lucide-react';
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 import { CHECKLIST_TEMPLATES, getInspectionReference, resolveInspectionModel, supportsExcavatorAttachment } from './checklist-templates'
 interface UnitData {
   id: string;
@@ -403,7 +404,7 @@ export default function FormInspeksiPage() {
 
   return (
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
-      <StatBanner eyebrow="Plant" title="Inspeksi P2H" subtitle="Pemeriksaan harian unit" />
+      <HeroBanner eyebrow="Plant" judul="Inspeksi P2H" sub="Pemeriksaan harian unit" />
       
 
       <div className="max-w-4xl mx-auto space-y-3">

@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 type ScanStatus = 'idle' | 'starting' | 'scanning' | 'detected' | 'error' | 'invalid'
 
 export default function ScanQRPage() {
@@ -160,7 +161,7 @@ export default function ScanQRPage() {
 
 
       {/* HEADER */}
-      <StatBanner eyebrow="Absensi" title="Scan QR Event" subtitle="Arahkan kamera ke QR Code untuk absen" />
+      <HeroBanner eyebrow="Absensi" judul="Scan QR Event" sub="Arahkan kamera ke QR Code untuk absen" />
 
       <div className="px-4 py-5 space-y-4 max-w-md mx-auto">
 

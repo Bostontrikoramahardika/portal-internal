@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 interface MatrixCell {
   status: 'AMAN' | 'SEGERA_GANTI' | 'EXPIRED' | 'BELUM_TERIMA'
   tanggal: string | null
@@ -143,7 +144,7 @@ export default function MonitoringApdPage() {
             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-2xl backdrop-blur-sm">
               📊
             </div>
-            <StatBanner eyebrow="SHE" title="Monitoring APD" subtitle="Pantau distribusi APD karyawan" />
+            <HeroBanner eyebrow="SHE" judul="Monitoring APD" sub="Pantau distribusi APD karyawan" />
           </div>
 
           {/* Stats Cards - Clickable */}
@@ -194,6 +195,21 @@ export default function MonitoringApdPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* HEADER */}
+      <div className="px-4 pt-3">
+        <HeroBanner
+          eyebrow="Monitoring APD"
+          judul="Monitoring APD"
+          sub={`Pantau distribusi & masa pakai APD${summary ? ` · ${summary.total} karyawan` : ''}`}
+          stats={summary ? [
+            { label: 'Total', value: summary.total, tone: 'sky' as const },
+            { label: 'Aman', value: summary.aman, tone: 'green' as const },
+            { label: 'Ganti', value: summary.segeraGanti, tone: 'amber' as const },
+            { label: 'Expired', value: summary.expired, tone: 'red' as const },
+          ] : []}
+        />
       </div>
 
       {/* SEARCH & FILTERS */}

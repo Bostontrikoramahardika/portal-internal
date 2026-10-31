@@ -1,4 +1,6 @@
 'use client'
+import HeroBanner from '@/app/components/ui/HeroBanner'
+
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KelolaHakCutiView — TAB "SALDO & TIKET"
@@ -130,19 +132,12 @@ export default function KelolaHakCutiView() {
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
 
       {/* ── HEADER ─────────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-5 lg:px-6 lg:pt-8 lg:pb-7 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl">🎫</span>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">
-              {data?.is_view_only ? 'HR HO • Read Only' : 'HR Site'}
-            </p>
-            <h1 className="text-xl lg:text-2xl font-black tracking-tight text-white">Saldo & Tiket</h1>
-            <p className="text-blue-200/80 text-xs font-medium">
-              Saldo cuti tahunan & hak tiket pesawat karyawan
-            </p>
-          </div>
-        </div>
+      <div className="px-4 pt-3 lg:px-6">
+        <HeroBanner
+          eyebrow={data?.is_view_only ? 'HR HO • Read Only' : 'HR Site'}
+          judul="Saldo & Tiket"
+          sub="Saldo cuti tahunan & hak tiket pesawat karyawan"
+        />
       </div>
 
       <div className="px-4 py-4 lg:px-6 lg:py-6 space-y-3">

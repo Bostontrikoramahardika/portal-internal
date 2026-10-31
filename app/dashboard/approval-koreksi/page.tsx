@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 type CorrectionType = 'LUPA_CLOCK_IN' | 'LUPA_CLOCK_OUT' | 'KOREKSI_JAM'
 type Status = 'PENDING' | 'APPROVED' | 'REJECTED'
 
@@ -188,7 +189,7 @@ export default function ApprovalKoreksiPage() {
           >
             ←
           </Link>
-          <StatBanner eyebrow="Leader" title="Koreksi Absensi" />
+          <HeroBanner eyebrow="Leader" judul="Koreksi Absensi" />
         </div>
 
         {/* TAB */}

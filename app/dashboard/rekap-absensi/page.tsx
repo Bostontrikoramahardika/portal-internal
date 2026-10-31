@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Employee {
   nrp: string; nama: string; site: string; jabatan: string; departemen: string
@@ -164,7 +165,7 @@ export default function RekapAbsensiPage() {
           Kembali
         </button>
 
-        <StatBanner eyebrow="HR" title="Rekap Absensi" subtitle="Laporan Kehadiran" />
+        <HeroBanner eyebrow="HR" judul="Rekap Absensi" sub="Laporan Kehadiran" />
       </div>
 
       <div className="px-4 space-y-4 relative z-10">

@@ -1,4 +1,6 @@
 'use client'
+import HeroBanner from '@/app/components/ui/HeroBanner'
+
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INSPEKSI / OBSERVASI (SHE)
@@ -68,17 +70,14 @@ export default function SheFormView({ jenis }: { jenis: 'INSPEKSI' | 'OBSERVASI'
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
 
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-5 lg:px-6 lg:pt-8 lg:pb-7 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl">{ikon}</span>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">SHE • K3</p>
-            <h1 className="text-xl lg:text-2xl font-black tracking-tight text-white">{judul}</h1>
-            <p className="text-blue-200/80 text-xs font-medium">
-              {forms.length} form tersedia • rekap otomatis ke SHE
-            </p>
-          </div>
-        </div>
+      <div className="px-4 pt-3 lg:px-6">
+        <HeroBanner
+          eyebrow="SHE • K3"
+          judul={judul}
+          sub={`${forms.length} form tersedia • rekap otomatis ke SHE`}
+        />
+      </div>
+      <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 py-2.5 lg:px-6">
 
         <div className="flex gap-2 mt-4">
           {([['isi', '📝 Isi Form'], ['riwayat', '📚 Riwayat']] as const).map(([k, l]) => (

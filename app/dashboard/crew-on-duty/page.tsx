@@ -9,6 +9,7 @@ import { useEffect, useState, useRef } from 'react'
 import html2canvas from 'html2canvas-pro'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 interface Member {
   nrp: string
   nama: string
@@ -159,11 +160,8 @@ export default function CrewOnDutyPage() {
 
       
       {/* HEADER */}
-      <div className="bg-[#003D79] text-white p-4 lg:p-6 shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="text-3xl lg:text-4xl">👷</div>
-          <StatBanner eyebrow="Leader" title="Crew On Duty" subtitle="Personel Plant yang bertugas hari ini" />
-        </div>
+      <div className="p-3 pb-0 lg:p-6 lg:pb-0">
+        <HeroBanner eyebrow="Leader" judul="Crew On Duty" sub="Personel Plant yang bertugas hari ini" />
       </div>
 
       {/* FILTER BAR */}

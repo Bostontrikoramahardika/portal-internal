@@ -1,4 +1,6 @@
 'use client'
+import HeroBanner from '@/app/components/ui/HeroBanner'
+
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PUNISHMENT — CNC / Surat Komitmen / SP1 / SP2 / SP3
@@ -63,17 +65,14 @@ export default function PunishmentView() {
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
 
       {/* HEADER */}
-      <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-5 lg:px-6 lg:pt-8 lg:pb-7 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl">⚠️</span>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">HR • Disiplin</p>
-            <h1 className="text-xl lg:text-2xl font-black tracking-tight text-white">Punishment</h1>
-            <p className="text-blue-200/80 text-xs font-medium">
-              CNC • Surat Komitmen • SP1 • SP2 • SP3 — otomatis memotong KPI
-            </p>
-          </div>
-        </div>
+      <div className="px-4 pt-3 lg:px-6">
+        <HeroBanner
+          eyebrow="HR • Disiplin"
+          judul="Punishment"
+          sub="CNC • Surat Komitmen • SP1 • SP2 • SP3 — otomatis memotong KPI"
+        />
+      </div>
+      <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 py-2.5 lg:px-6">
 
         <div className="flex gap-2 mt-4">
           {([['daftar', '📋 Daftar'], ['baru', '➕ Buat Baru']] as const).map(([k, l]) => (

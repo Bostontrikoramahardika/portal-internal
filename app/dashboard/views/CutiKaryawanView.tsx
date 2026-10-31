@@ -1,4 +1,6 @@
 'use client'
+import HeroBanner from '@/app/components/ui/HeroBanner'
+
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CUTI KARYAWAN (v1.1)
@@ -216,18 +218,21 @@ export default function CutiKaryawanView() {
     <div className="bg-[#f4f7fa] pb-24 text-slate-800">
 
       {/* ── HEADER ─────────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-br from-[#003D79] to-[#0056b3] px-4 pt-6 pb-5 lg:px-6 lg:pt-8 lg:pb-7 rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl">🌴</span>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">HR • Admin</p>
-            <h1 className="text-xl lg:text-2xl font-black tracking-tight text-white">Cuti Karyawan</h1>
-            <p className="text-blue-200/80 text-xs font-medium">
-              Jadwal cuti • hak cuti tahunan • tiket pesawat • status approval
-              <span className="ml-2 px-1.5 py-0.5 rounded bg-white/15 text-[9px] font-black tracking-wider">v1.1</span>
-            </p>
-          </div>
-        </div>
+      <div className="px-4 pt-3 lg:px-6">
+        <HeroBanner
+          eyebrow="HR • Admin"
+          judul="Cuti Karyawan"
+          sub="Jadwal cuti • hak cuti tahunan • tiket pesawat • status approval"
+          refreshing={loading}
+          onRefresh={loadAll}
+          stats={[
+            { label: 'Total', value: stats.total, tone: 'sky' },
+            { label: 'Belum ajukan', value: stats.belum, tone: 'amber' },
+            { label: 'Menunggu', value: stats.menunggu, tone: 'violet' },
+            { label: 'Disetujui', value: stats.disetujui, tone: 'green' },
+            { label: 'Ditolak', value: stats.ditolak, tone: 'red' },
+          ]}
+        />
       </div>
 
       <div className="px-4 py-4 lg:px-6 lg:py-6 space-y-3">

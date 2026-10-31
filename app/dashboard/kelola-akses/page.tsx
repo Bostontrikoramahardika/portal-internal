@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 // ═══ TYPES ═══
 interface Employee {
   nrp: string
@@ -145,7 +146,7 @@ export default function KelolaAksesPage() {
       
 
       {/* Header */}
-      <StatBanner eyebrow="Admin" title="Kelola Akses" subtitle="Role & Permission Terpusat" />
+      <HeroBanner eyebrow="Admin" judul="Kelola Akses" sub="Role & Permission Terpusat" />
 
       <div className="px-4 py-4">
         {activeTab === 'karyawan' && <TabKaryawan />}

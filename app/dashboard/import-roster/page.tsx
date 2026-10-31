@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 const ROSTER_TEMP_KEY = 'btm_roster_import_temp_v1'
 
 interface Category {
@@ -431,7 +432,7 @@ export default function ImportRosterPage() {
           className="mb-3 flex items-center gap-1.5 text-white/60 hover:text-white text-sm relative z-10">
           ← Kembali
         </button>
-        <StatBanner eyebrow="Import Data" title="Import Roster Bulanan" subtitle="Import Data" />
+        <HeroBanner eyebrow="Import Data" judul="Import Roster Bulanan" sub="Import Data" />
       </div>
 
       <div className="px-4 space-y-4 relative z-10">

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 interface Finding {
   id: string
   jenis_temuan: string
@@ -196,7 +197,7 @@ export default function McuSayaPage() {
   return (
     <div className="text-slate-800">
       <div className="space-y-3">
-        <StatBanner eyebrow="Profil Saya" title="MCU Saya" subtitle="Medical Check-Up pribadi" />
+        <HeroBanner eyebrow="Profil Saya" judul="MCU Saya" sub="Medical Check-Up pribadi" />
 
         {/* Header */}
         <div className="bg-white rounded-[2rem] shadow-xl p-6">

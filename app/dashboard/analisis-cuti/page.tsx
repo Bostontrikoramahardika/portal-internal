@@ -1,5 +1,7 @@
 'use client'
 
+import HeroBanner from '@/app/components/ui/HeroBanner'
+
 // ═══════════════════════════════════════════════════════════════════════════
 // ANALISIS CUTI — Rencana & Periodical Cuti
 // Data: app/lib/data/cuti-proyeksi.json (hasil hitung roster Oktober & November 2026)
@@ -79,11 +81,7 @@ export default function AnalisisCutiPage() {
 
   return (
     <StdPage width="full">
-      <StatBanner
-        eyebrow="ANALISIS CUTI"
-        title="Rencana & Periodical Cuti"
-        subtitle={`Site PPA-MLP · ${HC} karyawan · ${lam(BUL[0].p)} s.d. ${lam(BUL[BUL.length - 1].p)}`}
-      />
+      <HeroBanner eyebrow="ANALISIS CUTI" judul="Rencana & Periodical Cuti" />
 
       <TopTabs tabs={tabs} value={tab} onChange={setTab} scroll />
 

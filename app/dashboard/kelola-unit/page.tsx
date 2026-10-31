@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
 interface Unit {
   id: string
   kode_unit: string
@@ -233,7 +234,7 @@ function KelolaUnitContent() {
           className="mb-3 flex items-center gap-1.5 text-white/60 hover:text-white text-sm relative z-10">
           ← Kembali
         </button>
-        <StatBanner eyebrow="Plant" title="Kelola Unit" subtitle="Master Data" />
+        <HeroBanner eyebrow="Plant" judul="Kelola Unit" sub="Master Data" />
       </div>
 
       <div className="px-4 space-y-4 relative z-10">
