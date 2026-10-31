@@ -298,13 +298,14 @@ export default function ManajemenAbsensiPage() {
   }, [])
 
   // Fetch matrix
-  async function importExcel(file: File, terapkan: boolean) {
+  async function importExcel(file: File, terapkan: boolean, paksa = false) {
     setImporting(true)
     try {
       const token = localStorage.getItem('btm_session_token_v1') || ''
       const fd = new FormData()
       fd.append('file', file)
       fd.append('terapkan', terapkan ? '1' : '0')
+      if (paksa) fd.append('paksa', '1')
       fd.append('bulan', bulan)
 
       const res = await fetch('/api/attendance/matrix/import', {
@@ -625,6 +626,46 @@ export default function ManajemenAbsensiPage() {
               </div>
             )}
 
+            {hasilImport.peringatan && (
+              <div className="bg-amber-50 border border-amber-300 rounded-lg p-2 text-[10px] font-bold text-amber-900 leading-relaxed">
+                ⚠️ {hasilImport.peringatan}
+              </div>
+            )}
+
+            {Array.isArray(hasilImport.contoh) && hasilImport.contoh.length > 0 && (
+              <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <div className="bg-slate-100 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-slate-600">
+                  Sel yang berbeda — {hasilImport.contoh.length} contoh pertama
+                </div>
+                <div className="max-h-52 overflow-y-auto">
+                  <table className="w-full text-[9.5px]">
+                    <thead className="bg-slate-50 text-slate-500 sticky top-0">
+                      <tr>
+                        <th className="px-1.5 py-1 text-left font-black">NRP</th>
+                        <th className="px-1.5 py-1 text-left font-black">NAMA</th>
+                        <th className="px-1.5 py-1 text-center font-black">TGL</th>
+                        <th className="px-1.5 py-1 text-center font-black">DI APLIKASI</th>
+                        <th className="px-1.5 py-1 text-center font-black">DI EXCEL</th>
+                        <th className="px-1.5 py-1 text-center font-black">AKSI</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(hasilImport.contoh as any[]).map((c: any, i: number) => (
+                        <tr key={i} className="border-t border-slate-100">
+                          <td className="px-1.5 py-0.5 font-mono">{c.nrp}</td>
+                          <td className="px-1.5 py-0.5 truncate max-w-[110px]">{c.nama}</td>
+                          <td className="px-1.5 py-0.5 text-center tabular-nums">{String(c.tanggal).slice(8, 10)}</td>
+                          <td className="px-1.5 py-0.5 text-center font-black text-slate-700">{c.dari}</td>
+                          <td className="px-1.5 py-0.5 text-center font-black text-sky-700">{c.ke}</td>
+                          <td className="px-1.5 py-0.5 text-center text-slate-400">{c.aksi}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {Number(hasilImport.jumlah_dilewati) > 0 && (
               <p className="text-[10px] text-slate-500 font-bold">
                 {hasilImport.jumlah_dilewati} sel dilewati (NRP tidak dikenal / kode kosong)
@@ -635,9 +676,9 @@ export default function ManajemenAbsensiPage() {
               <div className="flex gap-2 pt-1">
                 <button onClick={() => setHasilImport(null)}
                   className="flex-1 py-2 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-black uppercase">Batal</button>
-                <button onClick={() => importExcel(hasilImport.__file, true)}
-                  className="flex-1 py-2 rounded-xl bg-emerald-600 text-white text-[11px] font-black uppercase">
-                  ✅ Terapkan ke Database
+                <button onClick={() => importExcel(hasilImport.__file, true, Boolean(hasilImport.peringatan))}
+                  className={(hasilImport.peringatan ? 'bg-rose-600' : 'bg-emerald-600') + ' flex-1 py-2 rounded-xl text-white text-[11px] font-black uppercase'}>
+                  {hasilImport.peringatan ? '⚠️ Tetap terapkan (sudah saya periksa)' : '✅ Terapkan ke Database'}
                 </button>
               </div>
             )}

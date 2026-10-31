@@ -357,20 +357,25 @@ export async function POST(req: NextRequest) {
     }
 
     // ── PENGAMAN: perubahan terlalu banyak = hampir pasti salah file ──
+    // Pratinjau SELALU boleh (supaya bisa dilihat sel mana yang beda).
+    // Yang ditolak hanya PENERAPAN, kecuali user mencentang "paksa".
     const paksa = String(form.get('paksa') || '') === '1'
     const BATAS_AMAN = 500
-    if (perubahan.length > BATAS_AMAN && !paksa) {
+    const terlaluBanyak = perubahan.length > BATAS_AMAN
+
+    if (terapkan && terlaluBanyak && !paksa) {
       return NextResponse.json({
         ok: false,
         mode: 'ditolak',
         bulan: bulanKey,
         jumlah_perubahan: perubahan.length,
+        batas_aman: BATAS_AMAN,
         error:
           `File ini akan mengubah ${perubahan.length} sel (batas aman ${BATAS_AMAN}). ` +
-          `Biasanya ini tanda file bukan hasil "Excel Matrix" atau bulan/site tidak cocok. ` +
-          `Silakan periksa dulu lewat PRATINJAU.`,
+          `Data TIDAK diubah. Lihat daftar sel yang beda di bawah: kalau polanya ` +
+          `"A → (kosong)" atau "CT → CR", berarti file Excel dibuat dari data yang sudah rusak.`,
         ringkasan: ringkasSementara(perubahan),
-        contoh: perubahan.slice(0, 30),
+        contoh: perubahan.slice(0, 60),
       }, { status: 400 })
     }
 
@@ -382,6 +387,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         ok: true,
         mode: 'pratinjau',
+        peringatan: terlaluBanyak
+          ? `File ini akan mengubah ${perubahan.length} sel (batas aman ${BATAS_AMAN}). ` +
+            `Periksa daftar di bawah dulu — kalau polanya "A → (kosong)" atau "CT → CR", ` +
+            `kemungkinan besar file Excel dibuat dari data yang sudah rusak, bukan hasil koreksi.`
+          : null,
+        batas_aman: BATAS_AMAN,
         bulan: bulanKey,
         jumlah_baris_excel: barisExcel.length,
         jumlah_karyawan_dikenal: Object.keys(petaEmp).length,
