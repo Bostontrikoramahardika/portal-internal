@@ -11,6 +11,7 @@ import ExcelJS from 'exceljs'
 import {
   konversiCell, isJabatanOperator, karyawanSampah, intiNrp, normNamaRapat,
 } from '@/app/lib/absensi-kode'
+import { ambilSemua, ambilSemuaPerNrp } from '@/app/lib/supabase-paginate'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -83,11 +84,18 @@ export async function GET(request: NextRequest) {
     const akhirData = tglStr(tahun, bulan, jmlHari)
 
 
-    // ══════════════ 1. ROSTER ══════════════
-    const { data: rosterRaw } = await supabaseAdmin
-      .from('rosters')
-      .select('nrp, tanggal, shift_code')
-      .gte('tanggal', awal).lte('tanggal', akhirData)
+    const kodeDariShiftTsLocal = (shift: any): 'DS' | 'NS' => {
+      const x = String(shift ?? '').trim().toUpperCase()
+      if (x === '2' || x === 'NS' || x === 'M' || x.includes('MALAM') || x.includes('NIGHT')) return 'NS'
+      return 'DS'
+    }
+
+    // ══════════════ 1. ROSTER (PAGINASI — jangan dipotong 1.000 baris) ══════════════
+    const rosterRaw = await ambilSemua(
+      supabaseAdmin, 'rosters', 'nrp, tanggal, shift_code',
+      (q) => q.gte('tanggal', awal).lte('tanggal', akhirData),
+      ['tanggal', 'nrp'],
+    )
 
     if (!rosterRaw || rosterRaw.length === 0) {
       return NextResponse.json({ error: 'Tidak ada data roster untuk periode ini' }, { status: 404 })
@@ -95,10 +103,11 @@ export async function GET(request: NextRequest) {
 
     // ══════════════ 2. KARYAWAN ══════════════
     const nrpRoster = Array.from(new Set(rosterRaw.map((r: any) => String(r.nrp))))
-    const { data: employees } = await supabaseAdmin
-      .from('employees')
-      .select('nrp, nama, jabatan, departemen, site, email, status_karyawan, tanggal_resign')
-      .in('nrp', nrpRoster)
+    const employees = await ambilSemuaPerNrp(
+      supabaseAdmin, 'employees',
+      'nrp, nama, jabatan, departemen, site, email, status_karyawan, tanggal_resign',
+      nrpRoster, undefined, ['nrp'],
+    )
 
     const empMap = new Map<string, any>()
     ;(employees || []).forEach((e: any) => empMap.set(String(e.nrp), e))
@@ -132,43 +141,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Tidak ada karyawan valid untuk filter ini' }, { status: 404 })
     }
 
-    // helper query berkala 200 NRP
-    async function ambilBerkala(tabel: string, kolom: string, tambahan?: (q: any) => any) {
-      let hasil: any[] = []
-      for (let i = 0; i < validNrps.length; i += 200) {
-        const potong = validNrps.slice(i, i + 200)
-        let q: any = supabaseAdmin.from(tabel).select(kolom).in('nrp', potong)
-          .gte('tanggal', awal).lte('tanggal', akhirData)
-        if (tambahan) q = tambahan(q)
-        const { data, error } = await q
-        if (error) throw new Error(`${tabel}: ${error.message}`)
-        if (data?.length) hasil = hasil.concat(data)
-      }
-      return hasil
-    }
+    // ══════════════ 3. ATTENDANCE (PAGINASI) ══════════════
+    const attAll = await ambilSemuaPerNrp(
+      supabaseAdmin, 'attendance',
+      'nrp, tanggal, shift, clock_in, clock_out, status, keterangan, jam_kerja_menit',
+      validNrps,
+      (q) => q.gte('tanggal', awal).lte('tanggal', akhirData),
+      ['tanggal', 'nrp'],
+    )
 
-    // ══════════════ 3. ATTENDANCE ══════════════
-    let attAll: any[] = []
-    for (let i = 0; i < validNrps.length; i += 200) {
-      const { data } = await supabaseAdmin
-        .from('attendance')
-        .select('nrp, tanggal, shift, clock_in, clock_out, status, keterangan, jam_kerja_menit')
-        .in('nrp', validNrps.slice(i, i + 200))
-        .gte('tanggal', awal).lte('tanggal', akhirData)
-      attAll = attAll.concat(data || [])
-    }
-
-    // ══════════════ 4. TS OPT ══════════════
+    // ══════════════ 4. TS OPT (PAGINASI) ══════════════
     const tsKode = new Map<string, { kode: 'DS' | 'NS'; unit: string | null }>()
     const normNama = (s: any) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
     try {
-      const tsAll = await ambilBerkala('ts_opt', 'tanggal, nrp, nama_operator, shift, kode_unit')
+      const tsAll = await ambilSemuaPerNrp(
+        supabaseAdmin, 'ts_opt',
+        'tanggal, nrp, nama_operator, shift, kode_unit',
+        validNrps,
+        (q) => q.gte('tanggal', awal).lte('tanggal', akhirData),
+        ['tanggal'],
+      )
       for (const r of tsAll) {
         const tgl = String(r.tanggal || '').slice(0, 10)
         if (!tgl) continue
-        const sh = String(r.shift ?? '').toUpperCase()
-        const kode: 'DS' | 'NS' =
-          sh === '2' || sh.includes('MALAM') || sh === 'NS' || sh.includes('NIGHT') ? 'NS' : 'DS'
+        const kode = kodeDariShiftTsLocal(r.shift)
         const isi = { kode, unit: r.kode_unit || null }
         const nr = String(r.nrp || '').trim()
         if (nr) {
@@ -180,21 +176,27 @@ export async function GET(request: NextRequest) {
       }
     } catch { /* ts_opt belum ada / kolom beda */ }
 
-    // ══════════════ 5. CUTI / IZIN / EVIDEN / LEMBUR ══════════════
+    // ══════════════ 5. CUTI & LEMBUR (PAGINASI) ══════════════
     let leaves: any[] = []
-    for (let i = 0; i < validNrps.length; i += 200) {
-      const { data } = await supabaseAdmin
-        .from('leave_requests')
-        .select('nrp, tanggal_mulai, tanggal_selesai, jenis_cuti, status_final')
-        .in('nrp', validNrps.slice(i, i + 200))
-        .lte('tanggal_mulai', akhirData).gte('tanggal_selesai', awal)
-      if (data?.length) leaves = leaves.concat(data)
-    }
+    try {
+      leaves = await ambilSemuaPerNrp(
+        supabaseAdmin, 'leave_requests',
+        'nrp, tanggal_mulai, tanggal_selesai, jenis_cuti, status_final',
+        validNrps,
+        (q) => q.lte('tanggal_mulai', akhirData).gte('tanggal_selesai', awal),
+        ['tanggal_mulai'],
+      )
+    } catch { /* tabel cuti belum ada */ }
 
     let lemburRows: any[] = []
     try {
-      lemburRows = await ambilBerkala('overtime_requests',
-        'nrp, tanggal, jam_mulai, jam_selesai, total_jam, jenis_lembur, alasan, status_final, status_atasan, status_pjo')
+      lemburRows = await ambilSemuaPerNrp(
+        supabaseAdmin, 'overtime_requests',
+        'nrp, tanggal, jam_mulai, jam_selesai, total_jam, jenis_lembur, alasan, status_final, status_atasan, status_pjo',
+        validNrps,
+        (q) => q.gte('tanggal', awal).lte('tanggal', akhirData),
+        ['tanggal'],
+      )
     } catch { /* tabel lembur belum ada */ }
 
     // ══════════════ 5b. KOMPENSASI CUTI (input manual HR) ══════════════
