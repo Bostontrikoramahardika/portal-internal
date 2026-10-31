@@ -236,7 +236,8 @@ export async function POST(req: NextRequest) {
     const awal = `${bulanKey}-01`
     const akhir = `${bulanKey}-${String(jmlHari).padStart(2, '0')}`
 
-    const petaAtt: Record<string, any> = {}   // key: nrp|tanggal
+    const petaAtt: Record<string, any> = {}          // key: nrp|tanggal (untuk tampilan)
+    const petaAttList: Record<string, any[]> = {}    // key: nrp|tanggal → semua baris
     {
       const semuaNrp = Object.keys(petaEmp)
       for (let i = 0; i < semuaNrp.length; i += 300) {
@@ -247,7 +248,10 @@ export async function POST(req: NextRequest) {
           .in('nrp', potong)
           .gte('tanggal', awal).lte('tanggal', akhir)
         ;(data || []).forEach((a: any) => {
-          petaAtt[String(a.nrp) + '|' + String(a.tanggal).slice(0, 10)] = a
+          const k = String(a.nrp) + '|' + String(a.tanggal).slice(0, 10)
+          petaAtt[k] = a
+          if (!petaAttList[k]) petaAttList[k] = []
+          petaAttList[k].push(a)
         })
       }
     }
@@ -407,53 +411,116 @@ export async function POST(req: NextRequest) {
     }
 
     // ═══════════════ TERAPKAN ═══════════════
+    // Tabel attendance punya UNIQUE (nrp, tanggal, shift), jadi satu hari
+    // bisa punya 2 baris (SIANG & MALAM). Cara lama menyimpan hanya satu
+    // baris per hari lalu selalu INSERT → kena "duplicate key".
+    // Sekarang: dikelompokkan per hari, baris yang cocok di-UPDATE,
+    // baris baru dibuat hanya kalau shift itu belum ada.
     const cap = `[IMPORT-EXCEL] koreksi dari file ${file.name}`.slice(0, 200)
     let nUbah = 0, nTambah = 0
     const gagal: string[] = []
 
-    // ① ubah baris yang sudah ada — dikelompokkan per (tanggal, status, shift)
-    const grup = new Map<string, string[]>()   // key: tanggal|status|shift → [id...]
-    perubahan.filter((p) => p.aksi === 'ubah' && p.adaId).forEach((p) => {
-      const k = `${p.tanggal}|${p.status}|${p.shift || ''}`
-      if (!grup.has(k)) grup.set(k, [])
-      grup.get(k)!.push(String(p.adaId))
-    })
+    const perHari = new Map<string, typeof perubahan>()
+    for (const p of perubahan) {
+      const k = `${p.nrp}|${p.tanggal}`
+      if (!perHari.has(k)) perHari.set(k, [])
+      perHari.get(k)!.push(p)
+    }
 
-    for (const [k, ids] of grup) {
-      const [tanggal, status, shift] = k.split('|')
-      for (let i = 0; i < ids.length; i += 200) {
-        const potong = ids.slice(i, i + 200)
+    const kunciShift = (x: any) => String(x || '').toUpperCase().trim()
+
+    for (const [k, daftar] of perHari) {
+      const [nrp, tanggal] = k.split('|')
+      const rows = (petaAttList[k] || []).slice()      // salinan, boleh ditandai
+      const dipakai = new Set<string>()
+
+      for (const p of daftar) {
+        const shiftTarget = p.shift ? kunciShift(p.shift) : ''
+
+        // a) baris dengan shift yang sama persis
+        let row = rows.find((r) => kunciShift(r.shift) === shiftTarget && !dipakai.has(String(r.id)))
+
+        // b) belum ada → pakai baris tanpa shift (mis. status ALPHA shift null)
+        if (!row && shiftTarget) {
+          row = rows.find((r) => !kunciShift(r.shift) && !dipakai.has(String(r.id)))
+        }
+
+        // c) tetap tidak ada → buat baris baru
+        if (!row) {
+          const { data, error } = await supabaseAdmin
+            .from('attendance')
+            .insert({
+              nrp,
+              tanggal,
+              site: petaEmp[nrp]?.site || siteSaya || null,
+              status: p.status,
+              shift: p.shift,
+              keterangan: cap,
+              updated_at: new Date().toISOString(),
+            })
+            .select('id')
+            .maybeSingle()
+
+          if (error) {
+            // Kalau ternyata barisnya SUDAH ada (unique nrp+tanggal+shift),
+            // jangan gagal — cari baris itu lalu perbarui.
+            const duplikat = /duplicate key|unique constraint/i.test(String(error.message || ''))
+            if (duplikat) {
+              let cari = supabaseAdmin
+                .from('attendance')
+                .select('id')
+                .eq('nrp', nrp)
+                .eq('tanggal', tanggal)
+              cari = p.shift ? cari.eq('shift', p.shift) : cari.is('shift', null)
+              const { data: ada } = await cari.limit(1).maybeSingle()
+
+              if (ada?.id) {
+                const { error: e2 } = await supabaseAdmin
+                  .from('attendance')
+                  .update({
+                    status: p.status,
+                    shift: p.shift,
+                    keterangan: cap,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('id', ada.id)
+                if (e2) gagal.push(`${tanggal} ${nrp} ubah ${p.ke}: ${e2.message}`)
+                else {
+                  nUbah++
+                  rows.push({ id: ada.id, nrp, tanggal, status: p.status, shift: p.shift })
+                }
+              } else {
+                gagal.push(`${tanggal} ${nrp} ${p.ke}: baris sudah ada tetapi tidak bisa dibaca`)
+              }
+            } else {
+              gagal.push(`${tanggal} ${nrp} tambah ${p.ke}: ${error.message}`)
+            }
+          } else {
+            nTambah++
+            if (data?.id) rows.push({ id: data.id, nrp, tanggal, status: p.status, shift: p.shift })
+          }
+          continue
+        }
+
+        dipakai.add(String(row.id))
         const { error } = await supabaseAdmin
           .from('attendance')
           .update({
-            status,
-            shift: shift || null,
+            status: p.status,
+            shift: p.shift,
             keterangan: cap,
             updated_at: new Date().toISOString(),
           })
-          .in('id', potong)
-        if (error) gagal.push(`${tanggal} ubah: ${error.message}`)
-        else nUbah += potong.length
-      }
-    }
+          .eq('id', row.id)
 
-    // ② tambah baris baru
-    const barisBaru = perubahan
-      .filter((p) => p.aksi === 'tambah')
-      .map((p) => ({
-        nrp: p.nrp,
-        tanggal: p.tanggal,
-        site: petaEmp[p.nrp]?.site || siteSaya || null,
-        status: p.status,
-        shift: p.shift,
-        keterangan: cap,
-        updated_at: new Date().toISOString(),
-      }))
-    for (let i = 0; i < barisBaru.length; i += 300) {
-      const potong = barisBaru.slice(i, i + 300)
-      const { error } = await supabaseAdmin.from('attendance').insert(potong)
-      if (error) gagal.push(`tambah: ${error.message}`)
-      else nTambah += potong.length
+        if (error) {
+          gagal.push(`${tanggal} ${nrp} ubah ${p.dari}→${p.ke}: ${error.message}`)
+        } else {
+          nUbah++
+          row.status = p.status
+          row.shift = p.shift
+        }
+      }
     }
 
     return NextResponse.json({

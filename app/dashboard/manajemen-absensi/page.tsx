@@ -676,7 +676,17 @@ export default function ManajemenAbsensiPage() {
               <div className="flex gap-2 pt-1">
                 <button onClick={() => setHasilImport(null)}
                   className="flex-1 py-2 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-black uppercase">Batal</button>
-                <button onClick={() => importExcel(hasilImport.__file, true, Boolean(hasilImport.peringatan))}
+                <button onClick={() => {
+                  if (hasilImport.peringatan) {
+                    const t = window.prompt(
+                      'PERHATIAN\n\nFile ini akan mengubah ' + (hasilImport.jumlah_perubahan ?? 0) + ' sel.\n' +
+                      'Kalau polanya banyak "A -> DS" atau "CT -> CR", file ini dibuat dari kondisi lama/rusak.\n\n' +
+                      'Ketik TERAPKAN (huruf besar) untuk melanjutkan:'
+                    )
+                    if (String(t || '').trim().toUpperCase() !== 'TERAPKAN') return
+                  }
+                  importExcel(hasilImport.__file, true, Boolean(hasilImport.peringatan))
+                }}
                   className={(hasilImport.peringatan ? 'bg-rose-600' : 'bg-emerald-600') + ' flex-1 py-2 rounded-xl text-white text-[11px] font-black uppercase'}>
                   {hasilImport.peringatan ? '⚠️ Tetap terapkan (sudah saya periksa)' : '✅ Terapkan ke Database'}
                 </button>
