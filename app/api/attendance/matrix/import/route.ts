@@ -93,25 +93,68 @@ export async function POST(req: NextRequest) {
     const grid: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' })
     if (!grid.length) return NextResponse.json({ error: 'File kosong' }, { status: 400 })
 
-    // ── cari baris header (yang mengandung NRP) ──
+    // ── CARI BARIS HEADER YANG BENAR ──
+    // File "Excel Matrix" punya 3 baris judul di atasnya:
+    //   baris 1 : REKAP ABSENSI — OKTOBER 2026
+    //   baris 2 : Site: ... Periode: ...
+    //   baris 3 : NO | NRP | NAMA KARYAWAN | JABATAN | SITE | TANGGAL | REKAP KEHADIRAN | LEMBUR
+    //   baris 4 : NO | NRP | NAMA KARYAWAN | JABATAN | SITE | 1 | 2 | 3 | ... | 31 | HDR | ...
+    //   baris 5 : (nama hari) MIN SEN SEL ...
+    //
+    // Cara lama mencari baris PERTAMA yang memuat "NRP" → ketemu baris 3
+    // (baris grup), yang tidak punya angka tanggal → muncul error
+    // "Kolom tanggal (1–31) tidak ditemukan di header".
+    //
+    // Cara baru: pilih baris yang punya angka 1..31 PALING BANYAK.
     let idxHeader = -1
-    for (let i = 0; i < Math.min(grid.length, 15); i++) {
-      const baris = (grid[i] || []).map((c) => String(c || '').trim().toUpperCase())
-      if (baris.includes('NRP')) { idxHeader = i; break }
-    }
-    if (idxHeader < 0) {
-      return NextResponse.json({ error: 'Baris header (berisi kolom NRP) tidak ditemukan. Pakai file hasil tombol Excel Matrix.' }, { status: 400 })
+    let skorTerbaik = 0
+    const batasCari = Math.min(grid.length, 25)
+
+    for (let i = 0; i < batasCari; i++) {
+      const baris = (grid[i] || []).map((c) => String(c ?? '').trim().toUpperCase())
+      let skor = 0
+      const terlihat = new Set<number>()
+      for (const c of baris) {
+        const n = Number(c)
+        if (Number.isInteger(n) && n >= 1 && n <= 31 && !terlihat.has(n)) {
+          terlihat.add(n)
+          skor++
+        }
+      }
+      if (skor > skorTerbaik) { skorTerbaik = skor; idxHeader = i }
     }
 
-    const header = (grid[idxHeader] || []).map((c) => String(c || '').trim().toUpperCase())
-    const iNrp = header.indexOf('NRP')
-    const iNama = header.indexOf('NAMA')
+    // minimal harus ada 20 kolom tanggal (satu bulan penuh) supaya yakin ini
+    // memang baris tanggal, bukan baris lain yang kebetulan berisi angka
+    if (idxHeader < 0 || skorTerbaik < 20) {
+      return NextResponse.json({
+        error:
+          'Baris tanggal (1–31) tidak ditemukan. Pastikan memakai file hasil tombol ' +
+          '"Excel Matrix" dan sheet pertama ("Rekap Absensi") tidak diubah susunannya.',
+      }, { status: 400 })
+    }
 
-    // kolom tanggal = header berisi angka 1..31
+    const header = (grid[idxHeader] || []).map((c) => String(c ?? '').trim().toUpperCase())
+
+    // kolom NRP: cari tulisan yang mengandung "NRP"
+    let iNrp = header.findIndex((h) => h === 'NRP')
+    if (iNrp < 0) iNrp = header.findIndex((h) => h.includes('NRP'))
+    if (iNrp < 0) iNrp = 1   // susunan baku file Excel Matrix
+
+    // kolom NAMA: file memakai "NAMA KARYAWAN", file lain "NAMA"
+    let iNama = header.findIndex((h) => h === 'NAMA')
+    if (iNama < 0) iNama = header.findIndex((h) => h.startsWith('NAMA'))
+    if (iNama < 0) iNama = iNrp + 1
+
+    // kolom tanggal = header berisi angka 1..31 (unik, urut)
     const kolomTanggal: { idx: number; hari: number }[] = []
+    const sudahAda = new Set<number>()
     header.forEach((h, i) => {
       const n = Number(h)
-      if (Number.isInteger(n) && n >= 1 && n <= 31 && i > iNrp) kolomTanggal.push({ idx: i, hari: n })
+      if (Number.isInteger(n) && n >= 1 && n <= 31 && !sudahAda.has(n)) {
+        sudahAda.add(n)
+        kolomTanggal.push({ idx: i, hari: n })
+      }
     })
     if (!kolomTanggal.length) {
       return NextResponse.json({ error: 'Kolom tanggal (1–31) tidak ditemukan di header' }, { status: 400 })
