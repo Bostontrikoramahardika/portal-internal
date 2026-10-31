@@ -313,8 +313,13 @@ export default function ManajemenAbsensiPage() {
         body: fd,
       })
       const j = await res.json()
-      if (!j.ok) {
-        setHasilImport({ mode: 'error', gagal: [j.error || 'Gagal memproses file'], jumlah_perubahan: 0 })
+      if (!j.ok || j.mode === 'ditolak') {
+        setHasilImport({
+          mode: j.mode === 'ditolak' ? 'ditolak' : 'error',
+          gagal: [j.error || 'Gagal memproses file'],
+          jumlah_perubahan: Number(j.jumlah_perubahan || 0),
+          ringkasan: j.ringkasan || null,
+        })
         return
       }
       setHasilImport({ ...j, __file: file })
@@ -557,8 +562,14 @@ export default function ManajemenAbsensiPage() {
         {hasilImport && (
           <div className="bg-white rounded-[1.5rem] shadow-xl p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#5a6a7e]">
-                Hasil Import {hasilImport.mode === 'pratinjau' ? '— Pratinjau' : '— Diterapkan'}
+              <p className={'text-[10px] font-black uppercase tracking-widest ' + (hasilImport.mode === 'ditolak' ? 'text-rose-600' : 'text-[#5a6a7e]')}>
+                Hasil Import {hasilImport.mode === 'pratinjau'
+                  ? '— Pratinjau'
+                  : hasilImport.mode === 'ditolak'
+                    ? '— DITOLAK (data tidak diubah)'
+                    : hasilImport.mode === 'error'
+                      ? '— Gagal'
+                      : '— Diterapkan'}
               </p>
               <button onClick={() => setHasilImport(null)} className="text-slate-400 font-bold text-xs">✕</button>
             </div>
@@ -591,6 +602,26 @@ export default function ManajemenAbsensiPage() {
             {Array.isArray(hasilImport.gagal) && hasilImport.gagal.length > 0 && (
               <div className="bg-rose-50 border border-rose-200 rounded-lg p-2 text-[10px] text-rose-800 font-mono">
                 {hasilImport.gagal.map((g: string, i: number) => <div key={i}>❌ {g}</div>)}
+              </div>
+            )}
+
+            {hasilImport.mode === 'ditolak' && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 space-y-1">
+                <p className="text-[10px] font-black text-amber-900 uppercase tracking-wide">
+                  Kok bisa ditolak? Cek 3 hal ini:
+                </p>
+                <p className="text-[10px] text-amber-800 leading-relaxed">
+                  1. <strong>Bulan</strong> di filter harus sama dengan bulan di judul file
+                  (mis. filter Oktober ↔ file &quot;REKAP ABSENSI — OKTOBER 2026&quot;).<br />
+                  2. Pakai file hasil tombol <strong>Excel Matrix</strong>, dan sheet pertama
+                  (&quot;Rekap Absensi&quot;) jangan diubah susunannya.<br />
+                  3. Kalau data absensi di aplikasi <strong>masih rusak</strong> dari import
+                  sebelumnya (banyak CT/CR tidak sesuai roster), berlakukan dulu
+                  pemulihan data — file yang benar pun akan terlihat &quot;beda&quot;.
+                </p>
+                <p className="text-[10px] text-amber-800">
+                  Data Anda <strong>tidak diubah sama sekali</strong> oleh percobaan ini.
+                </p>
               </div>
             )}
 
