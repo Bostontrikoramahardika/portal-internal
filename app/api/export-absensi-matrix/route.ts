@@ -8,6 +8,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
 import ExcelJS from 'exceljs'
+import {
+  konversiCell, isJabatanOperator, karyawanSampah, intiNrp, normNamaRapat,
+} from '@/app/lib/absensi-kode'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -54,14 +57,31 @@ export async function GET(request: NextRequest) {
 
     // batas hari yang datanya sudah ada:
     // bulan berjalan → sampai hari ini, bulan lampau → full, bulan depan → 0
+    // Tanggal "hari ini" menurut timezone SITE (bukan jam server/UTC).
+    // Aplikasi memakai getSiteDate(); Excel harus sama supaya batas hari kosong identik.
+    const todaySite = (() => {
+      try {
+        const tz = String((session as any)?.timezone || session?.site_timezone || 'Asia/Makassar')
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+        }).format(new Date())
+      } catch {
+        const d = new Date()
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      }
+    })()
+
     const bulanIni = new Date(now.getFullYear(), now.getMonth(), 1)
     const bulanPeriode = new Date(tahun, bulan - 1, 1)
     let batasIsi = jmlHari
-    if (bulanPeriode.getTime() === bulanIni.getTime()) batasIsi = now.getDate()
-    else if (bulanPeriode > bulanIni) batasIsi = 0
+    if (bulanPeriode.getTime() === bulanIni.getTime()) {
+      // hari ke-berapa "hari ini" menurut site, bukan jam server
+      batasIsi = Number(String(todaySite).slice(8, 10)) || jmlHari
+    } else if (bulanPeriode > bulanIni) batasIsi = 0
 
     const awal = tglStr(tahun, bulan, 1)
     const akhirData = tglStr(tahun, bulan, jmlHari)
+
 
     // ══════════════ 1. ROSTER ══════════════
     const { data: rosterRaw } = await supabaseAdmin
@@ -83,7 +103,28 @@ export async function GET(request: NextRequest) {
     const empMap = new Map<string, any>()
     ;(employees || []).forEach((e: any) => empMap.set(String(e.nrp), e))
 
-    let validNrps = nrpRoster.filter((n) => empMap.has(n))
+    // buang baris sampah (nama #N/A, NRP aneh) — sama seperti aplikasi
+    let validNrps = nrpRoster.filter((n) => {
+      const e = empMap.get(n)
+      if (!e) return false
+      if (karyawanSampah({ nrp: n, nama: e.nama })) return false
+      return true
+    })
+
+    // gabungkan NRP kembar (mis. 1234567 dan B1234567) → ambil satu
+    {
+      const perInti = new Map<string, string>()
+      for (const n of validNrps) {
+        const inti = intiNrp(n)
+        if (!inti) continue
+        const ada = perInti.get(inti)
+        if (!ada) { perInti.set(inti, n); continue }
+        const aB = String(ada).toUpperCase().startsWith('B')
+        const bB = String(n).toUpperCase().startsWith('B')
+        if (aB && !bB) perInti.set(inti, n)   // utamakan tanpa awalan B
+      }
+      validNrps = Array.from(new Set(perInti.values()))
+    }
     if (siteFilter && siteFilter !== 'ALL' && siteFilter !== 'Semua Site') {
       validNrps = validNrps.filter((n) => String(empMap.get(n).site || '') === siteFilter)
     }
@@ -150,11 +191,6 @@ export async function GET(request: NextRequest) {
       if (data?.length) leaves = leaves.concat(data)
     }
 
-    let evidences: any[] = []
-    try {
-      evidences = await ambilBerkala('attendance_evidences', 'nrp, tanggal, kategori, status_atasan')
-    } catch { /* tabel eviden belum ada */ }
-
     let lemburRows: any[] = []
     try {
       lemburRows = await ambilBerkala('overtime_requests',
@@ -218,70 +254,30 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const evMap = new Map<string, string>()
-    ;(evidences || []).forEach((ev: any) => {
-      if (String(ev.status_atasan || '').toUpperCase() !== 'APPROVED') return
-      evMap.set(`${ev.nrp}|${String(ev.tanggal).slice(0, 10)}`, ev.kategori || '')
-    })
-
-    // ══════════════ 7. TENTUKAN KODE (sama dengan aplikasi) ══════════════
+    // ══════════════ 7. TENTUKAN KODE — SATU SUMBER DENGAN APLIKASI ══════════════
+    // Memakai konversiCell() dari app/lib/absensi-kode.ts, fungsi yang SAMA
+    // dengan yang dipakai halaman Manajemen Absensi. Jadi isi Excel tidak
+    // mungkin beda dengan yang tampil di layar.
     function cariTs(nrp: string, nama: string, tgl: string) {
       return tsKode.get(`${tgl}|NRP:${nrp}`)
         || tsKode.get(`${tgl}|NRP:${nrp.replace(/^B/i, '')}`)
-        || tsKode.get(`${tgl}|NM:${normNama(nama)}`)
+        || tsKode.get(`${tgl}|NM:${normNamaRapat(nama)}`)
         || null
     }
 
-    function tentukanKode(nrp: string, nama: string, tgl: string): string {
+    function tentukanKode(nrp: string, nama: string, tgl: string, jabatan: string, resignDate: string | null): string {
       const key = `${nrp}|${tgl}`
-      const att = attMap.get(key)
+      const att = attMap.get(key) || null
       const roster = String(rosterMap.get(key) || '').toUpperCase()
-      const leave = String(leaveMap.get(key) || '').toUpperCase()
-      const ev = String(evMap.get(key) || '').toUpperCase()
       const ts = cariTs(nrp, nama, tgl)
 
-      const manual = String(att?.keterangan || '').match(/\[MANUAL:([A-Za-z]+)\]/i)
-      if (manual) return manual[1].toUpperCase()
+      const isFuture = tgl > todaySite
+      const isAfterResign = !!(resignDate && tgl > resignDate)
+      const isOperator = isJabatanOperator(jabatan)
 
-      if (leave) {
-        if (leave.includes('TAHUN')) return 'CT'
-        if (leave.includes('KOMPENSASI')) {
-          if (att?.clock_in) return String(att.shift || '').toUpperCase().includes('MALAM') ? 'MCK' : 'SCK'
-          if (ts) return ts.kode === 'NS' ? 'MCK' : 'SCK'
-          return 'CR'
-        }
-        if (leave.includes('ROSTER') || leave.includes('REGULER')) return 'CR'
-        return 'I'
-      }
-
-      if (ev) {
-        if (ev.includes('SAKIT')) return 'S'
-        if (ev.includes('BERBAYAR')) return 'IR'
-        if (ev.includes('IZIN')) return 'I'
-      }
-
-      const st = String(att?.status || '').toUpperCase()
-      const sh = String(att?.shift || '').toUpperCase()
-      if (st === 'HADIR' || st === 'TERLAMBAT' || st === 'SETENGAH_HARI') {
-        return sh.includes('MALAM') ? 'NS' : 'DS'
-      }
-      if (st === 'ALPHA') return 'A'
-      if (st === 'IZIN') return 'I'
-      if (st === 'SAKIT') return 'S'
-      if (st === 'CUTI') return 'CT'
-      if (st === 'LIBUR') return 'OFF'
-
-      if (ts) return att?.clock_in ? ts.kode : (ts.kode === 'NS' ? 'NW' : 'DW')
-
-      if (roster === 'OFF') return 'OFF'
-      if (roster === 'ID') return 'ID'
-      if (roster === 'TR') return 'TR'
-      if (roster === 'CR') return 'CR'
-      if (roster === 'CT' || roster === 'LV') return 'CT'
-
-      if (roster === 'S' || roster === 'M') return 'A'
-
-      return ''
+      const cell = konversiCell(roster, att, isFuture, isAfterResign, ts ? ts.kode : null, isOperator)
+      // '-' artinya tidak ada data (sama seperti sel kosong di aplikasi)
+      return cell.code === '-' ? '' : cell.code
     }
 
     // ══════════════ 8. SUSUN BARIS ══════════════
@@ -297,7 +293,13 @@ export async function GET(request: NextRequest) {
       for (let d = 1; d <= jmlHari; d++) {
         // hari yang belum terjadi → sel dibiarkan KOSONG (bukan A)
         if (d > batasIsi) { kodes.push(''); continue }
-        const kode = tentukanKode(nrp, emp?.nama || '', tglStr(tahun, bulan, d))
+        const kode = tentukanKode(
+          nrp,
+          emp?.nama || '',
+          tglStr(tahun, bulan, d),
+          String(emp?.jabatan || ''),
+          emp?.tanggal_resign ? String(emp.tanggal_resign).slice(0, 10) : null,
+        )
         kodes.push(kode)
         if (kode === 'DS' || kode === 'NS') { c.HDR++; c.TOTAL_KERJA++; kode === 'DS' ? c.DS++ : c.NS++ }
         else if (kode === 'DW' || kode === 'NW') { c.HDR++; c.TOTAL_KERJA++ }
