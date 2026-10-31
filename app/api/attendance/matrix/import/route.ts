@@ -11,6 +11,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
 import * as XLSX from 'xlsx'
+import { konversiCell, isJabatanOperator } from '@/app/lib/absensi-kode'
+import { ambilSemuaPerNrp } from '@/app/lib/supabase-paginate'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -63,6 +65,12 @@ function kodeSekarang(row: any): string {
   if (st === 'CUTI') return 'CT'
   if (st === 'LIBUR') return 'OFF'
   return st || ''
+}
+
+function ringkasSementara(perubahan: any[]): Record<string, number> {
+  const r: Record<string, number> = {}
+  perubahan.forEach((p) => (r[p.dari + '→' + p.ke] = (r[p.dari + '→' + p.ke] || 0) + 1))
+  return r
 }
 
 export async function POST(req: NextRequest) {
@@ -166,6 +174,32 @@ export async function POST(req: NextRequest) {
       const now = new Date()
       bulanKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     }
+
+    // ── PERIKSA BULAN DI DALAM FILE ──
+    // Judul file: "REKAP ABSENSI — OKTOBER 2026"
+    // Kalau bulan file BEDA dengan bulan yang dipilih, JANGAN diterapkan —
+    // inilah yang bikin koreksi masuk ke bulan yang salah.
+    const NAMA_BULAN = ['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI',
+      'AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER']
+    let bulanFile = ''
+    for (let i = 0; i < Math.min(grid.length, 5); i++) {
+      const teks = (grid[i] || []).join(' ').toUpperCase()
+      const m = teks.match(/(JANUARI|FEBRUARI|MARET|APRIL|MEI|JUNI|JULI|AGUSTUS|SEPTEMBER|OKTOBER|NOVEMBER|DESEMBER)\s+(\d{4})/)
+      if (m) {
+        const bl = NAMA_BULAN.indexOf(m[1]) + 1
+        bulanFile = `${m[2]}-${String(bl).padStart(2, '0')}`
+        break
+      }
+    }
+    if (bulanFile && bulanFile !== bulanKey) {
+      return NextResponse.json({
+        error:
+          `File ini untuk periode ${bulanFile}, sedangkan yang dipilih ${bulanKey}. ` +
+          `Pilih bulan yang sama di filter sebelum import — koreksi tidak diterapkan.`,
+        bulan_file: bulanFile,
+        bulan_dipilih: bulanKey,
+      }, { status: 400 })
+    }
     const [th, bl] = bulanKey.split('-')
     const jmlHari = new Date(Number(th), Number(bl), 0).getDate()
 
@@ -218,6 +252,69 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // ── ROSTER & TS OPT: untuk menghitung kode yang SEDANG TAMPIL ──
+    // Penting! Aplikasi menampilkan kode hasil hitungan (roster + TS Opt +
+    // absensi), bukan hanya isi tabel attendance. Tanpa ini, sel yang
+    // sebenarnya sudah tampil "A" dianggap kosong lalu DITAMBAH sebagai
+    // baris baru → ribuan baris palsu masuk ke database.
+    const todaySite = (() => {
+      try {
+        const tz = String((session as any)?.timezone || 'Asia/Makassar')
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+        }).format(new Date())
+      } catch {
+        const d = new Date()
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      }
+    })()
+
+    const petaRoster: Record<string, string> = {}
+    const petaTs: Record<string, 'DS' | 'NS'> = {}
+    try {
+      const rosterRows = await ambilSemuaPerNrp(
+        supabaseAdmin, 'rosters', 'nrp, tanggal, shift_code',
+        Object.keys(petaEmp),
+        (q) => q.gte('tanggal', awal).lte('tanggal', akhir),
+        ['tanggal'],
+      )
+      for (const r of rosterRows) {
+        petaRoster[String(r.nrp) + '|' + String(r.tanggal).slice(0, 10)] = String(r.shift_code || '').toUpperCase()
+      }
+    } catch { /* roster belum ada */ }
+    try {
+      const tsRows = await ambilSemuaPerNrp(
+        supabaseAdmin, 'ts_opt', 'tanggal, nrp, shift',
+        Object.keys(petaEmp),
+        (q) => q.gte('tanggal', awal).lte('tanggal', akhir),
+        ['tanggal'],
+      )
+      for (const r of tsRows) {
+        const sh = String(r.shift ?? '').trim().toUpperCase()
+        const kode: 'DS' | 'NS' =
+          (sh === '2' || sh === 'NS' || sh === 'M' || sh.includes('MALAM') || sh.includes('NIGHT')) ? 'NS' : 'DS'
+        const nr = String(r.nrp || '').trim()
+        if (nr) petaTs[nr + '|' + String(r.tanggal).slice(0, 10)] = kode
+      }
+    } catch { /* ts_opt belum ada */ }
+
+    // kode yang SEDANG TAMPIL di aplikasi untuk satu sel
+    function kodeTampil(nrp: string, tanggal: string): string {
+      const emp = petaEmp[nrp]
+      const att = petaAtt[nrp + '|' + tanggal] || null
+      const roster = petaRoster[nrp + '|' + tanggal] || null
+      const ts = petaTs[nrp + '|' + tanggal] || null
+      const resign = emp?.tanggal_resign ? String(emp.tanggal_resign).slice(0, 10) : null
+      const cell = konversiCell(
+        roster, att,
+        tanggal > todaySite,
+        Boolean(resign && tanggal > resign),
+        ts,
+        isJabatanOperator(emp?.jabatan),
+      )
+      return cell.code === '-' ? '' : cell.code
+    }
+
     // ── hitung perubahan ──
     type Perubahan = {
       nrp: string; nama: string; tanggal: string; hari: number
@@ -243,9 +340,11 @@ export async function POST(req: NextRequest) {
 
         const tanggal = `${bulanKey}-${String(hari).padStart(2, '0')}`
         const att = petaAtt[b.nrp + '|' + tanggal]
-        const kodeLama = kodeSekarang(att)
+        const kodeLama = kodeTampil(b.nrp, tanggal)
 
-        if (kodeLama.toUpperCase() === kodeBaru) continue   // sudah sama → lewati
+        // Dibandingkan dengan yang TAMPIL di aplikasi, bukan cuma isi tabel.
+        // Sel yang tampilannya sudah sama → tidak diubah sama sekali.
+        if (kodeLama.toUpperCase() === kodeBaru) continue
 
         perubahan.push({
           nrp: b.nrp, nama: emp.nama || b.nama, tanggal, hari,
@@ -255,6 +354,24 @@ export async function POST(req: NextRequest) {
           adaId: att?.id,
         })
       }
+    }
+
+    // ── PENGAMAN: perubahan terlalu banyak = hampir pasti salah file ──
+    const paksa = String(form.get('paksa') || '') === '1'
+    const BATAS_AMAN = 500
+    if (perubahan.length > BATAS_AMAN && !paksa) {
+      return NextResponse.json({
+        ok: false,
+        mode: 'ditolak',
+        bulan: bulanKey,
+        jumlah_perubahan: perubahan.length,
+        error:
+          `File ini akan mengubah ${perubahan.length} sel (batas aman ${BATAS_AMAN}). ` +
+          `Biasanya ini tanda file bukan hasil "Excel Matrix" atau bulan/site tidak cocok. ` +
+          `Silakan periksa dulu lewat PRATINJAU.`,
+        ringkasan: ringkasSementara(perubahan),
+        contoh: perubahan.slice(0, 30),
+      }, { status: 400 })
     }
 
     // ── ringkasan per kode ──
