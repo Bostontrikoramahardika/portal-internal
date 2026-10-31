@@ -158,8 +158,24 @@ export async function GET(request: NextRequest) {
     let lemburRows: any[] = []
     try {
       lemburRows = await ambilBerkala('overtime_requests',
-        'nrp, tanggal, jam_mulai, jam_selesai, total_jam, status_final, status_atasan, status_pjo')
+        'nrp, tanggal, jam_mulai, jam_selesai, total_jam, jenis_lembur, alasan, status_final, status_atasan, status_pjo')
     } catch { /* tabel lembur belum ada */ }
+
+    // ══════════════ 5b. KOMPENSASI CUTI (input manual HR) ══════════════
+    const kompMap = new Map<string, { hari: number; keterangan: string; oleh: string }>()
+    try {
+      const { data: kompAll } = await supabaseAdmin
+        .from('kompensasi_cuti')
+        .select('nrp, jumlah_hari, keterangan, diubah_oleh')
+        .eq('periode', `${tahun}-${String(bulan).padStart(2, '0')}`)
+      ;(kompAll || []).forEach((k: any) => {
+        kompMap.set(String(k.nrp), {
+          hari: Number(k.jumlah_hari) || 0,
+          keterangan: String(k.keterangan || ''),
+          oleh: String(k.diubah_oleh || ''),
+        })
+      })
+    } catch { /* tabel kompensasi_cuti belum dibuat → anggap kosong */ }
 
     const lemburJam: Record<string, number> = {}
     const lemburKali: Record<string, number> = {}
@@ -277,7 +293,7 @@ export async function GET(request: NextRequest) {
     for (const nrp of validNrps) {
       const emp = empMap.get(nrp)
       const kodes: string[] = []
-      const c: any = { HDR: 0, DS: 0, NS: 0, CT: 0, CR: 0, KMP: 0, S: 0, I: 0, IR: 0, A: 0, OFF: 0, TOTAL_KERJA: 0 }
+      const c: any = { HDR: 0, DS: 0, NS: 0, CT: 0, CR: 0, KMP: 0, KMPC: 0, S: 0, I: 0, IR: 0, A: 0, OFF: 0, TOTAL_KERJA: 0 }
       for (let d = 1; d <= jmlHari; d++) {
         // hari yang belum terjadi → sel dibiarkan KOSONG (bukan A)
         if (d > batasIsi) { kodes.push(''); continue }
@@ -294,6 +310,7 @@ export async function GET(request: NextRequest) {
         else if (kode === 'A') { c.A++; c.TOTAL_KERJA++ }
         else if (kode === 'OFF') { c.OFF++ }
       }
+      c.KMPC = kompMap.get(String(nrp))?.hari || 0
       hitung[nrp] = c
       barisMatriks.push({
         nrp,
@@ -337,7 +354,7 @@ export async function GET(request: NextRequest) {
 
     const KOL_NO = 1, KOL_NRP = 2, KOL_NAMA = 3, KOL_JAB = 4, KOL_SITE = 5
     const KOL_TGL1 = 6
-    const kolomRingkas = ['HDR', 'DS', 'NS', 'CT', 'CR', 'KMP', 'S', 'I', 'IR', 'A', 'OFF', '%']
+    const kolomRingkas = ['HDR', 'DS', 'NS', 'CT', 'CR', 'KMP', 'KOMP.CUTI', 'S', 'I', 'IR', 'A', 'OFF', '%']
     const kolomLembur = ['KALI', 'JAM']
     const KOL_RINGKAS = KOL_TGL1 + jmlHari
     const KOL_AKHIR = KOL_RINGKAS + kolomRingkas.length + kolomLembur.length - 1
@@ -465,7 +482,7 @@ export async function GET(request: NextRequest) {
       }
 
       const persen = c.TOTAL_KERJA > 0 ? Math.round((c.HDR / c.TOTAL_KERJA) * 1000) / 10 : 0
-      const nilai = [c.HDR, c.DS, c.NS, c.CT, c.CR, c.KMP, c.S, c.I, c.IR, c.A, c.OFF, persen,
+      const nilai = [c.HDR, c.DS, c.NS, c.CT, c.CR, c.KMP, c.KMPC, c.S, c.I, c.IR, c.A, c.OFF, persen,
                      lemburKali[b.nrp] || 0, lemburJam[b.nrp] || 0]
       const namaKol = [...kolomRingkas, ...kolomLembur]
       nilai.forEach((v, i) => {
@@ -510,7 +527,7 @@ export async function GET(request: NextRequest) {
       sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF2F2' } }
       sel.border = tipis
     }
-    const urutRingkas = ['HDR', 'DS', 'NS', 'CT', 'CR', 'KMP', 'S', 'I', 'IR', 'A', 'OFF']
+    const urutRingkas = ['HDR', 'DS', 'NS', 'CT', 'CR', 'KMP', 'KMPC', 'S', 'I', 'IR', 'A', 'OFF']
     urutRingkas.forEach((k, i) => {
       const v = barisMatriks.reduce((a, b) => a + (hitung[b.nrp][k] || 0), 0)
       const sel = ws.getCell(barisTotal, KOL_RINGKAS + i)
@@ -628,6 +645,200 @@ export async function GET(request: NextRequest) {
     }
     ;[5, 12, 28, 20, 10, 12, 10, 7, 11, 11, 13, 30, 12].forEach((w, i) => (wd.getColumn(i + 1).width = w))
     wd.autoFilter = { from: 'A1', to: 'M1' }
+
+    // ══════════ SHEET 4 : REKAP CUTI & LEMBUR ══════════
+    // Satu baris per karyawan: tanggal hadir, tanggal+jenis lembur,
+    // tanggal cuti, dan jumlah hari kompensasi cuti (input HR).
+    const ws4 = wb.addWorksheet('Rekap Cuti & Lembur', {
+      views: [{ state: 'frozen', xSplit: 3, ySplit: 4 }],
+    })
+    const HIJAU = 'FF0E9384'
+    const BIRU_CUTI = 'FFB45309'
+
+    const header4 = [
+      'NO', 'NRP', 'NAMA', 'JABATAN', 'SITE',
+      'HADIR (hari)', 'TANGGAL HADIR',
+      'LEMBUR (kali)', 'TANGGAL & JENIS LEMBUR',
+      'CUTI (hari)', 'TANGGAL & JENIS CUTI',
+      'KOMPENSASI CUTI (hari)', 'KETERANGAN KOMPENSASI',
+    ]
+    const jmlKol4 = header4.length
+
+    ws4.mergeCells(1, 1, 1, jmlKol4)
+    const j4 = ws4.getCell(1, 1)
+    j4.value = `REKAP CUTI & LEMBUR — ${bulanNama[bulan - 1].toUpperCase()} ${tahun}`
+    j4.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } }
+    j4.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY } }
+    j4.alignment = { vertical: 'middle' }
+    ws4.getRow(1).height = 26
+
+    ws4.mergeCells(2, 1, 2, jmlKol4)
+    const i4 = ws4.getCell(2, 1)
+    i4.value = `Site: ${siteFilter && siteFilter !== 'ALL' ? siteFilter : 'Semua Site'}   •   Periode: ${bulanNama[bulan - 1]} ${tahun}   •   Kompensasi cuti = input manual HR   •   Dicetak: ${new Date().toLocaleString('id-ID')}`
+    i4.font = { size: 9, color: { argb: 'FF475569' } }
+    ws4.getRow(2).height = 16
+
+    // grup header
+    const grup4: Array<[number, number, string, string]> = [
+      [1, 5, 'KARYAWAN', NAVY],
+      [6, 7, 'KEHADIRAN', 'FF0369A1'],
+      [8, 9, 'LEMBUR', ORANGE],
+      [10, 11, 'CUTI', BIRU_CUTI],
+      [12, 13, 'KOMPENSASI CUTI', HIJAU],
+    ]
+    for (const [k1, k2, label, warna] of grup4) {
+      if (k2 > k1) ws4.mergeCells(3, k1, 3, k2)
+      const sel = ws4.getCell(3, k1)
+      sel.value = label
+      sel.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
+      sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: warna } }
+      sel.alignment = { horizontal: 'center', vertical: 'middle' }
+      sel.border = tipis
+    }
+    ws4.getRow(3).height = 18
+
+    header4.forEach((h, i) => {
+      const sel = ws4.getCell(4, i + 1)
+      sel.value = h
+      sel.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
+      sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY2 } }
+      sel.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+      sel.border = tipis
+    })
+    ws4.getRow(4).height = 30
+    ws4.getRow(4).commit?.()
+
+    // helper tanggal: "03 Mei"
+    const sd = (d: number) => String(d).padStart(2, '0')
+    const tglRingkas = (tglStr2: string) => {
+      const d = Number(String(tglStr2).slice(8, 10))
+      return `${sd(d)} ${bulanNama[bulan - 1].slice(0, 3)}`
+    }
+
+    // lembur disetujui per karyawan
+    const lemburPerOrang = new Map<string, Array<{ tanggal: string; jenis: string }>>()
+    for (const l of lemburRows) {
+      const fin = String(l.status_final || '').toUpperCase()
+      const ata = String(l.status_atasan || '').toUpperCase()
+      const pjo = String(l.status_pjo || '').toUpperCase()
+      const disetujui = (fin.includes('APPROVED') || fin.includes('DISETUJUI')) ||
+        (ata === 'APPROVED' && pjo === 'APPROVED') || ata === 'APPROVED'
+      if (!disetujui) continue
+      const k = String(l.nrp)
+      if (!lemburPerOrang.has(k)) lemburPerOrang.set(k, [])
+      lemburPerOrang.get(k)!.push({
+        tanggal: String(l.tanggal).slice(0, 10),
+        jenis: String(l.jenis_lembur || 'BIASA').toUpperCase(),
+      })
+    }
+    lemburPerOrang.forEach((arr) => arr.sort((x, y) => x.tanggal.localeCompare(y.tanggal)))
+
+    // cuti disetujui per karyawan (dalam periode)
+    const cutiPerOrang = new Map<string, Array<{ tanggal: string; jenis: string }>>()
+    for (const lr of leaves) {
+      const fin = String(lr.status_final || '').toUpperCase()
+      const sudahFinal = fin.includes('DISETUJUI') || fin.includes('APPROVED')
+      if (!sudahFinal) continue
+      const k = String(lr.nrp)
+      const jenis = String(lr.jenis_cuti || 'CUTI').toUpperCase()
+      const st = new Date(`${String(lr.tanggal_mulai).slice(0, 10)}T00:00:00`)
+      const en = new Date(`${String(lr.tanggal_selesai).slice(0, 10)}T00:00:00`)
+      for (let d = new Date(st); d <= en; d.setDate(d.getDate() + 1)) {
+        const t = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        if (t < awal || t > akhirData) continue
+        if (!cutiPerOrang.has(k)) cutiPerOrang.set(k, [])
+        cutiPerOrang.get(k)!.push({ tanggal: t, jenis })
+      }
+    }
+    cutiPerOrang.forEach((arr) => arr.sort((x, y) => x.tanggal.localeCompare(y.tanggal)))
+
+    let r4 = 5
+    barisMatriks.forEach((b, idx) => {
+      const c = hitung[b.nrp]
+      // tanggal hadir
+      const tglHadir: string[] = []
+      const tglCuti: string[] = []
+      for (let d = 0; d < jmlHari; d++) {
+        const kode = b.kode[d] || ''
+        if (['DS', 'NS', 'DW', 'NW', 'SCK', 'MCK'].includes(kode)) tglHadir.push(sd(d + 1))
+        if (['CT', 'CR'].includes(kode)) tglCuti.push(`${sd(d + 1)} (${kode})`)
+      }
+      const lemburArr = lemburPerOrang.get(String(b.nrp)) || []
+      const lemburTeks = lemburArr
+        .map((l) => `${tglRingkas(l.tanggal)} — ${l.jenis.replace(/_/g, ' ')}`)
+        .join('; ')
+      const cutiArr = cutiPerOrang.get(String(b.nrp)) || []
+      const cutiTeks = cutiArr
+        .map((l) => `${tglRingkas(l.tanggal)} — ${l.jenis.replace(/_/g, ' ')}`)
+        .join('; ')
+      const komp = kompMap.get(String(b.nrp))
+
+      const row = ws4.getRow(r4)
+      row.values = [
+        idx + 1,
+        b.nrp,
+        b.nama,
+        b.jabatan,
+        b.site,
+        c.HDR,
+        tglHadir.join(', '),
+        lemburArr.length,
+        lemburTeks,
+        c.CT + c.CR,
+        cutiTeks || tglCuti.join(', '),
+        komp?.hari || 0,
+        komp?.keterangan || '',
+      ]
+      row.eachCell((sel) => {
+        sel.border = tipis
+        sel.font = { size: 9 }
+        sel.alignment = { vertical: 'top', wrapText: true, horizontal: 'left' }
+      })
+      row.getCell(1).alignment = { horizontal: 'center', vertical: 'top' }
+      row.getCell(2).alignment = { horizontal: 'center', vertical: 'top' }
+      row.getCell(3).font = { size: 9, bold: true }
+      ;[6, 8, 10, 12].forEach((k) => {
+        row.getCell(k).alignment = { horizontal: 'center', vertical: 'top' }
+        row.getCell(k).font = { size: 10, bold: true }
+      })
+      // warna
+      row.getCell(8).font = { size: 10, bold: true, color: { argb: lemburArr.length ? 'FFB45309' : 'FF94A3B8' } }
+      row.getCell(10).font = { size: 10, bold: true, color: { argb: (c.CT + c.CR) ? 'FF9A3412' : 'FF94A3B8' } }
+      const selKomp = row.getCell(12)
+      selKomp.font = { size: 10, bold: true, color: { argb: (komp?.hari || 0) ? 'FF0F766E' : 'FF94A3B8' } }
+      if ((komp?.hari || 0) > 0) {
+        selKomp.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCFBF1' } }
+      }
+      if (idx % 2 === 1) {
+        ;[1, 2, 3, 4, 5, 7, 9, 11, 13].forEach((k) => {
+          row.getCell(k).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }
+        })
+      }
+      r4++
+    })
+
+    // baris total sheet 4
+    const tot4 = ws4.getRow(r4)
+    tot4.values = [
+      '', '', `TOTAL ${barisMatriks.length} KARYAWAN`, '', '',
+      barisMatriks.reduce((a, b) => a + (hitung[b.nrp]?.HDR || 0), 0),
+      '',
+      Object.values(lemburKali).reduce((a, b) => a + b, 0),
+      '',
+      barisMatriks.reduce((a, b) => a + (hitung[b.nrp]?.CT || 0) + (hitung[b.nrp]?.CR || 0), 0),
+      '',
+      barisMatriks.reduce((a, b) => a + (hitung[b.nrp]?.KMPC || 0), 0),
+      '',
+    ]
+    tot4.eachCell((sel) => {
+      sel.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }
+      sel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY2 } }
+      sel.alignment = { horizontal: 'center', vertical: 'middle' }
+      sel.border = tipis
+    })
+
+    ;[5, 12, 26, 20, 10, 13, 26, 12, 42, 11, 40, 16, 30].forEach((w, i) => (ws4.getColumn(i + 1).width = w))
+    ws4.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4, column: jmlKol4 } }
 
     // ══════════ keluaran ══════════
     const buffer = await wb.xlsx.writeBuffer()

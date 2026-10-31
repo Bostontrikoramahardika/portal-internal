@@ -520,6 +520,45 @@ export async function GET(req: NextRequest) {
     attMap[`${a.nrp}_${a.tanggal}`] = a
   })
 
+  // ═══════════════════════════════════════════════
+  // KOMPENSASI CUTI (input manual HR per bulan)
+  // ═══════════════════════════════════════════════
+  const kompMap: Record<string, { hari: number; keterangan: string | null; oleh: string | null }> = {}
+  try {
+    const { data: kompRows } = await supabaseAdmin
+      .from('kompensasi_cuti')
+      .select('nrp, jumlah_hari, keterangan, diubah_oleh')
+      .eq('periode', bulan)
+    ;(kompRows || []).forEach((k: any) => {
+      kompMap[String(k.nrp)] = {
+        hari: Number(k.jumlah_hari) || 0,
+        keterangan: k.keterangan || null,
+        oleh: k.diubah_oleh || null,
+      }
+    })
+  } catch { /* tabel belum dibuat → anggap 0 */ }
+
+  // Pengajuan CUTI KOMPENSASI yang belum final → ditandai kecil di tabel
+  const kompMenungguMap: Record<string, number> = {}
+  try {
+    const { data: kompLeaves } = await supabaseAdmin
+      .from('leave_requests')
+      .select('nrp, tanggal_mulai, tanggal_selesai, jenis_cuti, status_final')
+      .in('nrp', nrpList)
+      .lte('tanggal_mulai', endDate)
+      .gte('tanggal_selesai', startDate)
+    ;(kompLeaves || []).forEach((lr: any) => {
+      if (!String(lr.jenis_cuti || '').toUpperCase().includes('KOMPENSASI')) return
+      const fin = String(lr.status_final || '').toUpperCase()
+      if (fin.includes('DISETUJUI') || fin.includes('APPROVED')) return
+      const st = new Date(`${lr.tanggal_mulai}T00:00:00`)
+      const en = new Date(`${lr.tanggal_selesai}T00:00:00`)
+      const hari = Math.max(1, Math.round((en.getTime() - st.getTime()) / 86400000) + 1)
+      const k = String(lr.nrp)
+      kompMenungguMap[k] = (kompMenungguMap[k] || 0) + hari
+    })
+  } catch { /* abaikan */ }
+
   const rows = employeesOk.map((emp: any) => {
     const days: any[] = []
     let hariKerja = 0, hariHadir = 0, shiftS = 0, shiftM = 0
@@ -613,6 +652,10 @@ export async function GET(req: NextRequest) {
         lembur_menunggu: lemburMenunggu.length,
         jam_lembur: totalJam(lemburList),
         jam_lembur_menunggu: totalJam(lemburMenunggu),
+        kompensasi_cuti: kompMap[String(emp.nrp)]?.hari || 0,
+        kompensasi_keterangan: kompMap[String(emp.nrp)]?.keterangan || null,
+        kompensasi_oleh: kompMap[String(emp.nrp)]?.oleh || null,
+        kompensasi_menunggu: kompMenungguMap[String(emp.nrp)] || 0,
         persen
       }
     }

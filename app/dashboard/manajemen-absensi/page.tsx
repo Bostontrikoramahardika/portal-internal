@@ -5,6 +5,8 @@ import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 
 import StatBanner from '@/app/components/std/StatBanner'
+import HeroBanner from '@/app/components/ui/HeroBanner'
+import Toolbar, { FilterBox, ToolBtn } from '@/app/components/ui/Toolbar'
 import KirimRekapPanel from '@/app/dashboard/kirim-rekap/page'
 import LemburPanel from './LemburPanel'
 import LemburKaryawan from './LemburKaryawan'
@@ -32,6 +34,11 @@ interface Row {
     shiftS: number; shiftM: number
     off: number; cuti: number; sakit: number; izin: number
     alpha: number; stb: number; persen: number
+    // ── Kompensasi cuti (input manual HR) ──
+    kompensasi_cuti?: number
+    kompensasi_keterangan?: string | null
+    kompensasi_oleh?: string | null
+    kompensasi_menunggu?: number
   }
 }
 interface Group { departemen: string; rows: Row[] }
@@ -218,6 +225,12 @@ export default function ManajemenAbsensiPage() {
   const [resignRow, setResignRow] = useState<Row | null>(null)
   // ⭐ CHAT 26: Popup detail cell (klik quick view)
   const [detailCell, setDetailCell] = useState<{ row: Row, day: Day } | null>(null)
+  // ── Kompensasi cuti (input manual HR) ──
+  const [kompRow,  setKompRow]  = useState<Row | null>(null)
+  const [kompHari, setKompHari] = useState<string>('0')
+  const [kompKet,  setKompKet]  = useState<string>('')
+  const [kompSimpan, setKompSimpan] = useState(false)
+  const [kompErr,  setKompErr]  = useState<string>('')
 
   // Export state
   const [exporting, setExporting] = useState<'matrix' | 'detail' | null>(null)
@@ -333,22 +346,95 @@ export default function ManajemenAbsensiPage() {
 
   useEffect(() => { fetchMatrix() }, [bulan, site, departemen, nama])
 
+  // ── Buka modal kompensasi cuti ──
+  function bukaKompensasi(row: Row) {
+    setKompRow(row)
+    setKompHari(String(Number(row.summary?.kompensasi_cuti || 0)))
+    setKompKet(String(row.summary?.kompensasi_keterangan || ''))
+    setKompErr('')
+  }
+
+  // ── Simpan kompensasi cuti (manual HR) ──
+  async function simpanKompensasi() {
+    if (!kompRow) return
+    const nilai = Number(kompHari.replace(',', '.'))
+    if (!Number.isFinite(nilai) || nilai < 0 || nilai > 31) {
+      setKompErr('Isi 0 – 31 hari (boleh 0,5 untuk setengah hari)')
+      return
+    }
+    setKompSimpan(true)
+    setKompErr('')
+    try {
+      const token = localStorage.getItem('btm_session_token_v1') || ''
+      const res = await fetch('/api/attendance/kompensasi-cuti', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          nrp: kompRow.nrp,
+          periode: bulan,
+          jumlah_hari: nilai,
+          keterangan: kompKet,
+        }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok || !j.ok) {
+        setKompErr(j.error || 'Gagal menyimpan')
+        return
+      }
+      setKompRow(null)
+      fetchMatrix()
+    } catch {
+      setKompErr('Koneksi gagal')
+    } finally {
+      setKompSimpan(false)
+    }
+  }
+
   const namaBulan = new Date(bulan + '-01').toLocaleDateString('id-ID', {
     month: 'long', year: 'numeric'
   })
+  const bulanSekarang = (() => {
+    const n = new Date()
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`
+  })()
 
   const totalKaryawan = groups.reduce((acc, g) => acc + g.rows.length, 0)
 
+  const TAB_UTAMA = [
+    { id: 'matriks', label: 'Matriks' },
+    { id: 'lembur', label: 'Lembur' },
+    { id: 'kirim', label: 'Kirim Rekap' },
+  ]
+
+  // angka ringkas untuk banner (dari data nyata)
+  const stat = useMemo(() => {
+    const hariIni = new Date()
+    const bulanIni = `${hariIni.getFullYear()}-${String(hariIni.getMonth() + 1).padStart(2, '0')}`
+    const idxHariIni = bulan === bulanIni ? hariIni.getDate() - 1 : -1
+
+    let total = 0, hadir = 0, alfa = 0, cuti = 0, lembur = 0
+    for (const g of groups) {
+      for (const r of g.rows) {
+        total++
+        if (idxHariIni >= 0) {
+          const d = r.days[idxHariIni]
+          if (d && (d.code === 'DS' || d.code === 'NS')) hadir++
+        }
+        for (const d of r.days) {
+          if (d.code === 'A') alfa++
+          else if (d.code === 'CT' || d.code === 'CR' || d.code === 'SCK' || d.code === 'MCK') cuti++
+        }
+        lembur += Number((r as any).lembur_jam || (r as any).total_lembur || 0)
+      }
+    }
+    return { total, hadir, alfa, cuti, lembur }
+  }, [groups, bulan])
+
   const BilahTab = () => (
-    <div className="flex gap-1.5 p-1 mb-3 rounded-2xl bg-slate-100 border border-slate-200">
-      {([['matriks', 'Matriks'], ['lembur', 'Lembur'], ['kirim', 'Kirim Rekap']] as const).map(([id, l]) => (
-        <button key={id} type="button" onClick={() => setTabUtama(id)}
-          className={'flex-1 px-3 py-2 rounded-xl text-[12px] font-black uppercase tracking-wide transition-all active:scale-95 ' +
-            (tabUtama === id ? 'bg-[#003d79] text-white shadow' : 'text-slate-500')}>
-          {l}
-        </button>
-      ))}
-    </div>
+    <Toolbar tabs={TAB_UTAMA} activeTab={tabUtama} onTab={(id) => setTabUtama(id as any)} />
   )
 
   if (tabUtama === 'lembur') {
@@ -385,124 +471,87 @@ export default function ManajemenAbsensiPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/>
           </svg> Kembali
         </button>
-        <StatBanner eyebrow="HR" title="Manajemen Absensi" subtitle="Matrix Kehadiran Bulanan" />
+        <HeroBanner eyebrow="HR" judul="Manajemen Absensi" sub="Matrix Kehadiran Bulanan" />
       </div>
 
       <div className="px-4 space-y-4 relative z-10">
 
-        {/* ── FILTER ── */}
-        <div className="bg-white rounded-[2rem] shadow-xl p-5 space-y-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e]">🔍 Filter</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">📅 Bulan</label>
-              <input type="month" value={bulan} onChange={e => setBulan(e.target.value)}
-                className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-[#003D79]/30"/>
-            </div>
-            <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">🏗️ Site</label>
-              <select value={site} onChange={e => setSite(e.target.value)}
-                className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-[#003D79]/30">
-                <option value="">Semua Site</option>
-                {siteList.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">🏷️ Golongan</label>
-              <select value={departemen} onChange={e => setDepartemen(e.target.value)}
-                className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-[#003D79]/30">
-                <option value="">Semua</option>
-                <option value="Staff">Staff</option>
-                <option value="Plant">Plant</option>
-                <option value="Operator">Operator</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] block mb-1">👤 Nama</label>
-              <div className="relative">
-                <input type="text" placeholder="Cari nama..."
-                  value={namaInput} onChange={e => setNamaInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && setNama(namaInput)}
-                  className="w-full border border-slate-200 rounded-[1.2rem] px-3 py-2.5 text-sm bg-slate-50 focus:ring-2 focus:ring-[#003D79]/30 pr-8"/>
-                {namaInput && (
-                  <button onClick={() => { setNamaInput(''); setNama('') }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5a6a7e] text-sm">✕</button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* ══ HEADER: banner biru + tab + filter + aksi (satu blok ringkas) ══ */}
+        <HeroBanner
+          eyebrow="Manajemen Absensi"
+          judul={`Matriks Absensi — ${namaBulan}`}
+          sub={`${totalKaryawan} karyawan · ${site || 'Semua Site'} · ${bulan === bulanSekarang ? `data s.d. ${new Date().getDate()} ${namaBulan.split(' ')[0]}` : 'satu bulan penuh'}`}
+          refreshing={loading}
+          onRefresh={fetchMatrix}
+          stats={[
+            { label: 'Hadir hari ini', value: stat.hadir, tone: 'green' },
+            { label: 'Alfa', value: stat.alfa, tone: 'red' },
+            { label: 'Cuti/Izin', value: stat.cuti, tone: 'amber' },
+            { label: 'Lembur j', value: stat.lembur ? stat.lembur.toFixed(1) : 0, tone: 'violet' },
+            { label: 'Staff', value: stat.total, tone: 'sky' },
+          ]}
+        />
 
-        {/* ── EXPORT BUTTONS ── */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={handleExportMatrix}
-            disabled={exporting !== null || groups.length === 0}
-            className="bg-emerald-600 text-white rounded-[1.5rem] shadow-xl py-4 px-4 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-all">
-            {exporting === 'matrix' ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                <span className="text-xs font-black">Export...</span>
-              </>
-            ) : (
-              <>
-                <span className="text-xl">📊</span>
-                <div className="text-left">
-                  <p className="text-xs font-black leading-tight">Excel Matrix</p>
-                  <p className="text-[9px] opacity-80">Grid tanggal 1-31</p>
-                </div>
-              </>
+        <Toolbar
+          tabs={TAB_UTAMA}
+          activeTab={tabUtama}
+          onTab={(id: string) => setTabUtama(id as any)}
+          onReset={() => {
+            setBulan(getMonthNow()); setSite(''); setDepartemen(''); setNama(''); setNamaInput('')
+          }}
+          actions={<>
+            <ToolBtn tone="teal" onClick={handleExportMatrix}
+              disabled={exporting !== null || groups.length === 0}>
+              {exporting === 'matrix' ? '⏳ Export…' : '⤓ Excel Matriks'}
+            </ToolBtn>
+            <ToolBtn tone="navy" onClick={handleExportDetail}
+              disabled={exporting !== null || groups.length === 0}>
+              {exporting === 'detail' ? '⏳ Export…' : '⤓ Excel Detail'}
+            </ToolBtn>
+            {canEdit && (
+              <label className="inline-flex h-6 cursor-pointer items-center gap-1 rounded border border-[#F3D19B] bg-[#FFF8EC] px-2 text-[10px] font-extrabold text-[#8A5300] transition-colors hover:bg-[#FFF1DA] active:scale-95">
+                {importing ? '⏳ Memproses…' : '⤒ Import Koreksi'}
+                <input type="file" accept=".xlsx,.xls" className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) importExcel(f, false)
+                    e.currentTarget.value = ''
+                  }} />
+              </label>
             )}
-          </button>
-
-          <button
-            onClick={handleExportDetail}
-            disabled={exporting !== null || groups.length === 0}
-            className="bg-[#003D79] text-white rounded-[1.5rem] shadow-xl py-4 px-4 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-all">
-            {exporting === 'detail' ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                <span className="text-xs font-black">Export...</span>
-              </>
-            ) : (
-              <>
-                <span className="text-xl">📋</span>
-                <div className="text-left">
-                  <p className="text-xs font-black leading-tight">Excel Detail</p>
-                  <p className="text-[9px] opacity-80">List per hari</p>
-                </div>
-              </>
-            )}
-          </button>
-
-          {canEdit && (
-            <label className="col-span-2 cursor-pointer bg-amber-500 text-white rounded-[1.5rem] shadow-xl py-3 px-4 flex items-center justify-center gap-2 active:scale-95 transition-all">
-              <span className="text-xl">📥</span>
-              <div className="text-left">
-                <p className="text-xs font-black leading-tight">
-                  {importing ? 'Memproses…' : 'Import Koreksi Excel'}
-                </p>
-                <p className="text-[9px] opacity-90">
-                  {importing ? 'Mohon tunggu, jangan tutup halaman' : 'Unggah balik file Excel Matrix yang sudah diedit'}
-                </p>
-              </div>
-              <input type="file" accept=".xlsx,.xls" className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0]
-                  if (f) importExcel(f, false)
-                  e.currentTarget.value = ''
-                }} />
-            </label>
-          )}
-        </div>
+          </>}
+        >
+          <FilterBox label="Bulan">
+            <input type="month" value={bulan} onChange={e => setBulan(e.target.value)}
+              className="border-0 bg-transparent text-[10px] font-bold text-slate-700 outline-none" />
+          </FilterBox>
+          <FilterBox label="Site">
+            <select value={site} onChange={e => setSite(e.target.value)}
+              className="border-0 bg-transparent text-[10px] font-bold text-slate-700 outline-none">
+              <option value="">Semua Site</option>
+              {siteList.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </FilterBox>
+          <FilterBox label="Gol.">
+            <select value={departemen} onChange={e => setDepartemen(e.target.value)}
+              className="border-0 bg-transparent text-[10px] font-bold text-slate-700 outline-none">
+              <option value="">Semua</option>
+              <option value="Staff">Staff</option>
+              <option value="Plant">Plant</option>
+              <option value="Operator">Operator</option>
+            </select>
+          </FilterBox>
+          <FilterBox label="Nama" className="min-w-[152px]">
+            <input type="text" placeholder="cari nama / NRP…" value={namaInput}
+              onChange={e => setNamaInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && setNama(namaInput)}
+              className="w-full border-0 bg-transparent text-[10px] font-bold text-slate-700 outline-none placeholder:font-semibold placeholder:text-slate-400" />
+            {namaInput ? (
+              <button type="button" onClick={() => { setNamaInput(''); setNama('') }}
+                className="text-[9px] text-slate-400">✕</button>
+            ) : null}
+          </FilterBox>
+        </Toolbar>
 
         {/* HASIL IMPORT */}
         {hasilImport && (
@@ -591,26 +640,22 @@ export default function ManajemenAbsensiPage() {
           </div>
         )}
 
-        {/* ── LEGENDA ── */}
-        <div className="bg-white rounded-[1.5rem] shadow-xl p-4">
-          <p className="text-[9px] font-black uppercase tracking-widest text-[#5a6a7e] mb-2">Legenda Kode</p>
-          <div className="grid grid-cols-4 gap-1.5 text-[10px]">
-            {Object.entries(CELL_STYLE).filter(([k]) => k !== '-').map(([code, s]) => (
-              <div key={code} className="flex items-center gap-1">
-                <div className={`w-6 h-5 ${s.bg} ${s.text} rounded flex items-center justify-center font-black text-[9px]`}>
-                  {code}
-                </div>
-                <span className="text-slate-600 truncate text-[9px]">{s.label}</span>
-              </div>
-            ))}
-            {/* ⭐ CHAT 26: Tambah legenda TERLAMBAT */}
-            <div className="flex items-center gap-1">
-              <div className="w-6 h-5 bg-yellow-300 text-yellow-900 rounded flex items-center justify-center font-black text-[9px]">
-                DS
-              </div>
-              <span className="text-slate-600 truncate text-[9px]">Terlambat</span>
-            </div>
-          </div>
+        {/* ── LEGENDA ringkas (satu baris, bisa digeser) ── */}
+        <div className="flex items-center gap-1 overflow-x-auto rounded-lg border border-slate-200 bg-white px-2 py-1">
+          <span className="mr-1 shrink-0 text-[8px] font-black uppercase tracking-widest text-slate-400">Legenda</span>
+          {Object.entries(CELL_STYLE).filter(([k]) => k !== '-').map(([code, st]) => (
+            <span key={code}
+              className="inline-flex h-[15px] shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-white pl-0.5 pr-1.5 text-[8.5px] font-bold text-slate-600">
+              <span className={`inline-flex items-center justify-center rounded-[2px] font-black ${st.bg} ${st.text}`}
+                style={{ width: 17, height: 11, fontSize: 7 }}>{code}</span>
+              {st.label}
+            </span>
+          ))}
+          <span className="inline-flex h-[15px] shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-white pl-0.5 pr-1.5 text-[8.5px] font-bold text-slate-600">
+            <span className="inline-flex items-center justify-center rounded-[2px] bg-yellow-300 font-black text-yellow-900"
+              style={{ width: 17, height: 11, fontSize: 7 }}>DS</span>
+            Terlambat
+          </span>
         </div>
 
         {/* ── ERROR ── */}
@@ -620,11 +665,17 @@ export default function ManajemenAbsensiPage() {
           </div>
         )}
 
-        {/* ── LOADING ── */}
+        {/* ── LOADING: skeleton (bukan spinner) ── */}
         {loading && (
-          <div className="bg-white rounded-[2rem] shadow-xl p-12 text-center">
-            <div className="text-4xl animate-pulse">⏳</div>
-            <p className="text-slate-500 font-bold mt-3">Loading matrix...</p>
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <div className="h-7 animate-pulse bg-slate-200/80" />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2 border-b border-slate-100 px-3 py-2">
+                <div className="h-2.5 w-24 animate-pulse rounded bg-slate-200" />
+                <div className="h-2.5 flex-1 animate-pulse rounded bg-slate-100" />
+                <div className="h-2.5 w-10 animate-pulse rounded bg-slate-100" />
+              </div>
+            ))}
           </div>
         )}
 
@@ -660,6 +711,7 @@ export default function ManajemenAbsensiPage() {
                     <th className="px-1 py-2 text-center min-w-[26px]">A</th>
                     <th className="px-1 py-2 text-center min-w-[32px]">Off</th>
                     <th className="px-1 py-2 text-center min-w-[36px]">Cuti</th>
+                    <th className="px-1 py-2 text-center min-w-[46px] bg-teal-700" title="Kompensasi cuti (hari) — input manual HR">Komp. Cuti</th>
                     <th className="px-1 py-2 text-center min-w-[52px] bg-amber-600" title="Total jam lembur yang sudah disetujui">Lembur</th>
                     <th className="px-1 py-2 text-center min-w-[44px]">Aksi</th>
                   </tr>
@@ -670,7 +722,7 @@ export default function ManajemenAbsensiPage() {
                     <Fragment key={group.departemen}>
                       {/* Group header */}
                       <tr key={`grp-${group.departemen}`} className="bg-slate-100 border-t-2 border-slate-200">
-                        <td colSpan={jmlHari + 12} className="px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-slate-600 sticky left-0">
+                        <td colSpan={jmlHari + 13} className="px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-slate-600 sticky left-0">
                           📋 {group.departemen} ({group.rows.length} orang)
                         </td>
                       </tr>
@@ -745,6 +797,36 @@ export default function ManajemenAbsensiPage() {
                           <td className="px-1 py-1.5 text-center text-red-700 font-bold">{row.summary.alpha || '-'}</td>
                           <td className="px-1 py-1.5 text-center text-slate-600 font-bold">{row.summary.off || '-'}</td>
                           <td className="px-1 py-1.5 text-center text-orange-700 font-bold">{row.summary.cuti || '-'}</td>
+                          <td className="px-1 py-1.5 text-center tabular-nums">
+                            {(() => {
+                              const hari = Number(row.summary?.kompensasi_cuti || 0)
+                              const tunggu = Number(row.summary?.kompensasi_menunggu || 0)
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => (canEdit ? bukaKompensasi(row) : undefined)}
+                                  title={
+                                    'Kompensasi cuti: ' + (hari || 0) + ' hari' +
+                                    (tunggu > 0 ? ' • ' + tunggu + ' hari pengajuan masih menunggu' : '') +
+                                    (row.summary?.kompensasi_keterangan ? ' • ' + row.summary.kompensasi_keterangan : '') +
+                                    (canEdit ? ' — klik untuk mengubah' : '')
+                                  }
+                                  className={
+                                    'w-full rounded px-1 py-0.5 font-black transition-colors ' +
+                                    (canEdit ? 'hover:ring-2 hover:ring-teal-600 cursor-pointer ' : 'cursor-default ') +
+                                    (hari > 0 ? 'bg-teal-100 text-teal-800' : 'text-slate-300')
+                                  }
+                                >
+                                  <div className="leading-tight">{hari > 0 ? hari : '-'}</div>
+                                  {tunggu > 0 && (
+                                    <div className="text-[8px] font-black leading-none text-amber-600" title="Pengajuan cuti kompensasi belum disetujui">
+                                      +{tunggu}
+                                    </div>
+                                  )}
+                                </button>
+                              )
+                            })()}
+                          </td>
                           <td className="px-1 py-1.5 text-center tabular-nums">
                             {(() => {
                               const jam = Number(row.summary?.jam_lembur || 0)
@@ -924,6 +1006,111 @@ export default function ManajemenAbsensiPage() {
                 </>
               )
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL KOMPENSASI CUTI (INPUT MANUAL HR) ═══ */}
+      {kompRow && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end lg:items-center justify-center p-0 lg:p-4"
+             onClick={() => setKompRow(null)}>
+          <div className="bg-white w-full lg:max-w-md rounded-t-[1.5rem] lg:rounded-[1.5rem] overflow-hidden"
+               onClick={e => e.stopPropagation()}>
+
+            <div className="bg-gradient-to-r from-[#092A5E] to-[#12428A] text-white px-4 py-3 flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-widest text-teal-200">Kompensasi Cuti</p>
+                <h2 className="text-sm font-black mt-0.5 truncate">{kompRow.nama}</h2>
+                <p className="text-[10px] text-blue-200">{kompRow.nrp} • {kompRow.jabatan} • {kompRow.site}</p>
+              </div>
+              <button onClick={() => setKompRow(null)}
+                className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center text-sm font-bold hover:bg-white/25 shrink-0">
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="rounded-lg bg-teal-50 border border-teal-200 px-3 py-2">
+                <p className="text-[10px] font-bold text-teal-800 leading-snug">
+                  Periode <strong>{namaBulan}</strong> — isi jumlah <strong>hari kompensasi cuti</strong> yang
+                  diberikan/potong untuk karyawan ini. Nilai ini ikut tercetak di file Excel rekap absensi.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                  Jumlah hari kompensasi
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={31}
+                    step={0.5}
+                    value={kompHari}
+                    onChange={(e) => setKompHari(e.target.value)}
+                    className="w-24 px-3 py-2 rounded-lg border-2 border-slate-200 focus:border-teal-500 outline-none text-sm font-black text-center tabular-nums"
+                  />
+                  <span className="text-xs font-bold text-slate-500">hari</span>
+                  <div className="flex gap-1 ml-auto">
+                    {['0', '0.5', '1', '2', '3'].map((v) => (
+                      <button key={v} type="button" onClick={() => setKompHari(v)}
+                        className={'px-2 py-1 rounded-md text-[10px] font-black border transition-colors ' +
+                          (String(kompHari) === v
+                            ? 'bg-teal-600 text-white border-teal-700'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50')}>
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                  Keterangan (opsional)
+                </label>
+                <input
+                  type="text"
+                  value={kompKet}
+                  onChange={(e) => setKompKet(e.target.value)}
+                  placeholder="contoh: kompensasi kerja hari libur 17 Agustus"
+                  className="w-full px-3 py-2 rounded-lg border-2 border-slate-200 focus:border-teal-500 outline-none text-xs font-semibold"
+                />
+              </div>
+
+              {Number(kompRow.summary?.kompensasi_menunggu || 0) > 0 && (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                  <p className="text-[10px] font-bold text-amber-800">
+                    ⏳ Ada <strong>{kompRow.summary?.kompensasi_menunggu} hari</strong> pengajuan CUTI KOMPENSASI
+                    yang belum disetujui di periode ini. Angkanya belum masuk hitungan.
+                  </p>
+                </div>
+              )}
+
+              {kompErr && (
+                <div className="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2">
+                  <p className="text-[10px] font-bold text-rose-700">⚠️ {kompErr}</p>
+                </div>
+              )}
+
+              {kompRow.summary?.kompensasi_oleh && (
+                <p className="text-[9px] text-slate-400 font-bold">
+                  Terakhir diubah: {kompRow.summary?.kompensasi_oleh}
+                </p>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setKompRow(null)}
+                  className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl text-xs font-black hover:bg-slate-200">
+                  Batal
+                </button>
+                <button onClick={simpanKompensasi} disabled={kompSimpan}
+                  className="flex-1 bg-teal-600 text-white py-2.5 rounded-xl text-xs font-black hover:bg-teal-700 disabled:opacity-60">
+                  {kompSimpan ? 'Menyimpan…' : '💾 Simpan'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
