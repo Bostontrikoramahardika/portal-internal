@@ -85,6 +85,15 @@ export function konversiCell(
     return { code: '', type: 'resigned' }
   }
 
+  // Tanggal yang BELUM TERJADI selalu menampilkan roster.
+  // Tidak boleh ada data attendance (sisa import/entri salah) yang menutupinya.
+  if (isFuture) {
+    if (['OFF', 'CR', 'CT', 'ID', 'SCK', 'MCK', 'TR', 'LV', 'S', 'M'].includes(roster)) {
+      return { code: roster, type: 'future' }
+    }
+    return { code: '-', type: 'future' }
+  }
+
   if (att) {
     const dariKet = String(att.keterangan || '').match(/\[MANUAL:(DS|NS|DW|NW|SCK|MCK|S|I|IR|A|OFF|CR|CT|ID|TR|LV)\]/i)
     if (dariKet) {
@@ -112,13 +121,6 @@ export function konversiCell(
   // Tercatat di TS Opt = masuk dan kerja → DS/NS (tidak wajib clock-in)
   if (tsOptKode) {
     return { code: tsOptKode, type: isFuture ? 'future' : 'actual' }
-  }
-
-  if (isFuture) {
-    if (['OFF', 'CR', 'CT', 'ID', 'SCK', 'MCK', 'TR', 'LV', 'S', 'M'].includes(roster)) {
-      return { code: roster, type: 'future' }
-    }
-    return { code: '-', type: 'future' }
   }
 
   if (['OFF', 'CR', 'CT', 'ID', 'SCK', 'MCK', 'TR', 'LV'].includes(roster)) {

@@ -191,7 +191,34 @@ export async function POST(req: NextRequest) {
         break
       }
     }
-    if (bulanFile && bulanFile !== bulanKey) {
+    // Kalau periode tidak terbaca dari isi file, coba dari NAMA file (mis. Rekap_Matrix_2026-10.xlsx)
+    if (!bulanFile) {
+      const namaFile = String((file as any).name || '')
+      const m1 = namaFile.match(/(20\d{2})[-_ ]?(0[1-9]|1[0-2])(?![0-9])/)
+      if (m1) bulanFile = `${m1[1]}-${m1[2]}`
+      if (!bulanFile) {
+        const naik = namaFile.toUpperCase()
+        for (let i = 0; i < NAMA_BULAN.length; i++) {
+          const m2 = naik.match(new RegExp(NAMA_BULAN[i] + '\\s*[-_]?\\s*(20\\d{2})'))
+          if (m2) { bulanFile = `${m2[1]}-${String(i + 1).padStart(2, '0')}`; break }
+        }
+      }
+    }
+
+    // Periode WAJIB diketahui. Kalau tidak, file tidak boleh diterapkan ke bulan
+    // yang kebetulan sedang dibuka — inilah yang dulu membuat file Oktober
+    // masuk ke bulan November.
+    if (!bulanFile) {
+      return NextResponse.json({
+        error:
+          'Periode file tidak terbaca, jadi import DIBATALKAN. ' +
+          'Pakai file hasil tombol "Excel Matrix" apa adanya (jangan di-rename), ' +
+          'atau pastikan judul di dalam file memuat nama bulan dan tahun.',
+        bulan_dipilih: bulanKey,
+      }, { status: 400 })
+    }
+
+    if (bulanFile !== bulanKey) {
       return NextResponse.json({
         error:
           `File ini untuk periode ${bulanFile}, sedangkan yang dipilih ${bulanKey}. ` +
@@ -343,6 +370,12 @@ export async function POST(req: NextRequest) {
         if (!target) { dilewati.push({ nrp: b.nrp, tanggal: `${bulanKey}-${String(hari).padStart(2, '0')}`, kode: kodeBaru, alasan: 'kode tidak dikenal' }); continue }
 
         const tanggal = `${bulanKey}-${String(hari).padStart(2, '0')}`
+        // Tanggal yang belum terjadi tidak punya absensi. Koreksi untuk tanggal
+        // masa depan selalu dilewati supaya roster tidak bisa ditimpa.
+        if (tanggal > todaySite) {
+          dilewati.push({ nrp: b.nrp, tanggal, kode: kodeBaru, alasan: 'tanggal belum terjadi (masa depan)' })
+          continue
+        }
         const att = petaAtt[b.nrp + '|' + tanggal]
         const kodeLama = kodeTampil(b.nrp, tanggal)
 
