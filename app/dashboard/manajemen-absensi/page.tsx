@@ -222,6 +222,11 @@ export default function ManajemenAbsensiPage() {
   const [hasilImport, setHasilImport] = useState<any>(null)
   const [importing, setImporting] = useState(false)
   const [editCell,  setEditCell]  = useState<{ row: Row, day: Day } | null>(null)
+  // ⭐ Perubahan yang dikumpulkan dulu, disimpan sekali di akhir
+  const [pending,   setPending]   = useState<any[]>([])
+  const [simpanMassal, setSimpanMassal] = useState(false)
+  const [hasilSimpan,  setHasilSimpan]  = useState<any>(null)
+  const [lihatPending, setLihatPending] = useState(false)
   const [resignRow, setResignRow] = useState<Row | null>(null)
   // ⭐ CHAT 26: Popup detail cell (klik quick view)
   const [detailCell, setDetailCell] = useState<{ row: Row, day: Day } | null>(null)
@@ -235,6 +240,50 @@ export default function ManajemenAbsensiPage() {
   // Export state
   const [exporting, setExporting] = useState<'matrix' | 'detail' | null>(null)
   const [tabUtama, setTabUtama] = useState<'matriks' | 'lembur' | 'kirim'>('matriks')
+
+  // kode yang BELUM disimpan (tampil menggantikan kode lama di tabel)
+  const pendingMap: Record<string, any> = {}
+  for (const p of pending) pendingMap[`${p.nrp}|${p.tanggal}`] = p
+
+  const tambahPending = (item: any) => {
+    setPending(prev => {
+      const sisa = prev.filter(x => !(x.nrp === item.nrp && x.tanggal === item.tanggal))
+      return [...sisa, item]
+    })
+    setHasilSimpan(null)
+    setEditCell(null)
+  }
+
+  const simpanSemua = async () => {
+    if (!pending.length) return
+    setSimpanMassal(true); setHasilSimpan(null)
+    try {
+      const token = localStorage.getItem('btm_session_token_v1') || ''
+      const res = await fetch('/api/attendance/matrix/edit-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ items: pending }),
+      })
+      const teks = await res.text()
+      let json: any = null
+      try { json = JSON.parse(teks) } catch { json = null }
+      if (!json) { setHasilSimpan({ ok: false, error: `Balasan bukan JSON (HTTP ${res.status}): ${teks.slice(0, 160)}` }); return }
+      if (!json.ok) { setHasilSimpan({ ok: false, error: json.error || 'Gagal simpan' }); return }
+      setHasilSimpan(json)
+      if (json.jumlah_gagal === 0) {
+        setPending([])
+        setLihatPending(false)
+        fetchMatrix()
+      } else {
+        // buang yang sudah berhasil, sisakan yang gagal
+        const gagalKeys = new Set((json.gagal || []).map((g: any) => `${g.nrp}|${g.tanggal}`))
+        setPending(prev => prev.filter(x => gagalKeys.has(`${x.nrp}|${x.tanggal}`)))
+        fetchMatrix()
+      }
+    } catch (e: any) {
+      setHasilSimpan({ ok: false, error: e?.message || 'Koneksi gagal' })
+    } finally { setSimpanMassal(false) }
+  }
 
   // Handler Export Matrix (grid tanggal 1-31)
   const handleExportMatrix = async () => {
@@ -857,8 +906,11 @@ export default function ManajemenAbsensiPage() {
                           {row.days.map(d => {
                             // ⭐ CHAT 26: Logic warna baru
                             const s = CELL_STYLE[d.code] || CELL_STYLE['-']
-                            const isDS = d.code === 'DS'
-                            const isNS = d.code === 'NS'
+                            const pend = pendingMap[`${row.nrp}|${d.tanggal}`]
+                            const kodeView = pend ? (pend.kode || '') : d.code
+                            const isPend = !!pend
+                            const isDS = kodeView === 'DS'
+                            const isNS = kodeView === 'NS'
                             const isHadir = isDS || isNS
                             const isTerlambat = isHadir && (d.terlambat_menit || 0) > 0
 
@@ -875,8 +927,10 @@ export default function ManajemenAbsensiPage() {
                               }
                             }
 
-                            const displayCode = d.code === '-' ? '' : d.code
-                            const tooltipText = isTerlambat 
+                            const displayCode = kodeView === '-' ? '' : kodeView
+                            const tooltipText = isPend
+                              ? `${fmtDate(d.tanggal)} — belum disimpan, akan menjadi ${kodeView || '(kosong)'}`
+                              : isTerlambat 
                               ? `${fmtDate(d.tanggal)} — ⚠️ Terlambat ${d.terlambat_menit}m`
                               : isHadir 
                                 ? `${fmtDate(d.tanggal)} — ✅ Tepat Waktu`
@@ -893,7 +947,7 @@ export default function ManajemenAbsensiPage() {
                                       setEditCell({ row, day: d })
                                     }
                                   }}
-                                  className={`w-full py-1 rounded ${cellBg} ${cellText} font-black text-[9px] cursor-pointer hover:ring-2 hover:ring-[#003D79] active:scale-95 transition-all`}
+                                  className={`w-full py-1 rounded ${cellBg} ${cellText} font-black text-[9px] cursor-pointer hover:ring-2 hover:ring-[#003D79] active:scale-95 transition-all ${isPend ? 'ring-2 ring-dashed ring-blue-500' : ''}`}
                                   title={tooltipText}
                                 >
                                   {displayCode}
@@ -1368,8 +1422,72 @@ export default function ManajemenAbsensiPage() {
           row={editCell.row}
           day={editCell.day}
           onClose={() => setEditCell(null)}
-          onSaved={() => { setEditCell(null); fetchMatrix() }}
+          onQueue={tambahPending}
+          sudahAda={!!pendingMap[`${editCell.row.nrp}|${editCell.day.tanggal}`]}
         />
+      )}
+
+      {/* ═══ PANEL PERUBAHAN BELUM DISIMPAN ═══ */}
+      {canEdit && pending.length > 0 && (
+        <div className="fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2 z-[55] w-[calc(100%-1.5rem)] max-w-2xl">
+          {lihatPending && (
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl mb-2 max-h-64 overflow-auto">
+              <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#5a6a7e]">
+                  Perubahan menunggu disimpan ({pending.length})
+                </p>
+                <button onClick={() => setLihatPending(false)} className="text-slate-400 font-black text-sm">✕</button>
+              </div>
+              <table className="w-full text-[11px]">
+                <tbody>
+                  {pending.map((p: any) => (
+                    <tr key={`${p.nrp}|${p.tanggal}`} className="border-b border-slate-50 last:border-0">
+                      <td className="px-3 py-1.5 font-bold text-slate-700">{p._nama || p.nrp}</td>
+                      <td className="px-2 py-1.5 text-slate-500 whitespace-nowrap">{fmtDate(p.tanggal)}</td>
+                      <td className="px-2 py-1.5 text-slate-400">{p._dari || '(kosong)'}</td>
+                      <td className="px-1 py-1.5 text-slate-400">→</td>
+                      <td className="px-2 py-1.5 font-black text-[#003D79]">{p.kode || '(kosong)'}</td>
+                      <td className="px-2 py-1.5 text-right">
+                        <button
+                          onClick={() => setPending(prev => prev.filter(x => !(x.nrp === p.nrp && x.tanggal === p.tanggal)))}
+                          className="text-rose-600 font-black text-[10px] hover:underline">
+                          hapus
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {hasilSimpan && !hasilSimpan.ok && (
+            <div className="bg-rose-50 border border-rose-300 text-rose-700 rounded-xl px-3 py-2 mb-2 text-[11px] font-bold">
+              ⚠️ {hasilSimpan.error}
+            </div>
+          )}
+          {hasilSimpan && hasilSimpan.ok && hasilSimpan.jumlah_gagal > 0 && (
+            <div className="bg-amber-50 border border-amber-300 text-amber-800 rounded-xl px-3 py-2 mb-2 text-[11px] font-bold">
+              {hasilSimpan.jumlah_ok} tersimpan · {hasilSimpan.jumlah_gagal} gagal — sisanya masih di daftar.
+            </div>
+          )}
+
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl px-3 py-2 flex items-center gap-2">
+            <button onClick={() => setLihatPending(v => !v)}
+              className="bg-slate-100 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-black whitespace-nowrap">
+              {lihatPending ? 'Sembunyikan' : 'Lihat'} ({pending.length})
+            </button>
+            <button
+              onClick={() => { setPending([]); setHasilSimpan(null); setLihatPending(false) }}
+              className="bg-rose-50 text-rose-600 px-3 py-2 rounded-xl text-[11px] font-black whitespace-nowrap">
+              Batalkan
+            </button>
+            <button onClick={simpanSemua} disabled={simpanMassal}
+              className="flex-1 bg-[#00A651] text-white py-2.5 rounded-xl text-sm font-black disabled:opacity-60">
+              {simpanMassal ? 'Menyimpan...' : `✅ Simpan Semua (${pending.length})`}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ═══ MODAL RESIGN ═══ */}
@@ -1387,7 +1505,7 @@ export default function ManajemenAbsensiPage() {
 // ═══════════════════════════════════════════════════════════
 // MODAL EDIT CELL
 // ═══════════════════════════════════════════════════════════
-function EditCellModal({ row, day, onClose, onSaved }: any) {
+function EditCellModal({ row, day, onClose, onQueue, sudahAda }: any) {
   const [rosterShift, setRosterShift] = useState(day.roster || '')
   const [kode,        setKode]        = useState(day.code && day.code !== '-' ? day.code : '')
   const [clockIn,     setClockIn]     = useState(day.clock_in ? String(day.clock_in).slice(11, 16) : '')
@@ -1404,48 +1522,23 @@ function EditCellModal({ row, day, onClose, onSaved }: any) {
     }).then(r => r.json()).then(d => { if (d.ok) setEviden(d.eviden || []) }).catch(() => {})
   }, [row.nrp, day.tanggal])
 
-  const handleSave = async () => {
-    setSaving(true); setError('')
-    try {
-      const token = localStorage.getItem('btm_session_token_v1') || ''
-      const ketAsli = String(keterangan || '').replace(/\[MANUAL:[A-Z]+\]\s*/gi, '').trim()
-      const payload: any = {
-        nrp: row.nrp,
-        tanggal: day.tanggal,
-        roster_shift: rosterShift || null,
-        status: kode || null,
-        keterangan: kode ? `[MANUAL:${kode}] ${ketAsli}`.trim() : ketAsli,
-      }
-      if (kode === 'NS' || kode === 'NW') payload.shift = 'MALAM'
-      else if (kode === 'DS' || kode === 'DW') payload.shift = 'SIANG'
-      if (clockIn)  payload.clock_in  = `${day.tanggal}T${clockIn}:00+08:00`
-      else payload.clock_in = null
-      if (clockOut) payload.clock_out = `${day.tanggal}T${clockOut}:00+08:00`
-      else payload.clock_out = null
-
-      const res = await fetch('/api/attendance/matrix/edit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify(payload)
-      })
-      const json = await res.json()
-      if (!json.ok) { setError(json.error || 'Gagal simpan'); return }
-
-      // verifikasi: kode yang tersimpan harus sama dengan yang dipilih
-      const ket = String(json?.updated?.terverifikasi?.keterangan || json?.updated?.attendance?.keterangan || '')
-      const sts = String(json?.updated?.terverifikasi?.status || json?.updated?.attendance?.status || '')
-      const kodeTersimpan = (ket.match(/\[MANUAL:([A-Z]+)\]/i)?.[1] || sts || '').toUpperCase()
-
-      if (kode && kodeTersimpan && kodeTersimpan !== kode.toUpperCase()) {
-        setError(`Tersimpan sebagai "${kodeTersimpan}", bukan "${kode}". Coba simpan ulang.`)
-        return
-      }
-      onSaved()
-    } catch { setError('Koneksi gagal') }
-    finally { setSaving(false) }
+  // Tidak ada jaringan di sini: perubahan cuma DICUMAHKAN dulu,
+  // supaya edit per hari terasa instan. Disimpan sekali di akhir.
+  const handleQueue = () => {
+    setError('')
+    const ketAsli = String(keterangan || '').replace(/\[MANUAL:[A-Z]+\]\s*/gi, '').trim()
+    const item: any = {
+      nrp: row.nrp,
+      tanggal: day.tanggal,
+      kode: kode || '',
+      roster_shift: rosterShift || null,
+      keterangan: ketAsli,
+      clock_in: clockIn ? `${day.tanggal}T${clockIn}:00+08:00` : null,
+      clock_out: clockOut ? `${day.tanggal}T${clockOut}:00+08:00` : null,
+      _nama: row.nama,
+      _dari: day.code === '-' ? '(kosong)' : day.code,
+    }
+    onQueue(item)
   }
 
   return (
@@ -1527,15 +1620,24 @@ function EditCellModal({ row, day, onClose, onSaved }: any) {
               className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50"/>
           </div>
 
+          {sudahAda && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-2.5 text-blue-800 text-[11px] font-bold">
+              ℹ️ Sel ini sudah ada di daftar perubahan. Menekan Tambahkan akan memperbaruinya.
+            </div>
+          )}
+
           <div className="flex gap-2 pt-2">
             <button onClick={onClose} className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl text-sm font-black">
               Batal
             </button>
-            <button onClick={handleSave} disabled={saving}
-              className="flex-1 bg-[#003D79] text-white py-2.5 rounded-xl text-sm font-black disabled:opacity-60">
-              {saving ? 'Simpan...' : '✅ Simpan'}
+            <button onClick={handleQueue}
+              className="flex-1 bg-[#003D79] text-white py-2.5 rounded-xl text-sm font-black">
+              ➕ Tambahkan
             </button>
           </div>
+          <p className="text-[10px] text-slate-500 text-center">
+            Semua perubahan disimpan sekaligus lewat tombol <span className="font-black">Simpan Semua</span> di bawah.
+          </p>
         </div>
       </div>
     </div>
