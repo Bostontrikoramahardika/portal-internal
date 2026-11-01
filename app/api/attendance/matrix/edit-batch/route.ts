@@ -106,27 +106,31 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      // 1) roster (kalau dikirim)
-      if (it.roster_shift !== undefined) {
+      // 1) roster (kalau dikirim DAN tidak kosong).
+      //    Kolom rosters.shift_code NOT NULL -> menulis null pasti gagal.
+      //    Gagal di roster TIDAK membatalkan koreksi absensi (hanya jadi peringatan).
+      const rosterBaru = it.roster_shift === undefined ? undefined : (String(it.roster_shift || '').trim() || undefined)
+      let peringatan: string | null = null
+      if (rosterBaru !== undefined) {
         const { data: rost } = await supabaseAdmin
           .from('rosters').select('id').eq('nrp', nrp).eq('tanggal', tanggal).limit(1)
         if (rost && rost.length) {
           const { error: eR } = await supabaseAdmin
-            .from('rosters').update({ shift_code: it.roster_shift })
+            .from('rosters').update({ shift_code: rosterBaru })
             .eq('nrp', nrp).eq('tanggal', tanggal)
-          if (eR) { hasil.push({ nrp, tanggal, ok: false, error: 'roster: ' + eR.message }); continue }
-        } else if (it.roster_shift) {
+          if (eR) peringatan = 'roster tidak diubah: ' + eR.message
+        } else if (rosterBaru) {
           const periode = new Date(tanggal).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase()
           const { error: eR } = await supabaseAdmin.from('rosters')
-            .insert({ nrp, tanggal, shift_code: it.roster_shift, periode })
-          if (eR) { hasil.push({ nrp, tanggal, ok: false, error: 'roster: ' + eR.message }); continue }
+            .insert({ nrp, tanggal, shift_code: rosterBaru, periode })
+          if (eR) peringatan = 'roster tidak dibuat: ' + eR.message
         }
       }
 
       // 2) attendance
       const kode = String(it.kode || '').toUpperCase().trim()
       if (!kode && it.clock_in === undefined && it.clock_out === undefined) {
-        hasil.push({ nrp, tanggal, ok: true, dilewati: true }); continue
+        hasil.push({ nrp, tanggal, ok: true, dilewati: true, peringatan }); continue
       }
 
       const target = PETA[kode]
@@ -183,7 +187,7 @@ export async function POST(req: NextRequest) {
 
       hasil.push(errTulis
         ? { nrp, tanggal, ok: false, error: errTulis }
-        : { nrp, tanggal, ok: true, kode })
+        : { nrp, tanggal, ok: true, kode, peringatan })
     } catch (e: any) {
       hasil.push({ nrp, tanggal, ok: false, error: e?.message || 'gagal' })
     }

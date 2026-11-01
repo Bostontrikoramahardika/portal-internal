@@ -1428,7 +1428,7 @@ export default function ManajemenAbsensiPage() {
       )}
 
       {/* ═══ PANEL PERUBAHAN BELUM DISIMPAN ═══ */}
-      {canEdit && pending.length > 0 && (
+      {canEdit && pending.length > 0 && !(editCell || detailCell || detailRow || resignRow || kompRow) && (
         <div className="fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2 z-[55] w-[calc(100%-1.5rem)] max-w-2xl">
           {lihatPending && (
             <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl mb-2 max-h-64 overflow-auto">
@@ -1467,8 +1467,13 @@ export default function ManajemenAbsensiPage() {
             </div>
           )}
           {hasilSimpan && hasilSimpan.ok && hasilSimpan.jumlah_gagal > 0 && (
-            <div className="bg-amber-50 border border-amber-300 text-amber-800 rounded-xl px-3 py-2 mb-2 text-[11px] font-bold">
-              {hasilSimpan.jumlah_ok} tersimpan · {hasilSimpan.jumlah_gagal} gagal — sisanya masih di daftar.
+            <div className="bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-3 py-2 mb-2 text-[11px] font-bold">
+              <p>{hasilSimpan.jumlah_ok} tersimpan · {hasilSimpan.jumlah_gagal} gagal — sisanya masih di daftar.</p>
+              <ul className="mt-1 space-y-0.5 font-semibold">
+                {(hasilSimpan.gagal || []).slice(0, 4).map((g: any, i: number) => (
+                  <li key={i}>• {g.nrp} · {g.tanggal} : {String(g.error || '').slice(0, 120)}</li>
+                ))}
+              </ul>
             </div>
           )}
 
