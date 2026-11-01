@@ -1300,6 +1300,14 @@ export default function ManajemenAbsensiPage() {
                 <p className="text-[9px] font-black uppercase tracking-widest text-blue-300">Detail Absensi</p>
                 <h2 className="text-xl font-black mt-1">{detailRow.nama}</h2>
                 <p className="text-blue-200 text-sm">{detailRow.nrp} • {detailRow.jabatan} • {detailRow.site}</p>
+                {(() => {
+                  const n = pending.filter((p: any) => p.nrp === detailRow.nrp).length
+                  return n > 0 ? (
+                    <p className="inline-block mt-1 bg-amber-300 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full">
+                      {n} sel belum disimpan (bertanda biru)
+                    </p>
+                  ) : null
+                })()}
               </div>
               <button onClick={() => setDetailRow(null)}
                 className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-xl font-bold hover:bg-white/20">
@@ -1359,9 +1367,11 @@ export default function ManajemenAbsensiPage() {
                 </thead>
                 <tbody>
                   {detailRow.days.map(d => {
-                    const s = CELL_STYLE[d.code] || CELL_STYLE['-']
+                    const pend = pendingMap[`${detailRow.nrp}|${d.tanggal}`]
+                    const kodeView = pend ? (pend.kode || '-') : d.code
+                    const s = CELL_STYLE[kodeView] || CELL_STYLE['-']
                     return (
-                      <tr key={d.tanggal} className="border-b border-slate-100">
+                      <tr key={d.tanggal} className={`border-b border-slate-100 ${pend ? 'bg-blue-50/60' : ''}`}>
                         <td className="p-2 font-bold">{d.day}</td>
                         <td className="p-2 text-center">
                           <span className="bg-slate-100 px-2 py-0.5 rounded font-bold text-[10px]">
@@ -1369,9 +1379,15 @@ export default function ManajemenAbsensiPage() {
                           </span>
                         </td>
                         <td className="p-2 text-center">
-                          <span className={`${s.bg} ${s.text} px-2 py-0.5 rounded font-black text-[10px]`}>
-                            {d.code}
+                          <span
+                            title={pend ? `Belum disimpan — akan menjadi ${kodeView}` : undefined}
+                            className={`${s.bg} ${s.text} px-2 py-0.5 rounded font-black text-[10px] ${pend ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}>
+                            {kodeView}
+                            {pend ? ' •' : ''}
                           </span>
+                          {pend && (
+                            <div className="text-[8px] font-black text-blue-600 uppercase mt-0.5">belum disimpan</div>
+                          )}
                         </td>
                         <td className="p-2 text-center text-emerald-700 font-mono">{fmtTime(d.clock_in)}</td>
                         <td className="p-2 text-center text-slate-700 font-mono">{fmtTime(d.clock_out)}</td>
@@ -1424,6 +1440,7 @@ export default function ManajemenAbsensiPage() {
           onClose={() => setEditCell(null)}
           onQueue={tambahPending}
           sudahAda={!!pendingMap[`${editCell.row.nrp}|${editCell.day.tanggal}`]}
+          pendingItem={pendingMap[`${editCell.row.nrp}|${editCell.day.tanggal}`] || null}
         />
       )}
 
@@ -1510,9 +1527,12 @@ export default function ManajemenAbsensiPage() {
 // ═══════════════════════════════════════════════════════════
 // MODAL EDIT CELL
 // ═══════════════════════════════════════════════════════════
-function EditCellModal({ row, day, onClose, onQueue, sudahAda }: any) {
-  const [rosterShift, setRosterShift] = useState(day.roster || '')
-  const [kode,        setKode]        = useState(day.code && day.code !== '-' ? day.code : '')
+function EditCellModal({ row, day, onClose, onQueue, sudahAda, pendingItem }: any) {
+  const awalan = pendingItem || null
+  const [rosterShift, setRosterShift] = useState(awalan ? (awalan.roster_shift || '') : (day.roster || ''))
+  const [kode,        setKode]        = useState(
+    awalan ? (awalan.kode || '') : (day.code && day.code !== '-' ? day.code : '')
+  )
   // Jam HARUS dibaca dengan zona waktu site (WITA), sama seperti tabel detail.
   // Dulu dipotong mentah dari string UTC -> tampil 8 jam lebih awal.
   const jamSite = (iso: any) => {
@@ -1523,8 +1543,12 @@ function EditCellModal({ row, day, onClose, onQueue, sudahAda }: any) {
       timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit', hour12: false,
     }).slice(0, 5)
   }
-  const [clockIn,     setClockIn]     = useState(jamSite(day.clock_in))
-  const [clockOut,    setClockOut]    = useState(jamSite(day.clock_out))
+  const [clockIn,     setClockIn]     = useState(
+    awalan && 'clock_in' in awalan ? jamSite(awalan.clock_in) : jamSite(day.clock_in)
+  )
+  const [clockOut,    setClockOut]    = useState(
+    awalan && 'clock_out' in awalan ? jamSite(awalan.clock_out) : jamSite(day.clock_out)
+  )
   const [keterangan,  setKeterangan]  = useState(String(day.keterangan || '').replace(/\[MANUAL:[A-Z]+\]\s*/gi, '').trim())
   const [saving,      setSaving]      = useState(false)
   const [error,       setError]       = useState('')

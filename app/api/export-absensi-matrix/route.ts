@@ -9,7 +9,7 @@ import { getSession } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
 import ExcelJS from 'exceljs'
 import {
-  konversiCell, isJabatanOperator, karyawanSampah, intiNrp, normNamaRapat,
+  konversiCell, jamSite, isJabatanOperator, karyawanSampah, intiNrp, normNamaRapat,
 } from '@/app/lib/absensi-kode'
 import { ambilSemua, ambilSemuaPerNrp } from '@/app/lib/supabase-paginate'
 
@@ -665,8 +665,8 @@ export async function GET(request: NextRequest) {
         const row = wd.addRow([
           noDetail++, b.nrp, b.nama, b.jabatan, b.site,
           tanggal, hariNama[new Date(tahun, bulan - 1, d + 1).getDay()], kode,
-          att?.clock_in ? new Date(att.clock_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '',
-          att?.clock_out ? new Date(att.clock_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '',
+          jamSite(att?.clock_in),
+          jamSite(att?.clock_out),
           att?.status || '', String(att?.keterangan || '').replace(/\[MANUAL:[A-Za-z]+\]\s*/gi, '').trim(),
           lemburPerHari.get(`${b.nrp}|${tanggal}`) || '',
         ])

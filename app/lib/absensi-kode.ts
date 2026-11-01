@@ -71,6 +71,36 @@ export type TipeCell = 'roster' | 'actual' | 'empty' | 'future' | 'resigned'
  *   6. ada jam masuk                 → DS/NS (operator: DW/NW)
  *   7. roster S/M tanpa absensi      → A
  */
+/**
+ * Jam masuk (WITA) menentukan SIANG atau MALAM.
+ *  - masuk >= 15.00 atau dini hari (<= 04.00)  -> MALAM
+ *  - masuk pagi/siang (05.00 - 14.59)          -> SIANG
+ * Kolom shift di database TIDAK dipakai lagi karena sering tidak cocok
+ * dengan jam masuk sebenarnya.
+ */
+export function isShiftMalam(clockIn: any, shiftCadangan: any = null): boolean {
+  const iso = String(clockIn || '')
+  const d = new Date(iso)
+  if (iso && !Number.isNaN(d.getTime())) {
+    const jam = Number(d.toLocaleTimeString('en-GB', {
+      timeZone: 'Asia/Makassar', hour: '2-digit', hour12: false,
+    }).slice(0, 2))
+    if (!Number.isNaN(jam)) return jam >= 15 || jam <= 4
+  }
+  const s = String(shiftCadangan || '').toUpperCase()
+  return s === 'MALAM' || s === 'NS' || s === 'M' || s === 'N'
+}
+
+/** Jam masuk dalam WITA, format HH:MM (dipakai Excel & detail). */
+export function jamSite(iso: any): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString('en-GB', {
+    timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).slice(0, 5)
+}
+
 export function konversiCell(
   rosterShift: string | null,
   att: any,
@@ -89,8 +119,7 @@ export function konversiCell(
   // Kode OFF/CR/CT/dll yang berasal dari roster atau sisa import lama TIDAK
   // boleh menutupi orang yang jelas-jelas clock-in.
   if (att?.clock_in) {
-    const shift = (att.shift || '').toUpperCase()
-    const malam = shift === 'MALAM' || shift === 'NS' || shift === 'M'
+    const malam = isShiftMalam(att.clock_in, att.shift)
     if (isOperator) return { code: malam ? 'NW' : 'DW', type: 'actual' }
     return { code: malam ? 'NS' : 'DS', type: 'actual' }
   }
