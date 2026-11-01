@@ -142,22 +142,23 @@ function rapikanGroups(groups: Group[]): Group[] {
 
 // ─── Konstanta ──────────────────────────────────────────────
 const CELL_STYLE: Record<string, { bg: string; text: string; label: string }> = {
-  'DS':  { bg: 'bg-sky-100',      text: 'text-sky-800',      label: 'Day Shift' },
-  'NS':  { bg: 'bg-violet-100',   text: 'text-violet-800',   label: 'Night Shift' },
-  'OFF': { bg: 'bg-slate-100', text: 'text-slate-600',        label: 'Off/Libur' },
-  'CR':  { bg: 'bg-yellow-200',   text: 'text-yellow-900',   label: 'Cuti Roster' },
-  'CT':  { bg: 'bg-orange-200',   text: 'text-orange-900',   label: 'Cuti Tahunan' },
-  'SCK': { bg: 'bg-emerald-200',  text: 'text-emerald-900',  label: 'Shift Cuti Kompensasi' },
-  'MCK': { bg: 'bg-emerald-300',  text: 'text-emerald-900',  label: 'Malam Cuti Kompensasi' },
-  'TR':  { bg: 'bg-blue-200',     text: 'text-blue-900',     label: 'Training' },
-  'ID':  { bg: 'bg-indigo-200',   text: 'text-indigo-900',   label: 'Induksi' },
-  'S':   { bg: 'bg-pink-200',     text: 'text-pink-900',     label: 'Sakit' },
-  'I':   { bg: 'bg-pink-100',     text: 'text-pink-800',     label: 'Izin Potongan' },
-  'IR':  { bg: 'bg-rose-100',     text: 'text-rose-800',     label: 'Izin Resmi' },
-  'A':   { bg: 'bg-red-400',      text: 'text-white',        label: 'Alfa' },
-  'DW':  { bg: 'bg-sky-50',       text: 'text-sky-800',      label: 'Day tanpa TS Opt' },
-  'NW':  { bg: 'bg-violet-50',    text: 'text-violet-800',  label: 'Night tanpa TS Opt' },
-  '-':   { bg: 'bg-white',        text: 'text-[#5a6a7e]',    label: 'Kosong' },
+  // ── Aturan warna sesuai contoh Excel ──
+  'DS':  { bg: 'bg-white border border-slate-300', text: 'text-slate-800', label: 'Day Shift' },
+  'NS':  { bg: 'bg-slate-400',   text: 'text-white',      label: 'Night Shift' },
+  'OFF': { bg: 'bg-slate-900',   text: 'text-white',      label: 'Off/Libur' },
+  'A':   { bg: 'bg-red-600',     text: 'text-white',      label: 'Alfa' },
+  'S':   { bg: 'bg-emerald-500', text: 'text-white',      label: 'Sakit' },
+  'CR':  { bg: 'bg-yellow-300',  text: 'text-yellow-900', label: 'Cuti Roster' },
+  'CT':  { bg: 'bg-orange-300',  text: 'text-orange-900', label: 'Cuti Tahunan' },
+  'I':   { bg: 'bg-teal-200',    text: 'text-teal-900',   label: 'Izin Potongan' },
+  'IR':  { bg: 'bg-teal-300',    text: 'text-teal-900',   label: 'Izin Resmi' },
+  'SCK': { bg: 'bg-emerald-200', text: 'text-emerald-900',label: 'Shift Cuti Kompensasi' },
+  'MCK': { bg: 'bg-emerald-300', text: 'text-emerald-900',label: 'Malam Cuti Kompensasi' },
+  'TR':  { bg: 'bg-blue-200',    text: 'text-blue-900',  label: 'Training' },
+  'ID':  { bg: 'bg-indigo-200',  text: 'text-indigo-900',label: 'Induksi' },
+  'DW':  { bg: 'bg-white border border-dashed border-slate-300', text: 'text-slate-700', label: 'Day tanpa TS Opt' },
+  'NW':  { bg: 'bg-slate-300',   text: 'text-slate-900', label: 'Night tanpa TS Opt' },
+  '-':   { bg: 'bg-white',       text: 'text-[#5a6a7e]',  label: 'Kosong' },
 }
 const ROSTER_OPTIONS = ['S','M','OFF','CR','CT','ID','TR','LV']
 const KODE_OPTIONS = [
@@ -911,21 +912,13 @@ export default function ManajemenAbsensiPage() {
                             const isPend = !!pend
                             const isDS = kodeView === 'DS'
                             const isNS = kodeView === 'NS'
-                            const isHadir = isDS || isNS
+                            const isHadir = isDS || isNS || kodeView === 'DW' || kodeView === 'NW' || kodeView === 'SCK' || kodeView === 'MCK'
                             const isTerlambat = isHadir && (d.terlambat_menit || 0) > 0
 
-                            // Warna: HADIR TEPAT WAKTU = polos, TERLAMBAT = kuning
-                            let cellBg = s.bg
-                            let cellText = s.text
-                            if (isHadir) {
-                              if (isTerlambat) {
-                                cellBg = 'bg-yellow-300'
-                                cellText = 'text-yellow-900'
-                              } else {
-                                cellBg = 'bg-white border border-slate-200'
-                                cellText = 'text-slate-600'
-                              }
-                            }
+                            // Warna mengikuti kode (aturan baru). Keterlambatan
+                            // ditandai titik kecil di atas kode, bukan ganti warna.
+                            const cellBg = s.bg
+                            const cellText = s.text
 
                             const displayCode = kodeView === '-' ? '' : kodeView
                             const tooltipText = isPend
@@ -947,9 +940,12 @@ export default function ManajemenAbsensiPage() {
                                       setEditCell({ row, day: d })
                                     }
                                   }}
-                                  className={`w-full py-1 rounded ${cellBg} ${cellText} font-black text-[9px] cursor-pointer hover:ring-2 hover:ring-[#003D79] active:scale-95 transition-all ${isPend ? 'ring-2 ring-dashed ring-blue-500' : ''}`}
+                                  className={`relative w-full py-1 rounded ${cellBg} ${cellText} font-black text-[9px] cursor-pointer hover:ring-2 hover:ring-[#003D79] active:scale-95 transition-all ${isPend ? 'ring-2 ring-dashed ring-blue-500' : ''}`}
                                   title={tooltipText}
                                 >
+                                  {isTerlambat && (
+                                    <span className="absolute -top-[3px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full bg-orange-500 ring-1 ring-white" />
+                                  )}
                                   {displayCode}
                                 </button>
                               </td>

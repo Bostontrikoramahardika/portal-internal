@@ -507,19 +507,30 @@ export async function GET(req: NextRequest) {
 
       if (isFuture || isAfterResign) continue
 
-      if (['S','M'].includes(roster || '')) hariKerja++
-      if (['DS','NS','DW','NW'].includes(cell.code)) hariHadir++
-      if (cell.code === 'DS' || cell.code === 'DW') shiftS++
-      if (cell.code === 'NS' || cell.code === 'NW') shiftM++
-      if (cell.code === 'OFF') off++
-      if (['CR','CT','LV','SCK','MCK'].includes(cell.code)) cuti++
-      if (cell.code === 'S') sakit++
-      if (cell.code === 'I' || cell.code === 'IR') izin++
-      if (cell.code === 'A') alpha++
-      if (cell.code === 'ID' || cell.code === 'TR') stb++
+      // ── SEMUA ANGKA DIHITUNG DARI KODE ABSENSI YANG TAMPIL ──
+      // bukan dari roster, supaya persen & jumlah hari selalu sama dengan
+      // yang terlihat di tabel.
+      const kode = String(cell.code || '').toUpperCase()
+      const HADIR = ['DS', 'NS', 'DW', 'NW', 'SCK', 'MCK']
+      const hadirHariIni = HADIR.includes(kode)
+
+      // hari kerja = hari yang dijadwalkan kerja ATAU ada kehadiran nyata
+      if (['S', 'M'].includes(roster || '') || hadirHariIni) hariKerja++
+      if (hadirHariIni) hariHadir++
+      if (kode === 'DS' || kode === 'DW' || kode === 'SCK') shiftS++
+      if (kode === 'NS' || kode === 'NW' || kode === 'MCK') shiftM++
+      if (kode === 'OFF') off++
+      if (['CR', 'CT', 'LV'].includes(kode)) cuti++
+      if (kode === 'S') sakit++
+      if (kode === 'I' || kode === 'IR') izin++
+      if (kode === 'A') alpha++
+      if (kode === 'ID' || kode === 'TR') stb++
     }
 
-    const persen = hariKerja > 0 ? Math.round((hariHadir / hariKerja) * 100) : 0
+    // persen kehadiran = hadir / hari kerja. Karena orang bisa masuk di hari
+    // OFF, penyebut dinaikkan supaya hasilnya tidak lebih dari 100%.
+    const penyebut = Math.max(hariKerja, hariHadir)
+    const persen = penyebut > 0 ? Math.round((hariHadir / penyebut) * 100) : 0
 
     const lemburList = lemburMap[String(emp.nrp)] || []
     const lemburMenunggu = lemburMenungguMap[String(emp.nrp)] || []
