@@ -85,6 +85,16 @@ export function konversiCell(
     return { code: '', type: 'resigned' }
   }
 
+  // Kalau ada JAM MASUK asli, kehadiran itulah yang benar.
+  // Kode OFF/CR/CT/dll yang berasal dari roster atau sisa import lama TIDAK
+  // boleh menutupi orang yang jelas-jelas clock-in.
+  if (att?.clock_in) {
+    const shift = (att.shift || '').toUpperCase()
+    const malam = shift === 'MALAM' || shift === 'NS' || shift === 'M'
+    if (isOperator) return { code: malam ? 'NW' : 'DW', type: 'actual' }
+    return { code: malam ? 'NS' : 'DS', type: 'actual' }
+  }
+
   // Tanggal yang BELUM TERJADI selalu menampilkan roster.
   // Tidak boleh ada data attendance (sisa import/entri salah) yang menutupinya.
   if (isFuture) {
@@ -125,13 +135,6 @@ export function konversiCell(
 
   if (['OFF', 'CR', 'CT', 'ID', 'SCK', 'MCK', 'TR', 'LV'].includes(roster)) {
     return { code: roster, type: 'roster' }
-  }
-
-  if (att?.clock_in) {
-    const shift = (att.shift || '').toUpperCase()
-    const malam = shift === 'MALAM' || shift === 'NS' || shift === 'M'
-    if (isOperator) return { code: malam ? 'NW' : 'DW', type: 'actual' }
-    return { code: malam ? 'NS' : 'DS', type: 'actual' }
   }
 
   const statusA = (att?.status || '').toUpperCase()

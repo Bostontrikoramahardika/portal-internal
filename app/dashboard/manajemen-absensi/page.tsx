@@ -1513,8 +1513,18 @@ export default function ManajemenAbsensiPage() {
 function EditCellModal({ row, day, onClose, onQueue, sudahAda }: any) {
   const [rosterShift, setRosterShift] = useState(day.roster || '')
   const [kode,        setKode]        = useState(day.code && day.code !== '-' ? day.code : '')
-  const [clockIn,     setClockIn]     = useState(day.clock_in ? String(day.clock_in).slice(11, 16) : '')
-  const [clockOut,    setClockOut]    = useState(day.clock_out ? String(day.clock_out).slice(11, 16) : '')
+  // Jam HARUS dibaca dengan zona waktu site (WITA), sama seperti tabel detail.
+  // Dulu dipotong mentah dari string UTC -> tampil 8 jam lebih awal.
+  const jamSite = (iso: any) => {
+    if (!iso) return ''
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return ''
+    return d.toLocaleTimeString('en-GB', {
+      timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit', hour12: false,
+    }).slice(0, 5)
+  }
+  const [clockIn,     setClockIn]     = useState(jamSite(day.clock_in))
+  const [clockOut,    setClockOut]    = useState(jamSite(day.clock_out))
   const [keterangan,  setKeterangan]  = useState(String(day.keterangan || '').replace(/\[MANUAL:[A-Z]+\]\s*/gi, '').trim())
   const [saving,      setSaving]      = useState(false)
   const [error,       setError]       = useState('')
