@@ -196,6 +196,9 @@ export async function POST(req: NextRequest) {
       return nilai
     }
 
+    // Baris yang benar-benar diedit (bisa kembar karena import lama).
+    const idTarget: string | null = existing?.[0]?.id || null
+
     // buang kolom yang tidak dikenal database, satu per satu, sampai berhasil
     async function tulis(tugas: 'update' | 'insert', dataAsli: any): Promise<string | null> {
       const awal: any = siapkanNilai(dataAsli)
@@ -206,9 +209,12 @@ export async function POST(req: NextRequest) {
       delete coba.__kandidatShift
       let idxStatus = 0
       let idxShift = 0
+      let sudahBersihKembar = false
       for (let i = 0; i < 14; i++) {
         const q = tugas === 'update'
-          ? supabaseAdmin.from('attendance').update(coba).eq('nrp', nrp).eq('tanggal', tanggal).select('id')
+          ? (idTarget
+              ? supabaseAdmin.from('attendance').update(coba).eq('id', idTarget).select('id')
+              : supabaseAdmin.from('attendance').update(coba).eq('nrp', nrp).eq('tanggal', tanggal).select('id'))
           : supabaseAdmin.from('attendance').insert(coba).select('id')
         const { data: hasil, error } = await q
         if (!error) return null
@@ -227,6 +233,33 @@ export async function POST(req: NextRequest) {
           idxStatus++
           if (idxStatus < kandidat.length + 1) {
             coba.status = idxStatus < kandidat.length ? kandidat[idxStatus] : null
+            continue
+          }
+        }
+
+        // ④ baris kembar: kombinasi nrp+tanggal+shift sudah dipakai baris lain
+        //    (sisa import lama yang menulis satu hari dua baris).
+        //    Hapus HANYA baris yang menempati shift sama, lalu ulangi.
+        if (/duplicate key value/i.test(error.message) && /attendance_nrp_tanggal_shift_key/i.test(error.message)) {
+          if (!sudahBersihKembar) {
+            sudahBersihKembar = true
+            const shiftBaru = coba.shift ?? null
+            const { data: kembar } = await supabaseAdmin
+              .from('attendance').select('id, shift, clock_in')
+              .eq('nrp', nrp).eq('tanggal', tanggal)
+            for (const k of (kembar || [])) {
+              if (idTarget && k.id === idTarget) continue
+              if ((k.shift ?? null) !== shiftBaru) continue
+              // jangan buang baris yang punya jam masuk asli
+              if (k.clock_in) continue
+              await supabaseAdmin.from('attendance').delete().eq('id', k.id)
+            }
+            // kalau yang dituju insert tapi baris hari itu sudah ada → ubah saja
+            if (tugas === 'insert' && idTarget) {
+              const { error: eUbah } = await supabaseAdmin
+                .from('attendance').update(coba).eq('id', idTarget).select('id')
+              if (!eUbah) return null
+            }
             continue
           }
         }
