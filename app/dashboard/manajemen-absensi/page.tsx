@@ -1428,10 +1428,10 @@ export default function ManajemenAbsensiPage() {
       )}
 
       {/* ═══ PANEL PERUBAHAN BELUM DISIMPAN ═══ */}
-      {canEdit && pending.length > 0 && !(editCell || detailCell || detailRow || resignRow || kompRow) && (
-        <div className="fixed bottom-16 lg:bottom-4 left-1/2 -translate-x-1/2 z-[55] w-[calc(100%-1.5rem)] max-w-2xl">
+      {canEdit && pending.length > 0 && (
+        <div className="fixed top-2 lg:top-3 left-1/2 -translate-x-1/2 z-[45] w-[calc(100%-1.5rem)] max-w-2xl flex flex-col">
           {lihatPending && (
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl mb-2 max-h-64 overflow-auto">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl mt-2 max-h-64 overflow-auto order-2">
               <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#5a6a7e]">
                   Perubahan menunggu disimpan ({pending.length})
@@ -1477,7 +1477,7 @@ export default function ManajemenAbsensiPage() {
             </div>
           )}
 
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl px-3 py-2 flex items-center gap-2">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl px-3 py-2 flex items-center gap-2 order-1">
             <button onClick={() => setLihatPending(v => !v)}
               className="bg-slate-100 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-black whitespace-nowrap">
               {lihatPending ? 'Sembunyikan' : 'Lihat'} ({pending.length})
