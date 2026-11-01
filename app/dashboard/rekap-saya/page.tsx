@@ -226,14 +226,8 @@ function Isi() {
                 {r.lembur_menunggu.length} lembur belum disetujui atasan (belum dihitung)
               </p>
             )}
-            {Number(detail?.nominal_lembur) > 0 && (
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Nominal per jam</span>
-                <span className="text-[12px] font-black text-slate-700">
-                  Rp {Number(detail.nominal_lembur).toLocaleString('id-ID')}
-                </span>
-              </div>
-            )}
+            {/* Nominal per jam TIDAK ditampilkan ke karyawan (kebijakan HR). */}
+
           </div>
 
           {/* Kompensasi cuti (input manual HR) */}
