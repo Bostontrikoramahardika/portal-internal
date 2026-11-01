@@ -1565,7 +1565,7 @@ function EditCellModal({ row, day, onClose, onQueue, sudahAda, pendingItem }: an
   const [clockOut,    setClockOut]    = useState(
     awalan && 'clock_out' in awalan ? jamSite(awalan.clock_out) : jamSite(day.clock_out)
   )
-  const [keterangan,  setKeterangan]  = useState(String(day.keterangan || '').replace(/\[MANUAL:[A-Z]+\]\s*/gi, '').trim())
+  const [keterangan,  setKeterangan]  = useState(String(day.keterangan || '').replace(/\[(MANUAL|KOREKSI):[A-Z]+\]\s*/gi, '').trim())
   const [saving,      setSaving]      = useState(false)
   const [error,       setError]       = useState('')
   const [eviden,      setEviden]      = useState<any[]>([])
@@ -1581,7 +1581,7 @@ function EditCellModal({ row, day, onClose, onQueue, sudahAda, pendingItem }: an
   // supaya edit per hari terasa instan. Disimpan sekali di akhir.
   const handleQueue = () => {
     setError('')
-    const ketAsli = String(keterangan || '').replace(/\[MANUAL:[A-Z]+\]\s*/gi, '').trim()
+    const ketAsli = String(keterangan || '').replace(/\[(MANUAL|KOREKSI):[A-Z]+\]\s*/gi, '').trim()
     const item: any = {
       nrp: row.nrp,
       tanggal: day.tanggal,

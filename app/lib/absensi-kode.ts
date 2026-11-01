@@ -107,7 +107,8 @@ export function konversiCell(
   isFuture: boolean = false,
   isAfterResign: boolean = false,
   tsOptKode: 'DS' | 'NS' | null = null,
-  isOperator: boolean = false
+  isOperator: boolean = false,
+  evidenKode: string | null = null
 ): { code: string; type: TipeCell } {
   const roster = (rosterShift || '').toUpperCase().trim()
 
@@ -115,9 +116,28 @@ export function konversiCell(
     return { code: '', type: 'resigned' }
   }
 
-  // Kalau ada JAM MASUK asli, kehadiran itulah yang benar.
-  // Kode OFF/CR/CT/dll yang berasal dari roster atau sisa import lama TIDAK
-  // boleh menutupi orang yang jelas-jelas clock-in.
+  // ── 1. KOREKSI HR = FINAL ──
+  // Dua sumber: panel Simpan Semua di aplikasi ([KOREKSI:..]) dan
+  // Import Koreksi dari Excel ([MANUAL:..]). Keduanya adalah keputusan HR
+  // dan selalu menang atas jam masuk, revisi karyawan, maupun roster.
+  if (att) {
+    const dariHr = String(att.keterangan || '').match(
+      /\[(?:KOREKSI|MANUAL):(DS|NS|DW|NW|SCK|MCK|S|I|IR|A|OFF|CR|CT|ID|TR|LV)\]/i
+    )
+    if (dariHr) {
+      return { code: dariHr[1].toUpperCase(), type: 'actual' }
+    }
+  }
+
+  // ── 2. REVISI ABSEN YANG SUDAH DISETUJUI GL ──
+  // Sakit / izin yang sudah di-approve atasan mengalahkan jam masuk
+  // (mis. karyawan sudah clock-in lalu mengajukan surat sakit dan disetujui).
+  if (evidenKode) {
+    return { code: String(evidenKode).toUpperCase(), type: 'actual' }
+  }
+
+  // ── 3. JAM MASUK ASLI ──
+  // Kode OFF/CR/CT dari roster tidak boleh menutupi orang yang clock-in.
   if (att?.clock_in) {
     const malam = isShiftMalam(att.clock_in, att.shift)
     if (isOperator) return { code: malam ? 'NW' : 'DW', type: 'actual' }
@@ -134,10 +154,6 @@ export function konversiCell(
   }
 
   if (att) {
-    const dariKet = String(att.keterangan || '').match(/\[MANUAL:(DS|NS|DW|NW|SCK|MCK|S|I|IR|A|OFF|CR|CT|ID|TR|LV)\]/i)
-    if (dariKet) {
-      return { code: dariKet[1].toUpperCase(), type: 'actual' }
-    }
     const status = (att.status || '').toUpperCase().trim()
     const KODE_MANUAL: Record<string, string> = {
       DS: 'DS', NS: 'NS', DW: 'DW', NW: 'NW',

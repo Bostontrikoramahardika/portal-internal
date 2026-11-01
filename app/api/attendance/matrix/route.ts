@@ -421,6 +421,37 @@ export async function GET(req: NextRequest) {
   })
 
   // ═══════════════════════════════════════════════
+  // REVISI ABSEN YANG SUDAH DISETUJUI GL (attendance_evidences)
+  // Sakit / izin disetujui atasan -> mengalahkan jam masuk,
+  // tetapi tetap kalah dari koreksi HR.
+  // ═══════════════════════════════════════════════
+  const evidenKodeMap: Record<string, string> = {}
+  try {
+    const awalEv = `${tahun}-${String(bln).padStart(2, '0')}-01`
+    const akhirEv = `${tahun}-${String(bln).padStart(2, '0')}-${String(jmlHari).padStart(2, '0')}`
+    const { data: evRows } = await supabaseAdmin
+      .from('attendance_evidences')
+      .select('nrp, tanggal, kategori, status_atasan')
+      .gte('tanggal', awalEv)
+      .lte('tanggal', akhirEv)
+      .eq('status_atasan', 'APPROVED')
+    const PETA_EV: Record<string, string> = {
+      SAKIT: 'S',
+      IZIN_POTONGAN: 'I',
+      IZIN_BERBAYAR: 'IR',
+      IZIN_RESMI: 'IR',
+      CUTI: 'CT',
+    }
+    ;(evRows || []).forEach((e: any) => {
+      const tgl = String(e.tanggal || '').slice(0, 10)
+      const kode = PETA_EV[String(e.kategori || '').toUpperCase()]
+      if (tgl && kode) evidenKodeMap[`${e.nrp}_${tgl}`] = kode
+    })
+  } catch (e) {
+    console.warn('[MATRIX] gagal baca attendance_evidences:', (e as any)?.message)
+  }
+
+  // ═══════════════════════════════════════════════
   // KOMPENSASI CUTI (input manual HR per bulan)
   // ═══════════════════════════════════════════════
   const kompMap: Record<string, { hari: number; keterangan: string | null; oleh: string | null }> = {}
@@ -477,7 +508,8 @@ export async function GET(req: NextRequest) {
       const isOperator = isJabatanOperator(emp.jabatan)
       const tsOptKode = cariTsOpt(tgl, emp)
       const tsHm = ringkasTsOpt(tgl, emp)
-      const cell = konversiCell(roster, att, isFuture, isAfterResign, tsOptKode, isOperator)
+      const evidenKode = evidenKodeMap[`${emp.nrp}_${tgl}`] || null
+      const cell = konversiCell(roster, att, isFuture, isAfterResign, tsOptKode, isOperator, evidenKode)
 
       days.push({
         tanggal: tgl,

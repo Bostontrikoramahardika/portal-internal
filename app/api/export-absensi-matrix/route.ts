@@ -289,6 +289,26 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // ══════════════ 6b. REVISI ABSEN DISETUJUI GL ══════════════
+    const evidenMap = new Map<string, string>()
+    try {
+      const awalEv = `${tahun}-${String(bulan).padStart(2, '0')}-01`
+      const akhirEv = `${tahun}-${String(bulan).padStart(2, '0')}-${String(jmlHari).padStart(2, '0')}`
+      const { data: evRows } = await supabaseAdmin
+        .from('attendance_evidences')
+        .select('nrp, tanggal, kategori, status_atasan')
+        .gte('tanggal', awalEv).lte('tanggal', akhirEv)
+        .eq('status_atasan', 'APPROVED')
+      const PETA_EV: Record<string, string> = {
+        SAKIT: 'S', IZIN_POTONGAN: 'I', IZIN_BERBAYAR: 'IR', IZIN_RESMI: 'IR', CUTI: 'CT',
+      }
+      ;(evRows || []).forEach((e: any) => {
+        const tgl = String(e.tanggal || '').slice(0, 10)
+        const kode = PETA_EV[String(e.kategori || '').toUpperCase()]
+        if (tgl && kode) evidenMap.set(`${e.nrp}|${tgl}`, kode)
+      })
+    } catch { /* tabel eviden belum ada */ }
+
     // ══════════════ 7. TENTUKAN KODE — SATU SUMBER DENGAN APLIKASI ══════════════
     // Memakai konversiCell() dari app/lib/absensi-kode.ts, fungsi yang SAMA
     // dengan yang dipakai halaman Manajemen Absensi. Jadi isi Excel tidak
@@ -310,7 +330,7 @@ export async function GET(request: NextRequest) {
       const isAfterResign = !!(resignDate && tgl > resignDate)
       const isOperator = isJabatanOperator(jabatan)
 
-      const cell = konversiCell(roster, att, isFuture, isAfterResign, ts ? ts.kode : null, isOperator)
+      const cell = konversiCell(roster, att, isFuture, isAfterResign, ts ? ts.kode : null, isOperator, evidenMap.get(`${nrp}|${tgl}`) || null)
       // '-' artinya tidak ada data (sama seperti sel kosong di aplikasi)
       return cell.code === '-' ? '' : cell.code
     }
@@ -667,7 +687,7 @@ export async function GET(request: NextRequest) {
           tanggal, hariNama[new Date(tahun, bulan - 1, d + 1).getDay()], kode,
           jamSite(att?.clock_in),
           jamSite(att?.clock_out),
-          att?.status || '', String(att?.keterangan || '').replace(/\[MANUAL:[A-Za-z]+\]\s*/gi, '').trim(),
+          att?.status || '', String(att?.keterangan || '').replace(/\[(MANUAL|KOREKSI):[A-Za-z]+\]\s*/gi, '').trim(),
           lemburPerHari.get(`${b.nrp}|${tanggal}`) || '',
         ])
         const selKode = row.getCell(8)

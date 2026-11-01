@@ -330,6 +330,24 @@ export async function POST(req: NextRequest) {
     } catch { /* ts_opt belum ada */ }
 
     // kode yang SEDANG TAMPIL di aplikasi untuk satu sel
+    // revisi absen disetujui GL (sama seperti aplikasi & export)
+    const petaEviden: Record<string, string> = {}
+    try {
+      const { data: evRows } = await supabaseAdmin
+        .from('attendance_evidences')
+        .select('nrp, tanggal, kategori, status_atasan')
+        .gte('tanggal', awal).lte('tanggal', akhir)
+        .eq('status_atasan', 'APPROVED')
+      const PETA_EV: Record<string, string> = {
+        SAKIT: 'S', IZIN_POTONGAN: 'I', IZIN_BERBAYAR: 'IR', IZIN_RESMI: 'IR', CUTI: 'CT',
+      }
+      ;(evRows || []).forEach((e: any) => {
+        const tgl = String(e.tanggal || '').slice(0, 10)
+        const kode = PETA_EV[String(e.kategori || '').toUpperCase()]
+        if (tgl && kode) petaEviden[`${e.nrp}|${tgl}`] = kode
+      })
+    } catch { /* opsional */ }
+
     function kodeTampil(nrp: string, tanggal: string): string {
       const emp = petaEmp[nrp]
       const att = petaAtt[nrp + '|' + tanggal] || null
@@ -342,6 +360,7 @@ export async function POST(req: NextRequest) {
         Boolean(resign && tanggal > resign),
         ts,
         isJabatanOperator(emp?.jabatan),
+        petaEviden[`${nrp}|${tanggal}`] || null,
       )
       return cell.code === '-' ? '' : cell.code
     }

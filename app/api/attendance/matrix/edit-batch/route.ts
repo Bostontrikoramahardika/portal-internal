@@ -138,14 +138,18 @@ export async function POST(req: NextRequest) {
       if (it.clock_in && it.clock_out) {
         jamKerja = Math.max(0, Math.floor((new Date(it.clock_out).getTime() - new Date(it.clock_in).getTime()) / 60000))
       }
-      const alasanBersih = String(it.keterangan || '').replace(/\[MANUAL:[A-Z]+\]\s*/gi, '').trim()
+      const alasanBersih = String(it.keterangan || '')
+        .replace(/\[MANUAL:[A-Z]+\]\s*/gi, '')
+        .replace(/\[KOREKSI:[A-Z]+\]\s*/gi, '')
+        .replace(/\[IMPORT-EXCEL\][^\[]*/gi, '')
+        .trim()
       const payload: any = {
         nrp,
         tanggal,
         site: petaSite[nrp] ?? null,
         updated_at: new Date().toISOString(),
       }
-      if (it.kode !== undefined) payload.keterangan = kode ? `[MANUAL:${kode}] ${alasanBersih}`.trim() : (alasanBersih || null)
+      if (it.kode !== undefined) payload.keterangan = kode ? `[KOREKSI:${kode}] ${alasanBersih}`.trim() : (alasanBersih || null)
       if (target) { payload.status = target.status; payload.shift = target.shift }
       if (it.clock_in !== undefined) payload.clock_in = it.clock_in || null
       if (it.clock_out !== undefined) payload.clock_out = it.clock_out || null
