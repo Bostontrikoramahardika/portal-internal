@@ -86,7 +86,7 @@ export function konversiCell(
   }
 
   if (att) {
-    const dariKet = String(att.keterangan || '').match(/\[MANUAL:(DS|NS|DW|NW|S|I|IR|A|OFF|CR|CT|ID|TR|LV)\]/i)
+    const dariKet = String(att.keterangan || '').match(/\[MANUAL:(DS|NS|DW|NW|SCK|MCK|S|I|IR|A|OFF|CR|CT|ID|TR|LV)\]/i)
     if (dariKet) {
       return { code: dariKet[1].toUpperCase(), type: 'actual' }
     }

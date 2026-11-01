@@ -15,7 +15,7 @@ import { konversiCell, isJabatanOperator } from '@/app/lib/absensi-kode'
 import { ambilSemuaPerNrp } from '@/app/lib/supabase-paginate'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60
+export const maxDuration = 120
 
 const BOLEH_IMPORT = [
   'hr_site', 'hrga_site', 'hr_ho', 'hrga', 'hrga_pusat', 'hrga_oprek',
@@ -410,118 +410,109 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // ═══════════════ TERAPKAN ═══════════════
-    // Tabel attendance punya UNIQUE (nrp, tanggal, shift), jadi satu hari
-    // bisa punya 2 baris (SIANG & MALAM). Cara lama menyimpan hanya satu
-    // baris per hari lalu selalu INSERT → kena "duplicate key".
-    // Sekarang: dikelompokkan per hari, baris yang cocok di-UPDATE,
-    // baris baru dibuat hanya kalau shift itu belum ada.
+    // ═══════════════ TERAPKAN (BATCH — CEPAT) ═══════════════
+    // Catatan penting: cara sebelumnya menulis SATU SEL PER SATU QUERY.
+    // Untuk 984 sel itu = 984 perjalanan ke database → 3,5 menit →
+    // browser menyerah dan muncul "Koneksi gagal".
+    // Sekarang: dikelompokkan, maksimal beberapa query saja.
+    //
+    // Skema tabel: UNIQUE (nrp, tanggal, shift) → satu hari bisa punya
+    // baris SIANG dan MALAM. Baris yang cocok di-UPDATE, sisanya di-UPSERT.
     const cap = `[IMPORT-EXCEL] koreksi dari file ${file.name}`.slice(0, 200)
+    // Keterangan yang ditulis ke setiap baris: kode PERSIS seperti di Excel,
+    // ditandai [MANUAL:KODE]. Tampilan aplikasi & export membaca tanda ini
+    // lebih dulu, jadi kode roster (CR/CT/OFF/ID/TR/SCK/MCK) pun bisa
+    // dikoreksi lewat Excel — bukan hanya DS/NS/A/S/I.
+    const ketUntuk = (kode: string) => `[MANUAL:${String(kode).toUpperCase()}] ${cap}`.slice(0, 250)
+    const waktuMulai = Date.now()
     let nUbah = 0, nTambah = 0
     const gagal: string[] = []
 
+    const kunciShift = (x: any) => String(x || '').toUpperCase().trim()
+    const kunci = (nrp: string, tgl: string) => `${nrp}|${tgl}`
+
+    // 1) tentukan baris tujuan untuk setiap perubahan
     const perHari = new Map<string, typeof perubahan>()
     for (const p of perubahan) {
-      const k = `${p.nrp}|${p.tanggal}`
+      const k = kunci(p.nrp, p.tanggal)
       if (!perHari.has(k)) perHari.set(k, [])
       perHari.get(k)!.push(p)
     }
 
-    const kunciShift = (x: any) => String(x || '').toUpperCase().trim()
+    type Pasangan = { p: any; id: string | null }
+    const pasangan: Pasangan[] = []
 
     for (const [k, daftar] of perHari) {
-      const [nrp, tanggal] = k.split('|')
-      const rows = (petaAttList[k] || []).slice()      // salinan, boleh ditandai
+      const rows = (petaAttList[k] || []).slice()
       const dipakai = new Set<string>()
-
       for (const p of daftar) {
-        const shiftTarget = p.shift ? kunciShift(p.shift) : ''
+        const sh = kunciShift(p.shift)
+        let row = rows.find((r) => kunciShift(r.shift) === sh && !dipakai.has(String(r.id)))
+        if (!row && sh) row = rows.find((r) => !kunciShift(r.shift) && !dipakai.has(String(r.id)))
+        if (row) dipakai.add(String(row.id))
+        pasangan.push({ p, id: row ? String(row.id) : null })
+      }
+    }
 
-        // a) baris dengan shift yang sama persis
-        let row = rows.find((r) => kunciShift(r.shift) === shiftTarget && !dipakai.has(String(r.id)))
+    // 2) UPDATE massal — kelompokkan per (status, shift), potong 200 id
+    const grupUpdate = new Map<string, { status: string; shift: string | null; kode: string; ids: string[] }>()
+    for (const { p, id } of pasangan) {
+      if (!id) continue
+      const gk = `${p.status}|${p.shift || ''}|${p.ke}`
+      if (!grupUpdate.has(gk)) grupUpdate.set(gk, { status: p.status, shift: p.shift, kode: p.ke, ids: [] })
+      grupUpdate.get(gk)!.ids.push(id)
+    }
 
-        // b) belum ada → pakai baris tanpa shift (mis. status ALPHA shift null)
-        if (!row && shiftTarget) {
-          row = rows.find((r) => !kunciShift(r.shift) && !dipakai.has(String(r.id)))
-        }
-
-        // c) tetap tidak ada → buat baris baru
-        if (!row) {
-          const { data, error } = await supabaseAdmin
-            .from('attendance')
-            .insert({
-              nrp,
-              tanggal,
-              site: petaEmp[nrp]?.site || siteSaya || null,
-              status: p.status,
-              shift: p.shift,
-              keterangan: cap,
-              updated_at: new Date().toISOString(),
-            })
-            .select('id')
-            .maybeSingle()
-
-          if (error) {
-            // Kalau ternyata barisnya SUDAH ada (unique nrp+tanggal+shift),
-            // jangan gagal — cari baris itu lalu perbarui.
-            const duplikat = /duplicate key|unique constraint/i.test(String(error.message || ''))
-            if (duplikat) {
-              let cari = supabaseAdmin
-                .from('attendance')
-                .select('id')
-                .eq('nrp', nrp)
-                .eq('tanggal', tanggal)
-              cari = p.shift ? cari.eq('shift', p.shift) : cari.is('shift', null)
-              const { data: ada } = await cari.limit(1).maybeSingle()
-
-              if (ada?.id) {
-                const { error: e2 } = await supabaseAdmin
-                  .from('attendance')
-                  .update({
-                    status: p.status,
-                    shift: p.shift,
-                    keterangan: cap,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq('id', ada.id)
-                if (e2) gagal.push(`${tanggal} ${nrp} ubah ${p.ke}: ${e2.message}`)
-                else {
-                  nUbah++
-                  rows.push({ id: ada.id, nrp, tanggal, status: p.status, shift: p.shift })
-                }
-              } else {
-                gagal.push(`${tanggal} ${nrp} ${p.ke}: baris sudah ada tetapi tidak bisa dibaca`)
-              }
-            } else {
-              gagal.push(`${tanggal} ${nrp} tambah ${p.ke}: ${error.message}`)
-            }
-          } else {
-            nTambah++
-            if (data?.id) rows.push({ id: data.id, nrp, tanggal, status: p.status, shift: p.shift })
-          }
-          continue
-        }
-
-        dipakai.add(String(row.id))
+    for (const [, g] of grupUpdate) {
+      for (let i = 0; i < g.ids.length; i += 200) {
+        const potong = g.ids.slice(i, i + 200)
         const { error } = await supabaseAdmin
           .from('attendance')
           .update({
-            status: p.status,
-            shift: p.shift,
-            keterangan: cap,
+            status: g.status,
+            shift: g.shift,
+            keterangan: ketUntuk(g.kode),
             updated_at: new Date().toISOString(),
           })
-          .eq('id', row.id)
-
-        if (error) {
-          gagal.push(`${tanggal} ${nrp} ubah ${p.dari}→${p.ke}: ${error.message}`)
-        } else {
-          nUbah++
-          row.status = p.status
-          row.shift = p.shift
-        }
+          .in('id', potong)
+        if (error) gagal.push(`update ${g.status}/${g.shift || '-'}: ${error.message}`)
+        else nUbah += potong.length
       }
     }
+
+    // 3) INSERT massal — hanya untuk sel yang belum punya baris sama sekali
+    const barisBaru = pasangan
+      .filter((x) => !x.id)
+      .map(({ p }) => ({
+        nrp: p.nrp,
+        tanggal: p.tanggal,
+        site: petaEmp[p.nrp]?.site || siteSaya || null,
+        status: p.status,
+        shift: p.shift,
+        keterangan: ketUntuk(p.ke),
+        updated_at: new Date().toISOString(),
+      }))
+
+    for (let i = 0; i < barisBaru.length; i += 200) {
+      const potong = barisBaru.slice(i, i + 200)
+      // upsert: kalau ternyata barisnya sudah ada (unique nrp+tanggal+shift),
+      // diperbarui saja — tidak lagi gagal "duplicate key".
+      const { error } = await supabaseAdmin
+        .from('attendance')
+        .upsert(potong, { onConflict: 'nrp,tanggal,shift' })
+
+      if (!error) {
+        nTambah += potong.length
+        continue
+      }
+
+      // kalau upsert ditolak (mis. constraint berbeda), coba insert biasa
+      const { error: e2 } = await supabaseAdmin.from('attendance').insert(potong)
+      if (!e2) nTambah += potong.length
+      else gagal.push(`tambah ${potong.length} baris: ${e2.message}`)
+    }
+
+    const detik = Math.round((Date.now() - waktuMulai) / 100) / 10
 
     return NextResponse.json({
       ok: true,
@@ -531,11 +522,26 @@ export async function POST(req: NextRequest) {
       terubah: nUbah,
       tertambah: nTambah,
       gagal: gagal.slice(0, 20),
+      jumlah_gagal: gagal.length,
+      detik,
       ringkasan: ringkas,
       dilewati: dilewati.slice(0, 20),
       jumlah_dilewati: dilewati.length,
     })
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Gagal memproses file' }, { status: 500 })
+    // Jangan ditelan: kirim pesan ASLI + lokasi baris supaya bisa dilacak.
+    const pesan = String(e?.message || e || 'Gagal memproses file')
+    const jejak = String(e?.stack || '')
+      .split('\n')
+      .slice(0, 4)
+      .join(' | ')
+      .slice(0, 500)
+    console.error('[IMPORT-EXCEL] GAGAL:', pesan, '\n', e?.stack || '')
+    return NextResponse.json({
+      ok: false,
+      mode: 'error',
+      error: pesan,
+      jejak,
+    }, { status: 500 })
   }
 }

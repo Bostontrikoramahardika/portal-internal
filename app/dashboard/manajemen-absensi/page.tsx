@@ -313,7 +313,27 @@ export default function ManajemenAbsensiPage() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
       })
-      const j = await res.json()
+
+      // Baca sebagai TEKS dulu. Kalau server membalas halaman error (bukan
+      // JSON), kita tampilkan isi aslinya — bukan "Koneksi gagal" yang kabur.
+      const teks = await res.text()
+      let j: any = null
+      try { j = JSON.parse(teks) } catch { j = null }
+
+      if (!j) {
+        console.error('[IMPORT] balasan bukan JSON. status', res.status, teks.slice(0, 500))
+        setHasilImport({
+          mode: 'error',
+          gagal: [
+            `Server membalas ${res.status} dan isinya bukan JSON.`,
+            teks.slice(0, 300) || '(kosong)',
+            'Buka terminal yang menjalankan npm run dev — pesan error lengkap ada di sana.',
+          ],
+          jumlah_perubahan: 0,
+        })
+        return
+      }
+
       if (!j.ok || j.mode === 'ditolak') {
         setHasilImport({
           mode: j.mode === 'ditolak' ? 'ditolak' : 'error',
@@ -325,8 +345,18 @@ export default function ManajemenAbsensiPage() {
       }
       setHasilImport({ ...j, __file: file })
       if (j.mode === 'terapkan') fetchMatrix()
-    } catch {
-      setHasilImport({ mode: 'error', gagal: ['Koneksi gagal saat mengunggah file'], jumlah_perubahan: 0 })
+    } catch (err: any) {
+      const sebab = String(err?.message || err || 'tidak diketahui')
+      console.error('[IMPORT] gagal:', err)
+      setHasilImport({
+        mode: 'error',
+        gagal: [
+          'Permintaan gagal dikirim / tidak ada balasan dari server.',
+          'Penyebab: ' + sebab,
+          'Kalau sebabnya "Failed to fetch" / "Load failed", cek terminal npm run dev — server mungkin berhenti.',
+        ],
+        jumlah_perubahan: 0,
+      })
     } finally {
       setImporting(false)
     }
@@ -664,6 +694,13 @@ export default function ManajemenAbsensiPage() {
                   </table>
                 </div>
               </div>
+            )}
+
+            {hasilImport.detik !== undefined && (
+              <p className="text-[10px] font-bold text-slate-500">
+                Selesai dalam {hasilImport.detik} detik
+                {Number(hasilImport.jumlah_gagal) > 0 ? ` · ${hasilImport.jumlah_gagal} baris gagal` : ' · tanpa kegagalan'}
+              </p>
             )}
 
             {Number(hasilImport.jumlah_dilewati) > 0 && (
