@@ -26,6 +26,9 @@ export default function KirimRekapPage() {
   const [muat, setMuat] = useState(false)
   const [kirim, setKirim] = useState(false)
   const [hasil, setHasil] = useState<string>('')
+  // simpanan nominal: dari draf browser + dari rekap bulan sebelumnya
+  const [sumberNominal, setSumberNominal] = useState<string>('')
+  const [adaNominal, setAdaNominal] = useState(false)
 
   const [periodeList, setPeriodeList] = useState<any[]>([])
   const [periodePilih, setPeriodePilih] = useState('')
@@ -54,6 +57,47 @@ export default function KirimRekapPage() {
   }
 
   useEffect(() => { muatMatrix() }, [bulan])
+
+  // ── NOMINAL: jangan kembali kosong ──
+  // 1) draf terakhir di browser untuk bulan ini (kalau ada)
+  // 2) kalau tidak ada, ambil nominal dari rekap yang terakhir dikirim
+  //    (bulan sebelumnya) supaya tidak perlu mengetik ulang
+  useEffect(() => {
+    let batal = false
+    const kunciDraf = 'btm_rekap_nominal_' + bulan
+    let draf: any = null
+    try { draf = JSON.parse(localStorage.getItem(kunciDraf) || 'null') } catch { draf = null }
+
+    if (draf && draf.items && Object.keys(draf.items).length) {
+      if (batal) return
+      setNominal(draf.items)
+      if (draf.pesan) setPesan(draf.pesan)
+      if (draf.batas) setBatas(draf.batas)
+      setSumberNominal('draf tersimpan di perangkat ini')
+      setAdaNominal(true)
+      return
+    }
+
+    fetch('/api/rekap-absensi/nominal?bulan=' + bulan, { credentials: 'include', headers: hdr() })
+      .then((r) => r.json())
+      .then((d) => {
+        if (batal || !d?.ok || !d?.ada) { setAdaNominal(false); setSumberNominal(''); return }
+        setNominal(d.items || {})
+        if (d.pesan) setPesan(d.pesan)
+        if (d.batas) setBatas(d.batas)
+        setSumberNominal(`${d.sumber}${d.versi ? ' versi ' + d.versi : ''}`)
+        setAdaNominal(true)
+      })
+      .catch(() => setAdaNominal(false))
+    return () => { batal = true }
+  }, [bulan])
+
+  // simpan draf setiap kali berubah (aman kalau halaman ditutup)
+  useEffect(() => {
+    try {
+      localStorage.setItem('btm_rekap_nominal_' + bulan, JSON.stringify({ items: nominal, pesan, batas }))
+    } catch { /* kuota penuh, abaikan */ }
+  }, [nominal, pesan, batas, bulan])
 
   useEffect(() => {
     fetch('/api/rekap-absensi?mode=periode', { credentials: 'include', headers: hdr() })
@@ -112,6 +156,26 @@ export default function KirimRekapPage() {
   function jmlLemburDipakai(r: any) {
     const n = nominal[r.nrp]
     return n?.jmlLembur !== undefined ? Number(n.jmlLembur) : Number(r.summary?.lembur || 0)
+  }
+
+  async function isiDariBulanLalu() {
+    const d = await fetch('/api/rekap-absensi/nominal?bulan=' + bulan, { credentials: 'include', headers: hdr() })
+      .then((r) => r.json()).catch(() => null)
+    if (!d?.ok || !d?.ada) { alert('Belum ada rekap sebelumnya yang bisa dipakai'); return }
+    if (!confirm(`Isi nominal dari rekap ${d.sumber} versi ${d.versi || 1}? Isian sekarang akan diganti.`)) return
+    setNominal(d.items || {})
+    if (d.pesan) setPesan(d.pesan)
+    if (d.batas) setBatas(d.batas)
+    setSumberNominal(`${d.sumber}${d.versi ? ' versi ' + d.versi : ''}`)
+    setAdaNominal(true)
+  }
+
+  async function kosongkanNominal() {
+    if (!confirm('Kosongkan semua nominal di bulan ini? (draf bulan lain tidak terpengaruh)')) return
+    setNominal({})
+    setSumberNominal('')
+    setAdaNominal(false)
+    try { localStorage.removeItem('btm_rekap_nominal_' + bulan) } catch {}
   }
 
   async function kirimRekap() {
@@ -207,6 +271,30 @@ export default function KirimRekapPage() {
 
       {tab === 'susun' && (
         <>
+          {/* NOMINAL: sumber isian + kendali */}
+          <div className={'rounded-2xl border p-3 flex flex-wrap items-center gap-2 ' +
+            (adaNominal ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200')}>
+            <div className="flex-1 min-w-[220px]">
+              <p className={'text-[10px] font-black uppercase tracking-widest ' +
+                (adaNominal ? 'text-emerald-700' : 'text-amber-700')}>
+                {adaNominal ? 'Nominal sudah terisi otomatis' : 'Nominal masih kosong'}
+              </p>
+              <p className={'text-[11px] font-semibold ' + (adaNominal ? 'text-emerald-800' : 'text-amber-800')}>
+                {adaNominal
+                  ? <>Diambil dari <b>{sumberNominal}</b>. Ubah bila ada perubahan — isian tersimpan otomatis.</>
+                  : <>Belum ada rekap sebelumnya. Isi nominal per jam / per piket di bawah, isian akan tersimpan.</>}
+              </p>
+            </div>
+            <button type="button" onClick={isiDariBulanLalu}
+              className="px-3 py-2 rounded-xl bg-[#003d79] text-white text-[11px] font-black active:scale-95">
+              Isi dari bulan lalu
+            </button>
+            <button type="button" onClick={kosongkanNominal}
+              className="px-3 py-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-black active:scale-95">
+              Kosongkan
+            </button>
+          </div>
+
           <div className="bg-white rounded-2xl border border-slate-200 p-3 space-y-2.5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
