@@ -815,7 +815,7 @@ export default function ManajemenAbsensiPage() {
           <span className="inline-flex items-center gap-1 mr-2 text-[8px] font-black uppercase text-[#5a6a7e]">
             <span className="inline-flex items-center justify-center rounded-[2px] bg-white border border-slate-300 font-black text-slate-400"
                   style={{ width: 16, height: 16 }}>S</span>
-            Roster / belum absen (tanpa warna)
+            Roster shift S/M (tanpa warna)
           </span>
           {Object.entries(CELL_STYLE).filter(([k]) => k !== '-').map(([code, st]) => (
             <span key={code}
@@ -915,9 +915,15 @@ export default function ManajemenAbsensiPage() {
                             const pend = pendingMap[`${row.nrp}|${d.tanggal}`]
                             const kodeView = pend ? (pend.kode || '') : d.code
                             const isPend = !!pend
-                            // 'actual' = sudah ada absensi nyata (jam masuk / koreksi manual).
-                            // Selain itu = masih roster / belum absen -> TIDAK DIWARNAI.
-                            const sudahAbsen = pend ? true : d.type === 'actual'
+                            // ATURAN WARNA:
+                            //  - warna mengikuti KODE (OFF hitam, CR kuning, A merah, NS abu, ...)
+                            //  - HANYA kode roster shift polos (S = siang, M = malam) dan
+                            //    sel kosong yang tidak diwarnai, supaya tidak tertukar
+                            //    dengan S = SAKIT (hijau).
+                            const KODE_SHIFT_ROSTER = ['S', 'M']
+                            const sudahAbsen = pend
+                              ? true
+                              : (d.type === 'actual' || !KODE_SHIFT_ROSTER.includes(String(kodeView || '').toUpperCase()))
                             const isDS = kodeView === 'DS'
                             const isNS = kodeView === 'NS'
                             const isHadir = isDS || isNS || kodeView === 'DW' || kodeView === 'NW' || kodeView === 'SCK' || kodeView === 'MCK'
@@ -1373,7 +1379,10 @@ export default function ManajemenAbsensiPage() {
                   {detailRow.days.map(d => {
                     const pend = pendingMap[`${detailRow.nrp}|${d.tanggal}`]
                     const kodeView = pend ? (pend.kode || '-') : d.code
-                    const sudahAbsen = pend ? true : d.type === 'actual'
+                    const KODE_SHIFT_ROSTER = ['S', 'M']
+                    const sudahAbsen = pend
+                      ? true
+                      : (d.type === 'actual' || !KODE_SHIFT_ROSTER.includes(String(kodeView || '').toUpperCase()))
                     const s = sudahAbsen
                       ? (CELL_STYLE[kodeView] || CELL_STYLE['-'])
                       : { bg: 'bg-white border border-slate-200', text: 'text-slate-400', label: 'roster' }
