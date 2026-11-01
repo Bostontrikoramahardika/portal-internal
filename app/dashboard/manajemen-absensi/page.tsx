@@ -812,6 +812,11 @@ export default function ManajemenAbsensiPage() {
         {/* ── LEGENDA ringkas (satu baris, bisa digeser) ── */}
         <div className="flex items-center gap-1 overflow-x-auto rounded-lg border border-slate-200 bg-white px-2 py-1">
           <span className="mr-1 shrink-0 text-[8px] font-black uppercase tracking-widest text-slate-400">Legenda</span>
+          <span className="inline-flex items-center gap-1 mr-2 text-[8px] font-black uppercase text-[#5a6a7e]">
+            <span className="inline-flex items-center justify-center rounded-[2px] bg-white border border-slate-300 font-black text-slate-400"
+                  style={{ width: 16, height: 16 }}>S</span>
+            Roster / belum absen (tanpa warna)
+          </span>
           {Object.entries(CELL_STYLE).filter(([k]) => k !== '-').map(([code, st]) => (
             <span key={code}
               className="inline-flex h-[15px] shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-white pl-0.5 pr-1.5 text-[8.5px] font-bold text-slate-600">
@@ -910,15 +915,18 @@ export default function ManajemenAbsensiPage() {
                             const pend = pendingMap[`${row.nrp}|${d.tanggal}`]
                             const kodeView = pend ? (pend.kode || '') : d.code
                             const isPend = !!pend
+                            // 'actual' = sudah ada absensi nyata (jam masuk / koreksi manual).
+                            // Selain itu = masih roster / belum absen -> TIDAK DIWARNAI.
+                            const sudahAbsen = pend ? true : d.type === 'actual'
                             const isDS = kodeView === 'DS'
                             const isNS = kodeView === 'NS'
                             const isHadir = isDS || isNS || kodeView === 'DW' || kodeView === 'NW' || kodeView === 'SCK' || kodeView === 'MCK'
                             const isTerlambat = isHadir && (d.terlambat_menit || 0) > 0
 
-                            // Warna mengikuti kode (aturan baru). Keterlambatan
-                            // ditandai titik kecil di atas kode, bukan ganti warna.
-                            const cellBg = s.bg
-                            const cellText = s.text
+                            // Warna hanya untuk yang SUDAH ABSEN.
+                            // Roster / belum absen = putih, tulisan abu-abu (mudah dibedakan).
+                            const cellBg = sudahAbsen ? s.bg : 'bg-white border border-slate-200'
+                            const cellText = sudahAbsen ? s.text : 'text-slate-400'
 
                             const displayCode = kodeView === '-' ? '' : kodeView
                             const tooltipText = isPend
@@ -1365,7 +1373,10 @@ export default function ManajemenAbsensiPage() {
                   {detailRow.days.map(d => {
                     const pend = pendingMap[`${detailRow.nrp}|${d.tanggal}`]
                     const kodeView = pend ? (pend.kode || '-') : d.code
-                    const s = CELL_STYLE[kodeView] || CELL_STYLE['-']
+                    const sudahAbsen = pend ? true : d.type === 'actual'
+                    const s = sudahAbsen
+                      ? (CELL_STYLE[kodeView] || CELL_STYLE['-'])
+                      : { bg: 'bg-white border border-slate-200', text: 'text-slate-400', label: 'roster' }
                     return (
                       <tr key={d.tanggal} className={`border-b border-slate-100 ${pend ? 'bg-blue-50/60' : ''}`}>
                         <td className="p-2 font-bold">{d.day}</td>
