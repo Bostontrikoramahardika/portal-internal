@@ -14,6 +14,15 @@ function hdr() {
   return h
 }
 
+const jamSite = (iso: any) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString('en-GB', {
+    timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).slice(0, 5)
+}
+
 const WARNA: Record<string, string> = {
   DS: 'bg-sky-100 text-sky-800', NS: 'bg-indigo-100 text-indigo-800',
   OFF: 'bg-slate-200 text-slate-600', CR: 'bg-amber-100 text-amber-800',
@@ -114,6 +123,11 @@ function Isi() {
             {[
               ['Total Hadir', s.hariHadir], ['DS', s.shiftS], ['NS', s.shiftM],
               ['OFF', s.off], ['CR', s.cuti], ['Alpha', s.alpha],
+              ['Sakit', s.sakit], ['Izin', s.izin],
+              ['Lembur (kali)', detail?.jml_lembur ?? s.lembur ?? lembur.length],
+              ['Jam Lembur', s.jam_lembur ?? 0],
+              ['Kompensasi Cuti (hari)', s.kompensasi_cuti ?? 0],
+              ['Piket (kali)', detail?.jml_piket ?? 0],
             ].map(([l, v]) => (
               <div key={String(l)} className="bg-white rounded-xl border border-slate-200 p-2.5 text-center">
                 <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{String(l)}</div>
@@ -156,9 +170,9 @@ function Isi() {
                     </div>
                     <div className="w-[92px] shrink-0 text-[11px] font-bold text-slate-700 tabular-nums">
                       {d?.clock_in
-                        ? <>{String(d.clock_in).slice(0, 5)} <span className="text-slate-300">-</span>{' '}
+                        ? <>{jamSite(d.clock_in)} <span className="text-slate-300">-</span>{' '}
                             {d?.clock_out
-                              ? String(d.clock_out).slice(0, 5)
+                              ? jamSite(d.clock_out)
                               : <span className="text-rose-600">--</span>}</>
                         : <span className="text-slate-300">-</span>}
                     </div>
@@ -172,34 +186,67 @@ function Isi() {
             </div>
           )}
 
-          {lembur.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Lembur</span>
-                <span className="text-[10px] font-bold text-slate-400">{lembur.length} kali</span>
-              </div>
-              {lembur.map((l: any, i: number) => (
-                <div key={i} className="flex gap-2.5 py-2 border-b border-slate-100 last:border-0">
-                  <div className="w-14 shrink-0 text-[10px] font-black text-slate-900">
-                    {String(l.tanggal || '').slice(8, 10)}/{String(l.tanggal || '').slice(5, 7)}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] text-slate-700 leading-snug">{l.alasan || '-'}</div>
-                    {l.disetujui_oleh && (
-                      <div className="text-[9px] text-slate-400 mt-0.5">Disetujui: {l.disetujui_oleh}</div>
-                    )}
-                    {l.tahap === 'MENUNGGU_PJO' && (
-                      <div className="text-[9px] font-bold text-amber-600 mt-0.5">Menunggu persetujuan PJO</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t-2 border-[#0b2a5b]">
-                <span className="text-[11px] font-black uppercase tracking-wider text-[#0b2a5b]">Total Lembur</span>
-                <span className="text-[16px] font-black text-[#0b2a5b]">{lembur.length} kali</span>
-              </div>
+          <div className="bg-white rounded-2xl border border-slate-200 p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Rincian Lembur</span>
+              <span className="text-[10px] font-bold text-slate-400">
+                {lembur.length} kali · {Number(s.jam_lembur || 0)} jam
+              </span>
             </div>
-          )}
+            {lembur.length === 0 ? (
+              <p className="py-3 text-center text-[11px] font-bold text-slate-400">
+                Tidak ada lembur yang disetujui bulan ini
+              </p>
+            ) : (
+              <>
+                {lembur.map((l: any, i: number) => (
+                  <div key={i} className="flex gap-2.5 py-2 border-b border-slate-100 last:border-0">
+                    <div className="w-14 shrink-0 text-[10px] font-black text-slate-900">
+                      {String(l.tanggal || '').slice(8, 10)}/{String(l.tanggal || '').slice(5, 7)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] text-slate-700 leading-snug">{l.alasan || '-'}</div>
+                      <div className="text-[9px] text-slate-400 mt-0.5">
+                        {l.jenis ? l.jenis + ' · ' : ''}{Number(l.jam || 0)} jam
+                        {l.disetujui_oleh ? ' · disetujui ' + l.disetujui_oleh : ''}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+            <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t-2 border-[#0b2a5b]">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#0b2a5b]">Total Lembur</span>
+              <span className="text-[16px] font-black text-[#0b2a5b]">
+                {detail?.jml_lembur ?? lembur.length} kali · {Number(s.jam_lembur || 0)} jam
+              </span>
+            </div>
+            {(Array.isArray(r?.lembur_menunggu) ? r.lembur_menunggu.length : 0) > 0 && (
+              <p className="mt-1.5 text-[10px] font-bold text-amber-600">
+                {r.lembur_menunggu.length} lembur belum disetujui atasan (belum dihitung)
+              </p>
+            )}
+            {Number(detail?.nominal_lembur) > 0 && (
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Nominal per jam</span>
+                <span className="text-[12px] font-black text-slate-700">
+                  Rp {Number(detail.nominal_lembur).toLocaleString('id-ID')}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Kompensasi cuti (input manual HR) */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-3 flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#0b2a5b]">Kompensasi Cuti</span>
+              {s.kompensasi_keterangan && (
+                <p className="text-[9px] text-slate-400 mt-0.5">{s.kompensasi_keterangan}</p>
+              )}
+            </div>
+            <span className="text-[16px] font-black text-[#0b2a5b]">{Number(s.kompensasi_cuti || 0)} hari</span>
+          </div>
+
 
           {Number(detail.jml_piket) > 0 && (
             <div className="bg-white rounded-2xl border border-slate-200 p-3 flex items-center justify-between">
