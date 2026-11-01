@@ -8,7 +8,7 @@ import { supabaseAdmin } from '@/app/lib/supabase'
 import { getSiteDate, Timezone, DEFAULT_TIMEZONE } from '@/app/lib/timezone'
 import {
   konversiCell, kodeDariShiftTs, isJabatanOperator, grupAbsensi,
-  karyawanSampah, normNama, intiNrp, tglKey,
+  karyawanSampah, normNama, intiNrp, tglKey, pilihAttBaris,
 } from '@/app/lib/absensi-kode'
 
 const HO_VIEW_ONLY  = ['hr_ho','director_ops','business_dev','manager_ops','spv_she_ho','she_site']
@@ -415,10 +415,16 @@ export async function GET(req: NextRequest) {
       lemburMap[k].sort((x: any, y: any) => String(x.tanggal).localeCompare(String(y.tanggal))))
   }
 
-  const attMap: Record<string, any> = {}
+  // kumpulkan dulu per orang+tanggal, lalu PILIH baris terbaik.
+  // (dulu baris terakhir langsung menimpa -> koreksi HR bisa tertutup)
+  const attKumpul: Record<string, any[]> = {}
   attendances.forEach((a: any) => {
-    attMap[`${a.nrp}_${a.tanggal}`] = a
+    const k = `${a.nrp}_${a.tanggal}`
+    if (!attKumpul[k]) attKumpul[k] = []
+    attKumpul[k].push(a)
   })
+  const attMap: Record<string, any> = {}
+  for (const k of Object.keys(attKumpul)) attMap[k] = pilihAttBaris(attKumpul[k])
 
   // ═══════════════════════════════════════════════
   // REVISI ABSEN YANG SUDAH DISETUJUI GL (attendance_evidences)

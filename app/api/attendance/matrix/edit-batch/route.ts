@@ -189,6 +189,22 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      // Setelah koreksi HR tersimpan, buang baris kembar lain pada hari itu
+      // yang TIDAK punya jam masuk (sisa import lama). Dengan begitu tidak ada
+      // baris lain yang bisa menutupi koreksi HR saat dibaca.
+      if (!errTulis && kode) {
+        try {
+          const { data: sisa } = await supabaseAdmin
+            .from('attendance').select('id, shift, clock_in, keterangan')
+            .eq('nrp', nrp).eq('tanggal', tanggal)
+          for (const b of (sisa || [])) {
+            if (b.clock_in) continue                                  // data asli: jangan dihapus
+            if (/\[(?:KOREKSI|MANUAL):[A-Za-z]+\]/i.test(String(b.keterangan || ''))) continue
+            await supabaseAdmin.from('attendance').delete().eq('id', b.id)
+          }
+        } catch { /* opsional */ }
+      }
+
       hasil.push(errTulis
         ? { nrp, tanggal, ok: false, error: errTulis }
         : { nrp, tanggal, ok: true, kode, peringatan })

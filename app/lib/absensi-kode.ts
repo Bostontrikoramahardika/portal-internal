@@ -101,6 +101,33 @@ export function jamSite(iso: any): string {
   }).slice(0, 5)
 }
 
+/**
+ * Satu orang satu tanggal bisa punya beberapa baris attendance (beda shift).
+ * Fungsi ini memilih SATU baris yang paling benar, dengan urutan:
+ *   1. baris yang punya koreksi HR   ([KOREKSI:..] / [MANUAL:..])
+ *   2. baris yang punya jam masuk
+ *   3. baris yang paling baru diubah
+ * Dipakai SEMUA pembaca (tampilan, export Excel, import) supaya tidak ada
+ * lagi sel yang "balik ke awal" karena baris lain menang.
+ */
+export function pilihAttBaris(list: any[]): any {
+  if (!list || !list.length) return null
+  const skor = (a: any) => {
+    const ket = String(a?.keterangan || '')
+    let n = 0
+    if (/\[(?:KOREKSI|MANUAL):[A-Za-z]+\]/i.test(ket)) n += 100
+    if (a?.clock_in) n += 10
+    if (a?.clock_out) n += 1
+    return n
+  }
+  return [...list].sort((a, b) => {
+    const d = skor(b) - skor(a)
+    if (d !== 0) return d
+    const t = String(b?.updated_at || '').localeCompare(String(a?.updated_at || ''))
+    return t
+  })[0]
+}
+
 export function konversiCell(
   rosterShift: string | null,
   att: any,

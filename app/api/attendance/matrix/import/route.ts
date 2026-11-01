@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
 import * as XLSX from 'xlsx'
-import { konversiCell, isJabatanOperator } from '@/app/lib/absensi-kode'
+import { konversiCell, isJabatanOperator, pilihAttBaris } from '@/app/lib/absensi-kode'
 import { ambilSemuaPerNrp } from '@/app/lib/supabase-paginate'
 
 export const dynamic = 'force-dynamic'
@@ -276,7 +276,7 @@ export async function POST(req: NextRequest) {
           .gte('tanggal', awal).lte('tanggal', akhir)
         ;(data || []).forEach((a: any) => {
           const k = String(a.nrp) + '|' + String(a.tanggal).slice(0, 10)
-          petaAtt[k] = a
+          petaAtt[k] = pilihAttBaris([...(petaAttList[k] || []), a])
           if (!petaAttList[k]) petaAttList[k] = []
           petaAttList[k].push(a)
         })

@@ -9,7 +9,7 @@ import { getSession } from '@/app/lib/auth'
 import { supabaseAdmin } from '@/app/lib/supabase'
 import ExcelJS from 'exceljs'
 import {
-  konversiCell, jamSite, isJabatanOperator, karyawanSampah, intiNrp, normNamaRapat,
+  konversiCell, jamSite, isJabatanOperator, pilihAttBaris, karyawanSampah, intiNrp, normNamaRapat,
 } from '@/app/lib/absensi-kode'
 import { ambilSemua, ambilSemuaPerNrp } from '@/app/lib/supabase-paginate'
 
@@ -278,7 +278,13 @@ export async function GET(request: NextRequest) {
     rosterRaw.forEach((r: any) => rosterMap.set(`${r.nrp}|${String(r.tanggal).slice(0, 10)}`, String(r.shift_code || '').toUpperCase()))
 
     const attMap = new Map<string, any>()
-    attAll.forEach((a: any) => attMap.set(`${a.nrp}|${String(a.tanggal).slice(0, 10)}`, a))
+    const attKumpul = new Map<string, any[]>()
+    attAll.forEach((a: any) => {
+      const k = `${a.nrp}|${String(a.tanggal).slice(0, 10)}`
+      if (!attKumpul.has(k)) attKumpul.set(k, [])
+      attKumpul.get(k)!.push(a)
+    })
+    for (const [k, list] of attKumpul) attMap.set(k, pilihAttBaris(list))
 
     const leaveMap = new Map<string, string>()
     ;(leaves || []).forEach((lr: any) => {
